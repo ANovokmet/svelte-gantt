@@ -1,0 +1,26 @@
+<div class="row" ref:row>
+    {#each tasks as task (task.id)}
+        <Task   row={row}
+                task={task}/>
+    {/each}
+</div>
+<style>
+    .row {
+        position: relative;
+        height: 24px;
+        width: 100%;
+        border-bottom: #efefef 1px solid;
+        box-sizing: border-box;
+    }
+</style>
+<script>
+        import Task from './Task.html';
+    
+        export default {
+            components: { Task },
+            oncreate() {
+                const { row } = this.get();
+                row.rowElement = this.refs.row;
+            }
+        };
+</script>

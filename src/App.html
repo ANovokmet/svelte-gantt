@@ -1,0 +1,59 @@
+<p>This is a top-level element.</p>
+<Grid
+	bind:rows=rows
+	from={from}
+	to={to}
+	width={width}
+/>
+
+<script>
+	import Grid from './Grid.html';
+    import moment from "../node_modules/moment/src/moment.js";
+    import { Store } from 'svelte/store.js';
+
+	let startOfToday = moment().startOf('day')
+
+    const store = new Store({
+				from: startOfToday,
+				to: moment().endOf('day'),
+				width: 800,
+				magnetOffset: 15,
+				magnetUnit: 'minute',
+				headerHeight: 100,
+				headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+	});
+
+
+
+	let data = {
+		rows: []
+	}
+
+	for(let i = 0; i < 50; i++){
+		data.rows.push({
+			label: 'Row #'+i,
+			tasks: [
+				{
+					id: i,
+					label: 'Task #'+i,
+					from: startOfToday.clone().set({'hour': 9, 'minute': 0}),
+					to: startOfToday.clone().set({'hour': 12, 'minute': 0})
+				}
+			]
+		});
+	}
+
+	store.set({rows: data.rows});
+
+	export default {
+		components: {
+			Grid
+		},
+		oncreate(){
+		},
+		data() {
+			return data
+		},
+		store: () => store
+	};
+</script>

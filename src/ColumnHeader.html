@@ -1,0 +1,63 @@
+<div class="column-header-row" style="width:{width}px">
+
+    {#each headers as header}
+        <div class="column-header" style="width:{header.width}px">
+            {header.label || 'N/A'}
+        </div>
+    {/each}
+</div>
+<style>
+    .column-header-row {
+        box-sizing: border-box;
+        border-top: 1px solid #ddd;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .column-header {
+        position: relative;
+        display: inline-block;
+        height: 100%;    
+        border-left: #efefef 1px solid;
+        box-sizing: border-box;
+        text-overflow: clip;
+        vertical-align: top;
+    }
+</style>
+<script>
+    import moment from "../node_modules/moment/src/moment.js";
+    import { Utils } from "./task.js";
+    console.log(moment());
+
+
+
+    export default {
+        oncreate() {
+            
+            const { header } = this.get();
+
+            const {from, to, width } = this.store.get();
+            const columnWidth = Utils.getPositionByDate(from.clone().add(1, header.unit), from, to, width);
+            
+            const columnCount = Math.ceil(width / columnWidth) 
+
+            var headers = [];
+            
+            
+
+            var headerTime = from.clone();
+
+            for(let i=0; i< columnCount; i++){
+                headers.push({width: columnWidth, label: headerTime.format(header.format)});
+                headerTime.add(1, header.unit);
+            }
+
+            this.set({headers: headers});
+        },
+        data(){
+            return {
+                headers: []
+            }
+        }
+    };
+</script>

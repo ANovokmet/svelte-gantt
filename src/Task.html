@@ -1,0 +1,243 @@
+<div class="task" style="left:{task.left}px;width:{task.width}px;"
+ use:drag>
+    {task.label}
+</div>
+
+<style>
+    .task {
+		position: absolute;     
+        top: 0;
+        bottom: 0;   
+        height: 80%;
+        margin: auto;
+        background: rgb(116, 191, 255);
+	}
+</style>
+
+<script>
+    import moment from "../node_modules/moment/src/moment.js";
+    import { Utils } from "./task.js";
+
+    const resizeHandleWidth = 15;
+
+    export default {
+        oncreate() {
+
+            const { task, row } = this.get();
+            task.row = row;
+
+            if(task.dragging) {
+
+            }
+
+            this.updateTaskPosition();
+        },
+        actions: {
+			drag(node) {
+
+                //var self = this;
+                const bodyElement  = document.getElementsByClassName("row-container");
+                const windowElement = window;
+
+                const { task } = this.get();
+                task.component = this;
+                const { rows } = this.store.get();
+
+                let mouseStartPosX;
+                let mouseStartRight;
+
+                function onmousedown(event) {
+                    
+                    event.preventDefault();
+                    console.log('drag down');
+
+                    
+                    mouseStartPosX = Utils.getRelativePos(bodyElement[0], event).x - task.left; //Utils.getRelativePos(node, event).x; //  
+                    
+                    mouseStartRight = task.left + task.width;
+
+                    if(mouseStartPosX < resizeHandleWidth) {
+                        task.resizing = true;
+                        task.direction = 'left';
+                    }
+                    else if(mouseStartPosX > task.width - resizeHandleWidth) {
+                        task.resizing = true;
+                        task.direction = 'right';
+                    }
+                    else {
+                        task.dragging = true;
+                    }
+
+
+
+                    
+                    windowElement.addEventListener('mousemove', onmousemove, false);
+                    Utils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                }
+                
+                function onmousemove(event) {
+                    
+                    event.preventDefault();
+                    if(task.resizing) {
+
+                        const mousePos = Utils.getRelativePos(bodyElement[0], event);
+
+
+                        var x = mousePos.x// - mouseStartPosX;
+                        
+                        if(task.direction === 'left') { //resize ulijevo
+                            if(mousePos.x > task.left + task.width) {
+                                task.left = mouseStartRight; //mousePos.x //
+                                task.width = task.left - mousePos.x;
+                                task.direction = 'right'
+                                mouseStartRight = task.left + task.width;
+                            }
+                            else{
+                                task.left = x;
+                                task.width = mouseStartRight - x;
+                            }
+                        }
+                        else if(task.direction === 'right') {//resize desno
+                            if(mousePos.x <= task.left) {
+                                task.width = task.left - mousePos.x;
+                                task.left = mousePos.x;
+                                task.direction = 'left';
+                                mouseStartRight = task.left + task.width;
+                            }
+                            else {
+                                task.width = mousePos.x - task.left;
+                            }
+                        }
+
+                        console.log(mousePos.x, mouseStartPosX)
+
+                        console.log(x)
+
+                        task.component.updateTaskDate();
+                        task.component.updateTaskPosition();
+                    }
+
+                    if(task.dragging) {
+                        const mousePos = Utils.getRelativePos(bodyElement[0], event);
+
+
+                        var x = mousePos.x - mouseStartPosX;
+
+                        const store = task.component.store.get();
+                        const from = Utils.getDateByPosition(x, store.from, store.to, store.width);
+                        const to = Utils.getDateByPosition(x + task.width, store.from, store.to, store.width);
+                
+
+                        task.left = x;
+
+                        task.component.updateTaskDate();
+                        task.component.updateTaskPosition();
+                        //task.component.set({ task: task }); 
+                        
+                        //row switching
+                        const rowCenterX = bodyElement[0].getBoundingClientRect().left + bodyElement[0].getBoundingClientRect().width / 2;
+                        const sourceRow = task.row;
+                        let targetRow;
+
+                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+                        let rowElement = elements.find((element) => element.classList.contains('row'));
+                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+
+                            const targetRow = rows.find((r) => r.rowElement === rowElement);
+                            console.log('move task to '+targetRow.label, targetRow);
+
+                            task.row = targetRow;
+                            targetRow.tasks.push(task);
+                            
+                            let i, task_;
+                            for (i = 0; i < sourceRow.tasks.length; i++) {
+                                task_ = sourceRow.tasks[i]
+                                if (task_ === task) {
+                                    break;
+                                }
+                            }
+                            sourceRow.tasks.splice(i, 1);
+                            task.component.store.set({rows: rows});
+                            
+                            task.component.fire('taskMoved', { task: task, row: targetRow });
+                        }
+                    }
+
+
+                }
+
+                function onmouseup(event) {
+                    console.log('drag up'); 
+                    task.dragging = false;
+                    task.resizing = false;
+                    windowElement.removeEventListener('mousemove', onmousemove, false);
+                }
+
+                node.addEventListener('mousedown', onmousedown, false);
+                
+                //bind mousemove on body, only on move
+                //node.addEventListener('mousemove', onmousemove, false);
+                
+                //bind on body, only on down
+                //node.addEventListener('mouseup', onmouseup, false);
+
+				return {
+					update() {
+                        
+					},
+
+					destroy() {
+						node.removeEventListener('mousedown', onmousedown, false);
+						//node.removeEventListener('mousemove', onmousemove, false);
+						//node.removeEventListener('mouseup', onmouseup, false);
+					}
+				}
+			}
+		},
+        methods: {
+			updateTaskPosition() {
+                const store = this.store.get();
+                const { task } = this.get();
+            
+                console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
+
+                if(!store.to) return;
+                const left = Utils.getPositionByDate(task.from, store.from, store.to, store.width);
+                const right = Utils.getPositionByDate(task.to, store.from, store.to, store.width); 
+
+                task.left = left;
+                task.width = right - left;
+
+
+                console.log(task.left, task.width);
+
+                this.set({ task: task });
+            },
+            updateTaskDate() {
+                const store = this.store.get();
+                const { task } = this.get();
+                
+                const from = Utils.getDateByPosition(task.left, store.from, store.to, store.width);
+                const to = Utils.getDateByPosition(task.left + task.width, store.from, store.to, store.width);
+                
+
+                task.from = this.magnetDate(from);
+                task.to = this.magnetDate(to);
+
+                //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
+                        
+                this.set({ task: task });
+            },
+            magnetDate(date) {
+                const { magnetUnit, magnetOffset } = this.store.get();
+                return Utils.roundTo(date, magnetUnit, magnetOffset);
+            }
+        },
+
+        data() {
+            return {
+                task: { dragging: false }
+            }
+        }
+    };
+</script>

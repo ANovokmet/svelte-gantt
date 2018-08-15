@@ -1,0 +1,8 @@
+- switch tasks between rows
+- grid resizing
+- event subscription
+- multi select/ multi edit/ moving
+- virtual scrolling
+- % of completion of tasks
+- dragging from/to outside divs
+- context menu (copying)

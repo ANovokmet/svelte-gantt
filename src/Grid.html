@@ -1,0 +1,115 @@
+<div class="grid">
+
+    <div class="side-header-container" style="height:{$headerHeight}px;width:100px">
+    
+    </div>
+
+    <div class="main-header-container" style="height:{$headerHeight}px;width:{$width}px">
+        {#each $headers as header}
+            <ColumnHeader header={header}/>
+        {/each}
+    </div>
+
+    <div class="side-container">
+        {#each rows as row}
+            <RowHeader 
+                bind:label=row.label/>
+        {/each}
+    </div>
+
+    <div class="main-container" style="width:{$width}px">
+        <div class="column-container">
+            {#each columns as column}
+                <Column width={column.width}/>
+            {/each}
+        </div>    
+        <div class="row-container" ref:rowContainer>
+            {#each $rows as row}
+                <Row 
+                row={row}
+                bind:tasks=row.tasks
+                    width={width}/>
+            {/each}
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .grid {
+        position: relative;
+        
+        font-family: tahoma, arial, verdana, Sans-serif;
+        font-size: 10px;
+        color: #656565;
+    }
+
+    .column-container {
+        position: absolute;
+        height: 100%;
+
+        float: left;
+        overflow: hidden;
+    }
+
+    .row-container {
+        width: 100%;
+        display: inline-block;
+    }
+
+
+    .side-container {
+        width: 100px;
+        float: left;
+    }
+
+    .main-container {
+        position: relative;
+        overflow: auto;
+    }
+
+    .side-header-container {
+        float: left;
+    }
+
+    .main-header-container {
+        position: relative;
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    import Row from './Row.html';
+    import RowHeader from './RowHeader.html';
+    import Column from './Column.html';
+    import ColumnHeader from './ColumnHeader.html';
+    import { Utils } from "./task.js";
+
+    export default {
+        components: { Row, Column, RowHeader, ColumnHeader },
+        oncreate(){
+            const {from, to, width, magnetOffset, magnetUnit} = this.store.get();
+            let diva;
+            const columnWidth = Utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit), from, to, width);
+            diva = width / columnWidth
+            const columnCount = Math.ceil(width / columnWidth) 
+
+            var columns = [];
+            
+            for(let i=0; i< columnCount; i++){
+                columns.push({width: columnWidth});
+            }
+
+            this.store.set({bodyElement: this.refs.rowContainer})
+
+            this.set({columns: columns});
+        },
+        actions: {
+		},
+        data() {
+            return {
+                columns: []
+            }
+        }
+    };
+</script>
