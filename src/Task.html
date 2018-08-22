@@ -26,10 +26,6 @@
             const { task, row } = this.get();
             task.row = row;
 
-            if(task.dragging) {
-
-            }
-
             this.updateTaskPosition();
         },
         actions: {
@@ -160,6 +156,7 @@
                             task.component.store.set({rows: rows});
                             
                             task.component.fire('taskMoved', { task: task, row: targetRow });
+                            task.component.fire('updateVisibleRows');
                         }
                     }
 
@@ -199,7 +196,7 @@
                 const store = this.store.get();
                 const { task } = this.get();
             
-                console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
+                //console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
 
                 if(!store.to) return;
                 const left = Utils.getPositionByDate(task.from, store.from, store.to, store.width);
@@ -209,7 +206,7 @@
                 task.width = right - left;
 
 
-                console.log(task.left, task.width);
+                //console.log(task.left, task.width);
 
                 this.set({ task: task });
             },

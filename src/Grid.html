@@ -10,26 +10,29 @@
         {/each}
     </div>
 
-    <div class="side-container">
+    <div class="side-container" style="height:{$height}px" use:scrollListener>
         {#each rows as row}
             <RowHeader 
                 bind:label=row.label/>
         {/each}
     </div>
 
-    <div class="main-container" style="width:{$width}px">
-        <div class="column-container">
-            {#each columns as column}
-                <Column width={column.width}/>
-            {/each}
-        </div>    
-        <div class="row-container" ref:rowContainer>
-            {#each $rows as row}
-                <Row 
-                row={row}
-                bind:tasks=row.tasks
-                    width={width}/>
-            {/each}
+    <div class="main-container" style="height:{$height}px;width:{$width}px" use:scrollable>
+        <div class="content">
+            <div class="column-container">
+                {#each columns as column}
+                    <Column width={column.width}/>
+                {/each}
+            </div>    
+            <div class="row-container" ref:rowContainer style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:1200px">
+                {#each visibleRows as row}
+                    <Row 
+                    row={row}
+                    bind:tasks=row.tasks
+                        width={width}
+                        on:updateVisibleRows="updateViewport()"/>
+                {/each}
+            </div>
         </div>
     </div>
 
@@ -54,17 +57,19 @@
 
     .row-container {
         width: 100%;
-        display: inline-block;
+        /* display: inline-block; */
+        box-sizing: border-box;
     }
 
 
     .side-container {
         width: 100px;
         float: left;
+        overflow-y: hidden;
     }
 
     .main-container {
-        position: relative;
+        /* position: relative; */
         overflow: auto;
     }
 
@@ -75,6 +80,10 @@
     .main-header-container {
         position: relative;
         overflow: hidden;
+    }
+
+    .content {
+        position: relative;
     }
 </style>
 
@@ -103,12 +112,62 @@
             this.store.set({bodyElement: this.refs.rowContainer})
 
             this.set({columns: columns});
+
+            this.updateVisibleRows(0, this.refs.rowContainer.clientHeight);
         },
         actions: {
+            scrollable(node){
+                const { scrollables } = this.get();
+                const self = this;
+
+                function onscroll(event) {
+                    const scrollAmout = node.scrollTop; 
+                    for(let i=0; i< scrollables.length; i++){
+                        const scrollable = scrollables[i];
+                        scrollables[i].scrollTop = scrollAmout;
+                    }
+                    self.updateVisibleRows(scrollAmout, node.clientHeight);
+                }
+
+                node.addEventListener('scroll', onscroll);
+                return {
+					destroy() {
+						node.removeEventListener('scroll', onscroll, false);
+					}
+                }
+            },
+            scrollListener(node){
+                const { scrollables } = this.get();
+                scrollables.push(node);
+            }
 		},
+        methods: {
+            updateVisibleRows(scrollTop, viewportHeight){
+                const { rows, height, rowHeight } = this.store.get();
+
+                let startIndex = Math.floor(scrollTop / rowHeight);
+                let endIndex = Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1);
+
+                console.log('['+startIndex+','+endIndex+']');
+
+                const paddingTop = startIndex * rowHeight;
+                const paddingBottom = rows.length * rowHeight - viewportHeight - paddingTop;
+
+
+                const visibleRows = rows.slice(startIndex, endIndex + 1);
+
+                this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
+            },
+            updateViewport() {
+                const {scrollTop, clientHeight} = this.refs.rowContainer;
+                this.updateVisibleRows(scrollTop, clientHeight);
+            }
+        },
         data() {
             return {
-                columns: []
+                columns: [],
+                scrollables: [],
+                visibleRows: []
             }
         }
     };

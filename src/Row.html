@@ -1,13 +1,12 @@
-<div class="row" ref:row>
+<div class="row" ref:row style="height:{$rowHeight}px">
     {#each tasks as task (task.id)}
         <Task   row={row}
-                task={task}/>
+                task={task}  on:updateVisibleRows/>
     {/each}
 </div>
 <style>
     .row {
         position: relative;
-        height: 24px;
         width: 100%;
         border-bottom: #efefef 1px solid;
         box-sizing: border-box;
@@ -21,6 +20,12 @@
             oncreate() {
                 const { row } = this.get();
                 row.rowElement = this.refs.row;
+                this.on('update', ({ changed, current, previous }) => {
+                    this.get().row.rowElement = this.refs.row;
+                });
+            },
+            methods: {
             }
+            
         };
 </script>

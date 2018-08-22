@@ -1,9 +1,6 @@
 <p>This is a top-level element.</p>
 <Grid
 	bind:rows=rows
-	from={from}
-	to={to}
-	width={width}
 />
 
 <script>
@@ -17,10 +14,12 @@
 				from: startOfToday,
 				to: moment().endOf('day'),
 				width: 800,
+				height: 400,
 				magnetOffset: 15,
 				magnetUnit: 'minute',
 				headerHeight: 100,
-				headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+				headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+				rowHeight: 24
 	});
 
 
