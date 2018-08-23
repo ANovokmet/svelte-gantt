@@ -1,6 +1,7 @@
 <p>This is a top-level element.</p>
 <Grid
 	bind:rows=rows
+	dependencies={dependencies}
 />
 
 <script>
@@ -25,7 +26,8 @@
 
 
 	let data = {
-		rows: []
+		rows: [],
+		dependencies: []
 	}
 
 	for(let i = 0; i < 50; i++){
@@ -41,6 +43,8 @@
 			]
 		});
 	}
+
+	data.dependencies.push({fromTask: data.rows[0].tasks[0], toTask: data.rows[1].tasks[0] });
 
 	store.set({rows: data.rows});
 

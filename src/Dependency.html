@@ -1,0 +1,70 @@
+<div class="dependency" style="left:{0}px;top:{0}px;">
+    <Arrow 
+        {startX}
+        {startY}
+        {endX}
+        {endY}/>
+</div>
+
+<style>
+    .dependency {
+		position: absolute;     
+        width:100%;
+        height: 100%;
+	}
+</style>
+<script>
+    import Arrow from './Arrow.html';
+    import { Utils } from "./task.js";
+
+    export default {
+        components: { Arrow },
+        oncreate() {
+            /*const { rows, rowHeight } = this.store.get();
+            const { fromTask, toTask } = this.get();
+
+            let startX = fromTask.left + fromTask.width;
+            let endX = toTask.left;
+
+            let startIndex = rows.indexOf(fromTask.row); 
+            let endIndex = rows.indexOf(toTask.row); 
+
+            let startY = (startIndex + 0.5) * rowHeight
+            let endY = (startIndex + 0.5) * rowHeight
+
+            this.set({startX, startY, endX, endY});*/
+
+            this.on('update', ({ changed, current, previous }) => {
+                console.log('DOM updated after state change', current);
+
+                const { rows, rowHeight } = this.store.get();
+                const { fromTask, toTask } = this.get();
+
+                if(fromTask && fromTask.left && toTask.left){
+                    let startX = fromTask.left + fromTask.width;
+                    let endX = toTask.left;
+
+                    let startIndex = rows.indexOf(fromTask.row); 
+                    let endIndex = rows.indexOf(toTask.row); 
+
+                    let startY = (startIndex + 0.5) * rowHeight
+                    let endY = (endIndex + 0.5) * rowHeight
+
+                    this.set({startX, startY, endX, endY});
+                }
+            });
+        },
+        data(){
+            return {
+                fromTask: {},
+                toTask: {}
+            }
+        }/*,
+        computed: {
+			startX:   ({ fromTask }) => fromTask.left + fromTask.width,
+			endX: ({ toTask }) => toTask.left,
+            startY: ({ fromTask, $rows, $rowHeight }) => ($rows.indexOf(fromTask.row) + 0.5) * $rowHeight,
+            endY: ({ toTask, $rows, $rowHeight }) => ($rows.indexOf(toTask.row) + 0.5) * $rowHeight
+		}*/
+    };
+</script>

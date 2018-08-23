@@ -19,6 +19,8 @@
 
     <div class="main-container" style="height:{$height}px;width:{$width}px" use:scrollable>
         <div class="content">
+            
+
             <div class="column-container">
                 {#each columns as column}
                     <Column width={column.width}/>
@@ -31,6 +33,14 @@
                     bind:tasks=row.tasks
                         width={width}
                         on:updateVisibleRows="updateViewport()"/>
+                {/each}
+            </div>
+
+            <div class="dependency-container">
+                {#each dependencies as dependency}
+                    <Dependency 
+                    bind:fromTask=dependency.fromTask 
+                    bind:toTask=dependency.toTask/>
                 {/each}
             </div>
         </div>
@@ -51,6 +61,17 @@
         position: absolute;
         height: 100%;
 
+        float: left;
+        overflow: hidden;
+    }
+
+    .dependency-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        
+        pointer-events: none;
+        top: 0;
         float: left;
         overflow: hidden;
     }
@@ -92,10 +113,11 @@
     import RowHeader from './RowHeader.html';
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
+    import Dependency from './Dependency.html';
     import { Utils } from "./task.js";
 
     export default {
-        components: { Row, Column, RowHeader, ColumnHeader },
+        components: { Row, Column, RowHeader, ColumnHeader, Dependency },
         oncreate(){
             const {from, to, width, magnetOffset, magnetUnit} = this.store.get();
             let diva;
@@ -112,6 +134,7 @@
             this.store.set({bodyElement: this.refs.rowContainer})
 
             this.set({columns: columns});
+
 
             this.updateVisibleRows(0, this.refs.rowContainer.clientHeight);
         },
@@ -157,6 +180,8 @@
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
                 this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
+
+                this.set({dependencies: this.get().dependencies});
             },
             updateViewport() {
                 const {scrollTop, clientHeight} = this.refs.rowContainer;

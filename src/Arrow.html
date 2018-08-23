@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" class="arrow" height="100%" width="100%">
+  <path d="{path}" stroke="black" fill="transparent" />
+  
+  <path d="M{endX-5} {endY-5} 
+  L{endX} {endY}
+  L{endX-5} {endY+5} Z" 
+  />
+</svg>
+
+<style>
+    .arrow {
+        position: absolute;
+        left: 0px;    
+        pointer-events: none;
+    }
+</style>
+<script>
+		//dependency -> props: from-task, to-task
+        //arrow -> start x,y -> end x,y
+        /*M{startX} {startY} 
+  L {startX+width/2} {startY} 
+  L {startX+width/2} {startY+height/2}
+  L {startX-width/2} {startY+height/2}
+  L {startX-width/2} {startY+height}
+  L {endX} {endY}
+  
+  transform="translate(5,5)"*/ 
+
+
+  /*startX >= endX
+  
+  M{startX} {startY} 
+  L {startX+minLen} {startY} 
+  L {startX+minLen} {startY+height/2}
+  L {endX-minLen} {startY+height/2}
+  L {endX-minLen} {endY}
+  L {endX} {endY}
+  
+  */
+
+ /*normal
+ M{startX} {startY} 
+  L {startX+width/2} {startY} 
+  L {startX+width/2} {endY}
+  L {endX-5} {endY}
+ 
+ */
+        export default {
+            oncreate() {
+
+                
+
+            },
+            data() {
+                return {
+                    startX: 0,
+                    startY: 0,
+                    endX: 100,
+                    endY: 100,
+                    minLen: 12
+                }
+            },
+            computed: {
+                height:   ({ endY, startY }) => (endY-startY), //Math.abs
+                width: ({ endX, startX }) => (endX-startX),
+                path: function ({startX, startY, endX, endY, minLen, width, height}) {
+                    let result;
+
+                    if(startX + minLen >= endX && startY != endY) {
+                        result = `L ${startX+minLen} ${startY} 
+                                L ${startX+minLen} ${startY+height/2}
+                                L ${endX-minLen} ${startY+height/2}
+                                L ${endX-minLen} ${endY} `
+                    }
+                    else{
+                        result = `L ${startX+width/2} ${startY} 
+                                L ${startX+width/2} ${endY}`
+                    }
+
+
+                    return `M${startX} ${startY}` + result + `L ${endX-2} ${endY}` //so it doesnt stick out of arrow head
+
+                }
+            }
+        };
+</script>
