@@ -37,7 +37,7 @@
 
                 const { task } = this.get();
                 task.component = this;
-                const { rows } = this.store.get();
+                //const { rows } = this.store.get();
 
                 let mouseStartPosX;
                 let mouseStartRight;
@@ -126,7 +126,7 @@
 
                         task.left = x;
 
-                        task.component.updateTaskDate();
+                        task.component.updateTaskDate();//pomaknuti na kraj funkcije
                         task.component.updateTaskPosition();
                         //task.component.set({ task: task }); 
                         
@@ -139,6 +139,10 @@
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
+                            const rows = task.component.store.get().visibleRows;
+
+                            const targetRows = rows.filter((r) => r.rowElement === rowElement);
+                            console.log("TARGET ROWS:", targetRows)
                             const targetRow = rows.find((r) => r.rowElement === rowElement);
                             console.log('move task to '+targetRow.label, targetRow);
 
@@ -153,11 +157,11 @@
                                 }
                             }
                             sourceRow.tasks.splice(i, 1);
-                            task.component.store.set({rows: rows});
+                            task.component.store.set({visibleRows: rows});
                             
                             task.component.fire('taskMoved', { task: task, row: targetRow });
-                            task.component.fire('updateVisibleRows');
                         }
+                        task.component.fire('updateVisibleRows');
                     }
 
 
@@ -185,8 +189,8 @@
 
 					destroy() {
 						node.removeEventListener('mousedown', onmousedown, false);
-						//node.removeEventListener('mousemove', onmousemove, false);
-						//node.removeEventListener('mouseup', onmouseup, false);
+						node.removeEventListener('mousemove', onmousemove, false);
+						node.removeEventListener('mouseup', onmouseup, false);
 					}
 				}
 			}
@@ -214,16 +218,19 @@
                 const store = this.store.get();
                 const { task } = this.get();
                 
-                const from = Utils.getDateByPosition(task.left, store.from, store.to, store.width);
-                const to = Utils.getDateByPosition(task.left + task.width, store.from, store.to, store.width);
+                if(task) {
+                    const from = Utils.getDateByPosition(task.left, store.from, store.to, store.width);
+                    const to = Utils.getDateByPosition(task.left + task.width, store.from, store.to, store.width);
+                    
+
+                    task.from = this.magnetDate(from);
+                    task.to = this.magnetDate(to);
+
+                    //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
+                            
+                    this.set({ task: task });
+                }
                 
-
-                task.from = this.magnetDate(from);
-                task.to = this.magnetDate(to);
-
-                //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
-                        
-                this.set({ task: task });
             },
             magnetDate(date) {
                 const { magnetUnit, magnetOffset } = this.store.get();

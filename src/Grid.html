@@ -11,13 +11,15 @@
     </div>
 
     <div class="side-container" style="height:{$height}px" use:scrollListener>
-        {#each rows as row}
-            <RowHeader 
-                bind:label=row.label/>
-        {/each}
+        <div class="row-header-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"> 
+            {#each visibleRows as row (row.id)}
+                <RowHeader 
+                    bind:label=row.label/>
+            {/each}
+        </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px;width:{$width}px" use:scrollable>
+    <div class="main-container" style="height:{$height}px;width:{$width}px" use:scrollable ref:rowContainer>
         <div class="content">
             
 
@@ -26,7 +28,7 @@
                     <Column width={column.width}/>
                 {/each}
             </div>    
-            <div class="row-container" ref:rowContainer style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:1200px">
+            <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;">
                 {#each visibleRows as row}
                     <Row 
                     row={row}
@@ -82,6 +84,11 @@
         box-sizing: border-box;
     }
 
+    .row-header-container {
+        
+        box-sizing: border-box;
+    }
+
 
     .side-container {
         width: 100px;
@@ -115,10 +122,44 @@
     import ColumnHeader from './ColumnHeader.html';
     import Dependency from './Dependency.html';
     import { Utils } from "./task.js";
+    import { Store } from 'svelte/store.js';
+
+    let SvelteGantt;
 
     export default {
+        setup(component){
+            SvelteGantt = component;
+            SvelteGantt.defaults = {
+				width: 800,
+				height: 400,
+				magnetOffset: 15,
+				magnetUnit: 'minute',
+				headerHeight: 100,
+				headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+				rowHeight: 24
+            };
+
+            SvelteGantt.create = function(target, data, options) {
+
+                const store = new Store();
+
+                store.set(Object.assign(SvelteGantt.defaults, options));
+                store.set({ rows: data.rows });
+                return new SvelteGantt({
+                    target,
+                    data,
+                    store
+                })
+            }
+            
+
+        },
+
+
+
         components: { Row, Column, RowHeader, ColumnHeader, Dependency },
         oncreate(){
+            
             const {from, to, width, magnetOffset, magnetUnit} = this.store.get();
             let diva;
             const columnWidth = Utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit), from, to, width);
@@ -144,12 +185,14 @@
                 const self = this;
 
                 function onscroll(event) {
-                    const scrollAmout = node.scrollTop; 
+                    const scrollAmount = node.scrollTop; 
+
+                    console.log(scrollAmount);
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
-                        scrollables[i].scrollTop = scrollAmout;
+                        scrollables[i].scrollTop = scrollAmount;
                     }
-                    self.updateVisibleRows(scrollAmout, node.clientHeight);
+                    self.updateVisibleRows(scrollAmount, node.clientHeight);
                 }
 
                 node.addEventListener('scroll', onscroll);
@@ -180,7 +223,7 @@
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
                 this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
-
+                this.store.set({ visibleRows });
                 this.set({dependencies: this.get().dependencies});
             },
             updateViewport() {
@@ -194,6 +237,9 @@
                 scrollables: [],
                 visibleRows: []
             }
+        },
+        computed: {
+            rowContainerHeight: ({rows, $rowHeight}) => rows.length * $rowHeight
         }
     };
 </script>
