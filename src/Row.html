@@ -1,7 +1,11 @@
 <div class="row" ref:row style="height:{$rowHeight}px">
-    {#each tasks as task (task.id)}
+    {#each row.tasks as task (task.id)}
         <Task   row={row}
-                task={task}  on:updateVisibleRows/>
+                task={task}  
+                on:updateVisibleRows 
+                on:taskMoved="moved()"
+                on:taskMovedRow="moved()"
+                on:taskResized="moved()"/>
     {/each}
 </div>
 <style>
@@ -20,12 +24,23 @@
             oncreate() {
                 const { row } = this.get();
                 row.rowElement = this.refs.row;
+
+
                 this.on('update', ({ changed, current, previous }) => {
-                    this.get().row.rowElement = this.refs.row;
+                    
+                    const { row } = this.get();
+                    row.rowElement = this.refs.row;
+                    row.component = this;
+                    console.log('update row', row.id);
                 });
             },
             methods: {
-            }
+                moved() {
+                    console.log('WAT WAT')
+                    const { row } = this.get();
+                    this.set({ row });
+                }
+            },
             
         };
 </script>

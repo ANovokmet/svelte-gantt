@@ -20,9 +20,32 @@
 
     const resizeHandleWidth = 15;
 
-    export default {
-        oncreate() {
+    let SvelteTask;
 
+    function notify(task) {
+        if(task.dependencies){
+            for(let i = 0; i < task.dependencies.length; i++){
+                task.dependencies[i].update();
+            }
+        }
+    }
+
+    function updatePosition(task, options){
+        if(!options.to || !task) return;
+
+        const left = Utils.getPositionByDate(task.from, options.from, options.to, options.width);
+        const right = Utils.getPositionByDate(task.to, options.from, options.to, options.width); 
+
+        task.left = left;
+        task.width = right - left;
+    }
+
+    export default {
+        setup(component) {
+            SvelteTask = component;
+            SvelteTask.updatePosition = updatePosition;
+        },
+        oncreate() {
             const { task, row } = this.get();
             task.row = row;
 
@@ -111,6 +134,8 @@
 
                         task.component.updateTaskDate();
                         task.component.updateTaskPosition();
+                        task.component.set({ task });
+                        task.component.fire('taskResized', { task: task });
                     }
 
                     if(task.dragging) {
@@ -159,12 +184,14 @@
                             sourceRow.tasks.splice(i, 1);
                             task.component.store.set({visibleRows: rows});
                             
-                            task.component.fire('taskMoved', { task: task, row: targetRow });
+                            task.component.fire('taskMovedRow', { task: task, row: targetRow });
+                            targetRow.component.moved();
                         }
-                        task.component.fire('updateVisibleRows');
+                        task.component.fire('taskMoved', { task: task });
+                        //task.component.fire('updateVisibleRows');
                     }
-
-
+                    task.component.set({task:task});
+                    notify(task);
                 }
 
                 function onmouseup(event) {
@@ -201,18 +228,11 @@
                 const { task } = this.get();
             
                 //console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
-
-                if(!store.to) return;
-                const left = Utils.getPositionByDate(task.from, store.from, store.to, store.width);
-                const right = Utils.getPositionByDate(task.to, store.from, store.to, store.width); 
-
-                task.left = left;
-                task.width = right - left;
+                updatePosition(task, store);
 
 
                 //console.log(task.left, task.width);
-
-                this.set({ task: task });
+                //this.set({ task: task });
             },
             updateTaskDate() {
                 const store = this.store.get();
@@ -228,7 +248,7 @@
 
                     //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
                             
-                    this.set({ task: task });
+                    //this.set({ task: task });
                 }
                 
             },

@@ -7,7 +7,7 @@ let data = {
 	dependencies: []
 }
 
-for(let i = 0; i < 500; i++){
+for(let i = 0; i < 5000; i++){
 	data.rows.push({
 		id: i,
 		label: 'Row #'+i,
@@ -22,6 +22,7 @@ for(let i = 0; i < 500; i++){
 	});
 }
 data.dependencies.push({fromTask: data.rows[0].tasks[0], toTask: data.rows[1].tasks[0] });
+data.dependencies.push({fromTask: data.rows[2].tasks[0], toTask: data.rows[1].tasks[0] });
 
 let options = {
 	from: startOfToday,

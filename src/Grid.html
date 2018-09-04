@@ -30,9 +30,7 @@
             </div>    
             <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;">
                 {#each visibleRows as row}
-                    <Row 
-                    row={row}
-                    bind:tasks=row.tasks
+                    <Row row={row}
                         width={width}
                         on:updateVisibleRows="updateViewport()"/>
                 {/each}
@@ -40,9 +38,8 @@
 
             <div class="dependency-container">
                 {#each dependencies as dependency}
-                    <Dependency 
-                    bind:fromTask=dependency.fromTask 
-                    bind:toTask=dependency.toTask/>
+                    <Dependency fromTask={dependency.fromTask} 
+                        toTask={dependency.toTask}/>
                 {/each}
             </div>
         </div>
@@ -124,6 +121,8 @@
     import { Utils } from "./task.js";
     import { Store } from 'svelte/store.js';
 
+    import Task from "./Task.html";
+
     let SvelteGantt;
 
     export default {
@@ -145,14 +144,22 @@
 
                 store.set(Object.assign(SvelteGantt.defaults, options));
                 store.set({ rows: data.rows });
+
+                for(let i=0; i < data.rows.length; i++){
+                    const row = data.rows[i];
+                    for(let j=0; j < row.tasks.length; j++){
+                        const task = row.tasks[j];
+                        Task.updatePosition(task, store.get());
+                        task.row = row;
+                    }
+                }
+
                 return new SvelteGantt({
                     target,
                     data,
                     store
                 })
             }
-            
-
         },
 
 
@@ -176,6 +183,14 @@
 
             this.set({columns: columns});
 
+            for(let i=0; i< columnCount; i++){
+                columns.push({width: columnWidth});
+            }
+
+            const { rows } = this.store.get();
+            for(let i=0; i < rows.length; i++){
+                Task.updatePosition(rows[i].tasks[0], this.store.get());
+            }
 
             this.updateVisibleRows(0, this.refs.rowContainer.clientHeight);
         },
@@ -209,6 +224,7 @@
 		},
         methods: {
             updateVisibleRows(scrollTop, viewportHeight){
+                console.log('update v rows');
                 const { rows, height, rowHeight } = this.store.get();
 
                 let startIndex = Math.floor(scrollTop / rowHeight);
@@ -224,9 +240,10 @@
 
                 this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
                 this.store.set({ visibleRows });
-                this.set({dependencies: this.get().dependencies});
+                //this.set({dependencies: this.get().dependencies});
             },
             updateViewport() {
+                console.log('update v port');
                 const {scrollTop, clientHeight} = this.refs.rowContainer;
                 this.updateVisibleRows(scrollTop, clientHeight);
             }
