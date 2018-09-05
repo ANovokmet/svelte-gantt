@@ -4,10 +4,12 @@
     
     </div>
 
-    <div class="main-header-container" style="height:{$headerHeight}px;width:{$width}px">
-        {#each $headers as header}
-            <ColumnHeader header={header}/>
-        {/each}
+    <div class="main-header-container" style="height:{$headerHeight}px" use:horizontalScrollListener>
+        <div class="header-container" style="width:{$width}px">
+            {#each $headers as header}
+                <ColumnHeader header={header}/>
+            {/each}
+        </div>
     </div>
 
     <div class="side-container" style="height:{$height}px" use:scrollListener>
@@ -19,8 +21,8 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px;width:{$width}px" use:scrollable ref:rowContainer>
-        <div class="content">
+    <div class="main-container" style="height:{$height}px" use:scrollable ref:rowContainer>
+        <div class="content" style="width:{$width}px">
             
 
             <div class="column-container">
@@ -49,8 +51,8 @@
 
 <style>
     .grid {
+        width: 100%;
         position: relative;
-        
         font-family: tahoma, arial, verdana, Sans-serif;
         font-size: 10px;
         color: #656565;
@@ -205,7 +207,12 @@
                     console.log(scrollAmount);
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
-                        scrollables[i].scrollTop = scrollAmount;
+                        if(scrollable.orientation === 'horizontal') {
+                            scrollable.node.scrollLeft = node.scrollLeft;
+                        }
+                        else {
+                            scrollable.node.scrollTop = scrollAmount;
+                        }
                     }
                     self.updateVisibleRows(scrollAmount, node.clientHeight);
                 }
@@ -219,7 +226,11 @@
             },
             scrollListener(node){
                 const { scrollables } = this.get();
-                scrollables.push(node);
+                scrollables.push({node});
+            },
+            horizontalScrollListener(node){
+                const { scrollables } = this.get();
+                scrollables.push({node, orientation: 'horizontal'});
             }
 		},
         methods: {

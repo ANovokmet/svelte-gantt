@@ -6371,7 +6371,12 @@ var app = (function () {
 	        console.log(scrollAmount);
 	        for(let i=0; i< scrollables.length; i++){
 	            const scrollable = scrollables[i];
-	            scrollables[i].scrollTop = scrollAmount;
+	            if(scrollable.orientation === 'horizontal') {
+	                scrollable.node.scrollLeft = node.scrollLeft;
+	            }
+	            else {
+	                scrollable.node.scrollTop = scrollAmount;
+	            }
 	        }
 	        self.updateVisibleRows(scrollAmount, node.clientHeight);
 	    }
@@ -6385,12 +6390,16 @@ var app = (function () {
 	}
 	function scrollListener(node){
 	    const { scrollables } = this.get();
-	    scrollables.push(node);
+	    scrollables.push({node});
+	}
+	function horizontalScrollListener(node){
+	    const { scrollables } = this.get();
+	    scrollables.push({node, orientation: 'horizontal'});
 	}
 	const file$7 = "src\\Grid.html";
 
 	function create_main_fragment$7(component, ctx) {
-		var div, div_1, text, div_2, text_2, div_3, div_4, each_1_blocks_1 = [], each_1_lookup = blankObject(), scrollListener_action, text_5, div_5, div_6, div_7, text_7, div_8, text_9, div_9, scrollable_action, current;
+		var div, div_1, text, div_2, div_3, horizontalScrollListener_action, text_3, div_4, div_5, each_1_blocks_1 = [], each_1_lookup = blankObject(), scrollListener_action, text_6, div_6, div_7, div_8, text_8, div_9, text_10, div_10, scrollable_action, current;
 
 		var each_value = ctx.$headers;
 
@@ -6488,73 +6497,77 @@ var app = (function () {
 				div_1 = createElement("div");
 				text = createText("\r\n\r\n    ");
 				div_2 = createElement("div");
+				div_3 = createElement("div");
 
 				for (var i = 0; i < each_blocks.length; i += 1) {
 					each_blocks[i].c();
 				}
 
-				text_2 = createText("\r\n\r\n    ");
-				div_3 = createElement("div");
+				text_3 = createText("\r\n\r\n    ");
 				div_4 = createElement("div");
+				div_5 = createElement("div");
 
 				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].c();
 
-				text_5 = createText("\r\n\r\n    ");
-				div_5 = createElement("div");
+				text_6 = createText("\r\n\r\n    ");
 				div_6 = createElement("div");
 				div_7 = createElement("div");
+				div_8 = createElement("div");
 
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
 					each_2_blocks[i].c();
 				}
 
-				text_7 = createText("    \r\n            ");
-				div_8 = createElement("div");
+				text_8 = createText("    \r\n            ");
+				div_9 = createElement("div");
 
 				for (var i = 0; i < each_3_blocks.length; i += 1) {
 					each_3_blocks[i].c();
 				}
 
-				text_9 = createText("\r\n\r\n            ");
-				div_9 = createElement("div");
+				text_10 = createText("\r\n\r\n            ");
+				div_10 = createElement("div");
 
 				for (var i = 0; i < each_4_blocks.length; i += 1) {
 					each_4_blocks[i].c();
 				}
-				div_1.className = "side-header-container svelte-t8pnrv";
+				div_1.className = "side-header-container svelte-95ghe2";
 				setStyle(div_1, "height", "" + ctx.$headerHeight + "px");
 				setStyle(div_1, "width", "100px");
 				addLoc(div_1, file$7, 2, 4, 26);
-				div_2.className = "main-header-container svelte-t8pnrv";
+				div_3.className = "header-container";
+				setStyle(div_3, "width", "" + ctx.$width + "px");
+				addLoc(div_3, file$7, 7, 8, 239);
+				div_2.className = "main-header-container svelte-95ghe2";
 				setStyle(div_2, "height", "" + ctx.$headerHeight + "px");
-				setStyle(div_2, "width", "" + ctx.$width + "px");
+				horizontalScrollListener_action = horizontalScrollListener.call(component, div_2) || {};
 				addLoc(div_2, file$7, 6, 4, 132);
-				div_4.className = "row-header-container svelte-t8pnrv";
-				setStyle(div_4, "padding-top", "" + ctx.paddingTop + "px");
-				setStyle(div_4, "padding-bottom", "" + ctx.paddingBottom + "px");
-				setStyle(div_4, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_4, file$7, 13, 8, 419);
-				div_3.className = "side-container svelte-t8pnrv";
-				setStyle(div_3, "height", "" + ctx.$height + "px");
-				scrollListener_action = scrollListener.call(component, div_3) || {};
-				addLoc(div_3, file$7, 12, 4, 335);
-				div_7.className = "column-container svelte-t8pnrv";
-				addLoc(div_7, file$7, 25, 12, 897);
-				div_8.className = "row-container svelte-t8pnrv";
-				setStyle(div_8, "padding-top", "" + ctx.paddingTop + "px");
-				setStyle(div_8, "padding-bottom", "" + ctx.paddingBottom + "px");
-				setStyle(div_8, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_8, file$7, 30, 12, 1085);
-				div_9.className = "dependency-container svelte-t8pnrv";
-				addLoc(div_9, file$7, 38, 12, 1458);
-				div_6.className = "content svelte-t8pnrv";
-				addLoc(div_6, file$7, 22, 8, 846);
-				div_5.className = "main-container svelte-t8pnrv";
-				setStyle(div_5, "height", "" + ctx.$height + "px");
-				setStyle(div_5, "width", "" + ctx.$width + "px");
-				scrollable_action = scrollable.call(component, div_5) || {};
-				addLoc(div_5, file$7, 21, 4, 732);
-				div.className = "grid svelte-t8pnrv";
+				div_5.className = "row-header-container svelte-95ghe2";
+				setStyle(div_5, "padding-top", "" + ctx.paddingTop + "px");
+				setStyle(div_5, "padding-bottom", "" + ctx.paddingBottom + "px");
+				setStyle(div_5, "height", "" + ctx.rowContainerHeight + "px");
+				addLoc(div_5, file$7, 15, 8, 524);
+				div_4.className = "side-container svelte-95ghe2";
+				setStyle(div_4, "height", "" + ctx.$height + "px");
+				scrollListener_action = scrollListener.call(component, div_4) || {};
+				addLoc(div_4, file$7, 14, 4, 440);
+				div_8.className = "column-container svelte-95ghe2";
+				addLoc(div_8, file$7, 27, 12, 1010);
+				div_9.className = "row-container svelte-95ghe2";
+				setStyle(div_9, "padding-top", "" + ctx.paddingTop + "px");
+				setStyle(div_9, "padding-bottom", "" + ctx.paddingBottom + "px");
+				setStyle(div_9, "height", "" + ctx.rowContainerHeight + "px");
+				addLoc(div_9, file$7, 32, 12, 1198);
+				div_10.className = "dependency-container svelte-95ghe2";
+				addLoc(div_10, file$7, 40, 12, 1571);
+				div_7.className = "content svelte-95ghe2";
+				setStyle(div_7, "width", "" + ctx.$width + "px");
+				addLoc(div_7, file$7, 24, 8, 934);
+				div_6.className = "main-container svelte-95ghe2";
+				setStyle(div_6, "height", "" + ctx.$height + "px");
+				scrollable_action = scrollable.call(component, div_6) || {};
+				addLoc(div_6, file$7, 23, 4, 837);
+				div.className = "grid svelte-95ghe2";
 				addLoc(div, file$7, 0, 0, 0);
 			},
 
@@ -6563,41 +6576,42 @@ var app = (function () {
 				appendNode(div_1, div);
 				appendNode(text, div);
 				appendNode(div_2, div);
+				appendNode(div_3, div_2);
 
 				for (var i = 0; i < each_blocks.length; i += 1) {
-					each_blocks[i].i(div_2, null);
+					each_blocks[i].i(div_3, null);
 				}
 
-				appendNode(text_2, div);
-				appendNode(div_3, div);
-				appendNode(div_4, div_3);
+				appendNode(text_3, div);
+				appendNode(div_4, div);
+				appendNode(div_5, div_4);
 
-				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].i(div_4, null);
+				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].i(div_5, null);
 
-				appendNode(text_5, div);
-				appendNode(div_5, div);
-				appendNode(div_6, div_5);
+				appendNode(text_6, div);
+				appendNode(div_6, div);
 				appendNode(div_7, div_6);
+				appendNode(div_8, div_7);
 
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
-					each_2_blocks[i].i(div_7, null);
+					each_2_blocks[i].i(div_8, null);
 				}
 
-				appendNode(text_7, div_6);
-				appendNode(div_8, div_6);
+				appendNode(text_8, div_7);
+				appendNode(div_9, div_7);
 
 				for (var i = 0; i < each_3_blocks.length; i += 1) {
-					each_3_blocks[i].i(div_8, null);
+					each_3_blocks[i].i(div_9, null);
 				}
 
-				appendNode(text_9, div_6);
-				appendNode(div_9, div_6);
+				appendNode(text_10, div_7);
+				appendNode(div_10, div_7);
 
 				for (var i = 0; i < each_4_blocks.length; i += 1) {
-					each_4_blocks[i].i(div_9, null);
+					each_4_blocks[i].i(div_10, null);
 				}
 
-				component.refs.rowContainer = div_5;
+				component.refs.rowContainer = div_6;
 				current = true;
 			},
 
@@ -6618,36 +6632,36 @@ var app = (function () {
 							each_blocks[i] = create_each_block$2(component, child_ctx);
 							each_blocks[i].c();
 						}
-						each_blocks[i].i(div_2, null);
+						each_blocks[i].i(div_3, null);
 					}
 					for (; i < each_blocks.length; i += 1) outroBlock(i, 1);
+				}
+
+				if (!current || changed.$width) {
+					setStyle(div_3, "width", "" + ctx.$width + "px");
 				}
 
 				if (!current || changed.$headerHeight) {
 					setStyle(div_2, "height", "" + ctx.$headerHeight + "px");
 				}
 
-				if (!current || changed.$width) {
-					setStyle(div_2, "width", "" + ctx.$width + "px");
-				}
-
 				const each_value_1 = ctx.visibleRows;
-				each_1_blocks_1 = updateKeyedEach(each_1_blocks_1, component, changed, get_key, 1, ctx, each_value_1, each_1_lookup, div_4, outroAndDestroyBlock, create_each_block_1, "i", null, get_each_1_context);
+				each_1_blocks_1 = updateKeyedEach(each_1_blocks_1, component, changed, get_key, 1, ctx, each_value_1, each_1_lookup, div_5, outroAndDestroyBlock, create_each_block_1, "i", null, get_each_1_context);
 
 				if (!current || changed.paddingTop) {
-					setStyle(div_4, "padding-top", "" + ctx.paddingTop + "px");
+					setStyle(div_5, "padding-top", "" + ctx.paddingTop + "px");
 				}
 
 				if (!current || changed.paddingBottom) {
-					setStyle(div_4, "padding-bottom", "" + ctx.paddingBottom + "px");
+					setStyle(div_5, "padding-bottom", "" + ctx.paddingBottom + "px");
 				}
 
 				if (!current || changed.rowContainerHeight) {
-					setStyle(div_4, "height", "" + ctx.rowContainerHeight + "px");
+					setStyle(div_5, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
 				if (!current || changed.$height) {
-					setStyle(div_3, "height", "" + ctx.$height + "px");
+					setStyle(div_4, "height", "" + ctx.$height + "px");
 				}
 
 				if (changed.columns) {
@@ -6662,7 +6676,7 @@ var app = (function () {
 							each_2_blocks[i] = create_each_block_2(component, child_ctx);
 							each_2_blocks[i].c();
 						}
-						each_2_blocks[i].i(div_7, null);
+						each_2_blocks[i].i(div_8, null);
 					}
 					for (; i < each_2_blocks.length; i += 1) outroBlock_1(i, 1);
 				}
@@ -6679,21 +6693,21 @@ var app = (function () {
 							each_3_blocks[i] = create_each_block_3(component, child_ctx);
 							each_3_blocks[i].c();
 						}
-						each_3_blocks[i].i(div_8, null);
+						each_3_blocks[i].i(div_9, null);
 					}
 					for (; i < each_3_blocks.length; i += 1) outroBlock_2(i, 1);
 				}
 
 				if (!current || changed.paddingTop) {
-					setStyle(div_8, "padding-top", "" + ctx.paddingTop + "px");
+					setStyle(div_9, "padding-top", "" + ctx.paddingTop + "px");
 				}
 
 				if (!current || changed.paddingBottom) {
-					setStyle(div_8, "padding-bottom", "" + ctx.paddingBottom + "px");
+					setStyle(div_9, "padding-bottom", "" + ctx.paddingBottom + "px");
 				}
 
 				if (!current || changed.rowContainerHeight) {
-					setStyle(div_8, "height", "" + ctx.rowContainerHeight + "px");
+					setStyle(div_9, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
 				if (changed.dependencies) {
@@ -6708,17 +6722,17 @@ var app = (function () {
 							each_4_blocks[i] = create_each_block_4(component, child_ctx);
 							each_4_blocks[i].c();
 						}
-						each_4_blocks[i].i(div_9, null);
+						each_4_blocks[i].i(div_10, null);
 					}
 					for (; i < each_4_blocks.length; i += 1) outroBlock_3(i, 1);
 				}
 
-				if (!current || changed.$height) {
-					setStyle(div_5, "height", "" + ctx.$height + "px");
+				if (!current || changed.$width) {
+					setStyle(div_7, "width", "" + ctx.$width + "px");
 				}
 
-				if (!current || changed.$width) {
-					setStyle(div_5, "width", "" + ctx.$width + "px");
+				if (!current || changed.$height) {
+					setStyle(div_6, "height", "" + ctx.$height + "px");
 				}
 			},
 
@@ -6758,6 +6772,8 @@ var app = (function () {
 
 				destroyEach(each_blocks, detach);
 
+				if (typeof horizontalScrollListener_action.destroy === 'function') horizontalScrollListener_action.destroy.call(component);
+
 				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].d();
 
 				if (typeof scrollListener_action.destroy === 'function') scrollListener_action.destroy.call(component);
@@ -6768,13 +6784,13 @@ var app = (function () {
 
 				destroyEach(each_4_blocks, detach);
 
-				if (component.refs.rowContainer === div_5) component.refs.rowContainer = null;
+				if (component.refs.rowContainer === div_6) component.refs.rowContainer = null;
 				if (typeof scrollable_action.destroy === 'function') scrollable_action.destroy.call(component);
 			}
 		};
 	}
 
-	// (8:8) {#each $headers as header}
+	// (9:12) {#each $headers as header}
 	function create_each_block$2(component, ctx) {
 		var current;
 
@@ -6820,7 +6836,7 @@ var app = (function () {
 		};
 	}
 
-	// (15:12) {#each visibleRows as row (row.id)}
+	// (17:12) {#each visibleRows as row (row.id)}
 	function create_each_block_1(component, key_1, ctx) {
 		var first, rowheader_updating = {}, current;
 
@@ -6900,7 +6916,7 @@ var app = (function () {
 		};
 	}
 
-	// (27:16) {#each columns as column}
+	// (29:16) {#each columns as column}
 	function create_each_block_2(component, ctx) {
 		var current;
 
@@ -6946,7 +6962,7 @@ var app = (function () {
 		};
 	}
 
-	// (32:16) {#each visibleRows as row}
+	// (34:16) {#each visibleRows as row}
 	function create_each_block_3(component, ctx) {
 		var current;
 
@@ -6997,7 +7013,7 @@ var app = (function () {
 		};
 	}
 
-	// (40:16) {#each dependencies as dependency}
+	// (42:16) {#each dependencies as dependency}
 	function create_each_block_4(component, ctx) {
 		var current;
 
