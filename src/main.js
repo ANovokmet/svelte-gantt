@@ -11,18 +11,22 @@ for(let i = 0; i < 5000; i++){
 	data.rows.push({
 		id: i,
 		label: 'Row #'+i,
-		tasks: [
-			{
-				id: i,
-				label: 'Task #'+i,
-				from: startOfToday.clone().set({'hour': 9, 'minute': 0}),
-				to: startOfToday.clone().set({'hour': 12, 'minute': 0})
-			}
-		]
+		tasks: []
+	});
+
+	let a = i % 3;
+
+	data.rows[i].tasks.push({
+		id: i,
+		label: 'Task #'+i,
+		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
+		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0})
 	});
 }
-data.dependencies.push({fromTask: data.rows[0].tasks[0], toTask: data.rows[1].tasks[0] });
-data.dependencies.push({fromTask: data.rows[2].tasks[0], toTask: data.rows[1].tasks[0] });
+
+for(let i = 0; i < 4999; i++){
+	data.dependencies.push({id: i, fromTask: data.rows[i].tasks[0], toTask: data.rows[i+1].tasks[0] });
+}
 
 let options = {
 	from: startOfToday,

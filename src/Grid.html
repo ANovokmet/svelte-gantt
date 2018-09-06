@@ -31,7 +31,7 @@
                 {/each}
             </div>    
             <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;">
-                {#each visibleRows as row}
+                {#each visibleRows as row (row.id)}
                     <Row row={row}
                         width={width}
                         on:updateVisibleRows="updateViewport()"/>
@@ -39,9 +39,10 @@
             </div>
 
             <div class="dependency-container">
-                {#each dependencies as dependency}
+                {#each visibleDependencies as dependency (dependency.id)}
                     <Dependency fromTask={dependency.fromTask} 
-                        toTask={dependency.toTask}/>
+                        toTask={dependency.toTask}
+                        {dependency}/>
                 {/each}
             </div>
         </div>
@@ -189,12 +190,20 @@
                 columns.push({width: columnWidth});
             }
 
-            const { rows } = this.store.get();
+            const { rows, rowHeight } = this.store.get();
             for(let i=0; i < rows.length; i++){
                 Task.updatePosition(rows[i].tasks[0], this.store.get());
             }
 
+            const { dependencies } = this.get();
+            for(let i=0; i < dependencies.length; i++){
+                let dependency = dependencies[i];
+                const res = Dependency.update(dependency.fromTask, dependency.toTask, rows, rowHeight);
+                Object.assign(dependency, res);
+            }
+
             this.updateVisibleRows(0, this.refs.rowContainer.clientHeight);
+            this.updateVisibleDependencies(0, this.refs.rowContainer.clientHeight);
         },
         actions: {
             scrollable(node){
@@ -215,6 +224,7 @@
                         }
                     }
                     self.updateVisibleRows(scrollAmount, node.clientHeight);
+                    self.updateVisibleDependencies(scrollAmount, node.clientHeight);
                 }
 
                 node.addEventListener('scroll', onscroll);
@@ -253,17 +263,54 @@
                 this.store.set({ visibleRows });
                 //this.set({dependencies: this.get().dependencies});
             },
-            updateViewport() {
+            updateViewport(){
                 console.log('update v port');
                 const {scrollTop, clientHeight} = this.refs.rowContainer;
                 this.updateVisibleRows(scrollTop, clientHeight);
+                this.updateVisibleDependencies(scrollTop, clientHeight);
+            },
+            updateVisibleDependencies(scrollTop, viewportHeight){
+                const { dependencies } = this.get();
+
+                //binary search
+                const visibleDependencies = [];
+                
+                const viewportTop = scrollTop;
+                const viewportBottom = scrollTop + viewportHeight;
+
+                for(let i = 0; i < dependencies.length; i++){
+                    const dependency = dependencies[i];
+                    let { startY, endY } = dependency; //init dependencies before components oncreate
+                    
+                    //let yMax = Math.max(startY, endY);//can be done 
+                    //let yMin = Math.min(startY, endY);//with an if //todo research performance
+                    let yMax, yMin;
+                    if(startY > endY){
+                        yMax = startY;
+                        yMin = endY;
+                    }
+                    else{
+                        yMax = endY;
+                        yMin = startY;
+                    }
+
+                    if(yMax < viewportTop && yMin < viewportTop || yMax > viewportBottom && yMin > viewportBottom) {
+                        //cant see dependency
+                    }
+                    else {
+                        visibleDependencies.push(dependency);
+                    }
+                }
+
+                this.set({ visibleDependencies });
             }
         },
         data() {
             return {
                 columns: [],
                 scrollables: [],
-                visibleRows: []
+                visibleRows: [],
+                visibleDependencies: []
             }
         },
         computed: {

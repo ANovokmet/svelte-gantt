@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" class="arrow" height="100%" width="100%">
   <path d="{path}" stroke="red" fill="transparent" />
   
-  <path d="M{endX-5} {endY-5} 
-  L{endX} {endY}
-  L{endX-5} {endY+5} Z" 
+  <path d="{arrowPath}" 
   fill="red"
   />
 </svg>
@@ -49,8 +47,6 @@
         export default {
             oncreate() {
 
-                
-
             },
             data() {
                 return {
@@ -67,6 +63,10 @@
                 path: function ({startX, startY, endX, endY, minLen, width, height}) {
                     let result;
 
+                    if(startX == NaN || startX == undefined) 
+                        return 'M0 0';
+
+
                     if(startX + minLen >= endX && startY != endY) {
                         result = `L ${startX+minLen} ${startY} 
                                 L ${startX+minLen} ${startY+height/2}
@@ -81,6 +81,13 @@
 
                     return `M${startX} ${startY}` + result + `L ${endX-2} ${endY}` //so it doesnt stick out of arrow head
 
+                },
+                arrowPath: function({endX, endY}){
+                    
+                    if(endX == NaN || endX == undefined) 
+                        return 'M0 0';
+
+                    return `M${endX-5} ${endY-5} L${endX} ${endY} L${endX-5} ${endY+5} Z`
                 }
             }
         };
