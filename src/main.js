@@ -7,7 +7,7 @@ let data = {
 	dependencies: []
 }
 
-for(let i = 0; i < 5000; i++){
+for(let i = 0; i < 500; i++){
 	data.rows.push({
 		id: i,
 		label: 'Row #'+i,
@@ -20,12 +20,17 @@ for(let i = 0; i < 5000; i++){
 		id: i,
 		label: 'Task #'+i,
 		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
-		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0})
+		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
+		amountDone: Math.floor(Math.random() * 100)
 	});
 }
 
-for(let i = 0; i < 4999; i++){
-	data.dependencies.push({id: i, fromTask: data.rows[i].tasks[0], toTask: data.rows[i+1].tasks[0] });
+for(let i = 0; i < 499; i++){
+	data.dependencies.push({
+		id: i, 
+		fromTask: data.rows[i].tasks[0], 
+		toTask: data.rows[i+1].tasks[0] 
+	});
 }
 
 let options = {

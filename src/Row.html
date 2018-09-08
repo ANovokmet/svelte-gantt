@@ -1,4 +1,4 @@
-<div class="row" ref:row style="height:{$rowHeight}px">
+<div class="row" ref:row style="height:{$rowHeight}px" use:contextMenu>
     {#each row.tasks as task (task.id)}
         <Task   row={row}
                 task={task}  
@@ -17,30 +17,74 @@
     }
 </style>
 <script>
-        import Task from './Task.html';
-    
-        export default {
-            components: { Task },
-            oncreate() {
-                const { row } = this.get();
+    import Task from './Task.html';
+    import ContextMenu from "./ContextMenu.html";
+    import { Utils } from "./task.js";
+
+    export default {
+        components: { Task },
+        oncreate() {
+            const { row } = this.get();
+            row.rowElement = this.refs.row;
+            row.component = this;
+        },
+        onupdate({ changed, current, previous }) {
+                //set previous null
+                //nije potrebno ako se u #each koristi (id)
+                /*const { row } = this.get();
                 row.rowElement = this.refs.row;
+                row.component = this;
+                console.log('update row', row.id);*/
+        },
+        ondestroy(){
+            const { row } = this.get();
+            row.rowElement = null;
+            row.component = null;
+        },
+        methods: {
+            moved() {
+                console.log('WAT WAT')
+                const { row } = this.get();
+                this.set({ row });
+            }
+        },
+        actions: {
+            contextMenu(node){
+                const { row } = this.get();
+                const { contextMenuManager } = this.store.get();
+
+                const options = [
+                    {
+                        label: 'Copy row',
+                        action: () => console.log('clicked action 1 for task ', row.id)
+                    },
+                    {
+                        label: 'Clear dependencies',
+                        action: () => console.log('clicked action 2 for task ', row.id)
+                    }
+                ];
 
 
-                this.on('update', ({ changed, current, previous }) => {
-                    
-                    const { row } = this.get();
-                    row.rowElement = this.refs.row;
-                    row.component = this;
-                    console.log('update row', row.id);
-                });
-            },
-            methods: {
-                moved() {
-                    console.log('WAT WAT')
-                    const { row } = this.get();
-                    this.set({ row });
+                function onClose(event) {
+                    //if(!contextMenu.isTarget(e))
+                    contextMenuManager.close();
                 }
-            },
-            
-        };
+
+                node.addEventListener('mouseup', (e) => {
+                    //e.stopPropagation();
+                    if(e.which === 3){
+                        contextMenuManager.open(options, {x: e.x, y: e.y});
+
+                        Utils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                    }
+                });
+
+                return {
+                    destroy() {
+                        contextMenuManager.close();
+                    }
+                }
+            }
+        }
+    };
 </script>

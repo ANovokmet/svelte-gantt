@@ -1,4 +1,4 @@
-<div class="grid">
+<div class="grid" use:disableContextMenu>
 
     <div class="side-header-container" style="height:{$headerHeight}px;width:100px">
     
@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px" use:scrollable ref:rowContainer>
+    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer>
         <div class="content" style="width:{$width}px">
             
 
@@ -30,7 +30,8 @@
                     <Column width={column.width}/>
                 {/each}
             </div>    
-            <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;">
+            <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
+                ref:rowContainer>
                 {#each visibleRows as row (row.id)}
                     <Row row={row}
                         width={width}
@@ -123,6 +124,8 @@
     import Dependency from './Dependency.html';
     import { Utils } from "./task.js";
     import { Store } from 'svelte/store.js';
+    import ContextMenuManager from './contextMenuManager.js'
+    import GanttUtils from "./utils.js";
 
     import Task from "./Task.html";
 
@@ -145,14 +148,22 @@
 
                 const store = new Store();
 
-                store.set(Object.assign(SvelteGantt.defaults, options));
-                store.set({ rows: data.rows });
+                const ganttOptions = Object.assign(SvelteGantt.defaults, options);
+                const ganttUtils = new GanttUtils(ganttOptions);
+
+                store.set(ganttOptions);
+                store.set({ 
+                    rows: data.rows,
+                    contextMenuManager: new ContextMenuManager(),
+                    ganttUtils: ganttUtils
+                });
 
                 for(let i=0; i < data.rows.length; i++){
                     const row = data.rows[i];
                     for(let j=0; j < row.tasks.length; j++){
                         const task = row.tasks[j];
-                        Task.updatePosition(task, store.get());
+                        task.amountDone = task.amountDone || 0;
+                        Task.updatePosition(task, ganttUtils);
                         task.row = row;
                     }
                 }
@@ -170,11 +181,11 @@
         components: { Row, Column, RowHeader, ColumnHeader, Dependency },
         oncreate(){
             
-            const {from, to, width, magnetOffset, magnetUnit} = this.store.get();
+            const {ganttUtils, magnetOffset, magnetUnit} = this.store.get();
             let diva;
-            const columnWidth = Utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit), from, to, width);
-            diva = width / columnWidth
-            const columnCount = Math.ceil(width / columnWidth) 
+            const columnWidth = ganttUtils.getPositionByDate(ganttUtils.from.clone().add(magnetOffset, magnetUnit));
+            diva = ganttUtils.width / columnWidth
+            const columnCount = Math.ceil(ganttUtils.width / columnWidth) 
 
             var columns = [];
             
@@ -182,7 +193,10 @@
                 columns.push({width: columnWidth});
             }
 
-            this.store.set({bodyElement: this.refs.rowContainer})
+            this.store.set({
+                bodyElement: this.refs.mainContainer, 
+                rowContainerElement: this.refs.rowContainer
+            });
 
             this.set({columns: columns});
 
@@ -190,11 +204,11 @@
                 columns.push({width: columnWidth});
             }
 
-            const { rows, rowHeight } = this.store.get();
-            for(let i=0; i < rows.length; i++){
+            /*for(let i=0; i < rows.length; i++){
                 Task.updatePosition(rows[i].tasks[0], this.store.get());
-            }
+            }*/
 
+            const { rows, rowHeight } = this.store.get();
             const { dependencies } = this.get();
             for(let i=0; i < dependencies.length; i++){
                 let dependency = dependencies[i];
@@ -202,10 +216,19 @@
                 Object.assign(dependency, res);
             }
 
-            this.updateVisibleRows(0, this.refs.rowContainer.clientHeight);
-            this.updateVisibleDependencies(0, this.refs.rowContainer.clientHeight);
+            this.updateVisibleRows(0, this.refs.mainContainer.clientHeight);
+            this.updateVisibleDependencies(0, this.refs.mainContainer.clientHeight);
         },
         actions: {
+            disableContextMenu(node) {
+                node.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                }, false);
+                //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu
+                document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                }, false);
+            },
             scrollable(node){
                 const { scrollables } = this.get();
                 const self = this;
@@ -265,7 +288,7 @@
             },
             updateViewport(){
                 console.log('update v port');
-                const {scrollTop, clientHeight} = this.refs.rowContainer;
+                const {scrollTop, clientHeight} = this.refs.mainContainer;
                 this.updateVisibleRows(scrollTop, clientHeight);
                 this.updateVisibleDependencies(scrollTop, clientHeight);
             },
@@ -303,6 +326,10 @@
                 }
 
                 this.set({ visibleDependencies });
+            },
+            onContextMenu(event) {
+                event.preventDefault();
+                return false;
             }
         },
         data() {

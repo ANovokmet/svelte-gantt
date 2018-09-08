@@ -15,7 +15,6 @@
 </style>
 <script>
     import Arrow from './Arrow.html';
-    import { Utils } from "./task.js";
 
     function subscribe(dependency, task) {
         if(!task.dependencies) {
@@ -57,30 +56,28 @@
             component.update = update;
         },
         components: { Arrow },
-        oncreate() {
-            
+        oncreate() {            
             this.update();
-
-            this.on('update', ({ changed, current, previous }) => {
-                console.log('DOM updated after state change', changed);
-                if(previous){
-                    unsubscribe(this, previous.fromTask);
-                    unsubscribe(this, previous.toTask);
-                }
-                subscribe(this, current.fromTask);
-                subscribe(this, current.toTask);
-                this.update();
-            });
-
-            this.on('destroy', () => {
-                const { fromTask, toTask } = this.get();
-                unsubscribe(this, fromTask);
-                unsubscribe(this, toTask);
-            });
 
             const { fromTask, toTask } = this.get();
             subscribe(this, fromTask);
             subscribe(this, toTask);
+        },
+        onupdate({ changed, current, previous }) {
+            //nije potrebno ako se u #each koristi (id)
+            /*console.log('Dependency state change', changed);
+            if(previous && previous.fromTask.dependencies && previous.toTask.dependencies){
+                unsubscribe(this, previous.fromTask);
+                unsubscribe(this, previous.toTask);
+            }
+            subscribe(this, current.fromTask);
+            subscribe(this, current.toTask);
+            this.update();*/
+        },
+        ondestroy() {
+            const { fromTask, toTask } = this.get();
+            unsubscribe(this, fromTask);
+            unsubscribe(this, toTask);
         },
         data() {
             return {
@@ -101,21 +98,19 @@
                 const { rows, rowHeight } = this.store.get();
                 const { fromTask, toTask, dependency } = this.get();
 
-                //if(fromTask && fromTask.left && toTask.left){
-                    let startX = fromTask.left + fromTask.width;
-                    let endX = toTask.left;
+                let startX = fromTask.left + fromTask.width;
+                let endX = toTask.left;
 
-                    let startIndex = rows.indexOf(fromTask.row); 
-                    let endIndex = rows.indexOf(toTask.row); 
+                let startIndex = rows.indexOf(fromTask.row); 
+                let endIndex = rows.indexOf(toTask.row); 
 
-                    let startY = (startIndex + 0.5) * rowHeight
-                    let endY = (endIndex + 0.5) * rowHeight
+                let startY = (startIndex + 0.5) * rowHeight
+                let endY = (endIndex + 0.5) * rowHeight
 
-                    if(startX == NaN || startX == undefined) 
-                        debugger;
-                    this.set({startX, startY, endX, endY});
-                    Object.assign(dependency, {startX, startY, endX, endY});
-                //}
+                if(startX == NaN || startX == undefined) 
+                    debugger;
+                this.set({startX, startY, endX, endY});
+                Object.assign(dependency, {startX, startY, endX, endY});
             }
         }
     };

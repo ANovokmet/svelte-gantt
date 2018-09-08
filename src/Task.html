@@ -1,6 +1,11 @@
-<div class="task" style="left:{task.left}px;width:{task.width}px;"
- use:drag>
+<div class="task" 
+    style="left:{task.left}px;width:{task.width}px;"
+    use:drag 
+    use:contextMenu
+    use:selectable>
+    <div class="task-background" style="width:{task.amountDone}%"></div>
     {task.label}
+    {task.selected}
 </div>
 
 <style>
@@ -12,11 +17,18 @@
         margin: auto;
         background: rgb(116, 191, 255);
 	}
+
+    .task-background {
+        position: absolute;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.2);
+    }
 </style>
 
 <script>
     import moment from "../node_modules/moment/src/moment.js";
     import { Utils } from "./task.js";
+    import ContextMenu from "./ContextMenu.html";
 
     const resizeHandleWidth = 15;
 
@@ -30,11 +42,9 @@
         }
     }
 
-    function updatePosition(task, options){
-        if(!options.to || !task) return;
-
-        const left = Utils.getPositionByDate(task.from, options.from, options.to, options.width);
-        const right = Utils.getPositionByDate(task.to, options.from, options.to, options.width); 
+    function updatePosition(task, ganttUtils){
+        const left = ganttUtils.getPositionByDate(task.from);
+        const right = ganttUtils.getPositionByDate(task.to); 
 
         task.left = left;
         task.width = right - left;
@@ -48,31 +58,32 @@
         oncreate() {
             const { task, row } = this.get();
             task.row = row;
+            task.component = this;
 
             this.updateTaskPosition();
         },
+        ondestroy() {
+            const { task, row } = this.get();
+            if(task.component === this) {
+                task.component = null;
+            }
+        },
         actions: {
 			drag(node) {
-
-                //var self = this;
-                const bodyElement  = document.getElementsByClassName("row-container");
+                const { rowContainerElement, ganttUtils } = this.store.get();
                 const windowElement = window;
 
                 const { task } = this.get();
-                task.component = this;
-                //const { rows } = this.store.get();
 
                 let mouseStartPosX;
                 let mouseStartRight;
 
                 function onmousedown(event) {
-                    
+                    event.stopPropagation();
                     event.preventDefault();
                     console.log('drag down');
 
-                    
-                    mouseStartPosX = Utils.getRelativePos(bodyElement[0], event).x - task.left; //Utils.getRelativePos(node, event).x; //  
-                    
+                    mouseStartPosX = Utils.getRelativePos(rowContainerElement, event).x - task.left;
                     mouseStartRight = task.left + task.width;
 
                     if(mouseStartPosX < resizeHandleWidth) {
@@ -87,9 +98,6 @@
                         task.dragging = true;
                     }
 
-
-
-                    
                     windowElement.addEventListener('mousemove', onmousemove, false);
                     Utils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
                 }
@@ -98,11 +106,7 @@
                     
                     event.preventDefault();
                     if(task.resizing) {
-
-                        const mousePos = Utils.getRelativePos(bodyElement[0], event);
-
-
-                        var x = mousePos.x// - mouseStartPosX;
+                        const mousePos = Utils.getRelativePos(rowContainerElement, event);
                         
                         if(task.direction === 'left') { //resize ulijevo
                             if(mousePos.x > task.left + task.width) {
@@ -112,8 +116,8 @@
                                 mouseStartRight = task.left + task.width;
                             }
                             else{
-                                task.left = x;
-                                task.width = mouseStartRight - x;
+                                task.left = mousePos.x;
+                                task.width = mouseStartRight - mousePos.x;
                             }
                         }
                         else if(task.direction === 'right') {//resize desno
@@ -130,8 +134,6 @@
 
                         console.log(mousePos.x, mouseStartPosX)
 
-                        console.log(x)
-
                         task.component.updateTaskDate();
                         task.component.updateTaskPosition();
                         task.component.set({ task });
@@ -139,24 +141,14 @@
                     }
 
                     if(task.dragging) {
-                        const mousePos = Utils.getRelativePos(bodyElement[0], event);
-
-
-                        var x = mousePos.x - mouseStartPosX;
-
-                        const store = task.component.store.get();
-                        const from = Utils.getDateByPosition(x, store.from, store.to, store.width);
-                        const to = Utils.getDateByPosition(x + task.width, store.from, store.to, store.width);
-                
-
-                        task.left = x;
+                        const mousePos = Utils.getRelativePos(rowContainerElement, event);
+                        task.left = mousePos.x - mouseStartPosX;
 
                         task.component.updateTaskDate();//pomaknuti na kraj funkcije
                         task.component.updateTaskPosition();
-                        //task.component.set({ task: task }); 
                         
                         //row switching
-                        const rowCenterX = bodyElement[0].getBoundingClientRect().left + bodyElement[0].getBoundingClientRect().width / 2;
+                        const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
                         const sourceRow = task.row;
                         let targetRow;
 
@@ -164,25 +156,23 @@
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-                            const rows = task.component.store.get().visibleRows;
+                            const { visibleRows } = task.component.store.get();
 
-                            const targetRows = rows.filter((r) => r.rowElement === rowElement);
-                            console.log("TARGET ROWS:", targetRows)
-                            const targetRow = rows.find((r) => r.rowElement === rowElement);
+                            const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
                             console.log('move task to '+targetRow.label, targetRow);
 
                             task.row = targetRow;
                             targetRow.tasks.push(task);
                             
-                            let i, task_;
+                            let i, sourceTask;
                             for (i = 0; i < sourceRow.tasks.length; i++) {
-                                task_ = sourceRow.tasks[i]
-                                if (task_ === task) {
+                                sourceTask = sourceRow.tasks[i]
+                                if (sourceTask === task) {
                                     break;
                                 }
                             }
                             sourceRow.tasks.splice(i, 1);
-                            task.component.store.set({visibleRows: rows});
+                            task.component.store.set({visibleRows: visibleRows});
                             
                             task.component.fire('taskMovedRow', { task: task, row: targetRow });
                             targetRow.component.moved();
@@ -198,16 +188,11 @@
                     console.log('drag up'); 
                     task.dragging = false;
                     task.resizing = false;
+                    task.direction = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
-                
-                //bind mousemove on body, only on move
-                //node.addEventListener('mousemove', onmousemove, false);
-                
-                //bind on body, only on down
-                //node.addEventListener('mouseup', onmouseup, false);
 
 				return {
 					update() {
@@ -220,27 +205,84 @@
 						node.removeEventListener('mouseup', onmouseup, false);
 					}
 				}
-			}
+            },
+            contextMenu(node){
+                const { task } = this.get();
+                const { contextMenuManager } = this.store.get();
+
+                const options = [
+                    {
+                        label: 'Copy',
+                        action: () => console.log('clicked action 1 for task ', task.id)
+                    },
+                    {
+                        label: 'Clear dependencies',
+                        action: () => console.log('clicked action 2 for task ', task.id)
+                    }
+                ];
+
+                function onClose(event) {
+                    //if(!contextMenu.isTarget(e))
+                    contextMenuManager.close();
+                }
+
+				node.addEventListener('mouseup', (e) => {
+                    if(e.which === 3){
+                        e.stopPropagation();
+                        contextMenuManager.open(options, {x: e.x, y: e.y})
+
+                        Utils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                    }
+                });
+
+				return {
+					destroy() {
+                        contextMenuManager.close();
+					}
+				}
+            },
+            selectable(node) {
+                const { task } = this.get();
+                const self = this;
+                //temporary fix, use class:selected directive
+                if(task.selected){
+                    node.classList.add('selected'); 
+                }
+                else{
+                    node.classList.remove('selected');
+                }
+
+                node.addEventListener('click', (e) => {
+                    task.selected = !!!task.selected;
+                    if(task.selected){
+                        node.classList.add('selected'); 
+                    }
+                    else{
+                        node.classList.remove('selected');
+                    }
+                    self.set({ task });
+                });
+            }
 		},
         methods: {
 			updateTaskPosition() {
-                const store = this.store.get();
+                const { ganttUtils } = this.store.get();
                 const { task } = this.get();
             
                 //console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
-                updatePosition(task, store);
+                updatePosition(task, ganttUtils);
 
 
                 //console.log(task.left, task.width);
                 //this.set({ task: task });
             },
             updateTaskDate() {
-                const store = this.store.get();
+                const { ganttUtils } = this.store.get();
                 const { task } = this.get();
                 
                 if(task) {
-                    const from = Utils.getDateByPosition(task.left, store.from, store.to, store.width);
-                    const to = Utils.getDateByPosition(task.left + task.width, store.from, store.to, store.width);
+                    const from = ganttUtils.getDateByPosition(task.left);
+                    const to = ganttUtils.getDateByPosition(task.left + task.width);
                     
 
                     task.from = this.magnetDate(from);
@@ -253,8 +295,8 @@
                 
             },
             magnetDate(date) {
-                const { magnetUnit, magnetOffset } = this.store.get();
-                return Utils.roundTo(date, magnetUnit, magnetOffset);
+                const { ganttUtils } = this.store.get();
+                return ganttUtils.roundTo(date);
             }
         },
 
