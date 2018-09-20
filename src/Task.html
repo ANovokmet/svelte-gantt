@@ -2,10 +2,11 @@
     style="left:{task.left}px;width:{task.width}px;"
     use:drag 
     use:contextMenu
-    use:selectable>
+    use:selectable
+    class:overlapping="task.overlapping"
+    class:selected="task.selected">
     <div class="task-background" style="width:{task.amountDone}%"></div>
     {task.label}
-    {task.selected}
 </div>
 
 <style>
@@ -50,10 +51,22 @@
         task.width = right - left;
     }
 
+    function overlaps(task, task2) {
+        //todo just return boolean expr
+        if(task.left <= task2.left && task.left + task.width <= task2.left ||
+        task.left >= task2.left + task2.width && task.left + task.width >= task2.left + task2.width){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
     export default {
         setup(component) {
             SvelteTask = component;
             SvelteTask.updatePosition = updatePosition;
+            SvelteTask.overlaps = overlaps;
         },
         oncreate() {
             const { task, row } = this.get();
@@ -82,6 +95,7 @@
                     event.stopPropagation();
                     event.preventDefault();
                     console.log('drag down');
+                    task.originalRow = task.row;
 
                     mouseStartPosX = Utils.getRelativePos(rowContainerElement, event).x - task.left;
                     mouseStartRight = task.left + task.width;
@@ -190,6 +204,12 @@
                     task.resizing = false;
                     task.direction = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
+                    task.component.fire('taskDropped', { task });
+
+                    //code this better
+                    if(task.originalRow && task.originalRow !== task.row) {
+                        task.originalRow.component.taskMoved();
+                    }
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
@@ -244,22 +264,8 @@
             selectable(node) {
                 const { task } = this.get();
                 const self = this;
-                //temporary fix, use class:selected directive
-                if(task.selected){
-                    node.classList.add('selected'); 
-                }
-                else{
-                    node.classList.remove('selected');
-                }
-
                 node.addEventListener('click', (e) => {
                     task.selected = !!!task.selected;
-                    if(task.selected){
-                        node.classList.add('selected'); 
-                    }
-                    else{
-                        node.classList.remove('selected');
-                    }
                     self.set({ task });
                 });
             }

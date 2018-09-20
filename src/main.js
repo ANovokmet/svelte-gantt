@@ -34,6 +34,8 @@ for(let i = 0; i < 499; i++){
 }
 
 let options = {
+	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
+	width: 1000,
 	from: startOfToday,
 	to: moment().endOf('day')
 }

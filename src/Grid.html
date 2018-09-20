@@ -1,10 +1,10 @@
 <div class="grid" use:disableContextMenu>
 
-    <div class="side-header-container" style="height:{$headerHeight}px;width:100px">
+    <div class="side-header-container" style="width:100px" ref:sideHeaderContainer>
     
     </div>
 
-    <div class="main-header-container" style="height:{$headerHeight}px" use:horizontalScrollListener>
+    <div class="main-header-container" use:horizontalScrollListener  ref:sideContainer>
         <div class="header-container" style="width:{$width}px">
             {#each $headers as header}
                 <ColumnHeader header={header}/>
@@ -181,28 +181,13 @@
         components: { Row, Column, RowHeader, ColumnHeader, Dependency },
         oncreate(){
             
-            const {ganttUtils, magnetOffset, magnetUnit} = this.store.get();
-            let diva;
-            const columnWidth = ganttUtils.getPositionByDate(ganttUtils.from.clone().add(magnetOffset, magnetUnit));
-            diva = ganttUtils.width / columnWidth
-            const columnCount = Math.ceil(ganttUtils.width / columnWidth) 
-
-            var columns = [];
-            
-            for(let i=0; i< columnCount; i++){
-                columns.push({width: columnWidth});
-            }
+            this.initColumns();
 
             this.store.set({
                 bodyElement: this.refs.mainContainer, 
                 rowContainerElement: this.refs.rowContainer
             });
-
-            this.set({columns: columns});
-
-            for(let i=0; i< columnCount; i++){
-                columns.push({width: columnWidth});
-            }
+            
 
             /*for(let i=0; i < rows.length; i++){
                 Task.updatePosition(rows[i].tasks[0], this.store.get());
@@ -218,6 +203,8 @@
 
             this.updateVisibleRows(0, this.refs.mainContainer.clientHeight);
             this.updateVisibleDependencies(0, this.refs.mainContainer.clientHeight);
+
+            this.updateHeaderHeight();
         },
         actions: {
             disableContextMenu(node) {
@@ -246,6 +233,7 @@
                             scrollable.node.scrollTop = scrollAmount;
                         }
                     }
+                    //TODO: only for vertical scroll
                     self.updateVisibleRows(scrollAmount, node.clientHeight);
                     self.updateVisibleDependencies(scrollAmount, node.clientHeight);
                 }
@@ -269,7 +257,7 @@
         methods: {
             updateVisibleRows(scrollTop, viewportHeight){
                 console.log('update v rows');
-                const { rows, height, rowHeight } = this.store.get();
+                const { rows, rowHeight } = this.store.get();
 
                 let startIndex = Math.floor(scrollTop / rowHeight);
                 let endIndex = Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1);
@@ -295,7 +283,7 @@
             updateVisibleDependencies(scrollTop, viewportHeight){
                 const { dependencies } = this.get();
 
-                //binary search
+                //interval tree or just debounce a bit
                 const visibleDependencies = [];
                 
                 const viewportTop = scrollTop;
@@ -327,9 +315,21 @@
 
                 this.set({ visibleDependencies });
             },
-            onContextMenu(event) {
-                event.preventDefault();
-                return false;
+            initColumns() {
+                const {ganttUtils, magnetOffset, magnetUnit} = this.store.get();
+                const columnWidth = ganttUtils.getPositionByDate(ganttUtils.from.clone().add(magnetOffset, magnetUnit));
+                const columnCount = Math.ceil(ganttUtils.width / columnWidth) 
+
+                const columns = [];
+                for(let i = 0; i < columnCount; i++){
+                    columns.push({width: columnWidth});
+                }
+
+                this.set({ columns });
+            },
+            updateHeaderHeight() {
+                const height = this.refs.sideContainer.clientHeight;
+                this.refs.sideHeaderContainer.style.height = height + 'px';
             }
         },
         data() {

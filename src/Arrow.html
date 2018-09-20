@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" class="arrow" height="100%" width="100%">
-  <path d="{path}" stroke="red" fill="transparent" />
+  <path d="{path}" stroke="red" fill="transparent" class="select-area" on:click="test()"/>
   
   <path d="{arrowPath}" 
   fill="red"
@@ -11,6 +11,11 @@
         position: absolute;
         left: 0px;    
         pointer-events: none;
+    }
+
+    .select-area {
+        pointer-events: visible;
+        position: absolute;
     }
 </style>
 <script>
@@ -55,6 +60,11 @@
                     endX: 100,
                     endY: 100,
                     minLen: 12
+                }
+            },
+            methods: {
+                test() {
+                    console.log('CLICKED ARROW');
                 }
             },
             computed: {
