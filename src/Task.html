@@ -1,4 +1,5 @@
-<div class="task" 
+<div ref:taskElement
+    class="task" 
     style="left:{task.left}px;width:{task.width}px;"
     use:drag 
     use:contextMenu
@@ -51,15 +52,16 @@
         task.width = right - left;
     }
 
+    function updateDate(task, ganttUtils){
+        const from = ganttUtils.getDateByPosition(task.left);
+        const to = ganttUtils.getDateByPosition(task.left + task.width);
+                   
+        task.from = ganttUtils.roundTo(from);
+        task.to = ganttUtils.roundTo(to);
+    }
+
     function overlaps(task, task2) {
-        //todo just return boolean expr
-        if(task.left <= task2.left && task.left + task.width <= task2.left ||
-        task.left >= task2.left + task2.width && task.left + task.width >= task2.left + task2.width){
-            return false;
-        }
-        else{
-            return true;
-        }
+        return !(task.left + task.width <= task2.left || task.left >= task2.left + task2.width);
     }
 
     export default {
@@ -92,6 +94,11 @@
                 let mouseStartRight;
 
                 function onmousedown(event) {
+                    if(event.which !== 1){
+                        //debugger;
+                        return;
+                    }
+
                     event.stopPropagation();
                     event.preventDefault();
                     console.log('drag down');
@@ -188,8 +195,10 @@
                             sourceRow.tasks.splice(i, 1);
                             task.component.store.set({visibleRows: visibleRows});
                             
-                            task.component.fire('taskMovedRow', { task: task, row: targetRow });
-                            targetRow.component.moved();
+                            //targetRow.component.movedRow();
+                            //sourceRow.component.movedRow();
+                            task.component.fire('taskRemovedRow', { task: task, row: targetRow });
+                            targetRow.component.taskAdded();
                         }
                         task.component.fire('taskMoved', { task: task });
                         //task.component.fire('updateVisibleRows');
@@ -263,10 +272,15 @@
             },
             selectable(node) {
                 const { task } = this.get();
+                const { selectionManager } = this.store.get();
                 const self = this;
                 node.addEventListener('click', (e) => {
-                    task.selected = !!!task.selected;
-                    self.set({ task });
+                    if(e.ctrlKey){
+                        selectionManager.toggleSelection(task);
+                    }
+                    else{
+                        selectionManager.selectSingle(task);
+                    }
                 });
             }
 		},
@@ -274,35 +288,16 @@
 			updateTaskPosition() {
                 const { ganttUtils } = this.store.get();
                 const { task } = this.get();
-            
-                //console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
                 updatePosition(task, ganttUtils);
-
-
-                //console.log(task.left, task.width);
-                //this.set({ task: task });
             },
             updateTaskDate() {
                 const { ganttUtils } = this.store.get();
                 const { task } = this.get();
-                
-                if(task) {
-                    const from = ganttUtils.getDateByPosition(task.left);
-                    const to = ganttUtils.getDateByPosition(task.left + task.width);
-                    
-
-                    task.from = this.magnetDate(from);
-                    task.to = this.magnetDate(to);
-
-                    //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
-                            
-                    //this.set({ task: task });
-                }
-                
+                updateDate(task, ganttUtils);
             },
-            magnetDate(date) {
-                const { ganttUtils } = this.store.get();
-                return ganttUtils.roundTo(date);
+            updateCursor(){
+                const element = this.refs.taskElement;
+                element.style.cursor = 'e-resize';
             }
         },
 

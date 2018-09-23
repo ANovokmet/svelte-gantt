@@ -5140,15 +5140,16 @@ var app = (function () {
 	    task.width = right - left;
 	}
 
+	function updateDate(task, ganttUtils){
+	    const from = ganttUtils.getDateByPosition(task.left);
+	    const to = ganttUtils.getDateByPosition(task.left + task.width);
+	               
+	    task.from = ganttUtils.roundTo(from);
+	    task.to = ganttUtils.roundTo(to);
+	}
+
 	function overlaps(task, task2) {
-	    //todo just return boolean expr
-	    if(task.left <= task2.left && task.left + task.width <= task2.left ||
-	    task.left >= task2.left + task2.width && task.left + task.width >= task2.left + task2.width){
-	        return false;
-	    }
-	    else{
-	        return true;
-	    }
+	    return !(task.left + task.width <= task2.left || task.left >= task2.left + task2.width);
 	}
 
 	function data$1() {
@@ -5160,35 +5161,16 @@ var app = (function () {
 				updateTaskPosition() {
 	        const { ganttUtils } = this.store.get();
 	        const { task } = this.get();
-	    
-	        //console.log(task.from.format('DD-MM-YYYY HH:mm:ss:SSS'), task.to.format('DD-MM-YYYY HH:mm:ss:SSS'));
 	        updatePosition(task, ganttUtils);
-
-
-	        //console.log(task.left, task.width);
-	        //this.set({ task: task });
 	    },
 	    updateTaskDate() {
 	        const { ganttUtils } = this.store.get();
 	        const { task } = this.get();
-	        
-	        if(task) {
-	            const from = ganttUtils.getDateByPosition(task.left);
-	            const to = ganttUtils.getDateByPosition(task.left + task.width);
-	            
-
-	            task.from = this.magnetDate(from);
-	            task.to = this.magnetDate(to);
-
-	            //console.log(from.format('DD-MM-YYYY HH:mm'), to.format('DD-MM-YYYY HH:mm'));
-	                    
-	            //this.set({ task: task });
-	        }
-	        
+	        updateDate(task, ganttUtils);
 	    },
-	    magnetDate(date) {
-	        const { ganttUtils } = this.store.get();
-	        return ganttUtils.roundTo(date);
+	    updateCursor(){
+	        const element = this.refs.taskElement;
+	        element.style.cursor = 'e-resize';
 	    }
 	};
 
@@ -5220,6 +5202,11 @@ var app = (function () {
 	                let mouseStartRight;
 
 	                function onmousedown(event) {
+	                    if(event.which !== 1){
+	                        //debugger;
+	                        return;
+	                    }
+
 	                    event.stopPropagation();
 	                    event.preventDefault();
 	                    console.log('drag down');
@@ -5315,8 +5302,10 @@ var app = (function () {
 	                            sourceRow.tasks.splice(i, 1);
 	                            task.component.store.set({visibleRows: visibleRows});
 	                            
-	                            task.component.fire('taskMovedRow', { task: task, row: targetRow });
-	                            targetRow.component.moved();
+	                            //targetRow.component.movedRow();
+	                            //sourceRow.component.movedRow();
+	                            task.component.fire('taskRemovedRow', { task: task, row: targetRow });
+	                            targetRow.component.taskAdded();
 	                        }
 	                        task.component.fire('taskMoved', { task: task });
 	                        //task.component.fire('updateVisibleRows');
@@ -5390,10 +5379,14 @@ var app = (function () {
 	}
 	function selectable(node) {
 	    const { task } = this.get();
-	    const self = this;
+	    const { selectionManager } = this.store.get();
 	    node.addEventListener('click', (e) => {
-	        task.selected = !!!task.selected;
-	        self.set({ task });
+	        if(e.ctrlKey){
+	            selectionManager.toggleSelection(task);
+	        }
+	        else{
+	            selectionManager.selectSingle(task);
+	        }
 	    });
 	}
 	const file$1 = "src\\Task.html";
@@ -5409,7 +5402,7 @@ var app = (function () {
 				text_1 = createText(text_1_value);
 				div_1.className = "task-background svelte-cbb6f";
 				setStyle(div_1, "width", "" + ctx.task.amountDone + "%");
-				addLoc(div_1, file$1, 7, 4, 213);
+				addLoc(div_1, file$1, 8, 4, 234);
 				div.className = "task svelte-cbb6f";
 				setStyle(div, "left", "" + ctx.task.left + "px");
 				setStyle(div, "width", "" + ctx.task.width + "px");
@@ -5423,6 +5416,7 @@ var app = (function () {
 				append(div, div_1);
 				append(div, text);
 				append(div, text_1);
+				component.refs.taskElement = div;
 				drag_action = drag.call(component, div) || {};
 				contextMenu_action = contextMenu.call(component, div) || {};
 				selectable_action = selectable.call(component, div) || {};
@@ -5459,6 +5453,7 @@ var app = (function () {
 					detachNode(div);
 				}
 
+				if (component.refs.taskElement === div) component.refs.taskElement = null;
 				if (typeof drag_action.destroy === 'function') drag_action.destroy.call(component);
 				if (typeof contextMenu_action.destroy === 'function') contextMenu_action.destroy.call(component);
 				if (typeof selectable_action.destroy === 'function') selectable_action.destroy.call(component);
@@ -5470,6 +5465,7 @@ var app = (function () {
 		this._debugName = '<Task>';
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
+		this.refs = {};
 		this._state = assign(data$1(), options.data);
 		if (!('task' in this._state)) console.warn("<Task> was created without expected data property 'task'");
 		this._intro = !!options.intro;
@@ -5505,12 +5501,23 @@ var app = (function () {
 	/* src\Row.html generated by Svelte v2.13.4 */
 
 	var methods$2 = {
-	    moved() {
-	        console.log('WAT WAT');
+	    taskMoved() {
+	        console.log('Task moved');
 	        const { row } = this.get();
 	        this.set({ row });
 	    },
-	    taskMoved(task) {
+	    taskAdded() {
+	        //when task moving to row, need to update row to show new task
+	        const { row } = this.get();
+	        console.log('Task moved to row', row);
+	        this.set({ row });
+	    },
+	    taskRemoved() {
+	        const { row } = this.get();
+	        console.log('Task removed from row', row);
+	        this.set({ row });
+	    },
+	    taskDropped(task) {
 	        this.sortTasks();
 	        const { row } = this.get();
 	        const overlaps = [];
@@ -5518,7 +5525,6 @@ var app = (function () {
 	        for(let i = 1; i < row.tasks.length; i++){
 	            const current = row.tasks[i];
 
-	            //fix  bug when moving task from overlap to another row (update previous row overlaps)
 	            if(Task$1.overlaps(current, previous))
 	            {
 	                if(current.overlapping !== true){
@@ -5578,15 +5584,7 @@ var app = (function () {
 	    row.component = null;
 	}
 	function onupdate({ changed, current, previous }) {
-	        //set previous null
-	        //nije potrebno ako se u #each koristi (id)
-	        /*const { row } = this.get();
-	        row.rowElement = this.refs.row;
-	        row.component = this;
-	        console.log('update row', row.id);*/
-	        
 	    
-
 	}
 	function contextMenu$1(node){
 	    const { row } = this.get();
@@ -5711,16 +5709,19 @@ var app = (function () {
 			component.fire("updateVisibleRows", event);
 		});
 		task.on("taskMoved", function(event) {
-			component.moved();
+			component.taskMoved();
 		});
 		task.on("taskMovedRow", function(event) {
-			component.moved();
+			component.taskAdded();
+		});
+		task.on("taskRemovedRow", function(event) {
+			component.taskRemoved();
 		});
 		task.on("taskResized", function(event) {
-			component.moved();
+			component.taskMoved();
 		});
 		task.on("taskDropped", function(event) {
-			component.taskMoved(ctx.task);
+			component.taskDropped(ctx.task);
 		});
 
 		return {
@@ -6741,6 +6742,44 @@ var app = (function () {
 	    }
 	}
 
+	class SelectionManager {
+	    constructor(onSelectionChange) {
+	        this.onSelectionChange = onSelectionChange;
+	        this.selection = [];
+	    }
+
+	    selectSingle(item){
+	        this.selection.forEach((selectionItem) => { 
+	            this.updateSelected(selectionItem, false);
+	        });
+	        this.updateSelected(item, true);
+	        this.selection = [item];
+	    }
+
+	    toggleSelection(item){
+	        const index = this.selection.indexOf(item);
+	        if(index !== -1){
+	            this.updateSelected(item, false);
+	            this.selection.splice(index, 1);
+	        }
+	        else{
+	            this.updateSelected(item, true);
+	            this.selection.push(item);
+	        }
+	    }
+
+	    updateSelected(item, value){
+	        if(item.selected !== value){
+	            item.selected = value;
+	            this.onSelectionChange && this.onSelectionChange(item, value);
+	        }
+	    }
+
+	    clearSelection(){
+	        this.selection = [];
+	    }
+	}
+
 	class GanttUtils {
 	    constructor({ from, to, width, magnetUnit, magnetOffset }) {
 	        this.from = from;
@@ -6825,9 +6864,30 @@ var app = (function () {
 
 	        const visibleRows = rows.slice(startIndex, endIndex + 1);
 
+	        //only horizontal scroll
+	        visibleRows.forEach(row => {
+	            row.visibleTasks = this.visibleTasks(row);
+	        });
+
 	        this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
 	        this.store.set({ visibleRows });
 	        //this.set({dependencies: this.get().dependencies});
+	    },
+	    visibleTasks(row){
+	        const scrollLeft = this.refs.mainContainer.scrollLeft;
+	        const clientWidth = this.refs.mainContainer.clientWidth;
+	        //finish this
+	        this.store.set({scrollLeft, clientWidth});
+
+	        //da su sortirani -> index prvog, zadnjeg, i onda slice
+	        const visibleTasks = [];
+	        row.tasks.forEach(task => {
+	            if(!(task.left + task.width < scrollLeft || task.left > scrollLeft + clientWidth)){
+	                visibleTasks.push(task);
+	            }
+	        });
+	        console.log(visibleTasks.length);
+	        return visibleTasks;
 	    },
 	    updateViewport(){
 	        console.log('update v port');
@@ -6936,6 +6996,7 @@ var app = (function () {
 	        store.set({ 
 	            rows: data.rows,
 	            contextMenuManager: new ContextMenuManager(),
+	            selectionManager: new SelectionManager((t) => { t.component && t.component.set({task: t}); }),
 	            ganttUtils: ganttUtils
 	        });
 
@@ -6960,7 +7021,7 @@ var app = (function () {
 	    node.addEventListener('contextmenu', function(e) {
 	        e.preventDefault();
 	    }, false);
-	    //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu
+	    //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu TO DO remove
 	    document.addEventListener('contextmenu', function(e) {
 	        e.preventDefault();
 	    }, false);

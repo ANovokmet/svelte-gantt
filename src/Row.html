@@ -3,10 +3,11 @@
         <Task   row={row}
                 task={task}  
                 on:updateVisibleRows 
-                on:taskMoved="moved()"
-                on:taskMovedRow="moved()"
-                on:taskResized="moved()"
-                on:taskDropped="taskMoved(task)"/>
+                on:taskMoved="taskMoved()"
+                on:taskMovedRow="taskAdded()"
+                on:taskRemovedRow="taskRemoved()"
+                on:taskResized="taskMoved()"
+                on:taskDropped="taskDropped(task)"/>
     {/each}
 </div>
 <style>
@@ -30,15 +31,7 @@
             row.component = this;
         },
         onupdate({ changed, current, previous }) {
-                //set previous null
-                //nije potrebno ako se u #each koristi (id)
-                /*const { row } = this.get();
-                row.rowElement = this.refs.row;
-                row.component = this;
-                console.log('update row', row.id);*/
-                
             
-
         },
         ondestroy(){
             const { row } = this.get();
@@ -46,12 +39,23 @@
             row.component = null;
         },
         methods: {
-            moved() {
-                console.log('WAT WAT')
+            taskMoved() {
+                console.log('Task moved')
                 const { row } = this.get();
                 this.set({ row });
             },
-            taskMoved(task) {
+            taskAdded() {
+                //when task moving to row, need to update row to show new task
+                const { row } = this.get();
+                console.log('Task moved to row', row);
+                this.set({ row });
+            },
+            taskRemoved() {
+                const { row } = this.get();
+                console.log('Task removed from row', row);
+                this.set({ row });
+            },
+            taskDropped(task) {
                 this.sortTasks();
                 const { row } = this.get();
                 const overlaps = [];
@@ -59,7 +63,6 @@
                 for(let i = 1; i < row.tasks.length; i++){
                     const current = row.tasks[i];
 
-                    //fix  bug when moving task from overlap to another row (update previous row overlaps)
                     if(Task.overlaps(current, previous))
                     {
                         if(current.overlapping !== true){

@@ -125,6 +125,7 @@
     import { Utils } from "./task.js";
     import { Store } from 'svelte/store.js';
     import ContextMenuManager from './contextMenuManager.js'
+    import SelectionManager from './selectionManager.js'
     import GanttUtils from "./utils.js";
 
     import Task from "./Task.html";
@@ -155,6 +156,7 @@
                 store.set({ 
                     rows: data.rows,
                     contextMenuManager: new ContextMenuManager(),
+                    selectionManager: new SelectionManager((t) => { t.component && t.component.set({task: t}) }),
                     ganttUtils: ganttUtils
                 });
 
@@ -211,7 +213,7 @@
                 node.addEventListener('contextmenu', function(e) {
                     e.preventDefault();
                 }, false);
-                //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu
+                //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu TO DO remove
                 document.addEventListener('contextmenu', function(e) {
                     e.preventDefault();
                 }, false);
@@ -270,9 +272,30 @@
 
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
+                //only horizontal scroll
+                visibleRows.forEach(row => {
+                    row.visibleTasks = this.visibleTasks(row);
+                })
+
                 this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
                 this.store.set({ visibleRows });
                 //this.set({dependencies: this.get().dependencies});
+            },
+            visibleTasks(row){
+                const scrollLeft = this.refs.mainContainer.scrollLeft;
+                const clientWidth = this.refs.mainContainer.clientWidth;
+                //finish this
+                this.store.set({scrollLeft, clientWidth});
+
+                //da su sortirani -> index prvog, zadnjeg, i onda slice
+                const visibleTasks = [];
+                row.tasks.forEach(task => {
+                    if(!(task.left + task.width < scrollLeft || task.left > scrollLeft + clientWidth)){
+                        visibleTasks.push(task);
+                    }
+                });
+                console.log(visibleTasks.length);
+                return visibleTasks;
             },
             updateViewport(){
                 console.log('update v port');
