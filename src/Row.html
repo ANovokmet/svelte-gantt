@@ -21,7 +21,7 @@
 <script>
     import Task from './Task.html';
     import ContextMenu from "./ContextMenu.html";
-    import { Utils } from "./task.js";
+    import { DOMUtils } from "./domUtils.js";
 
     export default {
         components: { Task },
@@ -63,7 +63,7 @@
                 for(let i = 1; i < row.tasks.length; i++){
                     const current = row.tasks[i];
 
-                    if(Task.overlaps(current, previous))
+                    if(current.overlaps(previous))
                     {
                         if(current.overlapping !== true){
                             current.overlapping = true;
@@ -137,7 +137,7 @@
                     if(e.which === 3){
                         contextMenuManager.open(options, {x: e.x, y: e.y});
 
-                        Utils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                        DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
                     }
                 });
 

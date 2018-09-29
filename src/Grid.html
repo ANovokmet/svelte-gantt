@@ -121,14 +121,16 @@
     import RowHeader from './RowHeader.html';
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
-    import Dependency from './Dependency.html';
-    import { Utils } from "./task.js";
     import { Store } from 'svelte/store.js';
     import ContextMenuManager from './contextMenuManager.js'
     import SelectionManager from './selectionManager.js'
     import GanttUtils from "./utils.js";
 
     import Task from "./Task.html";
+    import SvelteTask from "./task.js";
+
+    import Dependency from './Dependency.html';
+    import SvelteDependency from './dependency.js';
 
     let SvelteGantt;
 
@@ -149,7 +151,7 @@
 
                 const store = new Store();
 
-                const ganttOptions = Object.assign(SvelteGantt.defaults, options);
+                const ganttOptions = Object.assign({}, SvelteGantt.defaults, options);
                 const ganttUtils = new GanttUtils(ganttOptions);
 
                 store.set(ganttOptions);
@@ -160,14 +162,27 @@
                     ganttUtils: ganttUtils
                 });
 
+                const allTasks = [];
                 for(let i=0; i < data.rows.length; i++){
                     const row = data.rows[i];
                     for(let j=0; j < row.tasks.length; j++){
                         const task = row.tasks[j];
                         task.amountDone = task.amountDone || 0;
-                        Task.updatePosition(task, ganttUtils);
                         task.row = row;
+
+                        row.tasks[j] = new SvelteTask(task, ganttUtils);
+                        allTasks.push(row.tasks[j]);
                     }
+                }
+
+                for(let i=0; i < data.dependencies.length; i++){
+                    let dependency = data.dependencies[i];
+                    const fromTask = allTasks.find(t => t.id == dependency.fromTask);
+                    const toTask = allTasks.find(t => t.id == dependency.toTask);
+                    dependency.fromTask = fromTask;
+                    dependency.toTask = toTask;
+
+                    data.dependencies[i] = new SvelteDependency(dependency, store.get());
                 }
 
                 return new SvelteGantt({
@@ -177,35 +192,16 @@
                 })
             }
         },
-
-
-
         components: { Row, Column, RowHeader, ColumnHeader, Dependency },
         oncreate(){
-            
             this.initColumns();
-
             this.store.set({
                 bodyElement: this.refs.mainContainer, 
                 rowContainerElement: this.refs.rowContainer
             });
             
-
-            /*for(let i=0; i < rows.length; i++){
-                Task.updatePosition(rows[i].tasks[0], this.store.get());
-            }*/
-
-            const { rows, rowHeight } = this.store.get();
-            const { dependencies } = this.get();
-            for(let i=0; i < dependencies.length; i++){
-                let dependency = dependencies[i];
-                const res = Dependency.update(dependency.fromTask, dependency.toTask, rows, rowHeight);
-                Object.assign(dependency, res);
-            }
-
             this.updateVisibleRows(0, this.refs.mainContainer.clientHeight);
             this.updateVisibleDependencies(0, this.refs.mainContainer.clientHeight);
-
             this.updateHeaderHeight();
         },
         actions: {
@@ -288,6 +284,7 @@
                 this.store.set({scrollLeft, clientWidth});
 
                 //da su sortirani -> index prvog, zadnjeg, i onda slice
+                //da su sortirani -> nakon zadnjeg break
                 const visibleTasks = [];
                 row.tasks.forEach(task => {
                     if(!(task.left + task.width < scrollLeft || task.left > scrollLeft + clientWidth)){

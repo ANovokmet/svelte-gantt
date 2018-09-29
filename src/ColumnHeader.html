@@ -27,18 +27,14 @@
 </style>
 <script>
     import moment from "../node_modules/moment/src/moment.js";
-    import { Utils } from "./task.js";
-    console.log(moment());
-
-
 
     export default {
         oncreate() {
             
             const { header } = this.get();
 
-            const {from, to, width } = this.store.get();
-            const columnWidth = Utils.getPositionByDate(from.clone().add(1, header.unit), from, to, width);
+            const { from, width, ganttUtils } = this.store.get();
+            const columnWidth = ganttUtils.getPositionByDate(from.clone().add(1, header.unit));
             
             const columnCount = Math.ceil(width / columnWidth) 
 

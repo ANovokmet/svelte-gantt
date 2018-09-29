@@ -28,8 +28,8 @@ for(let i = 0; i < 500; i++){
 for(let i = 0; i < 499; i++){
 	data.dependencies.push({
 		id: i, 
-		fromTask: data.rows[i].tasks[0], 
-		toTask: data.rows[i+1].tasks[0] 
+		fromTask: i, 
+		toTask: i+1 
 	});
 }
 

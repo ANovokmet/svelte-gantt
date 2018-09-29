@@ -1,76 +1,55 @@
-export class Task {
-    constructor(from, to){
-        this.from = from;
-        this.to = to;
-    }
-}
-
-export class Utils {
-    /**
-     * Returns position of date on a line if from and to represent length of width
-     * @param {*} date 
-     * @param {*} from 
-     * @param {*} to 
-     * @param {*} width 
-     */
-    static getPositionByDate (date, from, to, width) {
-        if (!date) {
-          return undefined
-        }
-
-        let durationTo = date.diff(from, 'milliseconds')
-        let durationToEnd = to.diff(from, 'milliseconds')
-
-        return durationTo / durationToEnd * width;
+export default class SvelteTask {
+    
+    constructor(task, ganttUtils){
+        this.ganttUtils = ganttUtils;
+        Object.assign(this, task);
+        this.dependencies = [];
+        this.updatePosition();
     }
 
-    static getDateByPosition (x, from, to, width) {
-        //x: width = res:to.diff(from, 'milliseconds') 
-
-        let durationTo = x / width * to.diff(from, 'milliseconds');
-        let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
-        return dateAtPosition; 
-    }
-
-    /**
-     * 
-     * @param {Moment} date - Date
-     * @param {string} unit - Unit
-     * @param {number} offset - Magnet offset to round with 
-     * @returns {Moment} rounded date passed as parameter
-     */
-    static roundTo (date, unit, offset) {
-        offset = offset || 1
-        let value = date.get(unit)
-    
-        value = Math.round(value / offset);
-    
-        let units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year']
-        date.set(unit, value * offset)
-    
-        let indexOf = units.indexOf(unit)
-        for (let i = 0; i < indexOf; i++) {
-          date.set(units[i], 0)
-        }
-    
-        return date
-    }
-
-    //get mouse position within the element
-    static getRelativePos(node, event) {
-        const rect = node.getBoundingClientRect();
-        const x = event.clientX - rect.left; //x position within the element.
-        const y = event.clientY - rect.top;  //y position within the element.
-        return {
-            x: x,
-            y: y
+    notify() {
+        if(this.dependencies){
+            this.dependencies.forEach(dependency => {
+                dependency.update();
+            });
         }
     }
 
-    static addEventListenerOnce(target, type, listener, addOptions, removeOptions) {
-        target.addEventListener(type, function fn(event) {
-            target.removeEventListener(type, fn, removeOptions);
-            listener.apply(this, arguments, addOptions);
-        });
+    updatePosition(){
+        const left = this.ganttUtils.getPositionByDate(this.from);
+        const right = this.ganttUtils.getPositionByDate(this.to); 
+
+        this.left = left;
+        this.width = right - left;
+    }
+
+    updateDate(){
+        const from = this.ganttUtils.getDateByPosition(this.left);
+        const to = this.ganttUtils.getDateByPosition(this.left + this.width);
+                   
+        this.from = this.ganttUtils.roundTo(from);
+        this.to = this.ganttUtils.roundTo(to);
+    }
+
+    overlaps(other) {
+        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
+    }
+
+    subscribe(dependency) {
+        this.dependencies.push(dependency);
+    }
+
+    unsubscribe(dependency) {
+        let result = [];
+        for(let i = 0; i < this.dependencies.length; i++) {
+            if(this.dependencies[i] === dependency) {
+                result.push(dependency);
+            }
+        }
+
+        for(let i = 0; i < result.length; i++) {
+            let index = this.dependencies.indexOf(result[i]);
+            this.dependencies.splice(index, 1);
+        }
     }
 }

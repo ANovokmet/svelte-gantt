@@ -16,68 +16,25 @@
 <script>
     import Arrow from './Arrow.html';
 
-    function subscribe(dependency, task) {
-        if(!task.dependencies) {
-            task.dependencies = []
-        }
-        task.dependencies.push(dependency);
-    }
-
-    function unsubscribe(dependency, task) {
-        let res = [];
-        for(let i = 0; i < task.dependencies.length; i++) {
-            if(task.dependencies[i] === dependency) {
-                res.push(dependency);
-            }
-        }
-
-        for(let i = 0; i < res.length; i++) {
-            let index = task.dependencies.indexOf(res[i]);
-            task.dependencies.splice(index, 1);
-        }
-    }
-
-    function update(fromTask, toTask, rows, rowHeight) {
-        let startX = fromTask.left + fromTask.width;
-        let endX = toTask.left;
-
-        let startIndex = rows.indexOf(fromTask.row); 
-        let endIndex = rows.indexOf(toTask.row); 
-
-        let startY = (startIndex + 0.5) * rowHeight
-        let endY = (endIndex + 0.5) * rowHeight
-
-        return {startX, startY, endX, endY};
-    }
-
     export default {
-        setup(component){
-            component.subscribe = subscribe;
-            component.update = update;
-        },
         components: { Arrow },
-        oncreate() {            
-            this.update();
+        oncreate() { 
+            const { dependency } = this.get();
+            this.set({ 
+                startX: dependency.startX,
+                startY: dependency.startY,
+                endX: dependency.endX,
+                endY: dependency.endY
+            });
 
             const { fromTask, toTask } = this.get();
-            subscribe(this, fromTask);
-            subscribe(this, toTask);
-        },
-        onupdate({ changed, current, previous }) {
-            //nije potrebno ako se u #each koristi (id)
-            /*console.log('Dependency state change', changed);
-            if(previous && previous.fromTask.dependencies && previous.toTask.dependencies){
-                unsubscribe(this, previous.fromTask);
-                unsubscribe(this, previous.toTask);
-            }
-            subscribe(this, current.fromTask);
-            subscribe(this, current.toTask);
-            this.update();*/
+            fromTask.subscribe(this);
+            toTask.subscribe(this);
         },
         ondestroy() {
             const { fromTask, toTask } = this.get();
-            unsubscribe(this, fromTask);
-            unsubscribe(this, toTask);
+            fromTask.unsubscribe(this);
+            toTask.unsubscribe(this);
         },
         data() {
             return {
@@ -86,32 +43,12 @@
                 endX: 100,
                 endY: 100
             }
-        },/*,
-        computed: {
-			startX:   ({ fromTask }) => fromTask.left + fromTask.width,
-			endX: ({ toTask }) => toTask.left,
-            startY: ({ fromTask, $rows, $rowHeight }) => ($rows.indexOf(fromTask.row) + 0.5) * $rowHeight,
-            endY: ({ toTask, $rows, $rowHeight }) => ($rows.indexOf(toTask.row) + 0.5) * $rowHeight
-        }*/
+        },
         methods: {
             update() {
-                const { rows, rowHeight } = this.store.get();
-                const { fromTask, toTask, dependency } = this.get();
-
-                let startX = fromTask.left + fromTask.width;
-                let endX = toTask.left;
-
-                let startIndex = rows.indexOf(fromTask.row); 
-                let endIndex = rows.indexOf(toTask.row); 
-
-                let startY = (startIndex + 0.5) * rowHeight
-                let endY = (endIndex + 0.5) * rowHeight
-
-                
-                if(startX == NaN || startX == undefined) 
-                    debugger;
-                this.set({startX, startY, endX, endY});
-                Object.assign(dependency, {startX, startY, endX, endY});
+                const { dependency } = this.get();
+                const result = dependency.update();
+                this.set(result);
             }
         }
     };

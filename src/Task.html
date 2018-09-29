@@ -5,7 +5,8 @@
     use:contextMenu
     use:selectable
     class:overlapping="task.overlapping"
-    class:selected="task.selected">
+    class:selected="task.selected"
+    class:moving="task.dragging||task.resizing">
     <div class="task-background" style="width:{task.amountDone}%"></div>
     {task.label}
 </div>
@@ -25,57 +26,37 @@
         height: 100%;
         background: rgba(0, 0, 0, 0.2);
     }
+
+    .selected {
+        background: rgb(255, 255, 82);
+    }
+
+    .overlapping {
+        background: rgb(255, 122, 122);
+    }
+
+    .moving {
+        opacity: 0.5;
+    }
 </style>
 
 <script>
-    import moment from "../node_modules/moment/src/moment.js";
-    import { Utils } from "./task.js";
+    import { DOMUtils } from "./domUtils.js";
     import ContextMenu from "./ContextMenu.html";
 
     const resizeHandleWidth = 15;
 
     let SvelteTask;
 
-    function notify(task) {
-        if(task.dependencies){
-            for(let i = 0; i < task.dependencies.length; i++){
-                task.dependencies[i].update();
-            }
-        }
-    }
 
-    function updatePosition(task, ganttUtils){
-        const left = ganttUtils.getPositionByDate(task.from);
-        const right = ganttUtils.getPositionByDate(task.to); 
-
-        task.left = left;
-        task.width = right - left;
-    }
-
-    function updateDate(task, ganttUtils){
-        const from = ganttUtils.getDateByPosition(task.left);
-        const to = ganttUtils.getDateByPosition(task.left + task.width);
-                   
-        task.from = ganttUtils.roundTo(from);
-        task.to = ganttUtils.roundTo(to);
-    }
-
-    function overlaps(task, task2) {
-        return !(task.left + task.width <= task2.left || task.left >= task2.left + task2.width);
-    }
 
     export default {
         setup(component) {
-            SvelteTask = component;
-            SvelteTask.updatePosition = updatePosition;
-            SvelteTask.overlaps = overlaps;
         },
         oncreate() {
             const { task, row } = this.get();
             task.row = row;
             task.component = this;
-
-            this.updateTaskPosition();
         },
         ondestroy() {
             const { task, row } = this.get();
@@ -92,6 +73,8 @@
 
                 let mouseStartPosX;
                 let mouseStartRight;
+                
+                let originalRow;
 
                 function onmousedown(event) {
                     if(event.which !== 1){
@@ -102,9 +85,9 @@
                     event.stopPropagation();
                     event.preventDefault();
                     console.log('drag down');
-                    task.originalRow = task.row;
+                    originalRow = task.row;
 
-                    mouseStartPosX = Utils.getRelativePos(rowContainerElement, event).x - task.left;
+                    mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
                     mouseStartRight = task.left + task.width;
 
                     if(mouseStartPosX < resizeHandleWidth) {
@@ -120,14 +103,14 @@
                     }
 
                     windowElement.addEventListener('mousemove', onmousemove, false);
-                    Utils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                    DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
                 }
                 
                 function onmousemove(event) {
                     
                     event.preventDefault();
                     if(task.resizing) {
-                        const mousePos = Utils.getRelativePos(rowContainerElement, event);
+                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         
                         if(task.direction === 'left') { //resize ulijevo
                             if(mousePos.x > task.left + task.width) {
@@ -162,7 +145,7 @@
                     }
 
                     if(task.dragging) {
-                        const mousePos = Utils.getRelativePos(rowContainerElement, event);
+                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         task.left = mousePos.x - mouseStartPosX;
 
                         task.component.updateTaskDate();//pomaknuti na kraj funkcije
@@ -204,7 +187,7 @@
                         //task.component.fire('updateVisibleRows');
                     }
                     task.component.set({task:task});
-                    notify(task);
+                    task.notify();
                 }
 
                 function onmouseup(event) {
@@ -216,12 +199,27 @@
                     task.component.fire('taskDropped', { task });
 
                     //code this better
-                    if(task.originalRow && task.originalRow !== task.row) {
-                        task.originalRow.component.taskMoved();
+                    if(originalRow && originalRow !== task.row) {
+                        console.log('moved from original row', originalRow)
+                        originalRow.component.taskMoved();
                     }
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
+
+                const cursorOnMove = (e) => {
+                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
+
+                    //TODO globally set cursor ON mousedown
+                    if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > task.width - resizeHandleWidth) {
+                        this.updateCursor('e-resize');
+                    }
+                    else{
+                        this.updateCursor();
+                    }
+
+                };
+                node.addEventListener('mousemove', cursorOnMove, false)
 
 				return {
 					update() {
@@ -230,6 +228,7 @@
 
 					destroy() {
 						node.removeEventListener('mousedown', onmousedown, false);
+						//windowElement.removeEventListener('mousemove', onmousemove, false);
 						node.removeEventListener('mousemove', onmousemove, false);
 						node.removeEventListener('mouseup', onmouseup, false);
 					}
@@ -260,7 +259,7 @@
                         e.stopPropagation();
                         contextMenuManager.open(options, {x: e.x, y: e.y})
 
-                        Utils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                        DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
                     }
                 });
 
@@ -286,18 +285,16 @@
 		},
         methods: {
 			updateTaskPosition() {
-                const { ganttUtils } = this.store.get();
                 const { task } = this.get();
-                updatePosition(task, ganttUtils);
+                task.updatePosition();
             },
             updateTaskDate() {
-                const { ganttUtils } = this.store.get();
                 const { task } = this.get();
-                updateDate(task, ganttUtils);
+                task.updateDate();
             },
-            updateCursor(){
+            updateCursor(cursor){
                 const element = this.refs.taskElement;
-                element.style.cursor = 'e-resize';
+                element.style.cursor = cursor || 'default';
             }
         },
 
