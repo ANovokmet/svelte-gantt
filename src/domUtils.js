@@ -18,6 +18,10 @@ export class DOMUtils {
         }
     }
 
+    //does mouse position intersect element
+    static intersects(node, event) {
+    }
+
     static addEventListenerOnce(target, type, listener, addOptions, removeOptions) {
         target.addEventListener(type, function fn(event) {
             target.removeEventListener(type, fn, removeOptions);

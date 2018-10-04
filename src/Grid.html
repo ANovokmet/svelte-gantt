@@ -16,7 +16,7 @@
         <div class="row-header-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"> 
             {#each visibleRows as row (row.id)}
                 <RowHeader 
-                    bind:label=row.label/>
+                    label={row.label}/>
             {/each}
         </div>
     </div>
@@ -50,6 +50,9 @@
     </div>
 
 </div>
+<ExternalDiv>
+real content
+</ExternalDiv>
 
 <style>
     .grid {
@@ -117,6 +120,8 @@
 </style>
 
 <script>
+    import ExternalDiv from './ExternalDiv.html';
+
     import Row from './Row.html';
     import RowHeader from './RowHeader.html';
     import Column from './Column.html';
@@ -192,7 +197,7 @@
                 })
             }
         },
-        components: { Row, Column, RowHeader, ColumnHeader, Dependency },
+        components: { Row, Column, RowHeader, ColumnHeader, Dependency, ExternalDiv },
         oncreate(){
             this.initColumns();
             this.store.set({

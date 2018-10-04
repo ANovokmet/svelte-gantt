@@ -7,11 +7,11 @@ import uglify from 'rollup-plugin-uglify';
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-	input: 'src/main.js',
+	input: 'src/Grid.html',
 	output: {
 		sourcemap: true,
 		format: 'iife',
-		name: 'app',
+		name: 'SvelteGantt',
 		file: 'public/bundle.js'
 	},
 	plugins: [

@@ -1,0 +1,135 @@
+<div class="external-div" use:drag>
+    <slot>Fallback content</slot>
+</div>
+
+<style>
+    /*.external-div {
+        display: block;
+    }*/
+
+    .indicator {
+        pointer-events: none;
+        position: absolute;
+    }
+</style>
+
+<script>
+    import { DOMUtils } from "./domUtils.js";
+    //let SvelteGantt;
+
+    export default {
+        setup(component){
+            //SvelteGantt = component;
+            //register gantt store, dom elements etc
+            //SvelteGantt.create = function(target, data, options) {
+
+            //}
+        },
+        oncreate(){
+            
+        },
+        actions: {
+            drag(node) {
+                const { rowContainerElement, ganttUtils } = this.store.get();
+                const windowElement = window;
+                
+                let self = this;
+
+                
+
+                function onmousedown(event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    
+                    const element = self.createElement('yolo');
+                    Object.assign(element.style, {
+                        top: event.pageY+'px',
+                        left: event.pageX+'px'
+                    });
+                    document.body.appendChild(element);
+                    self.set({element, dragging: true});
+
+                    
+
+                    
+
+                    windowElement.addEventListener('mousemove', onmousemove, false);
+                    DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                }
+                
+                function onmousemove(event) {
+
+                    event.preventDefault();
+                    const { dragging } = self.get();
+                    if(dragging) {
+                        const { element } = self.get();
+                        Object.assign(element.style, {
+                            top: event.pageY+'px',
+                            left: event.pageX+'px'
+                        });
+
+
+                    }
+                }
+
+                function onmouseup(event) {
+                    const { element } = self.get();
+                    document.body.removeChild(element);
+                    self.set({dragging: false, element: null});
+
+                    //if over gantt
+                    
+                    const { rowContainerElement, ganttUtils } = self.store.get();
+                    //rowContainerElement.getb
+
+                    if(0){
+                        //create task
+                    }
+                    else{
+                        //fail, return indicator to ex-div
+                        //remove task if created
+                    }
+
+                    windowElement.removeEventListener('mousemove', onmousemove, false);
+                }
+
+                node.addEventListener('mousedown', onmousedown, false);
+
+
+				return {
+					update() {
+                        
+					},
+
+					destroy() {
+						node.removeEventListener('mousedown', onmousedown, false);
+						//windowElement.removeEventListener('mousemove', onmousemove, false);
+						node.removeEventListener('mousemove', onmousemove, false);
+						node.removeEventListener('mouseup', onmouseup, false);
+					}
+				}
+            }
+		},
+        methods: {
+            createElement(text){
+                const element = document.createElement('div');
+				element.textContent = text;
+
+				Object.assign(element.style, {
+                    position: 'absolute',
+					background: '#eee',
+					padding: '0.5em 1em',
+					fontSize: '12px',
+					pointerEvents: 'none',
+                });
+                
+                return element;
+            }
+        },
+        data() {
+            return {
+                dragging: false
+            }
+        }
+    };
+</script>

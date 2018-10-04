@@ -1,5 +1,5 @@
-import SvelteGantt from './Grid.html';
-import moment from "../node_modules/moment/src/moment.js";
+//import SvelteGantt from './Grid.html';
+//import moment from "../node_modules/moment/src/moment.js";
 let startOfToday = moment().startOf('day')
 
 let data = {
@@ -41,5 +41,3 @@ let options = {
 }
 
 var app = SvelteGantt.create(document.body, data, options);
-
-export default app;

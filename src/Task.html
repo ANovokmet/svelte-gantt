@@ -208,7 +208,7 @@
                 node.addEventListener('mousedown', onmousedown, false);
 
                 const cursorOnMove = (e) => {
-                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
+                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - task.left;
 
                     //TODO globally set cursor ON mousedown
                     if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > task.width - resizeHandleWidth) {
