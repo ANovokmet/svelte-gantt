@@ -15,33 +15,36 @@
 
 <script>
     import { DOMUtils } from "./domUtils.js";
+    import moment from "../node_modules/moment/src/moment.js";
+    import SvelteTask from "./task.js";
     //let SvelteGantt;
 
     export default {
         setup(component){
-            //SvelteGantt = component;
-            //register gantt store, dom elements etc
-            //SvelteGantt.create = function(target, data, options) {
 
-            //}
         },
         oncreate(){
             
         },
         actions: {
             drag(node) {
-                const { rowContainerElement, ganttUtils } = this.store.get();
-                const windowElement = window;
-                
-                let self = this;
+                const { ganttUtils } = this.store.get();
+                const windowElement = window, self = this;
 
+                let successful = false;
+                //TODO make these functions gantt instance specific
+                const onmouseenter = (e) => {
+                    successful = true; 
+                };
+                const onmouseleave = (e) => {
+                    successful = false;
+                };
                 
-
                 function onmousedown(event) {
-                    event.stopPropagation();
                     event.preventDefault();
                     
-                    const element = self.createElement('yolo');
+                    const { elementContent } = self.get();
+                    const element = self.createElement(elementContent);
                     Object.assign(element.style, {
                         top: event.pageY+'px',
                         left: event.pageX+'px'
@@ -49,16 +52,15 @@
                     document.body.appendChild(element);
                     self.set({element, dragging: true});
 
-                    
-
-                    
+                    const { rowContainerElement } = self.store.get();
+                    rowContainerElement.addEventListener('mouseenter', onmouseenter);
+                    rowContainerElement.addEventListener('mouseleave', onmouseleave);
 
                     windowElement.addEventListener('mousemove', onmousemove, false);
                     DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
                 }
                 
                 function onmousemove(event) {
-
                     event.preventDefault();
                     const { dragging } = self.get();
                     if(dragging) {
@@ -67,40 +69,50 @@
                             top: event.pageY+'px',
                             left: event.pageX+'px'
                         });
-
-
                     }
                 }
 
                 function onmouseup(event) {
-                    const { element } = self.get();
+                    const { element, onsuccess, onfail, gantt } = self.get();
+                    const { rowContainerElement } = self.store.get();
                     document.body.removeChild(element);
                     self.set({dragging: false, element: null});
 
                     //if over gantt
-                    
-                    const { rowContainerElement, ganttUtils } = self.store.get();
-                    //rowContainerElement.getb
-
-                    if(0){
+                    if(successful){
                         //create task
+                        const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
+                        
+                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+                        const dropDate = ganttUtils.getDateByPosition(mousePos.x);
+
+                        //TODO extract into helper, used in Task
+                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+                        let rowElement = elements.find((element) => element.classList.contains('row'));
+                        if(rowElement !== undefined) {
+                            const { visibleRows } = gantt.store.get();
+                            const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
+                            onsuccess(targetRow, dropDate, ganttUtils);
+                            gantt.set({ visibleRows });
+                        }
                     }
                     else{
+                        onfail();
                         //fail, return indicator to ex-div
                         //remove task if created
                     }
 
+                    rowContainerElement.removeEventListener('mouseenter', onmouseenter);
+                    rowContainerElement.removeEventListener('mouseleave', onmouseleave);
                     windowElement.removeEventListener('mousemove', onmousemove, false);
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
 
-
 				return {
 					update() {
                         
 					},
-
 					destroy() {
 						node.removeEventListener('mousedown', onmousedown, false);
 						//windowElement.removeEventListener('mousemove', onmousemove, false);
@@ -113,8 +125,7 @@
         methods: {
             createElement(text){
                 const element = document.createElement('div');
-				element.textContent = text;
-
+				element.innerHTML = text;
 				Object.assign(element.style, {
                     position: 'absolute',
 					background: '#eee',
@@ -122,13 +133,29 @@
 					fontSize: '12px',
 					pointerEvents: 'none',
                 });
-                
                 return element;
             }
         },
         data() {
             return {
-                dragging: false
+                dragging: false,
+                gantt: null,
+                onsuccess: function(targetRow, dropDate, ganttUtils) {
+                    const newTask = new SvelteTask({
+                                id: 5000+Math.floor(Math.random() * 1000),
+                                label: 'Task #'+4343,
+                                from: dropDate,
+                                to: dropDate.clone().add(3, 'hour'),
+                                amountDone: Math.floor(Math.random() * 100)
+                            }, ganttUtils);
+
+                    targetRow.tasks.push(newTask);
+                    console.log('drop successful');
+                },
+                onfail: function() {
+                    console.log('drop unsucessful');
+                },
+                elementContent: 'yolo'
             }
         }
     };

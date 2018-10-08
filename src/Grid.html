@@ -50,7 +50,7 @@
     </div>
 
 </div>
-<ExternalDiv>
+<ExternalDiv gantt={$gantt}>
 real content
 </ExternalDiv>
 
@@ -202,7 +202,8 @@ real content
             this.initColumns();
             this.store.set({
                 bodyElement: this.refs.mainContainer, 
-                rowContainerElement: this.refs.rowContainer
+                rowContainerElement: this.refs.rowContainer,
+                gantt: this
             });
             
             this.updateVisibleRows(0, this.refs.mainContainer.clientHeight);

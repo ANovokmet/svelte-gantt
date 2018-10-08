@@ -59,7 +59,7 @@
             task.component = this;
         },
         ondestroy() {
-            const { task, row } = this.get();
+            const { task } = this.get();
             if(task.component === this) {
                 task.component = null;
             }
@@ -108,6 +108,8 @@
                 
                 function onmousemove(event) {
                     
+                    const self = task.component;
+
                     event.preventDefault();
                     if(task.resizing) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
@@ -138,29 +140,28 @@
 
                         console.log(mousePos.x, mouseStartPosX)
 
-                        task.component.updateTaskDate();
-                        task.component.updateTaskPosition();
-                        task.component.set({ task });
-                        task.component.fire('taskResized', { task: task });
+                        self.updateTaskDate();
+                        self.updateTaskPosition();
+                        self.set({ task });
+                        self.fire('taskResized', { task: task });
                     }
 
                     if(task.dragging) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         task.left = mousePos.x - mouseStartPosX;
 
-                        task.component.updateTaskDate();//pomaknuti na kraj funkcije
-                        task.component.updateTaskPosition();
+                        self.updateTaskDate();//pomaknuti na kraj funkcije
+                        self.updateTaskPosition();
                         
                         //row switching
                         const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
                         const sourceRow = task.row;
-                        let targetRow;
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-                            const { visibleRows } = task.component.store.get();
+                            const { visibleRows } = self.store.get();
 
                             const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
                             console.log('move task to '+targetRow.label, targetRow);
@@ -176,17 +177,17 @@
                                 }
                             }
                             sourceRow.tasks.splice(i, 1);
-                            task.component.store.set({visibleRows: visibleRows});
+                            self.store.set({visibleRows: visibleRows});
                             
                             //targetRow.component.movedRow();
                             //sourceRow.component.movedRow();
-                            task.component.fire('taskRemovedRow', { task: task, row: targetRow });
+                            self.fire('taskRemovedRow', { task: task, row: targetRow });
                             targetRow.component.taskAdded();
                         }
-                        task.component.fire('taskMoved', { task: task });
+                        self.fire('taskMoved', { task: task });
                         //task.component.fire('updateVisibleRows');
                     }
-                    task.component.set({task:task});
+                    self.set({task:task});
                     task.notify();
                 }
 
