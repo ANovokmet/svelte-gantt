@@ -1,4 +1,4 @@
-.grid.svelte-95ghe2{width:100%;position:relative;font-family:tahoma, arial, verdana, Sans-serif;font-size:10px;color:#656565}.column-container.svelte-95ghe2{position:absolute;height:100%;float:left;overflow:hidden}.dependency-container.svelte-95ghe2{position:absolute;width:100%;height:100%;pointer-events:none;top:0;float:left;overflow:hidden}.row-container.svelte-95ghe2{width:100%;box-sizing:border-box}.row-header-container.svelte-95ghe2{box-sizing:border-box}.side-container.svelte-95ghe2{width:100px;float:left;overflow-y:hidden}.main-container.svelte-95ghe2{overflow:auto}.side-header-container.svelte-95ghe2{float:left}.main-header-container.svelte-95ghe2{position:relative;overflow:hidden}.content.svelte-95ghe2{position:relative}
+.grid.svelte-qkkmke{width:100%;position:relative;font-family:tahoma, arial, verdana, Sans-serif;font-size:10px;color:#656565}.column-container.svelte-qkkmke{position:absolute;height:100%;float:left;overflow:hidden}.row-container.svelte-qkkmke{width:100%;box-sizing:border-box}.row-header-container.svelte-qkkmke{box-sizing:border-box}.side-container.svelte-qkkmke{width:100px;float:left;overflow-y:hidden}.main-container.svelte-qkkmke{overflow:auto}.side-header-container.svelte-qkkmke{float:left}.main-header-container.svelte-qkkmke{position:relative;overflow:hidden}.content.svelte-qkkmke{position:relative}
 .row.svelte-xbfcv7{position:relative;width:100%;border-bottom:#efefef 1px solid;box-sizing:border-box}
 .row-header.svelte-1eq15f5{position:relative;height:24px;border-bottom:#efefef 1px solid;background-color:#fbfbfb;font-weight:bold;box-sizing:border-box}
 .column.svelte-1ros3s7{position:relative;display:inline-block;height:100%;border-left:#efefef 1px solid;box-sizing:border-box}
@@ -7,5 +7,6 @@
 .dependency.svelte-1uamtlx{position:absolute;width:100%;height:100%}
 .context-menu.svelte-1ps9bwa{position:absolute;background:white;border:1px solid #ccc;padding:0.25em 0;font-size:12px;transition:opacity 0.4s ease 0s;opacity:1;box-shadow:rgba(0, 0, 0, 0.32) 1px 1px 3px 0px}.context-option.svelte-1ps9bwa:hover{background:#eee}.context-option.svelte-1ps9bwa{cursor:default;padding:0.2em 1em}
 .arrow.svelte-m8v62h{position:absolute;left:0px;pointer-events:none}.select-area.svelte-m8v62h{pointer-events:visible;position:absolute}
+.dependency-container.svelte-mvwfh8{position:absolute;width:100%;height:100%;pointer-events:none;top:0;float:left;overflow:hidden}
 
 /*# sourceMappingURL=bundle.css.map */

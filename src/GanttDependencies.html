@@ -1,0 +1,93 @@
+<div class="dependency-container">
+    {#each visibleDependencies as dependency (dependency.id)}
+        <Dependency fromTask={dependency.fromTask} 
+            toTask={dependency.toTask}
+            {dependency}/>
+    {/each}
+</div>
+
+<style>
+    .dependency-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        
+        pointer-events: none;
+        top: 0;
+        float: left;
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    import Dependency from './Dependency.html';
+    import SvelteDependency from './dependency.js';
+    import { DOMUtils } from "./domUtils.js";
+
+    export default {
+        setup(component) {
+
+        },
+        components: { Dependency },
+        oncreate() {
+            this.fire('init', {module: this});
+        },
+        methods: {
+            initModule (options) {
+                this.set(options);
+                const {_gantt} = this.get();
+                const {dependencies, _allTasks} = _gantt.get();
+
+                for(let i=0; i < dependencies.length; i++){
+                    let dependency = dependencies[i];
+                    const fromTask = _allTasks.find(t => t.id == dependency.fromTask);
+                    const toTask = _allTasks.find(t => t.id == dependency.toTask);
+                    dependency.fromTask = fromTask;
+                    dependency.toTask = toTask;
+
+                    dependencies[i] = new SvelteDependency(dependency, _gantt.store.get());
+                }
+            },
+            updateVisible({scrollTop, viewportHeight}){
+                const { dependencies } = this.get()._options;
+
+                //interval tree or just debounce a bit
+                const visibleDependencies = [];
+                
+                const viewportTop = scrollTop;
+                const viewportBottom = scrollTop + viewportHeight;
+
+                for(let i = 0; i < dependencies.length; i++){
+                    const dependency = dependencies[i];
+                    let { startY, endY } = dependency;
+                    
+                    //let yMax = Math.max(startY, endY);//can be done 
+                    //let yMin = Math.min(startY, endY);//with an if //todo research performance
+                    let yMax, yMin;
+                    if(startY > endY){
+                        yMax = startY;
+                        yMin = endY;
+                    }
+                    else{
+                        yMax = endY;
+                        yMin = startY;
+                    }
+
+                    if(!(yMax < viewportTop && yMin < viewportTop || yMax > viewportBottom && yMin > viewportBottom)) {
+                        //cant see dependency
+                        visibleDependencies.push(dependency);
+                    }
+                }
+
+                this.set({ visibleDependencies });
+            }
+        },
+        data() {
+            return {
+                _gantt: null, //gantt this
+                _options: {}, //gantt this.get()
+                visibleDependencies: []
+            }
+        }
+    };
+</script>
