@@ -22,11 +22,12 @@
 <script>
     import Dependency from './Dependency.html';
     import SvelteDependency from './dependency.js';
-    import { DOMUtils } from "./domUtils.js";
 
     export default {
         setup(component) {
-
+            component.bindToGantt = function (params) {
+                params.ganttBodyModules.push(component);
+            }
         },
         components: { Dependency },
         oncreate() {
@@ -48,14 +49,14 @@
                     dependencies[i] = new SvelteDependency(dependency, _gantt.store.get());
                 }
             },
-            updateVisible({scrollTop, viewportHeight}){
+            updateVisible({scrollAmount, viewportHeight}){
                 const { dependencies } = this.get()._options;
 
                 //interval tree or just debounce a bit
                 const visibleDependencies = [];
                 
-                const viewportTop = scrollTop;
-                const viewportBottom = scrollTop + viewportHeight;
+                const viewportTop = scrollAmount;
+                const viewportBottom = scrollAmount + viewportHeight;
 
                 for(let i = 0; i < dependencies.length; i++){
                     const dependency = dependencies[i];

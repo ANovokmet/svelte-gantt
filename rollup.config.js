@@ -7,7 +7,7 @@ import uglify from 'rollup-plugin-uglify';
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-	input: 'src/Grid.html',
+	input: 'src/Gantt.html',
 	output: {
 		sourcemap: true,
 		format: 'iife',

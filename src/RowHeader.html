@@ -1,14 +1,24 @@
-<div class="row-header">
-    {label}
+<div class="row-header-row" style="height:{$rowHeight}px">
+    {#each headers as header}
+        <div class="row-header-cell" style="width:{header.width}px">
+            {row[header.property]}
+        </div>
+    {/each}
 </div>
 <style>
-    .row-header {
+    .row-header-row {
         position: relative;
-        height: 24px;
 
-        border-bottom: #efefef 1px solid;    
-        background-color: #fbfbfb;
+        border-bottom: #efefef 1px solid;  
         font-weight: bold;
+        box-sizing: border-box;
+        background-color: #fbfbfb;    
+    }
+
+    :global(.row-header-cell) {
+        display: inline-block;  
+        border-left: 1px solid #eee;
+        height: 100%;
         box-sizing: border-box;
     }
 </style>
@@ -17,9 +27,16 @@
         oncreate(){
             
         },
+        helpers: {
+            getValue(header) {
+
+            }
+        },
         data() {
             return {
-                label: ''
+                label: '',
+                row: null,
+                headers: null
             }
         }
     }

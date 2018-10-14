@@ -60,6 +60,7 @@
         },
         ondestroy() {
             const { task } = this.get();
+            //does automatically (?)
             if(task.component === this) {
                 task.component = null;
             }
@@ -198,6 +199,7 @@
                     task.direction = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
                     task.component.fire('taskDropped', { task });
+                    task.component.set({task});
 
                     //code this better
                     if(originalRow && originalRow !== task.row) {

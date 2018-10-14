@@ -1,8 +1,7 @@
-<div class="grid" use:disableContextMenu>
-
-    <div class="side-header-container" style="width:100px" ref:sideHeaderContainer>
-    
-    </div>
+<div class="gantt" use:disableContextMenu>
+    {#each _ganttTableModules as module (module.key)}
+        <svelte:component this={module} on:init="initModule(event.module)" {visibleRows}/>
+    {/each}
 
     <div class="main-header-container" use:horizontalScrollListener  ref:sideContainer>
         <div class="header-container" style="width:{$width}px">
@@ -12,33 +11,21 @@
         </div>
     </div>
 
-    <div class="side-container" style="height:{$height}px" use:scrollListener>
-        <div class="row-header-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"> 
-            {#each visibleRows as row (row.id)}
-                <RowHeader 
-                    label={row.label}/>
-            {/each}
-        </div>
-    </div>
-
     <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer>
         <div class="content" style="width:{$width}px">
-            
-
             <div class="column-container">
                 {#each columns as column}
                     <Column width={column.width}/>
                 {/each}
-            </div>    
+            </div>
             <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
                 ref:rowContainer>
                 {#each visibleRows as row (row.id)}
                     <Row row={row}
-                        width={width}
                         on:updateVisibleRows="updateViewport()"/>
                 {/each}
             </div>
-            {#each _modulesContainer as module (module.key)}
+            {#each _ganttBodyModules as module (module.key)}
                 <svelte:component this={module} on:init="initModule(event.module)" />
             {/each}
         </div>
@@ -50,7 +37,7 @@ real content
 </ExternalDiv>
 
 <style>
-    .grid {
+    .gantt {
         width: 100%;
         position: relative;
         font-family: tahoma, arial, verdana, Sans-serif;
@@ -66,33 +53,15 @@ real content
         overflow: hidden;
     }
 
-
-
     .row-container {
         width: 100%;
         /* display: inline-block; */
         box-sizing: border-box;
     }
 
-    .row-header-container {
-        
-        box-sizing: border-box;
-    }
-
-
-    .side-container {
-        width: 100px;
-        float: left;
-        overflow-y: hidden;
-    }
-
     .main-container {
         /* position: relative; */
         overflow: auto;
-    }
-
-    .side-header-container {
-        float: left;
     }
 
     .main-header-container {
@@ -104,6 +73,9 @@ real content
         position: relative;
     }
 
+    :global(*) {
+        box-sizing: border-box;
+    }
 </style>
 
 <script>
@@ -121,7 +93,8 @@ real content
     import Task from "./Task.html";
     import SvelteTask from "./task.js";
 
-    import GanttDependencies from './GanttDependencies.html';
+    import GanttDependencies from './modules/dependencies/GanttDependencies.html';
+    import Table from './modules/table/Table.html';
 
     let SvelteGantt;
 
@@ -129,22 +102,54 @@ real content
         setup(component){
             SvelteGantt = component;
             SvelteGantt.defaults = {
-				width: 800,
-				height: 400,
-				magnetOffset: 15,
-				magnetUnit: 'minute',
-				headerHeight: 100,
-				headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
-				rowHeight: 24
+                // datetime timeline starts on, currently moment-js object
+                from: null,
+                // datetime timeline ends on, currently moment-js object
+                to: null,
+                // width of main gantt area in px
+                width: 800,
+                // height of main gantt area in px
+                height: 400,
+                // minimum unit of time task date values will round to 
+                magnetUnit: 'minute',
+                // amount of units task date values will round to
+                magnetOffset: 15,
+                // list of headers used for main gantt area
+                // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+                // format: datetime format used for header cell label
+                headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+                // height of a single row in px
+                rowHeight: 24,
+                // modules used in gantt
+                modules: []
             };
 
             SvelteGantt.create = function(target, data, options) {
 
-                const store = new Store();
+                const ganttModules = {
+                    ganttBodyModules: [],
+                    ganttTableModules: [],
+                    defaults: {}
+                }
 
-                const ganttOptions = Object.assign({}, SvelteGantt.defaults, options);
+                // delete when each module gets built into separate js
+                options.modules = [Table, GanttDependencies];
+                if(options.modules) {
+                    options.modules.forEach((module) => {
+                        module.bindToGantt(ganttModules);
+                    })
+                }
+
+                Object.assign(data, {
+                    _ganttBodyModules: ganttModules.ganttBodyModules,
+                    _ganttTableModules: ganttModules.ganttTableModules
+                });
+
+
+                const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
                 const ganttUtils = new GanttUtils(ganttOptions);
 
+                const store = new Store();
                 store.set(ganttOptions);
                 store.set({ 
                     rows: data.rows,
@@ -170,10 +175,10 @@ real content
                     target,
                     data,
                     store
-                })
+                });
             }
         },
-        components: { Row, Column, RowHeader, ColumnHeader, ExternalDiv },
+        components: { Row, Column, ColumnHeader, ExternalDiv },
         oncreate(){
             this.initColumns();
             this.store.set({
@@ -182,12 +187,9 @@ real content
                 gantt: this
             });
             
-            this.updateVisibleRows(this.refs.mainContainer.scrollTop, this.refs.mainContainer.clientHeight);
-            this.broadcastModules('updateVisible', {
-                scrollAmount: this.refs.mainContainer.scrollTop, 
-                viewportHeight: this.refs.mainContainer.clientHeight
-            });
-            this.updateHeaderHeight();
+            this.updateViewport();
+            
+            this.broadcastModules('onGanttCreated');
         },
         actions: {
             disableContextMenu(node) {
@@ -267,18 +269,17 @@ real content
                 console.log('['+startIndex+','+endIndex+']');
 
                 const paddingTop = startIndex * rowHeight;
-                const paddingBottom = rows.length * rowHeight - viewportHeight - paddingTop;
-
+                const paddingBottom = (rows.length - endIndex - 1) * rowHeight;
 
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
                 //only horizontal scroll
                 visibleRows.forEach(row => {
                     row.visibleTasks = this.visibleTasks(row);
-                })
+                });
 
-                this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
-                this.store.set({ visibleRows });
+                this.set({ visibleRows, paddingTop, paddingBottom });
+                this.store.set({ visibleRows, paddingTop, paddingBottom });
             },
             visibleTasks(row){
                 const scrollLeft = this.refs.mainContainer.scrollLeft;
@@ -315,10 +316,6 @@ real content
                 }
 
                 this.set({ columns });
-            },
-            updateHeaderHeight() {
-                const height = this.refs.sideContainer.clientHeight;
-                this.refs.sideHeaderContainer.style.height = height + 'px';
             }
         },
         data() {
@@ -326,8 +323,12 @@ real content
                 columns: [],
                 scrollables: [],
                 visibleRows: [],
-                _modulesContainer: [GanttDependencies],
-                _modules: []
+                _ganttBodyModules: [],
+                _ganttTableModules: [],
+                _modules: [],
+
+                paddingTop: 0,
+                paddingBottom: 0
             }
         },
         computed: {

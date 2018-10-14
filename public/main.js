@@ -37,7 +37,8 @@ let options = {
 	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
 	width: 1000,
 	from: startOfToday,
-	to: moment().endOf('day')
+	to: moment().endOf('day'),
+	tableHeaders: [{title: 'ID', property: 'id', width: 20}, {title: 'Label', property: 'label', width: 80}]
 }
 
 var app = SvelteGantt.create(document.body, data, options);

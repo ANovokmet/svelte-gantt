@@ -1,0 +1,97 @@
+<div class="table-container" style="width:{$tableWidth}px;">
+    <div class="table-header-container" style="width:{scrollWidth}px" ref:sideHeaderContainer>
+        {#each $tableHeaders as header}
+            <div class="row-header-cell" style="width:{header.width}px">
+                {header.title}
+            </div>
+        {/each}
+    </div>
+
+    <div class="table-scroll-container" style="height:{$height}px;" ref:scrollable>
+        <div class="table-row-container" style="padding-top:{$paddingTop}px;padding-bottom:{$paddingBottom}px;height:{$rowContainerHeight}px;width:{scrollWidth}px"> 
+            {#each visibleRows as row (row.id)}
+                <RowHeader
+                    row={row}
+                    headers={$tableHeaders}/>
+            {/each}
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-container {
+        height:100%;
+        float: left;
+        position: relative;
+    }
+
+    .table-header-container {
+        width: 100%;
+        border-bottom: #efefef 1px solid; 
+        background-color: #fbfbfb; 
+        box-sizing: border-box;
+    }
+
+    .table-row-container {
+        box-sizing: border-box;
+    }
+
+    .table-scroll-container {
+        width: 100%;
+        overflow-y: hidden;
+    }
+</style>
+<script>
+    import RowHeader from '../../RowHeader.html';
+
+    export default {
+        setup(component) {
+            component.defaults = {
+                // list of columns used in the table
+                // title: label to display in the header
+                // property: property of row to display in the cell
+                // width: width of column
+                tableHeaders: [{title: 'Name', property: 'label', width: 100}],
+                // total width of the table, if width is smaller than sum of column widths, a scrollbar shows
+                tableWidth: 100
+            }
+
+            component.bindToGantt = function (params) {
+                params.ganttTableModules.push(component);
+                Object.assign(params.defaults, component.defaults);
+            }
+        },
+        components: { RowHeader },
+        oncreate(){
+            this.fire('init', {module: this});
+        },
+        methods: {
+            initModule (options) {
+                this.set(options);
+                const {_gantt} = this.get();
+                const {scrollables} = _gantt.get();
+                scrollables.push({node: this.refs.scrollable});
+            },
+            onGanttCreated() {
+                const {_gantt} = this.get();
+
+                const height = _gantt.refs.sideContainer.clientHeight;
+                this.refs.sideHeaderContainer.style.height = height + 'px';
+            }
+        },
+        data() {
+            return {
+                visibleRows: null
+            }
+        },
+        computed: {
+            scrollWidth: ({$tableHeaders}) => {
+                let sum = 0;
+                $tableHeaders.forEach(header => {
+                    sum += header.width;
+                });
+                return sum;
+            }
+        }
+    }
+</script>

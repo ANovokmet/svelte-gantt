@@ -30,30 +30,25 @@
 
     export default {
         oncreate() {
-            
             const { header } = this.get();
-
             const { from, width, ganttUtils } = this.store.get();
             const columnWidth = ganttUtils.getPositionByDate(from.clone().add(1, header.unit));
-            
             const columnCount = Math.ceil(width / columnWidth) 
 
-            var headers = [];
-            
-            
-
-            var headerTime = from.clone();
+            const headers = [];
+            let headerTime = from.clone();
 
             for(let i=0; i< columnCount; i++){
                 headers.push({width: columnWidth, label: headerTime.format(header.format)});
                 headerTime.add(1, header.unit);
             }
 
-            this.set({headers: headers});
+            this.set({headers});
         },
         data(){
             return {
-                headers: []
+                headers: [],
+                width: null
             }
         }
     };

@@ -5401,6 +5401,7 @@ var SvelteGantt = (function () {
 	}
 	function ondestroy() {
 	    const { task } = this.get();
+	    //does automatically (?)
 	    if(task.component === this) {
 	        task.component = null;
 	    }
@@ -5538,6 +5539,7 @@ var SvelteGantt = (function () {
 	                    task.direction = null;
 	                    windowElement.removeEventListener('mousemove', onmousemove, false);
 	                    task.component.fire('taskDropped', { task });
+	                    task.component.set({task});
 
 	                    //code this better
 	                    if(originalRow && originalRow !== task.row) {
@@ -6055,7 +6057,9 @@ var SvelteGantt = (function () {
 
 	function data$3() {
 	    return {
-	        label: ''
+	        label: '',
+	        row: null,
+	        headers: null
 	    }
 	}
 	function oncreate$4(){
@@ -6064,25 +6068,62 @@ var SvelteGantt = (function () {
 	const file$4 = "src\\RowHeader.html";
 
 	function create_main_fragment$4(component, ctx) {
-		var div, text, current;
+		var div, current;
+
+		var each_value = ctx.headers;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block$2(component, get_each_context$2(ctx, each_value, i));
+		}
 
 		return {
 			c: function create() {
 				div = createElement("div");
-				text = createText(ctx.label);
-				div.className = "row-header svelte-1eq15f5";
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
+				div.className = "row-header-row svelte-18quonn";
+				setStyle(div, "height", "" + ctx.$rowHeight + "px");
 				addLoc(div, file$4, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
 				insert(target, div, anchor);
-				append(div, text);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].m(div, null);
+				}
+
 				current = true;
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.label) {
-					setData(text, ctx.label);
+				if (changed.headers || changed.row) {
+					each_value = ctx.headers;
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context$2(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block$2(component, child_ctx);
+							each_blocks[i].c();
+							each_blocks[i].m(div, null);
+						}
+					}
+
+					for (; i < each_blocks.length; i += 1) {
+						each_blocks[i].d(1);
+					}
+					each_blocks.length = each_value.length;
+				}
+
+				if (changed.$rowHeight) {
+					setStyle(div, "height", "" + ctx.$rowHeight + "px");
 				}
 			},
 
@@ -6098,17 +6139,68 @@ var SvelteGantt = (function () {
 				if (detach) {
 					detachNode(div);
 				}
+
+				destroyEach(each_blocks, detach);
 			}
 		};
+	}
+
+	// (2:4) {#each headers as header}
+	function create_each_block$2(component, ctx) {
+		var div, text_value = ctx.row[ctx.header.property], text;
+
+		return {
+			c: function create() {
+				div = createElement("div");
+				text = createText(text_value);
+				div.className = "row-header-cell";
+				setStyle(div, "width", "" + ctx.header.width + "px");
+				addLoc(div, file$4, 2, 8, 99);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div, anchor);
+				append(div, text);
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.row || changed.headers) && text_value !== (text_value = ctx.row[ctx.header.property])) {
+					setData(text, text_value);
+				}
+
+				if (changed.headers) {
+					setStyle(div, "width", "" + ctx.header.width + "px");
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div);
+				}
+			}
+		};
+	}
+
+	function get_each_context$2(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.header = list[i];
+		child_ctx.each_value = list;
+		child_ctx.header_index = i;
+		return child_ctx;
 	}
 
 	function RowHeader(options) {
 		this._debugName = '<RowHeader>';
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
-		this._state = assign(data$3(), options.data);
-		if (!('label' in this._state)) console.warn("<RowHeader> was created without expected data property 'label'");
+		this._state = assign(assign(this.store._init(["rowHeight"]), data$3()), options.data);
+		this.store._add(this, ["rowHeight"]);
+		if (!('$rowHeight' in this._state)) console.warn("<RowHeader> was created without expected data property '$rowHeight'");
+		if (!('headers' in this._state)) console.warn("<RowHeader> was created without expected data property 'headers'");
+		if (!('row' in this._state)) console.warn("<RowHeader> was created without expected data property 'row'");
 		this._intro = !!options.intro;
+
+		this._handlers.destroy = [removeFromStore];
 
 		this._fragment = create_main_fragment$4(this, this._state);
 
@@ -6203,30 +6295,25 @@ var SvelteGantt = (function () {
 
 	function data$4(){
 	    return {
-	        headers: []
+	        headers: [],
+	        width: null
 	    }
 	}
 	function oncreate$5() {
-	    
 	    const { header } = this.get();
-
 	    const { from, width, ganttUtils } = this.store.get();
 	    const columnWidth = ganttUtils.getPositionByDate(from.clone().add(1, header.unit));
-	    
 	    const columnCount = Math.ceil(width / columnWidth); 
 
-	    var headers = [];
-	    
-	    
-
-	    var headerTime = from.clone();
+	    const headers = [];
+	    let headerTime = from.clone();
 
 	    for(let i=0; i< columnCount; i++){
 	        headers.push({width: columnWidth, label: headerTime.format(header.format)});
 	        headerTime.add(1, header.unit);
 	    }
 
-	    this.set({headers: headers});
+	    this.set({headers});
 	}
 	const file$6 = "src\\ColumnHeader.html";
 
@@ -6238,7 +6325,7 @@ var SvelteGantt = (function () {
 		var each_blocks = [];
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			each_blocks[i] = create_each_block$2(component, get_each_context$2(ctx, each_value, i));
+			each_blocks[i] = create_each_block$3(component, get_each_context$3(ctx, each_value, i));
 		}
 
 		return {
@@ -6268,12 +6355,12 @@ var SvelteGantt = (function () {
 					each_value = ctx.headers;
 
 					for (var i = 0; i < each_value.length; i += 1) {
-						const child_ctx = get_each_context$2(ctx, each_value, i);
+						const child_ctx = get_each_context$3(ctx, each_value, i);
 
 						if (each_blocks[i]) {
 							each_blocks[i].p(changed, child_ctx);
 						} else {
-							each_blocks[i] = create_each_block$2(component, child_ctx);
+							each_blocks[i] = create_each_block$3(component, child_ctx);
 							each_blocks[i].c();
 							each_blocks[i].m(div, null);
 						}
@@ -6309,7 +6396,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (3:4) {#each headers as header}
-	function create_each_block$2(component, ctx) {
+	function create_each_block$3(component, ctx) {
 		var div, text_value = ctx.header.label || 'N/A', text;
 
 		return {
@@ -6344,7 +6431,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	function get_each_context$2(ctx, list, i) {
+	function get_each_context$3(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.header = list[i];
 		child_ctx.each_value = list;
@@ -6666,7 +6753,7 @@ var SvelteGantt = (function () {
 	    }
 	}
 
-	/* src\Arrow.html generated by Svelte v2.13.4 */
+	/* src\modules\dependencies\Arrow.html generated by Svelte v2.13.4 */
 
 	//dependency -> props: from-task, to-task
 	//arrow -> start x,y -> end x,y
@@ -6753,7 +6840,7 @@ var SvelteGantt = (function () {
 	function oncreate$6() {
 
 	}
-	const file$7 = "src\\Arrow.html";
+	const file$7 = "src\\modules\\dependencies\\Arrow.html";
 
 	function create_main_fragment$7(component, ctx) {
 		var svg, path_1, path_2, current;
@@ -6878,7 +6965,7 @@ var SvelteGantt = (function () {
 		}
 	};
 
-	/* src\Dependency.html generated by Svelte v2.13.4 */
+	/* src\modules\dependencies\Dependency.html generated by Svelte v2.13.4 */
 
 	function data$6() {
 	    return {
@@ -6914,7 +7001,7 @@ var SvelteGantt = (function () {
 	    fromTask.unsubscribe(this);
 	    toTask.unsubscribe(this);
 	}
-	const file$8 = "src\\Dependency.html";
+	const file$8 = "src\\modules\\dependencies\\Dependency.html";
 
 	function create_main_fragment$8(component, ctx) {
 		var div, current;
@@ -7040,7 +7127,7 @@ var SvelteGantt = (function () {
 	    }
 	}
 
-	/* src\GanttDependencies.html generated by Svelte v2.13.4 */
+	/* src\modules\dependencies\GanttDependencies.html generated by Svelte v2.13.4 */
 
 	function data$7() {
 	    return {
@@ -7065,14 +7152,14 @@ var SvelteGantt = (function () {
 	            dependencies[i] = new SvelteDependency(dependency, _gantt.store.get());
 	        }
 	    },
-	    updateVisible({scrollTop, viewportHeight}){
+	    updateVisible({scrollAmount, viewportHeight}){
 	        const { dependencies } = this.get()._options;
 
 	        //interval tree or just debounce a bit
 	        const visibleDependencies = [];
 	        
-	        const viewportTop = scrollTop;
-	        const viewportBottom = scrollTop + viewportHeight;
+	        const viewportTop = scrollAmount;
+	        const viewportBottom = scrollAmount + viewportHeight;
 
 	        for(let i = 0; i < dependencies.length; i++){
 	            const dependency = dependencies[i];
@@ -7103,7 +7190,12 @@ var SvelteGantt = (function () {
 	function oncreate$8() {
 	    this.fire('init', {module: this});
 	}
-	const file$9 = "src\\GanttDependencies.html";
+	function setup$2(component) {
+	    component.bindToGantt = function (params) {
+	        params.ganttBodyModules.push(component);
+	    };
+	}
+	const file$9 = "src\\modules\\dependencies\\GanttDependencies.html";
 
 	function create_main_fragment$9(component, ctx) {
 		var div, each_blocks_1 = [], each_lookup = blankObject(), current;
@@ -7113,9 +7205,9 @@ var SvelteGantt = (function () {
 		const get_key = ctx => ctx.dependency.id;
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			let child_ctx = get_each_context$3(ctx, each_value, i);
+			let child_ctx = get_each_context$4(ctx, each_value, i);
 			let key = get_key(child_ctx);
-			each_blocks_1[i] = each_lookup[key] = create_each_block$3(component, key, child_ctx);
+			each_blocks_1[i] = each_lookup[key] = create_each_block$4(component, key, child_ctx);
 		}
 
 		return {
@@ -7137,7 +7229,7 @@ var SvelteGantt = (function () {
 
 			p: function update(changed, ctx) {
 				const each_value = ctx.visibleDependencies;
-				each_blocks_1 = updateKeyedEach(each_blocks_1, component, changed, get_key, 1, ctx, each_value, each_lookup, div, outroAndDestroyBlock, create_each_block$3, "i", null, get_each_context$3);
+				each_blocks_1 = updateKeyedEach(each_blocks_1, component, changed, get_key, 1, ctx, each_value, each_lookup, div, outroAndDestroyBlock, create_each_block$4, "i", null, get_each_context$4);
 			},
 
 			i: function intro(target, anchor) {
@@ -7166,7 +7258,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (2:4) {#each visibleDependencies as dependency (dependency.id)}
-	function create_each_block$3(component, key_1, ctx) {
+	function create_each_block$4(component, key_1, ctx) {
 		var first, current;
 
 		var dependency_initial_data = {
@@ -7228,7 +7320,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	function get_each_context$3(ctx, list, i) {
+	function get_each_context$4(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.dependency = list[i];
 		child_ctx.each_value = list;
@@ -7268,7 +7360,379 @@ var SvelteGantt = (function () {
 	GanttDependencies.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	};
 
-	/* src\Grid.html generated by Svelte v2.13.4 */
+	setup$2(GanttDependencies);
+
+	/* src\modules\table\Table.html generated by Svelte v2.13.4 */
+
+	function scrollWidth({$tableHeaders}) {
+	    let sum = 0;
+	    $tableHeaders.forEach(header => {
+	        sum += header.width;
+	    });
+	    return sum;
+	}
+
+	function data$8() {
+	    return {
+	        visibleRows: null
+	    }
+	}
+	var methods$7 = {
+	    initModule (options) {
+	        this.set(options);
+	        const {_gantt} = this.get();
+	        const {scrollables} = _gantt.get();
+	        scrollables.push({node: this.refs.scrollable});
+	    },
+	    onGanttCreated() {
+	        const {_gantt} = this.get();
+
+	        const height = _gantt.refs.sideContainer.clientHeight;
+	        this.refs.sideHeaderContainer.style.height = height + 'px';
+	    }
+	};
+
+	function oncreate$9(){
+	    this.fire('init', {module: this});
+	}
+	function setup$3(component) {
+	    component.defaults = {
+	        // list of columns used in the table
+	        // title: label to display in the header
+	        // property: property of row to display in the cell
+	        // width: width of column
+	        tableHeaders: [{title: 'Name', property: 'label', width: 100}],
+	        // total width of the table, if width is smaller than sum of column widths, a scrollbar shows
+	        tableWidth: 100
+	    };
+
+	    component.bindToGantt = function (params) {
+	        params.ganttTableModules.push(component);
+	        Object.assign(params.defaults, component.defaults);
+	    };
+	}
+	const file$10 = "src\\modules\\table\\Table.html";
+
+	function create_main_fragment$10(component, ctx) {
+		var div, div_1, text_1, div_2, div_3, each_1_blocks_1 = [], each_1_lookup = blankObject(), current;
+
+		var each_value = ctx.$tableHeaders;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block$5(component, get_each_context$5(ctx, each_value, i));
+		}
+
+		var each_value_1 = ctx.visibleRows;
+
+		const get_key = ctx => ctx.row.id;
+
+		for (var i = 0; i < each_value_1.length; i += 1) {
+			let child_ctx = get_each_1_context(ctx, each_value_1, i);
+			let key = get_key(child_ctx);
+			each_1_blocks_1[i] = each_1_lookup[key] = create_each_block_1(component, key, child_ctx);
+		}
+
+		return {
+			c: function create() {
+				div = createElement("div");
+				div_1 = createElement("div");
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
+
+				text_1 = createText("\r\n\r\n    ");
+				div_2 = createElement("div");
+				div_3 = createElement("div");
+
+				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].c();
+				div_1.className = "table-header-container svelte-nxm906";
+				setStyle(div_1, "width", "" + ctx.scrollWidth + "px");
+				addLoc(div_1, file$10, 1, 4, 66);
+				div_3.className = "table-row-container svelte-nxm906";
+				setStyle(div_3, "padding-top", "" + ctx.$paddingTop + "px");
+				setStyle(div_3, "padding-bottom", "" + ctx.$paddingBottom + "px");
+				setStyle(div_3, "height", "" + ctx.$rowContainerHeight + "px");
+				setStyle(div_3, "width", "" + ctx.scrollWidth + "px");
+				addLoc(div_3, file$10, 10, 8, 449);
+				div_2.className = "table-scroll-container svelte-nxm906";
+				setStyle(div_2, "height", "" + ctx.$height + "px");
+				addLoc(div_2, file$10, 9, 4, 360);
+				div.className = "table-container svelte-nxm906";
+				setStyle(div, "width", "" + ctx.$tableWidth + "px");
+				addLoc(div, file$10, 0, 0, 0);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div, anchor);
+				append(div, div_1);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].m(div_1, null);
+				}
+
+				component.refs.sideHeaderContainer = div_1;
+				append(div, text_1);
+				append(div, div_2);
+				append(div_2, div_3);
+
+				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].i(div_3, null);
+
+				component.refs.scrollable = div_2;
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				if (changed.$tableHeaders) {
+					each_value = ctx.$tableHeaders;
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context$5(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block$5(component, child_ctx);
+							each_blocks[i].c();
+							each_blocks[i].m(div_1, null);
+						}
+					}
+
+					for (; i < each_blocks.length; i += 1) {
+						each_blocks[i].d(1);
+					}
+					each_blocks.length = each_value.length;
+				}
+
+				if (!current || changed.scrollWidth) {
+					setStyle(div_1, "width", "" + ctx.scrollWidth + "px");
+				}
+
+				const each_value_1 = ctx.visibleRows;
+				each_1_blocks_1 = updateKeyedEach(each_1_blocks_1, component, changed, get_key, 1, ctx, each_value_1, each_1_lookup, div_3, outroAndDestroyBlock, create_each_block_1, "i", null, get_each_1_context);
+
+				if (!current || changed.$paddingTop) {
+					setStyle(div_3, "padding-top", "" + ctx.$paddingTop + "px");
+				}
+
+				if (!current || changed.$paddingBottom) {
+					setStyle(div_3, "padding-bottom", "" + ctx.$paddingBottom + "px");
+				}
+
+				if (!current || changed.$rowContainerHeight) {
+					setStyle(div_3, "height", "" + ctx.$rowContainerHeight + "px");
+				}
+
+				if (!current || changed.scrollWidth) {
+					setStyle(div_3, "width", "" + ctx.scrollWidth + "px");
+				}
+
+				if (!current || changed.$height) {
+					setStyle(div_2, "height", "" + ctx.$height + "px");
+				}
+
+				if (!current || changed.$tableWidth) {
+					setStyle(div, "width", "" + ctx.$tableWidth + "px");
+				}
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				const countdown = callAfter(outrocallback, each_1_blocks_1.length);
+				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].o(countdown);
+
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div);
+				}
+
+				destroyEach(each_blocks, detach);
+
+				if (component.refs.sideHeaderContainer === div_1) component.refs.sideHeaderContainer = null;
+
+				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].d();
+
+				if (component.refs.scrollable === div_2) component.refs.scrollable = null;
+			}
+		};
+	}
+
+	// (3:8) {#each $tableHeaders as header}
+	function create_each_block$5(component, ctx) {
+		var div, text_value = ctx.header.title, text;
+
+		return {
+			c: function create() {
+				div = createElement("div");
+				text = createText(text_value);
+				div.className = "row-header-cell";
+				setStyle(div, "width", "" + ctx.header.width + "px");
+				addLoc(div, file$10, 3, 12, 211);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div, anchor);
+				append(div, text);
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.$tableHeaders) && text_value !== (text_value = ctx.header.title)) {
+					setData(text, text_value);
+				}
+
+				if (changed.$tableHeaders) {
+					setStyle(div, "width", "" + ctx.header.width + "px");
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div);
+				}
+			}
+		};
+	}
+
+	// (12:12) {#each visibleRows as row (row.id)}
+	function create_each_block_1(component, key_1, ctx) {
+		var first, current;
+
+		var rowheader_initial_data = { row: ctx.row, headers: ctx.$tableHeaders };
+		var rowheader = new RowHeader({
+			root: component.root,
+			store: component.store,
+			data: rowheader_initial_data
+		});
+
+		return {
+			key: key_1,
+
+			first: null,
+
+			c: function create() {
+				first = createComment();
+				rowheader._fragment.c();
+				this.first = first;
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, first, anchor);
+				rowheader._mount(target, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				var rowheader_changes = {};
+				if (changed.visibleRows) rowheader_changes.row = ctx.row;
+				if (changed.$tableHeaders) rowheader_changes.headers = ctx.$tableHeaders;
+				rowheader._set(rowheader_changes);
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				if (rowheader) rowheader._fragment.o(outrocallback);
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(first);
+				}
+
+				rowheader.destroy(detach);
+			}
+		};
+	}
+
+	function get_each_context$5(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.header = list[i];
+		child_ctx.each_value = list;
+		child_ctx.header_index = i;
+		return child_ctx;
+	}
+
+	function get_each_1_context(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.row = list[i];
+		child_ctx.each_value_1 = list;
+		child_ctx.row_index = i;
+		return child_ctx;
+	}
+
+	function Table(options) {
+		this._debugName = '<Table>';
+		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
+		init(this, options);
+		this.refs = {};
+		this._state = assign(assign(this.store._init(["tableHeaders","tableWidth","height","paddingTop","paddingBottom","rowContainerHeight"]), data$8()), options.data);
+		this.store._add(this, ["tableHeaders","tableWidth","height","paddingTop","paddingBottom","rowContainerHeight"]);
+		this._recompute({ $tableHeaders: 1 }, this._state);
+		if (!('$tableHeaders' in this._state)) console.warn("<Table> was created without expected data property '$tableHeaders'");
+		if (!('$tableWidth' in this._state)) console.warn("<Table> was created without expected data property '$tableWidth'");
+
+		if (!('$height' in this._state)) console.warn("<Table> was created without expected data property '$height'");
+		if (!('$paddingTop' in this._state)) console.warn("<Table> was created without expected data property '$paddingTop'");
+		if (!('$paddingBottom' in this._state)) console.warn("<Table> was created without expected data property '$paddingBottom'");
+		if (!('$rowContainerHeight' in this._state)) console.warn("<Table> was created without expected data property '$rowContainerHeight'");
+		if (!('visibleRows' in this._state)) console.warn("<Table> was created without expected data property 'visibleRows'");
+		this._intro = !!options.intro;
+
+		this._handlers.destroy = [removeFromStore];
+
+		this._fragment = create_main_fragment$10(this, this._state);
+
+		this.root._oncreate.push(() => {
+			oncreate$9.call(this);
+			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
+		});
+
+		if (options.target) {
+			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			this._fragment.c();
+			this._mount(options.target, options.anchor);
+
+			flush(this);
+		}
+
+		this._intro = true;
+	}
+
+	assign(Table.prototype, protoDev);
+	assign(Table.prototype, methods$7);
+
+	Table.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('scrollWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<Table>: Cannot set read-only property 'scrollWidth'");
+	};
+
+	Table.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$tableHeaders) {
+			if (this._differs(state.scrollWidth, (state.scrollWidth = scrollWidth(state)))) changed.scrollWidth = true;
+		}
+	};
+
+	setup$3(Table);
+
+	/* src\Gantt.html generated by Svelte v2.13.4 */
 
 	let SvelteGantt;
 
@@ -7276,16 +7740,20 @@ var SvelteGantt = (function () {
 		return rows.length * $rowHeight;
 	}
 
-	function data$8() {
+	function data$9() {
 	    return {
 	        columns: [],
 	        scrollables: [],
 	        visibleRows: [],
-	        _modulesContainer: [GanttDependencies],
-	        _modules: []
+	        _ganttBodyModules: [],
+	        _ganttTableModules: [],
+	        _modules: [],
+
+	        paddingTop: 0,
+	        paddingBottom: 0
 	    }
 	}
-	var methods$7 = {
+	var methods$8 = {
 	    initModule(module){
 	        const moduleOptions = Object.assign({
 	            _gantt: this,
@@ -7314,8 +7782,7 @@ var SvelteGantt = (function () {
 	        console.log('['+startIndex+','+endIndex+']');
 
 	        const paddingTop = startIndex * rowHeight;
-	        const paddingBottom = rows.length * rowHeight - viewportHeight - paddingTop;
-
+	        const paddingBottom = (rows.length - endIndex - 1) * rowHeight;
 
 	        const visibleRows = rows.slice(startIndex, endIndex + 1);
 
@@ -7324,8 +7791,8 @@ var SvelteGantt = (function () {
 	            row.visibleTasks = this.visibleTasks(row);
 	        });
 
-	        this.set({ visibleRows: visibleRows, paddingTop: paddingTop, paddingBottom: paddingBottom });
-	        this.store.set({ visibleRows });
+	        this.set({ visibleRows, paddingTop, paddingBottom });
+	        this.store.set({ visibleRows, paddingTop, paddingBottom });
 	    },
 	    visibleTasks(row){
 	        const scrollLeft = this.refs.mainContainer.scrollLeft;
@@ -7362,14 +7829,10 @@ var SvelteGantt = (function () {
 	        }
 
 	        this.set({ columns });
-	    },
-	    updateHeaderHeight() {
-	        const height = this.refs.sideContainer.clientHeight;
-	        this.refs.sideHeaderContainer.style.height = height + 'px';
 	    }
 	};
 
-	function oncreate$9(){
+	function oncreate$10(){
 	    this.initColumns();
 	    this.store.set({
 	        bodyElement: this.refs.mainContainer, 
@@ -7377,32 +7840,61 @@ var SvelteGantt = (function () {
 	        gantt: this
 	    });
 	    
-	    this.updateVisibleRows(this.refs.mainContainer.scrollTop, this.refs.mainContainer.clientHeight);
-	    this.broadcastModules('updateVisible', {
-	        scrollAmount: this.refs.mainContainer.scrollTop, 
-	        viewportHeight: this.refs.mainContainer.clientHeight
-	    });
-	    this.updateHeaderHeight();
+	    this.updateViewport();
+	    
+	    this.broadcastModules('onGanttCreated');
 	}
-	function setup$3(component){
+	function setup$4(component){
 	    SvelteGantt = component;
 	    SvelteGantt.defaults = {
-					width: 800,
-					height: 400,
-					magnetOffset: 15,
-					magnetUnit: 'minute',
-					headerHeight: 100,
-					headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
-					rowHeight: 24
+	        // datetime timeline starts on, currently moment-js object
+	        from: null,
+	        // datetime timeline ends on, currently moment-js object
+	        to: null,
+	        // width of main gantt area in px
+	        width: 800,
+	        // height of main gantt area in px
+	        height: 400,
+	        // minimum unit of time task date values will round to 
+	        magnetUnit: 'minute',
+	        // amount of units task date values will round to
+	        magnetOffset: 15,
+	        // list of headers used for main gantt area
+	        // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+	        // format: datetime format used for header cell label
+	        headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+	        // height of a single row in px
+	        rowHeight: 24,
+	        // modules used in gantt
+	        modules: []
 	    };
 
 	    SvelteGantt.create = function(target, data, options) {
 
-	        const store = new Store();
+	        const ganttModules = {
+	            ganttBodyModules: [],
+	            ganttTableModules: [],
+	            defaults: {}
+	        };
 
-	        const ganttOptions = Object.assign({}, SvelteGantt.defaults, options);
+	        // delete when each module gets built into separate js
+	        options.modules = [Table, GanttDependencies];
+	        if(options.modules) {
+	            options.modules.forEach((module) => {
+	                module.bindToGantt(ganttModules);
+	            });
+	        }
+
+	        Object.assign(data, {
+	            _ganttBodyModules: ganttModules.ganttBodyModules,
+	            _ganttTableModules: ganttModules.ganttTableModules
+	        });
+
+
+	        const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
 	        const ganttUtils = new GanttUtils(ganttOptions);
 
+	        const store = new Store();
 	        store.set(ganttOptions);
 	        store.set({ 
 	            rows: data.rows,
@@ -7428,7 +7920,7 @@ var SvelteGantt = (function () {
 	            target,
 	            data,
 	            store
-	        })
+	        });
 	    };
 	}
 	function disableContextMenu(node) {
@@ -7470,47 +7962,43 @@ var SvelteGantt = (function () {
 						}
 	    }
 	}
-	function scrollListener(node){
-	    const { scrollables } = this.get();
-	    scrollables.push({node});
-	}
 	function horizontalScrollListener(node){
 	    const { scrollables } = this.get();
 	    scrollables.push({node, orientation: 'horizontal'});
 	}
-	const file$10 = "src\\Grid.html";
+	const file$11 = "src\\Gantt.html";
 
-	function create_main_fragment$10(component, ctx) {
-		var div, div_1, text, div_2, div_3, horizontalScrollListener_action, text_3, div_4, div_5, each_1_blocks_1 = [], each_1_lookup = blankObject(), scrollListener_action, text_6, div_6, div_7, div_8, text_8, div_9, each_3_blocks_1 = [], each_3_lookup = blankObject(), text_10, each_4_blocks_1 = [], each_4_lookup = blankObject(), scrollable_action, disableContextMenu_action, text_14, text_15, current;
+	function create_main_fragment$11(component, ctx) {
+		var div, each_blocks_1 = [], each_lookup = blankObject(), text, div_1, div_2, horizontalScrollListener_action, text_3, div_3, div_4, div_5, text_5, div_6, each_3_blocks_1 = [], each_3_lookup = blankObject(), text_7, each_4_blocks_1 = [], each_4_lookup = blankObject(), scrollable_action, disableContextMenu_action, text_11, text_12, current;
 
-		var each_value = ctx.$headers;
+		var each_value = ctx._ganttTableModules;
 
-		var each_blocks = [];
+		const get_key = ctx => ctx.module.key;
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			each_blocks[i] = create_each_block$4(component, get_each_context$4(ctx, each_value, i));
+			let child_ctx = get_each_context$6(ctx, each_value, i);
+			let key = get_key(child_ctx);
+			each_blocks_1[i] = each_lookup[key] = create_each_block$6(component, key, child_ctx);
+		}
+
+		var each_value_1 = ctx.$headers;
+
+		var each_1_blocks = [];
+
+		for (var i = 0; i < each_value_1.length; i += 1) {
+			each_1_blocks[i] = create_each_block_1$1(component, get_each_1_context$1(ctx, each_value_1, i));
 		}
 
 		function outroBlock(i, detach, fn) {
-			if (each_blocks[i]) {
-				each_blocks[i].o(() => {
+			if (each_1_blocks[i]) {
+				each_1_blocks[i].o(() => {
 					if (detach) {
-						each_blocks[i].d(detach);
-						each_blocks[i] = null;
+						each_1_blocks[i].d(detach);
+						each_1_blocks[i] = null;
 					}
 					if (fn) fn();
 				});
 			}
-		}
-
-		var each_value_1 = ctx.visibleRows;
-
-		const get_key = ctx => ctx.row.id;
-
-		for (var i = 0; i < each_value_1.length; i += 1) {
-			let child_ctx = get_each_1_context(ctx, each_value_1, i);
-			let key = get_key(child_ctx);
-			each_1_blocks_1[i] = each_1_lookup[key] = create_each_block_1(component, key, child_ctx);
 		}
 
 		var each_value_2 = ctx.columns;
@@ -7543,7 +8031,7 @@ var SvelteGantt = (function () {
 			each_3_blocks_1[i] = each_3_lookup[key] = create_each_block_3(component, key, child_ctx);
 		}
 
-		var each_value_4 = ctx._modulesContainer;
+		var each_value_4 = ctx._ganttBodyModules;
 
 		const get_key_2 = ctx => ctx.module.key;
 
@@ -7564,163 +8052,126 @@ var SvelteGantt = (function () {
 		return {
 			c: function create() {
 				div = createElement("div");
-				div_1 = createElement("div");
-				text = createText("\r\n\r\n    ");
-				div_2 = createElement("div");
-				div_3 = createElement("div");
 
-				for (var i = 0; i < each_blocks.length; i += 1) {
-					each_blocks[i].c();
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
+
+				text = createText("\r\n\r\n    ");
+				div_1 = createElement("div");
+				div_2 = createElement("div");
+
+				for (var i = 0; i < each_1_blocks.length; i += 1) {
+					each_1_blocks[i].c();
 				}
 
 				text_3 = createText("\r\n\r\n    ");
+				div_3 = createElement("div");
 				div_4 = createElement("div");
 				div_5 = createElement("div");
-
-				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].c();
-
-				text_6 = createText("\r\n\r\n    ");
-				div_6 = createElement("div");
-				div_7 = createElement("div");
-				div_8 = createElement("div");
 
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
 					each_2_blocks[i].c();
 				}
 
-				text_8 = createText("    \r\n            ");
-				div_9 = createElement("div");
+				text_5 = createText("\r\n            ");
+				div_6 = createElement("div");
 
 				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].c();
 
-				text_10 = createText("\r\n            ");
+				text_7 = createText("\r\n            ");
 
 				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].c();
 
-				text_14 = createText("\r\n");
-				text_15 = createText("\r\nreal content\r\n");
+				text_11 = createText("\r\n");
+				text_12 = createText("\r\nreal content\r\n");
 				externaldiv._fragment.c();
-				div_1.className = "side-header-container svelte-qkkmke";
-				setStyle(div_1, "width", "100px");
-				addLoc(div_1, file$10, 2, 4, 49);
-				div_3.className = "header-container";
-				setStyle(div_3, "width", "" + ctx.$width + "px");
-				addLoc(div_3, file$10, 7, 8, 247);
-				div_2.className = "main-header-container svelte-qkkmke";
-				addLoc(div_2, file$10, 6, 4, 154);
-				div_5.className = "row-header-container svelte-qkkmke";
-				setStyle(div_5, "padding-top", "" + ctx.paddingTop + "px");
-				setStyle(div_5, "padding-bottom", "" + ctx.paddingBottom + "px");
-				setStyle(div_5, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_5, file$10, 15, 8, 532);
-				div_4.className = "side-container svelte-qkkmke";
-				setStyle(div_4, "height", "" + ctx.$height + "px");
-				addLoc(div_4, file$10, 14, 4, 448);
-				div_8.className = "column-container svelte-qkkmke";
-				addLoc(div_8, file$10, 27, 12, 1016);
-				div_9.className = "row-container svelte-qkkmke";
-				setStyle(div_9, "padding-top", "" + ctx.paddingTop + "px");
-				setStyle(div_9, "padding-bottom", "" + ctx.paddingBottom + "px");
-				setStyle(div_9, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_9, file$10, 32, 12, 1204);
-				div_7.className = "content svelte-qkkmke";
-				setStyle(div_7, "width", "" + ctx.$width + "px");
-				addLoc(div_7, file$10, 24, 8, 940);
-				div_6.className = "main-container svelte-qkkmke";
-				setStyle(div_6, "height", "" + ctx.$height + "px");
-				addLoc(div_6, file$10, 23, 4, 842);
-				div.className = "grid svelte-qkkmke";
-				addLoc(div, file$10, 0, 0, 0);
+				div_2.className = "header-container";
+				setStyle(div_2, "width", "" + ctx.$width + "px");
+				addLoc(div_2, file$11, 6, 8, 303);
+				div_1.className = "main-header-container svelte-sdq4rk";
+				addLoc(div_1, file$11, 5, 4, 210);
+				div_5.className = "column-container svelte-sdq4rk";
+				addLoc(div_5, file$11, 15, 12, 662);
+				div_6.className = "row-container svelte-sdq4rk";
+				setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
+				setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
+				setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
+				addLoc(div_6, file$11, 20, 12, 846);
+				div_4.className = "content svelte-sdq4rk";
+				setStyle(div_4, "width", "" + ctx.$width + "px");
+				addLoc(div_4, file$11, 14, 8, 602);
+				div_3.className = "main-container svelte-sdq4rk";
+				setStyle(div_3, "height", "" + ctx.$height + "px");
+				addLoc(div_3, file$11, 13, 4, 504);
+				div.className = "gantt svelte-sdq4rk";
+				addLoc(div, file$11, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
 				insert(target, div, anchor);
-				append(div, div_1);
-				component.refs.sideHeaderContainer = div_1;
-				append(div, text);
-				append(div, div_2);
-				append(div_2, div_3);
 
-				for (var i = 0; i < each_blocks.length; i += 1) {
-					each_blocks[i].i(div_3, null);
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].i(div, null);
+
+				append(div, text);
+				append(div, div_1);
+				append(div_1, div_2);
+
+				for (var i = 0; i < each_1_blocks.length; i += 1) {
+					each_1_blocks[i].i(div_2, null);
 				}
 
-				component.refs.sideContainer = div_2;
-				horizontalScrollListener_action = horizontalScrollListener.call(component, div_2) || {};
+				component.refs.sideContainer = div_1;
+				horizontalScrollListener_action = horizontalScrollListener.call(component, div_1) || {};
 				append(div, text_3);
-				append(div, div_4);
+				append(div, div_3);
+				append(div_3, div_4);
 				append(div_4, div_5);
 
-				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].i(div_5, null);
-
-				scrollListener_action = scrollListener.call(component, div_4) || {};
-				append(div, text_6);
-				append(div, div_6);
-				append(div_6, div_7);
-				append(div_7, div_8);
-
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
-					each_2_blocks[i].i(div_8, null);
+					each_2_blocks[i].i(div_5, null);
 				}
 
-				append(div_7, text_8);
-				append(div_7, div_9);
+				append(div_4, text_5);
+				append(div_4, div_6);
 
-				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].i(div_9, null);
+				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].i(div_6, null);
 
-				component.refs.rowContainer = div_9;
-				append(div_7, text_10);
+				component.refs.rowContainer = div_6;
+				append(div_4, text_7);
 
-				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].i(div_7, null);
+				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].i(div_4, null);
 
-				component.refs.mainContainer = div_6;
-				scrollable_action = scrollable.call(component, div_6) || {};
+				component.refs.mainContainer = div_3;
+				scrollable_action = scrollable.call(component, div_3) || {};
 				disableContextMenu_action = disableContextMenu.call(component, div) || {};
-				insert(target, text_14, anchor);
-				append(externaldiv._slotted.default, text_15);
+				insert(target, text_11, anchor);
+				append(externaldiv._slotted.default, text_12);
 				externaldiv._mount(target, anchor);
 				current = true;
 			},
 
 			p: function update(changed, ctx) {
+				const each_value = ctx._ganttTableModules;
+				each_blocks_1 = updateKeyedEach(each_blocks_1, component, changed, get_key, 1, ctx, each_value, each_lookup, div, outroAndDestroyBlock, create_each_block$6, "i", text, get_each_context$6);
+
 				if (changed.$headers) {
-					each_value = ctx.$headers;
+					each_value_1 = ctx.$headers;
 
-					for (var i = 0; i < each_value.length; i += 1) {
-						const child_ctx = get_each_context$4(ctx, each_value, i);
+					for (var i = 0; i < each_value_1.length; i += 1) {
+						const child_ctx = get_each_1_context$1(ctx, each_value_1, i);
 
-						if (each_blocks[i]) {
-							each_blocks[i].p(changed, child_ctx);
+						if (each_1_blocks[i]) {
+							each_1_blocks[i].p(changed, child_ctx);
 						} else {
-							each_blocks[i] = create_each_block$4(component, child_ctx);
-							each_blocks[i].c();
+							each_1_blocks[i] = create_each_block_1$1(component, child_ctx);
+							each_1_blocks[i].c();
 						}
-						each_blocks[i].i(div_3, null);
+						each_1_blocks[i].i(div_2, null);
 					}
-					for (; i < each_blocks.length; i += 1) outroBlock(i, 1);
+					for (; i < each_1_blocks.length; i += 1) outroBlock(i, 1);
 				}
 
 				if (!current || changed.$width) {
-					setStyle(div_3, "width", "" + ctx.$width + "px");
-				}
-
-				const each_value_1 = ctx.visibleRows;
-				each_1_blocks_1 = updateKeyedEach(each_1_blocks_1, component, changed, get_key, 1, ctx, each_value_1, each_1_lookup, div_5, outroAndDestroyBlock, create_each_block_1, "i", null, get_each_1_context);
-
-				if (!current || changed.paddingTop) {
-					setStyle(div_5, "padding-top", "" + ctx.paddingTop + "px");
-				}
-
-				if (!current || changed.paddingBottom) {
-					setStyle(div_5, "padding-bottom", "" + ctx.paddingBottom + "px");
-				}
-
-				if (!current || changed.rowContainerHeight) {
-					setStyle(div_5, "height", "" + ctx.rowContainerHeight + "px");
-				}
-
-				if (!current || changed.$height) {
-					setStyle(div_4, "height", "" + ctx.$height + "px");
+					setStyle(div_2, "width", "" + ctx.$width + "px");
 				}
 
 				if (changed.columns) {
@@ -7735,35 +8186,35 @@ var SvelteGantt = (function () {
 							each_2_blocks[i] = create_each_block_2(component, child_ctx);
 							each_2_blocks[i].c();
 						}
-						each_2_blocks[i].i(div_8, null);
+						each_2_blocks[i].i(div_5, null);
 					}
 					for (; i < each_2_blocks.length; i += 1) outroBlock_1(i, 1);
 				}
 
 				const each_value_3 = ctx.visibleRows;
-				each_3_blocks_1 = updateKeyedEach(each_3_blocks_1, component, changed, get_key_1, 1, ctx, each_value_3, each_3_lookup, div_9, outroAndDestroyBlock, create_each_block_3, "i", null, get_each_3_context);
+				each_3_blocks_1 = updateKeyedEach(each_3_blocks_1, component, changed, get_key_1, 1, ctx, each_value_3, each_3_lookup, div_6, outroAndDestroyBlock, create_each_block_3, "i", null, get_each_3_context);
 
 				if (!current || changed.paddingTop) {
-					setStyle(div_9, "padding-top", "" + ctx.paddingTop + "px");
+					setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
 				}
 
 				if (!current || changed.paddingBottom) {
-					setStyle(div_9, "padding-bottom", "" + ctx.paddingBottom + "px");
+					setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
 				}
 
 				if (!current || changed.rowContainerHeight) {
-					setStyle(div_9, "height", "" + ctx.rowContainerHeight + "px");
+					setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
-				const each_value_4 = ctx._modulesContainer;
-				each_4_blocks_1 = updateKeyedEach(each_4_blocks_1, component, changed, get_key_2, 1, ctx, each_value_4, each_4_lookup, div_7, outroAndDestroyBlock, create_each_block_4, "i", null, get_each_4_context);
+				const each_value_4 = ctx._ganttBodyModules;
+				each_4_blocks_1 = updateKeyedEach(each_4_blocks_1, component, changed, get_key_2, 1, ctx, each_value_4, each_4_lookup, div_4, outroAndDestroyBlock, create_each_block_4, "i", null, get_each_4_context);
 
 				if (!current || changed.$width) {
-					setStyle(div_7, "width", "" + ctx.$width + "px");
+					setStyle(div_4, "width", "" + ctx.$width + "px");
 				}
 
 				if (!current || changed.$height) {
-					setStyle(div_6, "height", "" + ctx.$height + "px");
+					setStyle(div_3, "height", "" + ctx.$height + "px");
 				}
 
 				var externaldiv_changes = {};
@@ -7782,12 +8233,12 @@ var SvelteGantt = (function () {
 
 				outrocallback = callAfter(outrocallback, 6);
 
-				each_blocks = each_blocks.filter(Boolean);
-				const countdown = callAfter(outrocallback, each_blocks.length);
-				for (let i = 0; i < each_blocks.length; i += 1) outroBlock(i, 0, countdown);
+				const countdown = callAfter(outrocallback, each_blocks_1.length);
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].o(countdown);
 
-				const countdown_1 = callAfter(outrocallback, each_1_blocks_1.length);
-				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].o(countdown_1);
+				each_1_blocks = each_1_blocks.filter(Boolean);
+				const countdown_1 = callAfter(outrocallback, each_1_blocks.length);
+				for (let i = 0; i < each_1_blocks.length; i += 1) outroBlock(i, 0, countdown_1);
 
 				each_2_blocks = each_2_blocks.filter(Boolean);
 				const countdown_2 = callAfter(outrocallback, each_2_blocks.length);
@@ -7808,30 +8259,26 @@ var SvelteGantt = (function () {
 					detachNode(div);
 				}
 
-				if (component.refs.sideHeaderContainer === div_1) component.refs.sideHeaderContainer = null;
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].d();
 
-				destroyEach(each_blocks, detach);
+				destroyEach(each_1_blocks, detach);
 
-				if (component.refs.sideContainer === div_2) component.refs.sideContainer = null;
+				if (component.refs.sideContainer === div_1) component.refs.sideContainer = null;
 				if (typeof horizontalScrollListener_action.destroy === 'function') horizontalScrollListener_action.destroy.call(component);
-
-				for (i = 0; i < each_1_blocks_1.length; i += 1) each_1_blocks_1[i].d();
-
-				if (typeof scrollListener_action.destroy === 'function') scrollListener_action.destroy.call(component);
 
 				destroyEach(each_2_blocks, detach);
 
 				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].d();
 
-				if (component.refs.rowContainer === div_9) component.refs.rowContainer = null;
+				if (component.refs.rowContainer === div_6) component.refs.rowContainer = null;
 
 				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].d();
 
-				if (component.refs.mainContainer === div_6) component.refs.mainContainer = null;
+				if (component.refs.mainContainer === div_3) component.refs.mainContainer = null;
 				if (typeof scrollable_action.destroy === 'function') scrollable_action.destroy.call(component);
 				if (typeof disableContextMenu_action.destroy === 'function') disableContextMenu_action.destroy.call(component);
 				if (detach) {
-					detachNode(text_14);
+					detachNode(text_11);
 				}
 
 				externaldiv.destroy(detach);
@@ -7839,8 +8286,108 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (9:12) {#each $headers as header}
-	function create_each_block$4(component, ctx) {
+	// (2:4) {#each _ganttTableModules as module (module.key)}
+	function create_each_block$6(component, key_1, ctx) {
+		var first, switch_instance_anchor, current;
+
+		var switch_value = ctx.module;
+
+		function switch_props(ctx) {
+			var switch_instance_initial_data = { visibleRows: ctx.visibleRows };
+			return {
+				root: component.root,
+				store: component.store,
+				data: switch_instance_initial_data
+			};
+		}
+
+		if (switch_value) {
+			var switch_instance = new switch_value(switch_props(ctx));
+		}
+
+		function switch_instance_init(event) {
+			component.initModule(event.module);
+		}
+
+		if (switch_instance) switch_instance.on("init", switch_instance_init);
+
+		return {
+			key: key_1,
+
+			first: null,
+
+			c: function create() {
+				first = createComment();
+				if (switch_instance) switch_instance._fragment.c();
+				switch_instance_anchor = createComment();
+				this.first = first;
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, first, anchor);
+
+				if (switch_instance) {
+					switch_instance._mount(target, anchor);
+				}
+
+				insert(target, switch_instance_anchor, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				var switch_instance_changes = {};
+				if (changed.visibleRows) switch_instance_changes.visibleRows = ctx.visibleRows;
+
+				if (switch_value !== (switch_value = ctx.module)) {
+					if (switch_instance) {
+						const old_component = switch_instance;
+						old_component._fragment.o(() => {
+							old_component.destroy();
+						});
+					}
+
+					if (switch_value) {
+						switch_instance = new switch_value(switch_props(ctx));
+						switch_instance._fragment.c();
+						switch_instance._mount(switch_instance_anchor.parentNode, switch_instance_anchor);
+
+						switch_instance.on("init", switch_instance_init);
+					} else {
+						switch_instance = null;
+					}
+				}
+
+				else if (switch_value) {
+					switch_instance._set(switch_instance_changes);
+				}
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				if (switch_instance) switch_instance._fragment.o(outrocallback);
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(first);
+					detachNode(switch_instance_anchor);
+				}
+
+				if (switch_instance) switch_instance.destroy(detach);
+			}
+		};
+	}
+
+	// (8:12) {#each $headers as header}
+	function create_each_block_1$1(component, ctx) {
 		var current;
 
 		var columnheader_initial_data = { header: ctx.header };
@@ -7885,64 +8432,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (17:12) {#each visibleRows as row (row.id)}
-	function create_each_block_1(component, key_1, ctx) {
-		var first, current;
-
-		var rowheader_initial_data = { label: ctx.row.label };
-		var rowheader = new RowHeader({
-			root: component.root,
-			store: component.store,
-			data: rowheader_initial_data
-		});
-
-		return {
-			key: key_1,
-
-			first: null,
-
-			c: function create() {
-				first = createComment();
-				rowheader._fragment.c();
-				this.first = first;
-			},
-
-			m: function mount(target, anchor) {
-				insert(target, first, anchor);
-				rowheader._mount(target, anchor);
-				current = true;
-			},
-
-			p: function update(changed, ctx) {
-				var rowheader_changes = {};
-				if (changed.visibleRows) rowheader_changes.label = ctx.row.label;
-				rowheader._set(rowheader_changes);
-			},
-
-			i: function intro(target, anchor) {
-				if (current) return;
-
-				this.m(target, anchor);
-			},
-
-			o: function outro(outrocallback) {
-				if (!current) return;
-
-				if (rowheader) rowheader._fragment.o(outrocallback);
-				current = false;
-			},
-
-			d: function destroy$$1(detach) {
-				if (detach) {
-					detachNode(first);
-				}
-
-				rowheader.destroy(detach);
-			}
-		};
-	}
-
-	// (29:16) {#each columns as column}
+	// (17:16) {#each columns as column}
 	function create_each_block_2(component, ctx) {
 		var current;
 
@@ -7988,11 +8478,11 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (35:16) {#each visibleRows as row (row.id)}
+	// (23:16) {#each visibleRows as row (row.id)}
 	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 
-		var row_initial_data = { row: ctx.row, width: ctx.width };
+		var row_initial_data = { row: ctx.row };
 		var row = new Row({
 			root: component.root,
 			store: component.store,
@@ -8023,7 +8513,6 @@ var SvelteGantt = (function () {
 			p: function update(changed, ctx) {
 				var row_changes = {};
 				if (changed.visibleRows) row_changes.row = ctx.row;
-				if (changed.width) row_changes.width = ctx.width;
 				row._set(row_changes);
 			},
 
@@ -8050,7 +8539,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (41:12) {#each _modulesContainer as module (module.key)}
+	// (28:12) {#each _ganttBodyModules as module (module.key)}
 	function create_each_block_4(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -8141,19 +8630,19 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	function get_each_context$4(ctx, list, i) {
+	function get_each_context$6(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.header = list[i];
+		child_ctx.module = list[i];
 		child_ctx.each_value = list;
-		child_ctx.header_index = i;
+		child_ctx.module_index = i;
 		return child_ctx;
 	}
 
-	function get_each_1_context(ctx, list, i) {
+	function get_each_1_context$1(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.row = list[i];
+		child_ctx.header = list[i];
 		child_ctx.each_value_1 = list;
-		child_ctx.row_index = i;
+		child_ctx.header_index = i;
 		return child_ctx;
 	}
 
@@ -8169,7 +8658,7 @@ var SvelteGantt = (function () {
 		const child_ctx = Object.create(ctx);
 		child_ctx.row = list[i];
 		child_ctx.each_value_3 = list;
-		child_ctx.row_index_1 = i;
+		child_ctx.row_index = i;
 		return child_ctx;
 	}
 
@@ -8177,39 +8666,39 @@ var SvelteGantt = (function () {
 		const child_ctx = Object.create(ctx);
 		child_ctx.module = list[i];
 		child_ctx.each_value_4 = list;
-		child_ctx.module_index = i;
+		child_ctx.module_index_1 = i;
 		return child_ctx;
 	}
 
-	function Grid(options) {
-		this._debugName = '<Grid>';
+	function Gantt(options) {
+		this._debugName = '<Gantt>';
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["rowHeight","width","headers","height","gantt"]), data$8()), options.data);
+		this._state = assign(assign(this.store._init(["rowHeight","width","headers","height","gantt"]), data$9()), options.data);
 		this.store._add(this, ["rowHeight","width","headers","height","gantt"]);
 		this._recompute({ rows: 1, $rowHeight: 1 }, this._state);
-		if (!('rows' in this._state)) console.warn("<Grid> was created without expected data property 'rows'");
-		if (!('$rowHeight' in this._state)) console.warn("<Grid> was created without expected data property '$rowHeight'");
-		if (!('$width' in this._state)) console.warn("<Grid> was created without expected data property '$width'");
-		if (!('$headers' in this._state)) console.warn("<Grid> was created without expected data property '$headers'");
-		if (!('$height' in this._state)) console.warn("<Grid> was created without expected data property '$height'");
-		if (!('paddingTop' in this._state)) console.warn("<Grid> was created without expected data property 'paddingTop'");
-		if (!('paddingBottom' in this._state)) console.warn("<Grid> was created without expected data property 'paddingBottom'");
+		if (!('rows' in this._state)) console.warn("<Gantt> was created without expected data property 'rows'");
+		if (!('$rowHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$rowHeight'");
+		if (!('_ganttTableModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttTableModules'");
+		if (!('visibleRows' in this._state)) console.warn("<Gantt> was created without expected data property 'visibleRows'");
+		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
+		if (!('$headers' in this._state)) console.warn("<Gantt> was created without expected data property '$headers'");
+		if (!('$height' in this._state)) console.warn("<Gantt> was created without expected data property '$height'");
+		if (!('columns' in this._state)) console.warn("<Gantt> was created without expected data property 'columns'");
+		if (!('paddingTop' in this._state)) console.warn("<Gantt> was created without expected data property 'paddingTop'");
+		if (!('paddingBottom' in this._state)) console.warn("<Gantt> was created without expected data property 'paddingBottom'");
 
-		if (!('visibleRows' in this._state)) console.warn("<Grid> was created without expected data property 'visibleRows'");
-		if (!('columns' in this._state)) console.warn("<Grid> was created without expected data property 'columns'");
-		if (!('width' in this._state)) console.warn("<Grid> was created without expected data property 'width'");
-		if (!('_modulesContainer' in this._state)) console.warn("<Grid> was created without expected data property '_modulesContainer'");
-		if (!('$gantt' in this._state)) console.warn("<Grid> was created without expected data property '$gantt'");
+		if (!('_ganttBodyModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttBodyModules'");
+		if (!('$gantt' in this._state)) console.warn("<Gantt> was created without expected data property '$gantt'");
 		this._intro = !!options.intro;
 
 		this._handlers.destroy = [removeFromStore];
 
-		this._fragment = create_main_fragment$10(this, this._state);
+		this._fragment = create_main_fragment$11(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$9.call(this);
+			oncreate$10.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -8224,22 +8713,22 @@ var SvelteGantt = (function () {
 		this._intro = true;
 	}
 
-	assign(Grid.prototype, protoDev);
-	assign(Grid.prototype, methods$7);
+	assign(Gantt.prototype, protoDev);
+	assign(Gantt.prototype, methods$8);
 
-	Grid.prototype._checkReadOnly = function _checkReadOnly(newState) {
-		if ('rowContainerHeight' in newState && !this._updatingReadonlyProperty) throw new Error("<Grid>: Cannot set read-only property 'rowContainerHeight'");
+	Gantt.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('rowContainerHeight' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rowContainerHeight'");
 	};
 
-	Grid.prototype._recompute = function _recompute(changed, state) {
+	Gantt.prototype._recompute = function _recompute(changed, state) {
 		if (changed.rows || changed.$rowHeight) {
 			if (this._differs(state.rowContainerHeight, (state.rowContainerHeight = rowContainerHeight(state)))) changed.rowContainerHeight = true;
 		}
 	};
 
-	setup$3(Grid);
+	setup$4(Gantt);
 
-	return Grid;
+	return Gantt;
 
 }());
 //# sourceMappingURL=bundle.js.map
