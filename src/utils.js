@@ -1,10 +1,7 @@
-export default class {
-    constructor({ from, to, width, magnetUnit, magnetOffset }) {
-        this.from = from;
-        this.to = to;
-        this.width = width;
-        this.magnetUnit = magnetUnit;
-        this.magnetOffset = magnetOffset || 1;
+export class GanttUtils {
+
+    constructor(gantt) {
+        this.gantt = gantt;
     }
 
     /**
@@ -16,15 +13,19 @@ export default class {
           return undefined
         }
 
-        let durationTo = date.diff(this.from, 'milliseconds')
-        let durationToEnd = this.to.diff(this.from, 'milliseconds')
+        const {from, to, width} = this.gantt.store.get();
 
-        return durationTo / durationToEnd * this.width;
+        let durationTo = date.diff(from, 'milliseconds')
+        let durationToEnd = to.diff(from, 'milliseconds')
+
+        return durationTo / durationToEnd * width;
     }
 
     getDateByPosition (x) {
-        let durationTo = x / this.width * this.to.diff(this.from, 'milliseconds');
-        let dateAtPosition = this.from.clone().add(durationTo, 'milliseconds');
+        const {from, to, width} = this.gantt.store.get();
+
+        let durationTo = x / width * to.diff(from, 'milliseconds');
+        let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
         return dateAtPosition; 
     }
 
@@ -34,15 +35,17 @@ export default class {
      * @returns {Moment} rounded date passed as parameter
      */
     roundTo (date) {
-        let value = date.get(this.magnetUnit)
+        const {magnetUnit, magnetOffset} = this.gantt.store.get();
+
+        let value = date.get(magnetUnit)
     
-        value = Math.round(value / this.magnetOffset);
+        value = Math.round(value / magnetOffset);
     
-        date.set(this.magnetUnit, value * this.magnetOffset);
+        date.set(magnetUnit, value * magnetOffset);
 
         //round all smaller units to 0
         const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
-        const indexOf = units.indexOf(this.magnetUnit);
+        const indexOf = units.indexOf(magnetUnit);
         for (let i = 0; i < indexOf; i++) {
             date.set(units[i], 0)
         }

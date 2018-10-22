@@ -1,8 +1,9 @@
-export default class SvelteTask {
-    
-    constructor(task, ganttUtils){
-        this.ganttUtils = ganttUtils;
+export class SvelteTask {
+
+    constructor(gantt, task, row){
+        this.gantt = gantt;
         Object.assign(this, task);
+        this.row = row;
         this.dependencies = [];
         this.updatePosition();
     }
@@ -16,19 +17,19 @@ export default class SvelteTask {
     }
 
     updatePosition(){
-        const left = this.ganttUtils.getPositionByDate(this.from);
-        const right = this.ganttUtils.getPositionByDate(this.to); 
+        const left = this.gantt.utils.getPositionByDate(this.from);
+        const right = this.gantt.utils.getPositionByDate(this.to); 
 
         this.left = left;
         this.width = right - left;
     }
 
     updateDate(){
-        const from = this.ganttUtils.getDateByPosition(this.left);
-        const to = this.ganttUtils.getDateByPosition(this.left + this.width);
+        const from = this.gantt.utils.getDateByPosition(this.left);
+        const to = this.gantt.utils.getDateByPosition(this.left + this.width);
                    
-        this.from = this.ganttUtils.roundTo(from);
-        this.to = this.ganttUtils.roundTo(to);
+        this.from = this.gantt.utils.roundTo(from);
+        this.to = this.gantt.utils.roundTo(to);
     }
 
     overlaps(other) {
@@ -50,6 +51,12 @@ export default class SvelteTask {
         for(let i = 0; i < result.length; i++) {
             let index = this.dependencies.indexOf(result[i]);
             this.dependencies.splice(index, 1);
+        }
+    }
+
+    updateView() {
+        if(this.component) {
+            this.component.set({task: this});
         }
     }
 }

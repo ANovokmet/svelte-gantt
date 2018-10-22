@@ -20,6 +20,11 @@
         components: { Arrow },
         oncreate() { 
             const { dependency } = this.get();
+            if(!dependency) {
+                //todo make less confusing
+                //debugger;
+                return;
+            }
             this.set({ 
                 startX: dependency.startX,
                 startY: dependency.startY,
@@ -27,12 +32,15 @@
                 endY: dependency.endY
             });
 
-            const { fromTask, toTask } = this.get();
+            const { fromTask, toTask } = dependency//this.get();
             fromTask.subscribe(this);
             toTask.subscribe(this);
+
+
         },
         ondestroy() {
-            const { fromTask, toTask } = this.get();
+            const { dependency } = this.get();
+            const { fromTask, toTask } =  dependency//this.get();
             fromTask.unsubscribe(this);
             toTask.unsubscribe(this);
         },

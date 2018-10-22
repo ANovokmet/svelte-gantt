@@ -1,20 +1,22 @@
 export default class SvelteDependency {
-    constructor(dependency, {rows, rowHeight}){
+    constructor(gantt, dependency){
         Object.assign(this, dependency);
-        this.rows = rows;
-        this.rowHeight = rowHeight;
+
+        this.gantt = gantt;
         this.update();
     }
 
     update() {
+        const {rows, rowHeight} = this.gantt.store.get();
+
         let startX = this.fromTask.left + this.fromTask.width;
         let endX = this.toTask.left;
 
-        let startIndex = this.rows.indexOf(this.fromTask.row); 
-        let endIndex = this.rows.indexOf(this.toTask.row); 
+        let startIndex = rows.indexOf(this.fromTask.row); 
+        let endIndex = rows.indexOf(this.toTask.row); 
 
-        let startY = (startIndex + 0.5) * this.rowHeight
-        let endY = (endIndex + 0.5) * this.rowHeight
+        let startY = (startIndex + 0.5) * rowHeight;
+        let endY = (endIndex + 0.5) * rowHeight;
 
         const result = {startX, startY, endX, endY}
         Object.assign(this, result);

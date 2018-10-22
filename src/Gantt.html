@@ -88,10 +88,10 @@ real content
     import { Store } from 'svelte/store.js';
     import ContextMenuManager from './contextMenuManager.js'
     import SelectionManager from './selectionManager.js'
-    import GanttUtils from "./utils.js";
+    import {GanttUtils} from "./utils.js";
 
     import Task from "./Task.html";
-    import SvelteTask from "./task.js";
+    import {SvelteTask} from "./task.js";
 
     import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     import Table from './modules/table/Table.html';
@@ -153,23 +153,10 @@ real content
                 store.set(ganttOptions);
                 store.set({ 
                     rows: data.rows,
-                    contextMenuManager: new ContextMenuManager(),
-                    selectionManager: new SelectionManager((t) => { t.component && t.component.set({task: t}) }),
-                    ganttUtils: ganttUtils
+                    //contextMenuManager: new ContextMenuManager(),
+                    //selectionManager: new SelectionManager((t) => { t.component && t.component.set({task: t}) }),
+                    //ganttUtils: ganttUtils
                 });
-
-                data._allTasks = [];
-                for(let i=0; i < data.rows.length; i++){
-                    const row = data.rows[i];
-                    for(let j=0; j < row.tasks.length; j++){
-                        const task = row.tasks[j];
-                        task.amountDone = task.amountDone || 0;
-                        task.row = row;
-
-                        row.tasks[j] = new SvelteTask(task, ganttUtils);
-                        data._allTasks.push(row.tasks[j]);
-                    }
-                }
 
                 return new SvelteGantt({
                     target,
@@ -180,16 +167,30 @@ real content
         },
         components: { Row, Column, ColumnHeader, ExternalDiv },
         oncreate(){
-            this.initColumns();
-            this.store.set({
-                bodyElement: this.refs.mainContainer, 
-                rowContainerElement: this.refs.rowContainer,
-                gantt: this
-            });
+            this.initGantt();
             
-            this.updateViewport();
+
+            const {rows} = this.get();
+            const _allTasks = [];
+            for(let i=0; i < rows.length; i++){
+                const row = rows[i];
+                for(let j=0; j < row.tasks.length; j++){
+                    const task = row.tasks[j];
+                    task.amountDone = task.amountDone || 0;
+                    
+
+                    row.tasks[j] = new SvelteTask(this, task, row);
+                    _allTasks.push(row.tasks[j]);
+                }
+            }
+            this.set({_allTasks})
+
+
+            this.initColumns();
+
             
             this.broadcastModules('onGanttCreated');
+            this.updateViewport();
         },
         actions: {
             disableContextMenu(node) {
@@ -241,6 +242,19 @@ real content
             }
 		},
         methods: {
+            initGantt(){
+                if(!this.store.get().gantt){
+                    this.store.set({
+                        bodyElement: this.refs.mainContainer, 
+                        rowContainerElement: this.refs.rowContainer,
+                        gantt: this
+                    });
+                    
+                    this.menuManager = new ContextMenuManager();
+                    this.selectionManager = new SelectionManager(t => t.updateView());
+                    this.utils = new GanttUtils(this);
+                }
+            },
             initModule(module){
                 const moduleOptions = Object.assign({
                     _gantt: this,
@@ -274,9 +288,9 @@ real content
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
                 //only horizontal scroll
-                visibleRows.forEach(row => {
+                /*visibleRows.forEach(row => {
                     row.visibleTasks = this.visibleTasks(row);
-                });
+                });*/
 
                 this.set({ visibleRows, paddingTop, paddingBottom });
                 this.store.set({ visibleRows, paddingTop, paddingBottom });
@@ -306,9 +320,9 @@ real content
                 this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
             },
             initColumns() {
-                const {ganttUtils, magnetOffset, magnetUnit} = this.store.get();
-                const columnWidth = ganttUtils.getPositionByDate(ganttUtils.from.clone().add(magnetOffset, magnetUnit));
-                const columnCount = Math.ceil(ganttUtils.width / columnWidth) 
+                const {magnetOffset, magnetUnit, from, width} = this.store.get();
+                const columnWidth = this.utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit));
+                const columnCount = Math.ceil(width / columnWidth) 
 
                 const columns = [];
                 for(let i = 0; i < columnCount; i++){

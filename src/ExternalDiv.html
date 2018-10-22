@@ -16,7 +16,7 @@
 <script>
     import { DOMUtils } from "./domUtils.js";
     import moment from "../node_modules/moment/src/moment.js";
-    import SvelteTask from "./task.js";
+    import {SvelteTask} from "./task.js";
     //let SvelteGantt;
 
     export default {
@@ -28,7 +28,7 @@
         },
         actions: {
             drag(node) {
-                const { ganttUtils } = this.store.get();
+                const { gantt } = this.store.get();
                 const windowElement = window, self = this;
 
                 let successful = false;
@@ -84,7 +84,7 @@
                         const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
                         
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-                        const dropDate = ganttUtils.getDateByPosition(mousePos.x);
+                        const dropDate = gantt.utils.getDateByPosition(mousePos.x);
 
                         //TODO extract into helper, used in Task
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
@@ -92,7 +92,7 @@
                         if(rowElement !== undefined) {
                             const { visibleRows } = gantt.store.get();
                             const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
-                            onsuccess(targetRow, dropDate, ganttUtils);
+                            onsuccess(targetRow, dropDate, gantt);
                             gantt.set({ visibleRows });
                         }
                     }
@@ -140,14 +140,14 @@
             return {
                 dragging: false,
                 gantt: null,
-                onsuccess: function(targetRow, dropDate, ganttUtils) {
-                    const newTask = new SvelteTask({
+                onsuccess: function(targetRow, dropDate, gantt) {
+                    const newTask = new SvelteTask(gantt, {
                                 id: 5000+Math.floor(Math.random() * 1000),
                                 label: 'Task #'+4343,
                                 from: dropDate,
                                 to: dropDate.clone().add(3, 'hour'),
                                 amountDone: Math.floor(Math.random() * 100)
-                            }, ganttUtils);
+                            }, targetRow);
 
                     targetRow.tasks.push(newTask);
                     console.log('drop successful');

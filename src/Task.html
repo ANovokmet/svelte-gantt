@@ -239,7 +239,7 @@
             },
             contextMenu(node){
                 const { task } = this.get();
-                const { contextMenuManager } = this.store.get();
+                const { gantt } = this.store.get();
 
                 const options = [
                     {
@@ -254,13 +254,13 @@
 
                 function onClose(event) {
                     //if(!contextMenu.isTarget(e))
-                    contextMenuManager.close();
+                    gantt.menuManager.close();
                 }
 
 				node.addEventListener('mouseup', (e) => {
                     if(e.which === 3){
                         e.stopPropagation();
-                        contextMenuManager.open(options, {x: e.x, y: e.y})
+                        gantt.menuManager.open(options, {x: e.x, y: e.y})
 
                         DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
                     }
@@ -268,20 +268,20 @@
 
 				return {
 					destroy() {
-                        contextMenuManager.close();
+                        gantt.menuManager.close();
 					}
 				}
             },
             selectable(node) {
                 const { task } = this.get();
-                const { selectionManager } = this.store.get();
+                const { gantt } = this.store.get();
                 const self = this;
                 node.addEventListener('click', (e) => {
                     if(e.ctrlKey){
-                        selectionManager.toggleSelection(task);
+                        gantt.selectionManager.toggleSelection(task);
                     }
                     else{
-                        selectionManager.selectSingle(task);
+                        gantt.selectionManager.selectSingle(task);
                     }
                 });
             }

@@ -30,9 +30,10 @@
 
     export default {
         oncreate() {
+            this.root.initGantt();
             const { header } = this.get();
-            const { from, width, ganttUtils } = this.store.get();
-            const columnWidth = ganttUtils.getPositionByDate(from.clone().add(1, header.unit));
+            const { from, width, gantt } = this.store.get();
+            const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
             const columnCount = Math.ceil(width / columnWidth) 
 
             const headers = [];

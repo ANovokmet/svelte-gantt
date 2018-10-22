@@ -21,9 +21,29 @@ for(let i = 0; i < 500; i++){
 		label: 'Task #'+i,
 		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
 		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
-		amountDone: Math.floor(Math.random() * 100)
+		amountDone: Math.floor(Math.random() * 100),
+		h: Math.random() < 0.5
 	});
+
+
 }
+
+/*setInterval(() => {
+	for(let i = 0; i < 500; i++){
+		let t = data.rows[i].tasks[0];
+		if(t.h){
+			t.amountDone += 1;
+		}
+		else{
+			t.amountDone -= 1;
+		}
+	
+		if(t.amountDone == 0 || t.amountDone == 100){
+			t.h = !t.h
+		}	
+		t.updateView();
+	}
+}, 50)*/
 
 for(let i = 0; i < 499; i++){
 	data.dependencies.push({
