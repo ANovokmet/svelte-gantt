@@ -17,17 +17,14 @@
     .column-header {
         position: relative;
         display: inline-block;
-        height: 100%;    
-        border-left: #efefef 1px solid;
+        height: 100%;
         box-sizing: border-box;
         text-overflow: clip;
-        vertical-align: top;
+        /* vertical-align: top; */
         text-align: center;
     }
 </style>
 <script>
-    import moment from "../node_modules/moment/src/moment.js";
-
     export default {
         oncreate() {
             this.root.initGantt();

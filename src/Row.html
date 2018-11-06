@@ -1,4 +1,4 @@
-<div class="row" ref:row style="height:{$rowHeight}px" use:contextMenu>
+<div class="row {row.classes}" ref:row style="height:{$rowHeight}px" use:contextMenu>
     {#each row.tasks as task (task.id)}
         <Task   row={row}
                 task={task}  
@@ -9,12 +9,14 @@
                 on:taskResized="taskMoved()"
                 on:taskDropped="taskDropped(task)"/>
     {/each}
+    {#if row.contentHtml}
+        {@html row.contentHtml}
+    {/if}
 </div>
 <style>
     .row {
         position: relative;
         width: 100%;
-        border-bottom: #efefef 1px solid;
         box-sizing: border-box;
     }
 </style>
@@ -56,6 +58,9 @@
                 this.set({ row });
             },
             taskDropped(task) {
+                this.handleOverlaps();
+            },
+            handleOverlaps(){
                 this.sortTasks();
                 const { row } = this.get();
                 const overlaps = [];
@@ -112,35 +117,36 @@
         },
         actions: {
             contextMenu(node){
-                const { row } = this.get();
                 const { gantt } = this.store.get();
 
-                const options = [
-                    {
-                        label: 'Copy row',
-                        action: () => console.log('clicked action 1 for task ', row.id)
-                    },
-                    {
-                        label: 'Clear dependencies',
-                        action: () => console.log('clicked action 2 for task ', row.id)
+                if(gantt.enableContextMenu){
+                    const { row } = this.get();
+                    const options = [
+                        {
+                            label: 'Copy row',
+                            action: () => console.log('clicked action 1 for task ', row.id)
+                        },
+                        {
+                            label: 'Clear dependencies',
+                            action: () => console.log('clicked action 2 for task ', row.id)
+                        }
+                    ];
+
+                    function onClose(event) {
+                        //if(!contextMenu.isTarget(e))
+                        gantt.menuManager.close();
                     }
-                ];
 
+                    node.addEventListener('mouseup', (e) => {
+                        //e.stopPropagation();
+                        if(e.which === 3){
+                            gantt.menuManager.open(options, {x: e.x, y: e.y});
 
-                function onClose(event) {
-                    //if(!contextMenu.isTarget(e))
-                    gantt.menuManager.close();
+                            DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                        }
+                    });
                 }
-
-                node.addEventListener('mouseup', (e) => {
-                    //e.stopPropagation();
-                    if(e.which === 3){
-                        gantt.menuManager.open(options, {x: e.x, y: e.y});
-
-                        DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
-                    }
-                });
-
+                
                 return {
                     destroy() {
                         gantt.menuManager.close();

@@ -1,42 +1,31 @@
 <div ref:taskElement
     class="task" 
-    style="left:{task.left}px;width:{task.width}px;"
+    style="left:{task.truncated ? task.truncatedLeft : task.left}px;width:{task.truncated ? task.truncatedWidth : task.width}px;"
     use:drag 
     use:contextMenu
     use:selectable
     class:overlapping="task.overlapping"
     class:selected="task.selected"
     class:moving="task.dragging||task.resizing">
-    <div class="task-background" style="width:{task.amountDone}%"></div>
-    {task.label}
+    <div class="task-background {task.classes}" style="width:{task.amountDone}%"></div>
+    {#if task.html}
+        {@html task.html}
+    {:else}
+        {task.label}
+    {/if}
 </div>
 
 <style>
     .task {
 		position: absolute;     
         top: 0;
-        bottom: 0;   
-        height: 80%;
+        bottom: 0;
         margin: auto;
-        background: rgb(116, 191, 255);
 	}
 
     .task-background {
         position: absolute;
         height: 100%;
-        background: rgba(0, 0, 0, 0.2);
-    }
-
-    .selected {
-        background: rgb(255, 255, 82);
-    }
-
-    .overlapping {
-        background: rgb(255, 122, 122);
-    }
-
-    .moving {
-        opacity: 0.5;
     }
 </style>
 
@@ -45,10 +34,6 @@
     import ContextMenu from "./ContextMenu.html";
 
     const resizeHandleWidth = 15;
-
-    let SvelteTask;
-
-
 
     export default {
         setup(component) {
@@ -88,23 +73,25 @@
                     console.log('drag down');
                     originalRow = task.row;
 
-                    mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
-                    mouseStartRight = task.left + task.width;
+                    if(originalRow.enableDragging){
+                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
+                        mouseStartRight = task.left + task.width;
 
-                    if(mouseStartPosX < resizeHandleWidth) {
-                        task.resizing = true;
-                        task.direction = 'left';
-                    }
-                    else if(mouseStartPosX > task.width - resizeHandleWidth) {
-                        task.resizing = true;
-                        task.direction = 'right';
-                    }
-                    else {
-                        task.dragging = true;
-                    }
+                        if(mouseStartPosX < resizeHandleWidth) {
+                            task.resizing = true;
+                            task.direction = 'left';
+                        }
+                        else if(mouseStartPosX > task.width - resizeHandleWidth) {
+                            task.resizing = true;
+                            task.direction = 'right';
+                        }
+                        else {
+                            task.dragging = true;
+                        }
 
-                    windowElement.addEventListener('mousemove', onmousemove, false);
-                    DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                        windowElement.addEventListener('mousemove', onmousemove, false);
+                        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                    }
                 }
                 
                 function onmousemove(event) {
@@ -167,27 +154,30 @@
                             const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
                             console.log('move task to '+targetRow.label, targetRow);
 
-                            task.row = targetRow;
-                            targetRow.tasks.push(task);
-                            
-                            let i, sourceTask;
-                            for (i = 0; i < sourceRow.tasks.length; i++) {
-                                sourceTask = sourceRow.tasks[i]
-                                if (sourceTask === task) {
-                                    break;
+                            if(targetRow.enableDragging){
+                                task.row = targetRow;
+                                targetRow.tasks.push(task);
+                                
+                                let i, sourceTask;
+                                for (i = 0; i < sourceRow.tasks.length; i++) {
+                                    sourceTask = sourceRow.tasks[i]
+                                    if (sourceTask === task) {
+                                        break;
+                                    }
                                 }
+                                sourceRow.tasks.splice(i, 1);
+                                self.store.set({visibleRows: visibleRows});
+                                
+                                //targetRow.component.movedRow();
+                                //sourceRow.component.movedRow();
+                                self.fire('taskRemovedRow', { task: task, row: targetRow });
+                                targetRow.component.taskAdded();
                             }
-                            sourceRow.tasks.splice(i, 1);
-                            self.store.set({visibleRows: visibleRows});
-                            
-                            //targetRow.component.movedRow();
-                            //sourceRow.component.movedRow();
-                            self.fire('taskRemovedRow', { task: task, row: targetRow });
-                            targetRow.component.taskAdded();
                         }
                         self.fire('taskMoved', { task: task });
                         //task.component.fire('updateVisibleRows');
                     }
+                    self.truncate();
                     self.set({task:task});
                     task.notify();
                 }
@@ -205,6 +195,7 @@
                     if(originalRow && originalRow !== task.row) {
                         console.log('moved from original row', originalRow)
                         originalRow.component.taskMoved();
+                        originalRow.component.handleOverlaps();
                     }
                 }
 
@@ -238,34 +229,36 @@
 				}
             },
             contextMenu(node){
-                const { task } = this.get();
                 const { gantt } = this.store.get();
 
-                const options = [
-                    {
-                        label: 'Copy',
-                        action: () => console.log('clicked action 1 for task ', task.id)
-                    },
-                    {
-                        label: 'Clear dependencies',
-                        action: () => console.log('clicked action 2 for task ', task.id)
-                    }
-                ];
+                if(gantt.enableContextMenu){
+                    const { task } = this.get();
+                    const options = [
+                        {
+                            label: 'Copy',
+                            action: () => console.log('clicked action 1 for task ', task.id)
+                        },
+                        {
+                            label: 'Clear dependencies',
+                            action: () => console.log('clicked action 2 for task ', task.id)
+                        }
+                    ];
 
-                function onClose(event) {
-                    //if(!contextMenu.isTarget(e))
-                    gantt.menuManager.close();
+                    function onClose(event) {
+                        //if(!contextMenu.isTarget(e))
+                        gantt.menuManager.close();
+                    }
+
+                    node.addEventListener('mouseup', (e) => {
+                        if(e.which === 3){
+                            e.stopPropagation();
+                            gantt.menuManager.open(options, {x: e.x, y: e.y})
+
+                            DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
+                        }
+                    });
                 }
-
-				node.addEventListener('mouseup', (e) => {
-                    if(e.which === 3){
-                        e.stopPropagation();
-                        gantt.menuManager.open(options, {x: e.x, y: e.y})
-
-                        DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
-                    }
-                });
-
+                
 				return {
 					destroy() {
                         gantt.menuManager.close();
@@ -298,6 +291,31 @@
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
+            },
+            truncate(){
+                const { task } = this.get();
+                if(!task){
+                    return;
+                }
+
+                const ganttWidth = this.store.get().width;
+                if(task.left + task.width > ganttWidth){
+                    task.truncated = true;
+                    task.truncatedWidth = ganttWidth - task.left;
+                    task.truncatedLeft = task.left;
+                }
+                /*else{
+                    task.truncated = false;
+                }*/
+                
+                else if(task.left < 0){
+                    task.truncated = true;
+                    task.truncatedLeft = 0;
+                    task.truncatedWidth = task.width + task.left;
+                }
+                else{
+                    task.truncated = false;
+                }
             }
         },
 

@@ -7,7 +7,7 @@
         {/each}
     </div>
 
-    <div class="table-scroll-container" style="height:{$height}px;" ref:scrollable>
+    <div class="table-scroll-container" style="height:{height}px;" ref:scrollable>
         <div class="table-row-container" style="padding-top:{$paddingTop}px;padding-bottom:{$paddingBottom}px;height:{$rowContainerHeight}px;width:{scrollWidth}px"> 
             {#each visibleRows as row (row.id)}
                 <RowHeader
@@ -27,8 +27,6 @@
 
     .table-header-container {
         width: 100%;
-        border-bottom: #efefef 1px solid; 
-        background-color: #fbfbfb; 
         box-sizing: border-box;
     }
 
@@ -91,7 +89,8 @@
                     sum += header.width;
                 });
                 return sum;
-            }
+            },
+            height: ({$height}) => $height - 17
         }
     }
 </script>

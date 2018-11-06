@@ -1,8 +1,9 @@
 import ContextMenu from './ContextMenu.html';
 
 export default class {
-    constructor() {
+    constructor(gantt) {
         this.current = null;
+        this.gantt = gantt;
     }
 
     open(actions, position) {
@@ -11,7 +12,7 @@ export default class {
         }
         
         const contextMenu = new ContextMenu({
-            target: document.body,
+            target: document.body,//this.gantt.refs.ganttElement,//todo: fix, styles (font size, font face), positioning
             data: { actions },
             position: position,
             onactionend: () => contextMenu.close()

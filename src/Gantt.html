@@ -1,4 +1,4 @@
-<div class="gantt" use:disableContextMenu>
+<div class="gantt {$classes}" use:disableContextMenu ref:ganttElement>
     {#each _ganttTableModules as module (module.key)}
         <svelte:component this={module} on:init="initModule(event.module)" {visibleRows}/>
     {/each}
@@ -40,9 +40,6 @@ real content
     .gantt {
         width: 100%;
         position: relative;
-        font-family: tahoma, arial, verdana, Sans-serif;
-        font-size: 10px;
-        color: #656565;
     }
 
     .column-container {
@@ -82,19 +79,18 @@ real content
     import ExternalDiv from './ExternalDiv.html';
 
     import Row from './Row.html';
-    import RowHeader from './RowHeader.html';
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
     import ContextMenuManager from './contextMenuManager.js'
     import SelectionManager from './selectionManager.js'
-    import {GanttUtils} from "./utils.js";
+    import GanttUtils from './utils.js';
 
     import Task from "./Task.html";
     import {SvelteTask} from "./task.js";
 
-    import GanttDependencies from './modules/dependencies/GanttDependencies.html';
-    import Table from './modules/table/Table.html';
+    //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
+    //import Table from './modules/table/Table.html';
 
     let SvelteGantt;
 
@@ -121,7 +117,11 @@ real content
                 // height of a single row in px
                 rowHeight: 24,
                 // modules used in gantt
-                modules: []
+                modules: [],
+                // enables right click context menu
+                enableContextMenu: false,
+                // sets top level gantt class which can be used for styling
+                classes: ''
             };
 
             SvelteGantt.create = function(target, data, options) {
@@ -133,7 +133,7 @@ real content
                 }
 
                 // delete when each module gets built into separate js
-                options.modules = [Table, GanttDependencies];
+                //options.modules = [Table, ...options.modules]; // [Table, GanttDependencies];
                 if(options.modules) {
                     options.modules.forEach((module) => {
                         module.bindToGantt(ganttModules);
@@ -147,15 +147,11 @@ real content
 
 
                 const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
-                const ganttUtils = new GanttUtils(ganttOptions);
-
+                
                 const store = new Store();
                 store.set(ganttOptions);
                 store.set({ 
-                    rows: data.rows,
-                    //contextMenuManager: new ContextMenuManager(),
-                    //selectionManager: new SelectionManager((t) => { t.component && t.component.set({task: t}) }),
-                    //ganttUtils: ganttUtils
+                    rows: data.rows
                 });
 
                 return new SvelteGantt({
@@ -188,19 +184,35 @@ real content
 
             this.initColumns();
 
+            this.refs.mainContainer.addEventListener('mouseup', function(event){
+                console.log('mouse up on ', event.target);
+            });
+
+            //window.addEventListener('resize', (event) => {
+
+                const parentWidth = this.refs.ganttElement.clientWidth;
+                
+                const tableWidth = this.store.get().tableWidth || 0;
+
+                this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
+                this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
+            //});
+
             
             this.broadcastModules('onGanttCreated');
             this.updateViewport();
         },
         actions: {
             disableContextMenu(node) {
-                node.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                }, false);
-                //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu TO DO remove
-                document.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                }, false);
+                if(this.store.get().enableContextMenu){
+                    node.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                    }, false);
+                    //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu TO DO remove
+                    document.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                    }, false);
+                }
             },
             scrollable(node){
                 const { scrollables } = this.get();
@@ -250,7 +262,7 @@ real content
                         gantt: this
                     });
                     
-                    this.menuManager = new ContextMenuManager();
+                    this.menuManager = new ContextMenuManager(this);
                     this.selectionManager = new SelectionManager(t => t.updateView());
                     this.utils = new GanttUtils(this);
                 }

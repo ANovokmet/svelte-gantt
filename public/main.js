@@ -11,8 +11,16 @@ for(let i = 0; i < 500; i++){
 	data.rows.push({
 		id: i,
 		label: 'Row #'+i,
-		tasks: []
+		tasks: [],
+		enableDragging: true,
+		//contentHtml: '<s>Test</s>'
+		//headerHtml: '<s>Test</s>'
 	});
+
+	if(Math.random() < 0.5){
+		data.rows[i].classes = ['penis-row'];
+		data.rows[i].enableDragging = false;
+	}
 
 	let a = i % 3;
 
@@ -21,8 +29,8 @@ for(let i = 0; i < 500; i++){
 		label: 'Task #'+i,
 		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
 		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
-		amountDone: Math.floor(Math.random() * 100),
-		h: Math.random() < 0.5
+		amountDone: Math.floor(Math.random() * 100)
+		//h: Math.random() < 0.5
 	});
 
 
@@ -58,7 +66,8 @@ let options = {
 	width: 1000,
 	from: startOfToday,
 	to: moment().endOf('day'),
-	tableHeaders: [{title: 'ID', property: 'id', width: 20}, {title: 'Label', property: 'label', width: 80}]
+	tableHeaders: [{title: 'ID', property: 'id', width: 20}, {title: 'Label', property: 'label', width: 80}],
+	modules: [SvelteGanttTable, SvelteGanttDependencies]
 }
 
 var app = SvelteGantt.create(document.body, data, options);

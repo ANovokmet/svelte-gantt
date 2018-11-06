@@ -1,23 +1,22 @@
 <div class="row-header-row" style="height:{$rowHeight}px">
     {#each headers as header}
         <div class="row-header-cell" style="width:{header.width}px">
-            {row[header.property]}
+            {#if row.headerHtml}
+                {@html row.headerHtml}
+            {:else}
+                {row[header.property]}
+            {/if}
         </div>
     {/each}
 </div>
 <style>
     .row-header-row {
         position: relative;
-
-        border-bottom: #efefef 1px solid;  
-        font-weight: bold;
         box-sizing: border-box;
-        background-color: #fbfbfb;    
     }
 
     :global(.row-header-cell) {
         display: inline-block;  
-        border-left: 1px solid #eee;
         height: 100%;
         box-sizing: border-box;
     }

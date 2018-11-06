@@ -1,4 +1,4 @@
-export class GanttUtils {
+export default class {
 
     constructor(gantt) {
         this.gantt = gantt;
