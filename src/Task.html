@@ -52,7 +52,7 @@
         },
         actions: {
 			drag(node) {
-                const { rowContainerElement, ganttUtils } = this.store.get();
+                const { rowContainerElement, ganttUtils, gantt } = this.store.get();
                 const windowElement = window;
 
                 const { task } = this.get();
@@ -171,6 +171,7 @@
                                 //targetRow.component.movedRow();
                                 //sourceRow.component.movedRow();
                                 self.fire('taskRemovedRow', { task: task, row: targetRow });
+                                gantt.api.tasks.raise.switchRow(task, targetRow, originalRow);
                                 targetRow.component.taskAdded();
                             }
                         }
@@ -180,6 +181,7 @@
                     self.truncate();
                     self.set({task:task});
                     task.notify();
+                    gantt.api.tasks.raise.move(task);
                 }
 
                 function onmouseup(event) {
@@ -275,6 +277,10 @@
                     }
                     else{
                         gantt.selectionManager.selectSingle(task);
+                    }
+
+                    if(task.selected){
+                        gantt.api.tasks.raise.select(task);
                     }
                 });
             }

@@ -17,7 +17,7 @@ for(let i = 0; i < 500; i++){
 		//headerHtml: '<s>Test</s>'
 	});
 
-	if(Math.random() < 0.5){
+	if(Math.random() < 0.2){
 		data.rows[i].classes = ['penis-row'];
 		data.rows[i].enableDragging = false;
 	}
@@ -70,4 +70,8 @@ let options = {
 	modules: [SvelteGanttTable, SvelteGanttDependencies]
 }
 
-var app = SvelteGantt.create(document.body, data, options);
+var gantt = SvelteGantt.create(document.body, data, options);
+
+gantt.api.tasks.on.move((task) => console.log('Listener: task moved', task));
+gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
+gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));

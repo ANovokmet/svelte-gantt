@@ -83,8 +83,9 @@ real content
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
     import ContextMenuManager from './contextMenuManager.js'
-    import SelectionManager from './selectionManager.js'
+    import SelectionManager from './selectionManager.js';
     import GanttUtils from './utils.js';
+    import GanttApi from './api.js';
 
     import Task from "./Task.html";
     import {SvelteTask} from "./task.js";
@@ -265,6 +266,11 @@ real content
                     this.menuManager = new ContextMenuManager(this);
                     this.selectionManager = new SelectionManager(t => t.updateView());
                     this.utils = new GanttUtils(this);
+                    this.api = new GanttApi(this);
+
+                    this.api.registerEvent('tasks', 'move');
+                    this.api.registerEvent('tasks', 'select');
+                    this.api.registerEvent('tasks', 'switchRow');
                 }
             },
             initModule(module){
