@@ -63,6 +63,10 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
-.penis-row {
+.row-disabled {
     background-color: rgb(235, 235, 235);
+}
+
+.task-status-1 {
+    background-color: rgb(188, 235, 194);
 }

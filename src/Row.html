@@ -30,6 +30,10 @@
         oncreate() {
             const { row } = this.get();
             row.rowElement = this.refs.row;
+
+            if(!row.classes){ //default
+                row.classes = [];
+            }
             row.component = this;
         },
         onupdate({ changed, current, previous }) {
@@ -113,6 +117,30 @@
                     }
                     return 0
                 });
+            },
+            updateVisible(){
+                const { row } = this.get();
+
+                const visibleTasks = this.visibleTasks(row);
+                this.set({visibleTasks});
+            },
+            visibleTasks(row){
+                const { gantt, from, to } = this.store.get();
+                const scrollLeft = gantt.refs.mainContainer.scrollLeft;
+                const clientWidth = gantt.refs.mainContainer.clientWidth;
+                //finish this
+                //this.store.set({scrollLeft, clientWidth});
+
+                //da su sortirani -> index prvog, zadnjeg, i onda slice
+                //da su sortirani -> nakon zadnjeg break
+                const visibleTasks = [];
+                row.tasks.forEach(task => {
+                    if(!(task.to < from || task.from > to)){
+                        visibleTasks.push(task);
+                    }
+                });
+                console.log(visibleTasks.length);
+                return visibleTasks;
             }
         },
         actions: {

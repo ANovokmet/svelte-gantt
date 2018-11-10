@@ -1,5 +1,5 @@
 <div ref:taskElement
-    class="task" 
+    class="task {task.classes}" 
     style="left:{task.truncated ? task.truncatedLeft : task.left}px;width:{task.truncated ? task.truncatedWidth : task.width}px;"
     use:drag 
     use:contextMenu
@@ -7,12 +7,14 @@
     class:overlapping="task.overlapping"
     class:selected="task.selected"
     class:moving="task.dragging||task.resizing">
-    <div class="task-background {task.classes}" style="width:{task.amountDone}%"></div>
-    {#if task.html}
-        {@html task.html}
-    {:else}
-        {task.label}
-    {/if}
+    <div class="task-background" style="width:{task.amountDone}%"></div>
+    <div class="task-content">
+        {#if task.html}
+            {@html task.html}
+        {:else}
+            {task.label}
+        {/if}
+    </div>
 </div>
 
 <style>
@@ -28,6 +30,13 @@
     .task-background {
         position: absolute;
         height: 100%;
+        top: 0;
+    }
+
+    .task-content {
+        position: absolute;
+        height: 100%;
+        top: 0;
     }
 </style>
 
@@ -35,7 +44,6 @@
     import { DOMUtils } from "./domUtils.js";
     import ContextMenu from "./ContextMenu.html";
 
-    const resizeHandleWidth = 15;
 
     export default {
         setup(component) {
@@ -54,7 +62,7 @@
         },
         actions: {
 			drag(node) {
-                const { rowContainerElement, ganttUtils, gantt } = this.store.get();
+                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
 
                 const { task } = this.get();
@@ -144,7 +152,7 @@
                         self.updateTaskPosition();
                         
                         //row switching
-                        const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
+                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2; //rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
                         const sourceRow = task.row;
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);

@@ -123,7 +123,9 @@ real content
                 // enables right click context menu
                 enableContextMenu: false,
                 // sets top level gantt class which can be used for styling
-                classes: ''
+                classes: '',
+                // width of handle for resizing grid
+                resizeHandleWidth: 5
             };
 
             SvelteGantt.create = function(target, data, options) {
@@ -332,7 +334,7 @@ real content
                 const scrollLeft = this.refs.mainContainer.scrollLeft;
                 const clientWidth = this.refs.mainContainer.clientWidth;
                 //finish this
-                this.store.set({scrollLeft, clientWidth});
+                //this.store.set({scrollLeft, clientWidth});
 
                 //da su sortirani -> index prvog, zadnjeg, i onda slice
                 //da su sortirani -> nakon zadnjeg break
@@ -364,15 +366,20 @@ real content
 
                 this.set({ columns });
             },
-            updateView({from, to, headers}){
-                this.store.set({from, to, headers});
+            updateView({from, to, headers, width}){
+                this.store.set({from, to, headers, width});
                 this.initColumns();
-
 
                 const {_allTasks} = this.get();
                 _allTasks.forEach(task => {
                     task.updatePosition();
                     task.updateView();
+                });
+
+                const {rows} = this.store.get();
+                rows.forEach(row => {
+                    if(row.component)
+                        row.component.updateVisible();
                 });
 
                 this.broadcastModules('updateView', {from, to, headers});

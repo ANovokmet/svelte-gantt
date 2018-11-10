@@ -18,7 +18,7 @@ for(let i = 0; i < 500; i++){
 	});
 
 	if(Math.random() < 0.2){
-		data.rows[i].classes = ['penis-row'];
+		data.rows[i].classes = ['row-disabled'];
 		data.rows[i].enableDragging = false;
 	}
 
@@ -29,7 +29,8 @@ for(let i = 0; i < 500; i++){
 		label: 'Task #'+i,
 		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
 		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
-		amountDone: Math.floor(Math.random() * 100)
+		amountDone: Math.floor(Math.random() * 100),
+		classes: Math.random() < 0.1 ? 'task-status-1' : ''
 		//h: Math.random() < 0.5
 	});
 
@@ -87,6 +88,7 @@ document.getElementById('setDayView').addEventListener('click', (event) => {
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
+		width: 1000,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
 });
@@ -96,6 +98,7 @@ document.getElementById('setWeekView').addEventListener('click', (event) => {
 	gantt.updateView({
 		from: currentStart.clone().startOf('week'),
 		to: currentStart.clone().endOf('week'),
+		width: 5000,
 		headers: [{unit: 'month', format: 'Mo YYYY'},{unit: 'day', format: 'DD'}]
 	});
 });

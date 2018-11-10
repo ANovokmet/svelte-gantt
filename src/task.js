@@ -2,7 +2,9 @@ export class SvelteTask {
 
     constructor(gantt, task, row){
         this.gantt = gantt;
-        Object.assign(this, task);
+        Object.assign(this, {
+            classes: ''
+        }, task);
         this.row = row;
         this.dependencies = [];
         this.updatePosition();
@@ -28,8 +30,13 @@ export class SvelteTask {
         const from = this.gantt.utils.getDateByPosition(this.left);
         const to = this.gantt.utils.getDateByPosition(this.left + this.width);
                    
-        this.from = this.gantt.utils.roundTo(from);
-        this.to = this.gantt.utils.roundTo(to);
+        const roundedFrom = this.gantt.utils.roundTo(from);
+        const roundedTo = this.gantt.utils.roundTo(to);
+
+        if(!roundedFrom.isSame(roundedTo)){
+            this.from = roundedFrom;
+            this.to = roundedTo;
+        }
     }
 
     overlaps(other) {
