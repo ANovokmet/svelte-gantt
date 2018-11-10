@@ -1189,10 +1189,10 @@ var SvelteGantt = (function () {
 				div_1 = createElement("div");
 				text = createText("\r\n    ");
 				if_block.c();
-				div_1.className = div_1_class_value = "task-background " + ctx.task.classes + " svelte-f60lqn";
+				div_1.className = div_1_class_value = "task-background " + ctx.task.classes + " svelte-illiuc";
 				setStyle(div_1, "width", "" + ctx.task.amountDone + "%");
 				addLoc(div_1, file$2, 9, 4, 360);
-				div.className = "task svelte-f60lqn";
+				div.className = "task svelte-illiuc";
 				setStyle(div, "left", "" + (ctx.task.truncated ? ctx.task.truncatedLeft : ctx.task.left) + "px");
 				setStyle(div, "width", "" + (ctx.task.truncated ? ctx.task.truncatedWidth : ctx.task.width) + "px");
 				toggleClass(div, "overlapping", ctx.task.overlapping);
@@ -1214,7 +1214,7 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.task) && div_1_class_value !== (div_1_class_value = "task-background " + ctx.task.classes + " svelte-f60lqn")) {
+				if ((changed.task) && div_1_class_value !== (div_1_class_value = "task-background " + ctx.task.classes + " svelte-illiuc")) {
 					div_1.className = div_1_class_value;
 				}
 
@@ -1825,22 +1825,33 @@ var SvelteGantt = (function () {
 	        width: null
 	    }
 	}
-	function oncreate$5() {
-	    this.root.initGantt();
-	    const { header } = this.get();
-	    const { from, width, gantt } = this.store.get();
-	    const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
-	    const columnCount = Math.ceil(width / columnWidth); 
+	var methods$4 = {
+	    initHeaders() {
+	        this.root.initGantt();
+	        const { header } = this.get();
+	        const { from, width, gantt } = this.store.get();
+	        const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
+	        const columnCount = Math.ceil(width / columnWidth); 
 
-	    const headers = [];
-	    let headerTime = from.clone();
+	        const headers = [];
+	        let headerTime = from.clone();
 
-	    for(let i=0; i< columnCount; i++){
-	        headers.push({width: columnWidth, label: headerTime.format(header.format)});
-	        headerTime.add(1, header.unit);
+	        for(let i=0; i< columnCount; i++){
+	            headers.push({width: columnWidth, label: headerTime.format(header.format)});
+	            headerTime.add(1, header.unit);
+	        }
+
+	        this.set({headers});
 	    }
+	};
 
-	    this.set({headers});
+	function oncreate$5() {
+	    this.initHeaders();
+	}
+	function onupdate$1({ changed, current, previous }){
+	    if(previous != null){
+	        this.initHeaders();
+	    }
 	}
 	const file$5 = "src\\ColumnHeader.html";
 
@@ -1922,7 +1933,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (3:4) {#each headers as header}
+	// (2:4) {#each headers as header}
 	function create_each_block$2(component, ctx) {
 		var div, text_value = ctx.header.label || 'N/A', text;
 
@@ -1932,7 +1943,7 @@ var SvelteGantt = (function () {
 				text = createText(text_value);
 				div.className = "column-header svelte-1obsyea";
 				setStyle(div, "width", "" + ctx.header.width + "px");
-				addLoc(div, file$5, 3, 8, 98);
+				addLoc(div, file$5, 2, 8, 96);
 			},
 
 			m: function mount(target, anchor) {
@@ -1974,6 +1985,7 @@ var SvelteGantt = (function () {
 		if (!('width' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'width'");
 		if (!('headers' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'headers'");
 		this._intro = !!options.intro;
+		this._handlers.update = [onupdate$1];
 
 		this._fragment = create_main_fragment$5(this, this._state);
 
@@ -1994,6 +2006,7 @@ var SvelteGantt = (function () {
 	}
 
 	assign(ColumnHeader.prototype, protoDev);
+	assign(ColumnHeader.prototype, methods$4);
 
 	ColumnHeader.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	};
@@ -2358,7 +2371,7 @@ var SvelteGantt = (function () {
 	        paddingBottom: 0
 	    }
 	}
-	var methods$4 = {
+	var methods$5 = {
 	    initGantt(){
 	        if(!this.store.get().gantt){
 	            this.store.set({
@@ -2452,6 +2465,19 @@ var SvelteGantt = (function () {
 	        }
 
 	        this.set({ columns });
+	    },
+	    updateView({from, to, headers}){
+	        this.store.set({from, to, headers});
+	        this.initColumns();
+
+
+	        const {_allTasks} = this.get();
+	        _allTasks.forEach(task => {
+	            task.updatePosition();
+	            task.updateView();
+	        });
+
+	        this.broadcastModules('updateView', {from, to, headers});
 	    }
 	};
 
@@ -2481,19 +2507,32 @@ var SvelteGantt = (function () {
 	        console.log('mouse up on ', event.target);
 	    });
 
-	    //window.addEventListener('resize', (event) => {
-
+	    this.onWindowResizeHandler = (event) => {
 	        const parentWidth = this.refs.ganttElement.clientWidth;
+	        const parentHeight = this.refs.ganttElement.clientHeight;
 	        
 	        const tableWidth = this.store.get().tableWidth || 0;
 
 	        this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
 	        this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
-	    //});
 
+	        const height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+
+	        this.store.set({
+	            //width, 
+	            height
+	        });
+	    };
+
+	    window.addEventListener('resize', this.onWindowResizeHandler);
+	    this.onWindowResizeHandler(null);
 	    
 	    this.broadcastModules('onGanttCreated');
 	    this.updateViewport();
+	}
+	function ondestroy$2(){
+	    //remove event listener
+	    window.removeEventListener('resize', this.onWindowResizeHandler);
 	}
 	function setup$2(component){
 	    SvelteGantt = component;
@@ -2503,7 +2542,7 @@ var SvelteGantt = (function () {
 	        // datetime timeline ends on, currently moment-js object
 	        to: null,
 	        // width of main gantt area in px
-	        width: 800,
+	        width: 800, //rename to timelinewidth
 	        // height of main gantt area in px
 	        height: 400,
 	        // minimum unit of time task date values will round to 
@@ -2727,22 +2766,22 @@ var SvelteGantt = (function () {
 				div_2.className = "header-container";
 				setStyle(div_2, "width", "" + ctx.$width + "px");
 				addLoc(div_2, file$6, 6, 8, 331);
-				div_1.className = "main-header-container svelte-1ec7d4a";
+				div_1.className = "main-header-container svelte-1mh1voh";
 				addLoc(div_1, file$6, 5, 4, 238);
-				div_5.className = "column-container svelte-1ec7d4a";
+				div_5.className = "column-container svelte-1mh1voh";
 				addLoc(div_5, file$6, 15, 12, 690);
-				div_6.className = "row-container svelte-1ec7d4a";
+				div_6.className = "row-container svelte-1mh1voh";
 				setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
 				setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
 				setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
 				addLoc(div_6, file$6, 20, 12, 874);
-				div_4.className = "content svelte-1ec7d4a";
+				div_4.className = "content svelte-1mh1voh";
 				setStyle(div_4, "width", "" + ctx.$width + "px");
 				addLoc(div_4, file$6, 14, 8, 630);
-				div_3.className = "main-container svelte-1ec7d4a";
+				div_3.className = "main-container svelte-1mh1voh";
 				setStyle(div_3, "height", "" + ctx.$height + "px");
 				addLoc(div_3, file$6, 13, 4, 532);
-				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-1ec7d4a";
+				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-1mh1voh";
 				addLoc(div, file$6, 0, 0, 0);
 			},
 
@@ -2858,7 +2897,7 @@ var SvelteGantt = (function () {
 					setStyle(div_3, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-1ec7d4a")) {
+				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-1mh1voh")) {
 					div.className = div_class_value;
 				}
 
@@ -3340,7 +3379,7 @@ var SvelteGantt = (function () {
 		if (!('$gantt' in this._state)) console.warn("<Gantt> was created without expected data property '$gantt'");
 		this._intro = !!options.intro;
 
-		this._handlers.destroy = [removeFromStore];
+		this._handlers.destroy = [ondestroy$2, removeFromStore];
 
 		this._fragment = create_main_fragment$6(this, this._state);
 
@@ -3361,7 +3400,7 @@ var SvelteGantt = (function () {
 	}
 
 	assign(Gantt.prototype, protoDev);
-	assign(Gantt.prototype, methods$4);
+	assign(Gantt.prototype, methods$5);
 
 	Gantt.prototype._checkReadOnly = function _checkReadOnly(newState) {
 		if ('rowContainerHeight' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rowContainerHeight'");

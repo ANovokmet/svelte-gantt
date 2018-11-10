@@ -1,5 +1,4 @@
 <div class="column-header-row" style="width:{width}px">
-
     {#each headers as header}
         <div class="column-header" style="width:{header.width}px">
             {header.label || 'N/A'}
@@ -27,21 +26,31 @@
 <script>
     export default {
         oncreate() {
-            this.root.initGantt();
-            const { header } = this.get();
-            const { from, width, gantt } = this.store.get();
-            const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
-            const columnCount = Math.ceil(width / columnWidth) 
-
-            const headers = [];
-            let headerTime = from.clone();
-
-            for(let i=0; i< columnCount; i++){
-                headers.push({width: columnWidth, label: headerTime.format(header.format)});
-                headerTime.add(1, header.unit);
+            this.initHeaders();
+        },
+        onupdate({ changed, current, previous }){
+            if(previous != null){
+                this.initHeaders();
             }
+        },
+        methods: {
+            initHeaders() {
+                this.root.initGantt();
+                const { header } = this.get();
+                const { from, width, gantt } = this.store.get();
+                const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
+                const columnCount = Math.ceil(width / columnWidth) 
 
-            this.set({headers});
+                const headers = [];
+                let headerTime = from.clone();
+
+                for(let i=0; i< columnCount; i++){
+                    headers.push({width: columnWidth, label: headerTime.format(header.format)});
+                    headerTime.add(1, header.unit);
+                }
+
+                this.set({headers});
+            }
         },
         data(){
             return {

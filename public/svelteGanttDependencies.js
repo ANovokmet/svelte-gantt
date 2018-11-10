@@ -574,6 +574,17 @@ var SvelteGanttDependencies = (function () {
 	    fromTask.unsubscribe(this);
 	    toTask.unsubscribe(this);
 	}
+	function onupdate({ changed, current, previous }){
+	    if(previous != null){
+	        const { dependency } = this.get();
+	        this.set({ 
+	            startX: dependency.startX,
+	            startY: dependency.startY,
+	            endX: dependency.endX,
+	            endY: dependency.endY
+	        });
+	    }
+	}
 	const file$1 = "src\\modules\\dependencies\\Dependency.html";
 
 	function create_main_fragment$1(component, ctx) {
@@ -649,6 +660,7 @@ var SvelteGanttDependencies = (function () {
 		if (!('endX' in this._state)) console.warn("<Dependency> was created without expected data property 'endX'");
 		if (!('endY' in this._state)) console.warn("<Dependency> was created without expected data property 'endY'");
 		this._intro = !!options.intro;
+		this._handlers.update = [onupdate];
 
 		this._handlers.destroy = [ondestroy];
 
@@ -776,6 +788,16 @@ var SvelteGanttDependencies = (function () {
 	        }
 
 	        this.set({ visibleDependencies });
+	    },
+	    updateView({from, to, headers}){
+	        const {_gantt} = this.get();
+	        const {dependencies} = _gantt.get();
+
+	        dependencies.forEach(dependency => {
+	            dependency.update();
+	        });
+
+	        this.set({ visibleDependencies: this.get().visibleDependencies });
 	    }
 	};
 

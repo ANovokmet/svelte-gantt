@@ -1,6 +1,6 @@
 //import SvelteGantt from './Grid.html';
 //import moment from "../node_modules/moment/src/moment.js";
-let startOfToday = moment().startOf('day')
+let startOfToday = moment().startOf('day');
 
 let data = {
 	rows: [],
@@ -75,3 +75,50 @@ var gantt = SvelteGantt.create(document.body, data, options);
 gantt.api.tasks.on.move((task) => console.log('Listener: task moved', task));
 gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
 gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));
+
+
+
+const currentStart = moment().startOf('day');
+const currentEnd = moment().endOf('day');
+
+
+document.getElementById('setDayView').addEventListener('click', (event) => {
+	console.log('set day view');
+	gantt.updateView({
+		from: currentStart,
+		to: currentEnd,
+		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+	});
+});
+
+document.getElementById('setWeekView').addEventListener('click', (event) => {
+	console.log('set week view');
+	gantt.updateView({
+		from: currentStart.clone().startOf('week'),
+		to: currentStart.clone().endOf('week'),
+		headers: [{unit: 'month', format: 'Mo YYYY'},{unit: 'day', format: 'DD'}]
+	});
+});
+
+document.getElementById('setNextDay').addEventListener('click', (event) => {
+	currentStart.add(1, 'day');
+	currentEnd.add(1, 'day');
+
+	gantt.updateView({
+		from: currentStart,
+		to: currentEnd,
+		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+	});
+});
+
+
+document.getElementById('setPreviousDay').addEventListener('click', (event) => {
+	currentStart.subtract(1, 'day');
+	currentEnd.subtract(1, 'day');
+
+	gantt.updateView({
+		from: currentStart,
+		to: currentEnd,
+		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+	});
+});

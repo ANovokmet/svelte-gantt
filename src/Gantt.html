@@ -39,6 +39,7 @@ real content
 <style>
     .gantt {
         width: 100%;
+        height: 90%;
         position: relative;
     }
 
@@ -104,7 +105,7 @@ real content
                 // datetime timeline ends on, currently moment-js object
                 to: null,
                 // width of main gantt area in px
-                width: 800,
+                width: 800, //rename to timelinewidth
                 // height of main gantt area in px
                 height: 400,
                 // minimum unit of time task date values will round to 
@@ -180,7 +181,7 @@ real content
                     _allTasks.push(row.tasks[j]);
                 }
             }
-            this.set({_allTasks})
+            this.set({_allTasks});
 
 
             this.initColumns();
@@ -189,19 +190,33 @@ real content
                 console.log('mouse up on ', event.target);
             });
 
-            //window.addEventListener('resize', (event) => {
-
+            this.onWindowResizeHandler = (event) => {
                 const parentWidth = this.refs.ganttElement.clientWidth;
+                const parentHeight = this.refs.ganttElement.clientHeight;
                 
                 const tableWidth = this.store.get().tableWidth || 0;
 
                 this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
                 this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
-            //});
 
+                const height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+                const width = parentWidth - tableWidth - 17;
+
+                this.store.set({
+                    //width, 
+                    height
+                });
+            };
+
+            window.addEventListener('resize', this.onWindowResizeHandler);
+            this.onWindowResizeHandler(null);
             
             this.broadcastModules('onGanttCreated');
             this.updateViewport();
+        },
+        ondestroy(){
+            //remove event listener
+            window.removeEventListener('resize', this.onWindowResizeHandler)
         },
         actions: {
             disableContextMenu(node) {
@@ -348,6 +363,19 @@ real content
                 }
 
                 this.set({ columns });
+            },
+            updateView({from, to, headers}){
+                this.store.set({from, to, headers});
+                this.initColumns();
+
+
+                const {_allTasks} = this.get();
+                _allTasks.forEach(task => {
+                    task.updatePosition();
+                    task.updateView();
+                });
+
+                this.broadcastModules('updateView', {from, to, headers});
             }
         },
         data() {

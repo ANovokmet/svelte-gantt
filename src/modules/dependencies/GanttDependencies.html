@@ -98,6 +98,16 @@
                 }
 
                 this.set({ visibleDependencies });
+            },
+            updateView({from, to, headers}){
+                const {_gantt} = this.get();
+                const {dependencies} = _gantt.get();
+
+                dependencies.forEach(dependency => {
+                    dependency.update();
+                });
+
+                this.set({ visibleDependencies: this.get().visibleDependencies });
             }
         },
         data() {

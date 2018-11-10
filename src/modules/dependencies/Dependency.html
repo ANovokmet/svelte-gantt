@@ -38,6 +38,17 @@
 
 
         },
+        onupdate({ changed, current, previous }){
+            if(previous != null){
+                const { dependency } = this.get();
+                this.set({ 
+                    startX: dependency.startX,
+                    startY: dependency.startY,
+                    endX: dependency.endX,
+                    endY: dependency.endY
+                });
+            }
+        },
         ondestroy() {
             const { dependency } = this.get();
             const { fromTask, toTask } =  dependency//this.get();
