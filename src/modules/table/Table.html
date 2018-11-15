@@ -9,7 +9,7 @@
 
     <div class="table-scroll-container" style="height:{height}px;" ref:scrollable>
         <div class="table-row-container" style="padding-top:{$paddingTop}px;padding-bottom:{$paddingBottom}px;height:{$rowContainerHeight}px;width:{scrollWidth}px"> 
-            {#each visibleRows as row (row.id)}
+            {#each visibleRows as row (row.model.id)}
                 <RowHeader
                     row={row}
                     headers={$tableHeaders}/>
@@ -40,7 +40,7 @@
     }
 </style>
 <script>
-    import RowHeader from '../../RowHeader.html';
+    import RowHeader from './RowHeader.html';
 
     export default {
         setup(component) {

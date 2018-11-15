@@ -386,9 +386,11 @@ var SvelteGantt = (function () {
 
 	    constructor(gantt, task, row){
 	        this.gantt = gantt;
-	        Object.assign(this, {
+	        this.model = task;
+
+	        /*Object.assign(this, {
 	            classes: ''
-	        }, task);
+	        }, task);*/
 	        this.row = row;
 	        this.dependencies = [];
 	        this.updatePosition();
@@ -403,8 +405,8 @@ var SvelteGantt = (function () {
 	    }
 
 	    updatePosition(){
-	        const left = this.gantt.utils.getPositionByDate(this.from);
-	        const right = this.gantt.utils.getPositionByDate(this.to); 
+	        const left = this.gantt.utils.getPositionByDate(this.model.from);
+	        const right = this.gantt.utils.getPositionByDate(this.model.to); 
 
 	        this.left = left;
 	        this.width = right - left;
@@ -418,8 +420,8 @@ var SvelteGantt = (function () {
 	        const roundedTo = this.gantt.utils.roundTo(to);
 
 	        if(!roundedFrom.isSame(roundedTo)){
-	            this.from = roundedFrom;
-	            this.to = roundedTo;
+	            this.model.from = roundedFrom;
+	            this.model.to = roundedTo;
 	        }
 	    }
 
@@ -943,17 +945,36 @@ var SvelteGantt = (function () {
 	        task.component = null;
 	    }
 	}
+	function onupdate({ changed, current, previous }) {
+	    if(changed.task){
+	        //console.log('current', current.task);
+	        //console.log('previous', previous && previous.task);
+	        //current.row.rowElement = this.refs.row;
+	        console.log('update, generation:', current.task.model.generation, previous && previous.task.model.generation);
+	        current.task.component = this;
+	    }
+
+	    if(changed.task && changed.row){
+	        current.task.row = current.row;
+	    }
+	}
 	function drag$1(node) {
+	                //PROBLEM: pri refreshu podataka ovdje su "stari" event handleri
 	                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
 	                const windowElement = window;
 
-	                const { task } = this.get();
+	                let { task } = this.get();
+	                this.on('update', ({ changed, current, previous }) => {
+	                    if(changed.task){
+	                        task = current.task;
+	                    }
+	                });
 
 	                let mouseStartPosX;
 	                let mouseStartRight;
 	                
 	                let originalRow;
-
+	                    
 	                function onmousedown(event) {
 	                    if(event.which !== 1){
 	                        //debugger;
@@ -962,10 +983,14 @@ var SvelteGantt = (function () {
 
 	                    event.stopPropagation();
 	                    event.preventDefault();
-	                    console.log('drag down');
+	                    console.log('drag down, generation:', task.model.generation);
 	                    originalRow = task.row;
 
-	                    if(originalRow.enableDragging){
+	                    if(originalRow.tasks.filter(t => t.model.id === task.model.id).length > 1){
+	                        debugger;
+	                    }
+
+	                    if(originalRow.model.enableDragging){
 	                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
 	                        mouseStartRight = task.left + task.width;
 
@@ -987,7 +1012,6 @@ var SvelteGantt = (function () {
 	                }
 	                
 	                function onmousemove(event) {
-	                    
 	                    const self = task.component;
 
 	                    event.preventDefault();
@@ -1046,18 +1070,10 @@ var SvelteGantt = (function () {
 	                            const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
 	                            console.log('move task to '+targetRow.label, targetRow);
 
-	                            if(targetRow.enableDragging){
-	                                task.row = targetRow;
-	                                targetRow.tasks.push(task);
-	                                
-	                                let i, sourceTask;
-	                                for (i = 0; i < sourceRow.tasks.length; i++) {
-	                                    sourceTask = sourceRow.tasks[i];
-	                                    if (sourceTask === task) {
-	                                        break;
-	                                    }
-	                                }
-	                                sourceRow.tasks.splice(i, 1);
+	                            if(targetRow.model.enableDragging){
+
+	                                targetRow.moveTask(task);
+
 	                                self.store.set({visibleRows: visibleRows});
 	                                
 	                                //targetRow.component.movedRow();
@@ -1077,7 +1093,7 @@ var SvelteGantt = (function () {
 	                }
 
 	                function onmouseup(event) {
-	                    console.log('drag up'); 
+	                    console.log('drag up, generation:', task.model.generation); 
 	                    task.dragging = false;
 	                    task.resizing = false;
 	                    task.direction = null;
@@ -1088,9 +1104,11 @@ var SvelteGantt = (function () {
 	                    //code this better
 	                    if(originalRow && originalRow !== task.row) {
 	                        console.log('moved from original row', originalRow);
+
 	                        originalRow.component.taskMoved();
 	                        originalRow.component.handleOverlaps();
 	                    }
+	                    console.log('drag up end, generation:', task.model.generation); 
 	                }
 
 	                node.addEventListener('mousedown', onmousedown, false);
@@ -1111,7 +1129,8 @@ var SvelteGantt = (function () {
 
 		return {
 			update() {
-	                        
+	                        //ne radi??
+	                        task = this.get().task;
 			},
 
 			destroy() {
@@ -1130,11 +1149,11 @@ var SvelteGantt = (function () {
 	        const options = [
 	            {
 	                label: 'Copy',
-	                action: () => console.log('clicked action 1 for task ', task.id)
+	                action: () => console.log('clicked action 1 for task ', task.model.id)
 	            },
 	            {
 	                label: 'Clear dependencies',
-	                action: () => console.log('clicked action 2 for task ', task.id)
+	                action: () => console.log('clicked action 2 for task ', task.model.id)
 	            }
 	        ];
 
@@ -1160,9 +1179,9 @@ var SvelteGantt = (function () {
 					}
 	}
 	function selectable(node) {
-	    const { task } = this.get();
 	    const { gantt } = this.store.get();
 	    node.addEventListener('click', (e) => {
+	        const { task } = this.get();
 	        if(e.ctrlKey){
 	            gantt.selectionManager.toggleSelection(task);
 	        }
@@ -1181,7 +1200,7 @@ var SvelteGantt = (function () {
 		var div, div_1, text, div_2, div_class_value, drag_action, contextMenu_action, selectable_action, current;
 
 		function select_block_type(ctx) {
-			if (ctx.task.html) return create_if_block;
+			if (ctx.task.model.html) return create_if_block;
 			return create_if_block_1;
 		}
 
@@ -1196,11 +1215,11 @@ var SvelteGantt = (function () {
 				div_2 = createElement("div");
 				if_block.c();
 				div_1.className = "task-background svelte-1mt96qt";
-				setStyle(div_1, "width", "" + ctx.task.amountDone + "%");
-				addLoc(div_1, file$2, 9, 4, 375);
+				setStyle(div_1, "width", "" + ctx.task.model.amountDone + "%");
+				addLoc(div_1, file$2, 9, 4, 381);
 				div_2.className = "task-content svelte-1mt96qt";
-				addLoc(div_2, file$2, 10, 4, 449);
-				div.className = div_class_value = "task " + ctx.task.classes + " svelte-1mt96qt";
+				addLoc(div_2, file$2, 10, 4, 461);
+				div.className = div_class_value = "task " + ctx.task.model.classes + " svelte-1mt96qt";
 				setStyle(div, "left", "" + (ctx.task.truncated ? ctx.task.truncatedLeft : ctx.task.left) + "px");
 				setStyle(div, "width", "" + (ctx.task.truncated ? ctx.task.truncatedWidth : ctx.task.width) + "px");
 				toggleClass(div, "overlapping", ctx.task.overlapping);
@@ -1224,7 +1243,7 @@ var SvelteGantt = (function () {
 
 			p: function update(changed, ctx) {
 				if (changed.task) {
-					setStyle(div_1, "width", "" + ctx.task.amountDone + "%");
+					setStyle(div_1, "width", "" + ctx.task.model.amountDone + "%");
 				}
 
 				if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
@@ -1236,7 +1255,7 @@ var SvelteGantt = (function () {
 					if_block.m(div_2, null);
 				}
 
-				if ((changed.task) && div_class_value !== (div_class_value = "task " + ctx.task.classes + " svelte-1mt96qt")) {
+				if ((changed.task) && div_class_value !== (div_class_value = "task " + ctx.task.model.classes + " svelte-1mt96qt")) {
 					div.className = div_class_value;
 				}
 
@@ -1274,9 +1293,9 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (12:8) {#if task.html}
+	// (12:8) {#if task.model.html}
 	function create_if_block(component, ctx) {
-		var raw_value = ctx.task.html, raw_before, raw_after;
+		var raw_value = ctx.task.model.html, raw_before, raw_after;
 
 		return {
 			c: function create() {
@@ -1291,7 +1310,7 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.task) && raw_value !== (raw_value = ctx.task.html)) {
+				if ((changed.task) && raw_value !== (raw_value = ctx.task.model.html)) {
 					detachBetween(raw_before, raw_after);
 					raw_before.insertAdjacentHTML("afterend", raw_value);
 				}
@@ -1309,7 +1328,7 @@ var SvelteGantt = (function () {
 
 	// (14:8) {:else}
 	function create_if_block_1(component, ctx) {
-		var text_value = ctx.task.label, text;
+		var text_value = ctx.task.model.label, text;
 
 		return {
 			c: function create() {
@@ -1321,7 +1340,7 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.task) && text_value !== (text_value = ctx.task.label)) {
+				if ((changed.task) && text_value !== (text_value = ctx.task.model.label)) {
 					setData(text, text_value);
 				}
 			},
@@ -1342,6 +1361,7 @@ var SvelteGantt = (function () {
 		this._state = assign(data$2(), options.data);
 		if (!('task' in this._state)) console.warn("<Task> was created without expected data property 'task'");
 		this._intro = !!options.intro;
+		this._handlers.update = [onupdate];
 
 		this._handlers.destroy = [ondestroy];
 
@@ -1474,19 +1494,22 @@ var SvelteGantt = (function () {
 	function oncreate$3() {
 	    const { row } = this.get();
 	    row.rowElement = this.refs.row;
+	    row.component = this;
 
 	    if(!row.classes){ //default
 	        row.classes = [];
 	    }
-	    row.component = this;
 	}
 	function ondestroy$1(){
 	    const { row } = this.get();
 	    row.rowElement = null;
 	    row.component = null;
 	}
-	function onupdate({ changed, current, previous }) {
-	    
+	function onupdate$1({ changed, current, previous }) {
+	    if(changed.row){
+	        current.row.rowElement = this.refs.row;
+	        current.row.component = this;
+	    }
 	}
 	function contextMenu$1(node){
 	    const { gantt } = this.store.get();
@@ -1532,7 +1555,7 @@ var SvelteGantt = (function () {
 
 		var each_value = ctx.row.tasks;
 
-		const get_key = ctx => ctx.task.id;
+		const get_key = ctx => ctx.task.model.id;
 
 		for (var i = 0; i < each_value.length; i += 1) {
 			let child_ctx = get_each_context$1(ctx, each_value, i);
@@ -1540,7 +1563,7 @@ var SvelteGantt = (function () {
 			each_blocks_1[i] = each_lookup[key] = create_each_block$1(component, key, child_ctx);
 		}
 
-		var if_block = (ctx.row.contentHtml) && create_if_block$1(component, ctx);
+		var if_block = (ctx.row.model.contentHtml) && create_if_block$1(component, ctx);
 
 		return {
 			c: function create() {
@@ -1550,7 +1573,7 @@ var SvelteGantt = (function () {
 
 				text = createText("\r\n    ");
 				if (if_block) if_block.c();
-				div.className = div_class_value = "row " + ctx.row.classes + " svelte-1jglin1";
+				div.className = div_class_value = "row " + ctx.row.model.classes + " svelte-1jglin1";
 				setStyle(div, "height", "" + ctx.$rowHeight + "px");
 				addLoc(div, file$3, 0, 0, 0);
 			},
@@ -1571,7 +1594,7 @@ var SvelteGantt = (function () {
 				const each_value = ctx.row.tasks;
 				each_blocks_1 = updateKeyedEach(each_blocks_1, component, changed, get_key, 1, ctx, each_value, each_lookup, div, outroAndDestroyBlock, create_each_block$1, "i", text, get_each_context$1);
 
-				if (ctx.row.contentHtml) {
+				if (ctx.row.model.contentHtml) {
 					if (if_block) {
 						if_block.p(changed, ctx);
 					} else {
@@ -1584,7 +1607,7 @@ var SvelteGantt = (function () {
 					if_block = null;
 				}
 
-				if ((!current || changed.row) && div_class_value !== (div_class_value = "row " + ctx.row.classes + " svelte-1jglin1")) {
+				if ((!current || changed.row) && div_class_value !== (div_class_value = "row " + ctx.row.model.classes + " svelte-1jglin1")) {
 					div.className = div_class_value;
 				}
 
@@ -1622,7 +1645,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (2:4) {#each row.tasks as task (task.id)}
+	// (2:4) {#each row.tasks as task (task.model.id)}
 	function create_each_block$1(component, key_1, ctx) {
 		var first, current;
 
@@ -1700,9 +1723,9 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (12:4) {#if row.contentHtml}
+	// (12:4) {#if row.model.contentHtml}
 	function create_if_block$1(component, ctx) {
-		var raw_value = ctx.row.contentHtml, raw_before, raw_after;
+		var raw_value = ctx.row.model.contentHtml, raw_before, raw_after;
 
 		return {
 			c: function create() {
@@ -1717,7 +1740,7 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.row) && raw_value !== (raw_value = ctx.row.contentHtml)) {
+				if ((changed.row) && raw_value !== (raw_value = ctx.row.model.contentHtml)) {
 					detachBetween(raw_before, raw_after);
 					raw_before.insertAdjacentHTML("afterend", raw_value);
 				}
@@ -1751,7 +1774,7 @@ var SvelteGantt = (function () {
 		if (!('row' in this._state)) console.warn("<Row> was created without expected data property 'row'");
 		if (!('$rowHeight' in this._state)) console.warn("<Row> was created without expected data property '$rowHeight'");
 		this._intro = !!options.intro;
-		this._handlers.update = [onupdate];
+		this._handlers.update = [onupdate$1];
 
 		this._handlers.destroy = [ondestroy$1, removeFromStore];
 
@@ -1888,7 +1911,7 @@ var SvelteGantt = (function () {
 	function oncreate$5() {
 	    this.initHeaders();
 	}
-	function onupdate$1({ changed, current, previous }){
+	function onupdate$2({ changed, current, previous }){
 	    if(previous != null){
 	        this.initHeaders();
 	    }
@@ -2025,7 +2048,7 @@ var SvelteGantt = (function () {
 		if (!('width' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'width'");
 		if (!('headers' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'headers'");
 		this._intro = !!options.intro;
-		this._handlers.update = [onupdate$1];
+		this._handlers.update = [onupdate$2];
 
 		this._fragment = create_main_fragment$5(this, this._state);
 
@@ -2273,7 +2296,8 @@ var SvelteGantt = (function () {
 	    updateSelected(item, value){
 	        if(item.selected !== value){
 	            item.selected = value;
-	            this.onSelectionChange && this.onSelectionChange(item, value);
+	            item.updateView();
+	            //this.onSelectionChange && this.onSelectionChange(item, value);
 	        }
 	    }
 
@@ -2387,6 +2411,53 @@ var SvelteGantt = (function () {
 	      }
 	}
 
+	class SvelteRow {
+
+	    constructor(gantt, row){
+	        this.gantt = gantt;
+	        this.model = row;
+	        this.tasks = [];//kasnije se init
+	    }
+
+	    addTask(task) {
+	        this.tasks.push(task);
+
+	        if (this.model.tasks === undefined) {
+	            this.model.tasks = [];
+	        }
+	        if (this.model.tasks.indexOf(task.model) === -1) {
+	            this.model.tasks.push(task.model);
+	        }
+	    }
+
+	    moveTask(task) {
+	        const sourceRow = task.row;
+	        sourceRow.removeTask(task);
+
+	        task.row = this;
+	        this.addTask(task);
+	    }
+
+	    
+	    removeTask(task) {
+	        const index = this.tasks.indexOf(task);
+	        if(index !== -1){
+	            this.tasks.splice(index, 1);
+	        }
+
+	        const modelIndex = this.model.tasks.indexOf(task.model);
+	        if(modelIndex !== -1){
+	            this.model.tasks.splice(modelIndex, 1);
+	        }
+	    }
+
+	    updateView() {
+	        if(this.component) {
+	            this.component.set({row: this});
+	        }
+	    }
+	}
+
 	/* src\Gantt.html generated by Svelte v2.13.4 */
 
 	//import GanttDependencies from './modules/dependencies/GanttDependencies.html';
@@ -2407,11 +2478,41 @@ var SvelteGantt = (function () {
 	        _ganttTableModules: [],
 	        _modules: [],
 
+	        rows: [],
+
 	        paddingTop: 0,
 	        paddingBottom: 0
 	    }
 	}
 	var methods$5 = {
+	    initData(data){
+	        const rows = [];
+	        const _allTasks = [];
+	        const _taskCache = {};
+	        for(let i=0; i < data.rows.length; i++){
+	            const currentRow = data.rows[i];
+	            const row = new SvelteRow(this, currentRow);
+	            for(let j=0; j < currentRow.tasks.length; j++){
+	                const currentTask = currentRow.tasks[j];
+	                currentTask.amountDone = currentTask.amountDone || 0;
+	                
+	                const task = new SvelteTask(this, currentTask, row);
+	                row.addTask(task);
+	                _allTasks.push(task);
+	                _taskCache[task.model.id] = task;
+	            }
+	            rows.push(row);
+	        }
+	        this.set({
+	            _allTasks,
+	            _taskCache,
+	            rows
+	        });
+	        this.store.set({rows});
+	        this.selectionManager.clearSelection();
+	        this.updateViewport();
+	        this.broadcastModules('initData', data);
+	    },
 	    initGantt(){
 	        if(!this.store.get().gantt){
 	            this.store.set({
@@ -2421,7 +2522,7 @@ var SvelteGantt = (function () {
 	            });
 	            
 	            this.menuManager = new ContextMenuManager(this);
-	            this.selectionManager = new SelectionManager(t => t.updateView());
+	            this.selectionManager = new SelectionManager();
 	            this.utils = new GanttUtils(this);
 	            this.api = new GanttApi(this);
 
@@ -2530,20 +2631,30 @@ var SvelteGantt = (function () {
 	    this.initGantt();
 	    
 
-	    const {rows} = this.get();
-	    const _allTasks = [];
-	    for(let i=0; i < rows.length; i++){
-	        const row = rows[i];
-	        for(let j=0; j < row.tasks.length; j++){
-	            const task = row.tasks[j];
-	            task.amountDone = task.amountDone || 0;
+	    const {rows, initialRows, dependencies} = this.get();
+	    this.initData({rows: initialRows, dependencies});
+	    // const _allTasks = [];
+	    // const _taskCache = {};
+	    // for(let i=0; i < initialRows.length; i++){
+	    //     const currentRow = initialRows[i];
+	    //     const row = new SvelteRow(this, currentRow);
+	    //     for(let j=0; j < currentRow.tasks.length; j++){
+	    //         const currentTask = currentRow.tasks[j];
+	    //         currentTask.amountDone = currentTask.amountDone || 0;
 	            
-
-	            row.tasks[j] = new SvelteTask(this, task, row);
-	            _allTasks.push(row.tasks[j]);
-	        }
-	    }
-	    this.set({_allTasks});
+	    //         const task = new SvelteTask(this, currentTask, row);
+	    //         row.addTask(task);
+	    //         _allTasks.push(task);
+	    //         _taskCache[task.model.id] = task;
+	    //     }
+	    //     rows.push(row);
+	    // }
+	    // this.set({
+	    //     _allTasks,
+	    //     _taskCache,
+	    //     rows
+	    // });
+	    // this.store.set({rows});
 
 
 	    this.initColumns();
@@ -2626,7 +2737,12 @@ var SvelteGantt = (function () {
 	            });
 	        }
 
-	        Object.assign(data, {
+	        const newData = {
+	            initialRows: data.rows,
+	            dependencies: data.dependencies
+	        };
+
+	        Object.assign(newData, {
 	            _ganttBodyModules: ganttModules.ganttBodyModules,
 	            _ganttTableModules: ganttModules.ganttTableModules
 	        });
@@ -2637,12 +2753,12 @@ var SvelteGantt = (function () {
 	        const store = new Store();
 	        store.set(ganttOptions);
 	        store.set({ 
-	            rows: data.rows
+	            //rows: data.rows
 	        });
 
 	        return new SvelteGantt({
 	            target,
-	            data,
+	            data: newData,
 	            store
 	        });
 	    };
@@ -2749,7 +2865,7 @@ var SvelteGantt = (function () {
 
 		var each_value_3 = ctx.visibleRows;
 
-		const get_key_1 = ctx => ctx.row.id;
+		const get_key_1 = ctx => ctx.row.model.id;
 
 		for (var i = 0; i < each_value_3.length; i += 1) {
 			let child_ctx = get_each_3_context(ctx, each_value_3, i);
@@ -3210,7 +3326,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (23:16) {#each visibleRows as row (row.id)}
+	// (23:16) {#each visibleRows as row (row.model.id)}
 	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 

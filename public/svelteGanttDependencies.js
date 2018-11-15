@@ -741,20 +741,34 @@ var SvelteGanttDependencies = (function () {
 	    },
 	    onGanttCreated() {
 	        const {_gantt} = this.get();
-	        const {dependencies, _allTasks} = _gantt.get();
+	        const {dependencies, _allTasks, _taskCache} = _gantt.get();
 
-	        for(let i=0; i < dependencies.length; i++){
+	        /*for(let i=0; i < dependencies.length; i++){
 	            let dependency = dependencies[i];
-	            const fromTask = _allTasks.find(t => t.id == dependency.fromTask);
-	            const toTask = _allTasks.find(t => t.id == dependency.toTask);
+	            const fromTask = _taskCache[dependency.fromTask]; //_allTasks.find(t => t.id == dependency.fromTask);
+	            const toTask = _taskCache[dependency.toTask];//_allTasks.find(t => t.id == dependency.toTask);
+	            dependency.fromTask = fromTask;
+	            dependency.toTask = toTask;
+
+	            dependencies[i] = new SvelteDependency(_gantt, dependency);
+	        }*/
+
+	        //this.updateVisible({scrollAmount:0, viewportHeight:400});
+	        //this.set({visibleDependencies});
+	    },
+	    initData(data){
+	        const {_gantt} = this.get();
+	        const {dependencies, _allTasks, _taskCache} = _gantt.get();
+
+	        for(let i=0; i < data.dependencies.length; i++){
+	            let dependency = dependencies[i];
+	            const fromTask = _taskCache[dependency.fromTask]; //_allTasks.find(t => t.id == dependency.fromTask);
+	            const toTask = _taskCache[dependency.toTask];//_allTasks.find(t => t.id == dependency.toTask);
 	            dependency.fromTask = fromTask;
 	            dependency.toTask = toTask;
 
 	            dependencies[i] = new SvelteDependency(_gantt, dependency);
 	        }
-
-	        //this.updateVisible({scrollAmount:0, viewportHeight:400});
-	        //this.set({visibleDependencies});
 	    },
 	    updateVisible({scrollAmount, viewportHeight}){
 	        const { dependencies } = this.get()._options;

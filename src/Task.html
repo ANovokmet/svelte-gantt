@@ -1,5 +1,5 @@
 <div ref:taskElement
-    class="task {task.classes}" 
+    class="task {task.model.classes}" 
     style="left:{task.truncated ? task.truncatedLeft : task.left}px;width:{task.truncated ? task.truncatedWidth : task.width}px;"
     use:drag 
     use:contextMenu
@@ -7,12 +7,12 @@
     class:overlapping="task.overlapping"
     class:selected="task.selected"
     class:moving="task.dragging||task.resizing">
-    <div class="task-background" style="width:{task.amountDone}%"></div>
+    <div class="task-background" style="width:{task.model.amountDone}%"></div>
     <div class="task-content">
-        {#if task.html}
-            {@html task.html}
+        {#if task.model.html}
+            {@html task.model.html}
         {:else}
-            {task.label}
+            {task.model.label}
         {/if}
     </div>
 </div>
@@ -60,18 +60,37 @@
                 task.component = null;
             }
         },
+        onupdate({ changed, current, previous }) {
+            if(changed.task){
+                //console.log('current', current.task);
+                //console.log('previous', previous && previous.task);
+                //current.row.rowElement = this.refs.row;
+                console.log('update, generation:', current.task.model.generation, previous && previous.task.model.generation);
+                current.task.component = this;
+            }
+
+            if(changed.task && changed.row){
+                current.task.row = current.row;
+            }
+        },
         actions: {
 			drag(node) {
+                //PROBLEM: pri refreshu podataka ovdje su "stari" event handleri
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
 
-                const { task } = this.get();
+                let { task } = this.get();
+                this.on('update', ({ changed, current, previous }) => {
+                    if(changed.task){
+                        task = current.task;
+                    }
+                });
 
                 let mouseStartPosX;
                 let mouseStartRight;
                 
                 let originalRow;
-
+                    
                 function onmousedown(event) {
                     if(event.which !== 1){
                         //debugger;
@@ -80,10 +99,14 @@
 
                     event.stopPropagation();
                     event.preventDefault();
-                    console.log('drag down');
+                    console.log('drag down, generation:', task.model.generation);
                     originalRow = task.row;
 
-                    if(originalRow.enableDragging){
+                    if(originalRow.tasks.filter(t => t.model.id === task.model.id).length > 1){
+                        debugger;
+                    }
+
+                    if(originalRow.model.enableDragging){
                         mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
                         mouseStartRight = task.left + task.width;
 
@@ -105,7 +128,6 @@
                 }
                 
                 function onmousemove(event) {
-                    
                     const self = task.component;
 
                     event.preventDefault();
@@ -164,18 +186,10 @@
                             const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
                             console.log('move task to '+targetRow.label, targetRow);
 
-                            if(targetRow.enableDragging){
-                                task.row = targetRow;
-                                targetRow.tasks.push(task);
-                                
-                                let i, sourceTask;
-                                for (i = 0; i < sourceRow.tasks.length; i++) {
-                                    sourceTask = sourceRow.tasks[i]
-                                    if (sourceTask === task) {
-                                        break;
-                                    }
-                                }
-                                sourceRow.tasks.splice(i, 1);
+                            if(targetRow.model.enableDragging){
+
+                                targetRow.moveTask(task);
+
                                 self.store.set({visibleRows: visibleRows});
                                 
                                 //targetRow.component.movedRow();
@@ -195,7 +209,7 @@
                 }
 
                 function onmouseup(event) {
-                    console.log('drag up'); 
+                    console.log('drag up, generation:', task.model.generation); 
                     task.dragging = false;
                     task.resizing = false;
                     task.direction = null;
@@ -205,10 +219,12 @@
 
                     //code this better
                     if(originalRow && originalRow !== task.row) {
-                        console.log('moved from original row', originalRow)
+                        console.log('moved from original row', originalRow);
+
                         originalRow.component.taskMoved();
                         originalRow.component.handleOverlaps();
                     }
+                    console.log('drag up end, generation:', task.model.generation); 
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
@@ -229,7 +245,8 @@
 
 				return {
 					update() {
-                        
+                        //ne radi??
+                        task = this.get().task;
 					},
 
 					destroy() {
@@ -248,11 +265,11 @@
                     const options = [
                         {
                             label: 'Copy',
-                            action: () => console.log('clicked action 1 for task ', task.id)
+                            action: () => console.log('clicked action 1 for task ', task.model.id)
                         },
                         {
                             label: 'Clear dependencies',
-                            action: () => console.log('clicked action 2 for task ', task.id)
+                            action: () => console.log('clicked action 2 for task ', task.model.id)
                         }
                     ];
 
@@ -278,10 +295,10 @@
 				}
             },
             selectable(node) {
-                const { task } = this.get();
                 const { gantt } = this.store.get();
                 const self = this;
                 node.addEventListener('click', (e) => {
+                    const { task } = this.get();
                     if(e.ctrlKey){
                         gantt.selectionManager.toggleSelection(task);
                     }

@@ -27,7 +27,8 @@ export default class {
     updateSelected(item, value){
         if(item.selected !== value){
             item.selected = value;
-            this.onSelectionChange && this.onSelectionChange(item, value);
+            item.updateView();
+            //this.onSelectionChange && this.onSelectionChange(item, value);
         }
     }
 

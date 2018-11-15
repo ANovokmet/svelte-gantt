@@ -2,9 +2,11 @@ export class SvelteTask {
 
     constructor(gantt, task, row){
         this.gantt = gantt;
-        Object.assign(this, {
+        this.model = task;
+
+        /*Object.assign(this, {
             classes: ''
-        }, task);
+        }, task);*/
         this.row = row;
         this.dependencies = [];
         this.updatePosition();
@@ -19,8 +21,8 @@ export class SvelteTask {
     }
 
     updatePosition(){
-        const left = this.gantt.utils.getPositionByDate(this.from);
-        const right = this.gantt.utils.getPositionByDate(this.to); 
+        const left = this.gantt.utils.getPositionByDate(this.model.from);
+        const right = this.gantt.utils.getPositionByDate(this.model.to); 
 
         this.left = left;
         this.width = right - left;
@@ -34,8 +36,8 @@ export class SvelteTask {
         const roundedTo = this.gantt.utils.roundTo(to);
 
         if(!roundedFrom.isSame(roundedTo)){
-            this.from = roundedFrom;
-            this.to = roundedTo;
+            this.model.from = roundedFrom;
+            this.model.to = roundedTo;
         }
     }
 

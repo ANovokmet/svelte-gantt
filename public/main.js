@@ -2,39 +2,57 @@
 //import moment from "../node_modules/moment/src/moment.js";
 let startOfToday = moment().startOf('day');
 
-let data = {
-	rows: [],
-	dependencies: []
-}
-
-for(let i = 0; i < 500; i++){
-	data.rows.push({
-		id: i,
-		label: 'Row #'+i,
-		tasks: [],
-		enableDragging: true,
-		//contentHtml: '<s>Test</s>'
-		//headerHtml: '<s>Test</s>'
-	});
-
-	if(Math.random() < 0.2){
-		data.rows[i].classes = ['row-disabled'];
-		data.rows[i].enableDragging = false;
+let generation = 0;
+function generateData() {
+	const data = {
+		rows: [],
+		dependencies: []
 	}
 
-	let a = i % 3;
+	for(let i = 0; i < 500; i++) {
+		data.rows.push({
+			generation,
+			id: i,
+			label: 'Row #'+i,
+			tasks: [],
+			enableDragging: true,
+			//contentHtml: '<s>Test</s>'
+			//headerHtml: '<s>Test</s>'
+		});
+	
+		if(Math.random() < 0.2) {
+			data.rows[i].classes = ['row-disabled'];
+			data.rows[i].enableDragging = false;
+		}
+		else{
+			data.rows[i].enableDragging = true;
+		}
+	
+		let a = i % 3;
+	
+		data.rows[i].tasks.push({
+			generation,
+			id: i,
+			label: 'Task #'+i,
+			from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
+			to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
+			amountDone: Math.floor(Math.random() * 100),
+			classes: Math.random() < 0.1 ? 'task-status-1' : ''
+			//h: Math.random() < 0.5
+		});
+	}
 
-	data.rows[i].tasks.push({
-		id: i,
-		label: 'Task #'+i,
-		from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
-		to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
-		amountDone: Math.floor(Math.random() * 100),
-		classes: Math.random() < 0.1 ? 'task-status-1' : ''
-		//h: Math.random() < 0.5
-	});
+	generation += 1;
+	
+	for(let i = 0; i < 499; i++) {
+		data.dependencies.push({
+			id: i, 
+			fromTask: i, 
+			toTask: i+1 
+		});
+	}
 
-
+	return data;
 }
 
 /*setInterval(() => {
@@ -54,13 +72,6 @@ for(let i = 0; i < 500; i++){
 	}
 }, 50)*/
 
-for(let i = 0; i < 499; i++){
-	data.dependencies.push({
-		id: i, 
-		fromTask: i, 
-		toTask: i+1 
-	});
-}
 
 let options = {
 	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
@@ -71,7 +82,7 @@ let options = {
 	modules: [SvelteGanttTable, SvelteGanttDependencies]
 }
 
-var gantt = SvelteGantt.create(document.body, data, options);
+var gantt = SvelteGantt.create(document.body, generateData(), options);
 
 gantt.api.tasks.on.move((task) => console.log('Listener: task moved', task));
 gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
@@ -106,6 +117,7 @@ document.getElementById('setWeekView').addEventListener('click', (event) => {
 document.getElementById('setNextDay').addEventListener('click', (event) => {
 	currentStart.add(1, 'day');
 	currentEnd.add(1, 'day');
+	console.log('set next day');
 
 	gantt.updateView({
 		from: currentStart,
@@ -118,10 +130,17 @@ document.getElementById('setNextDay').addEventListener('click', (event) => {
 document.getElementById('setPreviousDay').addEventListener('click', (event) => {
 	currentStart.subtract(1, 'day');
 	currentEnd.subtract(1, 'day');
+	console.log('set previous day');
 
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
+});
+
+document.getElementById('reInit').addEventListener('click', (event) => {
+	
+	console.log('re init');
+	gantt.initData(generateData());
 });

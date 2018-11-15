@@ -20,7 +20,7 @@
             </div>
             <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
                 ref:rowContainer>
-                {#each visibleRows as row (row.id)}
+                {#each visibleRows as row (row.model.id)}
                     <Row row={row}
                         on:updateVisibleRows="updateViewport()"/>
                 {/each}
@@ -90,6 +90,7 @@ real content
 
     import Task from "./Task.html";
     import {SvelteTask} from "./task.js";
+    import {SvelteRow} from "./row.js";
 
     //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     //import Table from './modules/table/Table.html';
@@ -144,7 +145,12 @@ real content
                     })
                 }
 
-                Object.assign(data, {
+                const newData = {
+                    initialRows: data.rows,
+                    dependencies: data.dependencies
+                }
+
+                Object.assign(newData, {
                     _ganttBodyModules: ganttModules.ganttBodyModules,
                     _ganttTableModules: ganttModules.ganttTableModules
                 });
@@ -155,12 +161,12 @@ real content
                 const store = new Store();
                 store.set(ganttOptions);
                 store.set({ 
-                    rows: data.rows
+                    //rows: data.rows
                 });
 
                 return new SvelteGantt({
                     target,
-                    data,
+                    data: newData,
                     store
                 });
             }
@@ -170,20 +176,30 @@ real content
             this.initGantt();
             
 
-            const {rows} = this.get();
-            const _allTasks = [];
-            for(let i=0; i < rows.length; i++){
-                const row = rows[i];
-                for(let j=0; j < row.tasks.length; j++){
-                    const task = row.tasks[j];
-                    task.amountDone = task.amountDone || 0;
+            const {rows, initialRows, dependencies} = this.get();
+            this.initData({rows: initialRows, dependencies});
+            // const _allTasks = [];
+            // const _taskCache = {};
+            // for(let i=0; i < initialRows.length; i++){
+            //     const currentRow = initialRows[i];
+            //     const row = new SvelteRow(this, currentRow);
+            //     for(let j=0; j < currentRow.tasks.length; j++){
+            //         const currentTask = currentRow.tasks[j];
+            //         currentTask.amountDone = currentTask.amountDone || 0;
                     
-
-                    row.tasks[j] = new SvelteTask(this, task, row);
-                    _allTasks.push(row.tasks[j]);
-                }
-            }
-            this.set({_allTasks});
+            //         const task = new SvelteTask(this, currentTask, row);
+            //         row.addTask(task);
+            //         _allTasks.push(task);
+            //         _taskCache[task.model.id] = task;
+            //     }
+            //     rows.push(row);
+            // }
+            // this.set({
+            //     _allTasks,
+            //     _taskCache,
+            //     rows
+            // });
+            // this.store.set({rows});
 
 
             this.initColumns();
@@ -272,6 +288,34 @@ real content
             }
 		},
         methods: {
+            initData(data){
+                const rows = [];
+                const _allTasks = [];
+                const _taskCache = {};
+                for(let i=0; i < data.rows.length; i++){
+                    const currentRow = data.rows[i];
+                    const row = new SvelteRow(this, currentRow);
+                    for(let j=0; j < currentRow.tasks.length; j++){
+                        const currentTask = currentRow.tasks[j];
+                        currentTask.amountDone = currentTask.amountDone || 0;
+                        
+                        const task = new SvelteTask(this, currentTask, row);
+                        row.addTask(task);
+                        _allTasks.push(task);
+                        _taskCache[task.model.id] = task;
+                    }
+                    rows.push(row);
+                }
+                this.set({
+                    _allTasks,
+                    _taskCache,
+                    rows
+                });
+                this.store.set({rows});
+                this.selectionManager.clearSelection();
+                this.updateViewport();
+                this.broadcastModules('initData', data);
+            },
             initGantt(){
                 if(!this.store.get().gantt){
                     this.store.set({
@@ -281,7 +325,7 @@ real content
                     });
                     
                     this.menuManager = new ContextMenuManager(this);
-                    this.selectionManager = new SelectionManager(t => t.updateView());
+                    this.selectionManager = new SelectionManager();
                     this.utils = new GanttUtils(this);
                     this.api = new GanttApi(this);
 
@@ -393,6 +437,8 @@ real content
                 _ganttBodyModules: [],
                 _ganttTableModules: [],
                 _modules: [],
+
+                rows: [],
 
                 paddingTop: 0,
                 paddingBottom: 0
