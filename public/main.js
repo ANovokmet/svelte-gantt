@@ -145,3 +145,23 @@ document.getElementById('reInit').addEventListener('click', (event) => {
 	console.log('re init');
 	gantt.initData(generateData());
 });
+
+SvelteGanttExternal.create(document.getElementById('newTask'), {
+	gantt,
+	onsuccess: (row, date, g) => {
+		const task = new g.task(gantt, {
+			id: 5000+Math.floor(Math.random() * 1000),
+			label: 'Task #'+4343,
+			from: date,
+			to: date.clone().add(3, 'hour'),
+			amountDone: Math.floor(Math.random() * 100)
+		});
+
+		row.addTask(task);
+		const { _allTasks, _taskCache } = g.get();
+		_allTasks.push(task);
+		_taskCache[task.model.id] = task;
+
+		g.updateViewport();
+	}
+});

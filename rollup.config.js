@@ -79,5 +79,20 @@ export default [
 		css: css => {
 			css.write('public/svelteGanttTable.css');
 		}
-	})
+	}),
+	{
+		input: 'src/ExternalDiv.js',
+		output: {
+			sourcemap: true,
+			format: 'iife',
+			name: 'SvelteGanttExternal',
+			file: 'public/svelteGanttExternal.js'
+		},
+		plugins: [
+			resolve(),
+			commonjs(),
+			production && buble({ include: ['src/**', 'node_modules/svelte/shared.js'] }),
+			production && uglify()
+		]
+	}
 ];

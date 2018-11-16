@@ -6,8 +6,8 @@
     font-family: tahoma, arial, verdana, Sans-serif;
     font-size: 10px;
     color: #656565;
+    height: 90% !important;
 }
-
 
 .moving {
     opacity: 0.5;
