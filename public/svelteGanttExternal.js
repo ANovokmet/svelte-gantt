@@ -42,6 +42,7 @@ var SvelteGanttExternal = (function () {
             let successful = false;
             //TODO make these functions gantt instance specific
             const onmouseenter = (e) => {
+                console.log('iiii');
                 successful = true; 
             };
             const onmouseleave = (e) => {
@@ -89,7 +90,7 @@ var SvelteGanttExternal = (function () {
                 //if over gantt
                 if(successful){
                     //create task
-                    const rowCenterX = rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
+                    const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
                     
                     const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                     const dropDate = gantt.utils.getDateByPosition(mousePos.x);
