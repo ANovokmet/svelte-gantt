@@ -1,12 +1,24 @@
 export class SvelteTask {
 
     constructor(gantt, task, row){
+        // defaults
+        // id of task, every task needs to have a unique one
+        //task.id = task.id || undefined;
+        // completion %, indicated on task
+        task.amountDone = task.amountDone || 0;
+        // css classes
+        task.classes = task.classes || '';
+        // datetime task starts on, currently moment-js object
+        task.from = task.from || null;
+        // datetime task ends on, currently moment-js object
+        task.to = task.to || null;
+        // label of task
+        task.label = task.label || undefined;
+        // html content of task, will override label
+        task.html = task.html || undefined;
+
         this.gantt = gantt;
         this.model = task;
-
-        /*Object.assign(this, {
-            classes: ''
-        }, task);*/
         this.row = row;
         this.dependencies = [];
         this.updatePosition();

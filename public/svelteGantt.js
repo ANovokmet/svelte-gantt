@@ -385,12 +385,24 @@ var SvelteGantt = (function () {
 	class SvelteTask {
 
 	    constructor(gantt, task, row){
+	        // defaults
+	        // id of task, every task needs to have a unique one
+	        //task.id = task.id || undefined;
+	        // completion %, indicated on task
+	        task.amountDone = task.amountDone || 0;
+	        // css classes
+	        task.classes = task.classes || '';
+	        // datetime task starts on, currently moment-js object
+	        task.from = task.from || null;
+	        // datetime task ends on, currently moment-js object
+	        task.to = task.to || null;
+	        // label of task
+	        task.label = task.label || undefined;
+	        // html content of task, will override label
+	        task.html = task.html || undefined;
+
 	        this.gantt = gantt;
 	        this.model = task;
-
-	        /*Object.assign(this, {
-	            classes: ''
-	        }, task);*/
 	        this.row = row;
 	        this.dependencies = [];
 	        this.updatePosition();
@@ -950,7 +962,6 @@ var SvelteGantt = (function () {
 	        //console.log('current', current.task);
 	        //console.log('previous', previous && previous.task);
 	        //current.row.rowElement = this.refs.row;
-	        console.log('update, generation:', current.task.model.generation, previous && previous.task.model.generation);
 	        current.task.component = this;
 	    }
 
@@ -959,12 +970,12 @@ var SvelteGantt = (function () {
 	    }
 	}
 	function drag$1(node) {
-	                //PROBLEM: pri refreshu podataka ovdje su "stari" event handleri
 	                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
 	                const windowElement = window;
 
 	                let { task } = this.get();
-	                this.on('update', ({ changed, current, previous }) => {
+	                //update reference when tasks are loaded with new data
+	                const listener = this.on('update', ({ changed, current, previous }) => {
 	                    if(changed.task){
 	                        task = current.task;
 	                    }
@@ -983,12 +994,8 @@ var SvelteGantt = (function () {
 
 	                    event.stopPropagation();
 	                    event.preventDefault();
-	                    console.log('drag down, generation:', task.model.generation);
+	                    
 	                    originalRow = task.row;
-
-	                    if(originalRow.tasks.filter(t => t.model.id === task.model.id).length > 1){
-	                        debugger;
-	                    }
 
 	                    if(originalRow.model.enableDragging){
 	                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
@@ -1012,7 +1019,6 @@ var SvelteGantt = (function () {
 	                }
 	                
 	                function onmousemove(event) {
-	                    const self = task.component;
 
 	                    event.preventDefault();
 	                    if(task.resizing) {
@@ -1041,59 +1047,46 @@ var SvelteGantt = (function () {
 	                                task.width = mousePos.x - task.left;
 	                            }
 	                        }
-
-	                        console.log(mousePos.x, mouseStartPosX);
-
-	                        self.updateTaskDate();
-	                        self.updateTaskPosition();
-	                        self.set({ task });
-	                        self.fire('taskResized', { task: task });
 	                    }
 
 	                    if(task.dragging) {
 	                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
 	                        task.left = mousePos.x - mouseStartPosX;
-
-	                        self.updateTaskDate();//pomaknuti na kraj funkcije
-	                        self.updateTaskPosition();
 	                        
 	                        //row switching
-	                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2; //rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
+	                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
 	                        const sourceRow = task.row;
 
 	                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
 	                        let rowElement = elements.find((element) => element.classList.contains('row'));
 	                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-	                            const { visibleRows } = self.store.get();
-
+	                            const { visibleRows } = gantt.store.get();
 	                            const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
-	                            console.log('move task to '+targetRow.label, targetRow);
 
 	                            if(targetRow.model.enableDragging){
-
 	                                targetRow.moveTask(task);
-
-	                                self.store.set({visibleRows: visibleRows});
 	                                
-	                                //targetRow.component.movedRow();
-	                                //sourceRow.component.movedRow();
-	                                self.fire('taskRemovedRow', { task: task, row: targetRow });
-	                                gantt.api.tasks.raise.switchRow(task, targetRow, originalRow);
+	                                sourceRow.component.taskRemoved();
 	                                targetRow.component.taskAdded();
+	                                gantt.api.tasks.raise.switchRow(task, targetRow, sourceRow);
 	                            }
 	                        }
-	                        self.fire('taskMoved', { task: task });
-	                        //task.component.fire('updateVisibleRows');
 	                    }
-	                    self.truncate();
-	                    self.set({task:task});
-	                    task.notify();
-	                    gantt.api.tasks.raise.move(task);
+
+	                    if(task.dragging || task.resizing){
+	                        const self = task.component;
+
+	                        self.updateTaskDate();
+	                        self.updateTaskPosition();
+	                        self.set({task});
+	                        self.truncate();
+	                        task.notify();
+	                        gantt.api.tasks.raise.move(task);
+	                    }
 	                }
 
 	                function onmouseup(event) {
-	                    console.log('drag up, generation:', task.model.generation); 
 	                    task.dragging = false;
 	                    task.resizing = false;
 	                    task.direction = null;
@@ -1103,12 +1096,9 @@ var SvelteGantt = (function () {
 
 	                    //code this better
 	                    if(originalRow && originalRow !== task.row) {
-	                        console.log('moved from original row', originalRow);
-
-	                        originalRow.component.taskMoved();
 	                        originalRow.component.handleOverlaps();
 	                    }
-	                    console.log('drag up end, generation:', task.model.generation); 
+	                    gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
 	                }
 
 	                node.addEventListener('mousedown', onmousedown, false);
@@ -1137,7 +1127,8 @@ var SvelteGantt = (function () {
 				node.removeEventListener('mousedown', onmousedown, false);
 				//windowElement.removeEventListener('mousemove', onmousemove, false);
 				node.removeEventListener('mousemove', onmousemove, false);
-				node.removeEventListener('mouseup', onmouseup, false);
+	                        node.removeEventListener('mouseup', onmouseup, false);
+	                        listener.cancel();
 			}
 		}
 	            }
@@ -1394,8 +1385,6 @@ var SvelteGantt = (function () {
 	var methods$3 = {
 	    taskMoved() {
 	        console.log('Task moved');
-	        const { row } = this.get();
-	        this.set({ row });
 	    },
 	    taskAdded() {
 	        //when task moving to row, need to update row to show new task
@@ -1656,20 +1645,11 @@ var SvelteGantt = (function () {
 			data: task_initial_data
 		});
 
-		task.on("updateVisibleRows", function(event) {
-			component.fire("updateVisibleRows", event);
-		});
-		task.on("taskMoved", function(event) {
-			component.taskMoved();
-		});
 		task.on("taskMovedRow", function(event) {
 			component.taskAdded();
 		});
 		task.on("taskRemovedRow", function(event) {
 			component.taskRemoved();
-		});
-		task.on("taskResized", function(event) {
-			component.taskMoved();
 		});
 		task.on("taskDropped", function(event) {
 			component.taskDropped(ctx.task);
@@ -1723,7 +1703,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (12:4) {#if row.model.contentHtml}
+	// (9:4) {#if row.model.contentHtml}
 	function create_if_block$1(component, ctx) {
 		var raw_value = ctx.row.model.contentHtml, raw_before, raw_after;
 
@@ -2268,8 +2248,7 @@ var SvelteGantt = (function () {
 	}
 
 	class SelectionManager {
-	    constructor(onSelectionChange) {
-	        this.onSelectionChange = onSelectionChange;
+	    constructor() {
 	        this.selection = [];
 	    }
 
@@ -2297,7 +2276,6 @@ var SvelteGantt = (function () {
 	        if(item.selected !== value){
 	            item.selected = value;
 	            item.updateView();
-	            //this.onSelectionChange && this.onSelectionChange(item, value);
 	        }
 	    }
 
@@ -2414,9 +2392,19 @@ var SvelteGantt = (function () {
 	class SvelteRow {
 
 	    constructor(gantt, row){
+	        // defaults
+	        // id of task, every task needs to have a unique one
+	        //row.id = row.id || undefined;
+	        // css classes
+	        row.classes = row.classes || '';
+	        // html content of row
+	        row.contentHtml = row.contentHtml || undefined;
+	        // enable dragging of tasks to and from this row 
+	        row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
+
 	        this.gantt = gantt;
 	        this.model = row;
-	        this.tasks = [];//kasnije se init
+	        this.tasks = [];
 	    }
 
 	    addTask(task) {
@@ -2494,7 +2482,6 @@ var SvelteGantt = (function () {
 	            const row = new SvelteRow(this, currentRow);
 	            for(let j=0; j < currentRow.tasks.length; j++){
 	                const currentTask = currentRow.tasks[j];
-	                currentTask.amountDone = currentTask.amountDone || 0;
 	                
 	                const task = new SvelteTask(this, currentTask, row);
 	                row.addTask(task);
@@ -2510,8 +2497,8 @@ var SvelteGantt = (function () {
 	        });
 	        this.store.set({rows});
 	        this.selectionManager.clearSelection();
-	        this.updateViewport();
 	        this.broadcastModules('initData', data);
+	        this.updateViewport();
 	    },
 	    initGantt(){
 	        if(!this.store.get().gantt){
@@ -2529,6 +2516,7 @@ var SvelteGantt = (function () {
 	            this.api.registerEvent('tasks', 'move');
 	            this.api.registerEvent('tasks', 'select');
 	            this.api.registerEvent('tasks', 'switchRow');
+	            this.api.registerEvent('tasks', 'moveEnd');
 	        }
 	    },
 	    initModule(module){
@@ -2550,13 +2538,10 @@ var SvelteGantt = (function () {
 	        });
 	    },
 	    updateVisibleRows(scrollTop, viewportHeight){
-	        console.log('update v rows');
 	        const { rows, rowHeight } = this.store.get();
 
 	        let startIndex = Math.floor(scrollTop / rowHeight);
 	        let endIndex = Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1);
-
-	        console.log('['+startIndex+','+endIndex+']');
 
 	        const paddingTop = startIndex * rowHeight;
 	        const paddingBottom = (rows.length - endIndex - 1) * rowHeight;
@@ -2589,7 +2574,6 @@ var SvelteGantt = (function () {
 	        return visibleTasks;
 	    },
 	    updateViewport(){
-	        console.log('update v port');
 	        const {scrollTop, clientHeight} = this.refs.mainContainer;
 
 	        this.updateVisibleRows(scrollTop, clientHeight);
@@ -2630,33 +2614,8 @@ var SvelteGantt = (function () {
 	function oncreate$6(){
 	    this.initGantt();
 	    
-
-	    const {rows, initialRows, dependencies} = this.get();
-	    this.initData({rows: initialRows, dependencies});
-	    // const _allTasks = [];
-	    // const _taskCache = {};
-	    // for(let i=0; i < initialRows.length; i++){
-	    //     const currentRow = initialRows[i];
-	    //     const row = new SvelteRow(this, currentRow);
-	    //     for(let j=0; j < currentRow.tasks.length; j++){
-	    //         const currentTask = currentRow.tasks[j];
-	    //         currentTask.amountDone = currentTask.amountDone || 0;
-	            
-	    //         const task = new SvelteTask(this, currentTask, row);
-	    //         row.addTask(task);
-	    //         _allTasks.push(task);
-	    //         _taskCache[task.model.id] = task;
-	    //     }
-	    //     rows.push(row);
-	    // }
-	    // this.set({
-	    //     _allTasks,
-	    //     _taskCache,
-	    //     rows
-	    // });
-	    // this.store.set({rows});
-
-
+	    const {rows, initialRows, initialDependencies} = this.get();
+	    this.initData({rows: initialRows, dependencies: initialDependencies});
 	    this.initColumns();
 
 	    this.refs.mainContainer.addEventListener('mouseup', function(event){
@@ -2723,38 +2682,32 @@ var SvelteGantt = (function () {
 
 	    SvelteGantt.create = function(target, data, options) {
 
+	        // bind gantt modules
 	        const ganttModules = {
 	            ganttBodyModules: [],
 	            ganttTableModules: [],
 	            defaults: {}
 	        };
 
-	        // delete when each module gets built into separate js
-	        //options.modules = [Table, ...options.modules]; // [Table, GanttDependencies];
 	        if(options.modules) {
 	            options.modules.forEach((module) => {
 	                module.bindToGantt(ganttModules);
 	            });
 	        }
 
+	        // initialize gantt state
 	        const newData = {
 	            initialRows: data.rows,
-	            dependencies: data.dependencies
-	        };
-
-	        Object.assign(newData, {
+	            initialDependencies: data.dependencies,
 	            _ganttBodyModules: ganttModules.ganttBodyModules,
 	            _ganttTableModules: ganttModules.ganttTableModules
-	        });
+	        };
 
-
+	        // initialize all the gantt options
 	        const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
 	        
 	        const store = new Store();
 	        store.set(ganttOptions);
-	        store.set({ 
-	            //rows: data.rows
-	        });
 
 	        return new SvelteGantt({
 	            target,
@@ -2780,8 +2733,6 @@ var SvelteGantt = (function () {
 
 	    function onscroll(event) {
 	        const scrollAmount = node.scrollTop; 
-
-	        console.log(scrollAmount);
 	        for(let i=0; i< scrollables.length; i++){
 	            const scrollable = scrollables[i];
 	            if(scrollable.orientation === 'horizontal') {

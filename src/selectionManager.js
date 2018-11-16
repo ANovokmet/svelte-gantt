@@ -1,6 +1,5 @@
 export default class {
-    constructor(onSelectionChange) {
-        this.onSelectionChange = onSelectionChange;
+    constructor() {
         this.selection = [];
     }
 
@@ -28,7 +27,6 @@ export default class {
         if(item.selected !== value){
             item.selected = value;
             item.updateView();
-            //this.onSelectionChange && this.onSelectionChange(item, value);
         }
     }
 

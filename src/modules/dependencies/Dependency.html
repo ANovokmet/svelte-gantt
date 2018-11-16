@@ -1,9 +1,9 @@
 <div class="dependency" style="left:{0}px;top:{0}px;">
     <Arrow 
-        {startX}
-        {startY}
-        {endX}
-        {endY}/>
+        startX={dependency.startX}
+        startY={dependency.startY}
+        endX={dependency.endX}
+        endY={dependency.endY}/>
 </div>
 
 <style>
@@ -19,55 +19,33 @@
     export default {
         components: { Arrow },
         oncreate() { 
-            const { dependency } = this.get();
-            if(!dependency) {
-                //todo make less confusing
-                //debugger;
-                return;
-            }
-            this.set({ 
-                startX: dependency.startX,
-                startY: dependency.startY,
-                endX: dependency.endX,
-                endY: dependency.endY
-            });
-
-            const { fromTask, toTask } = dependency//this.get();
+            const { fromTask, toTask } = this.get().dependency;
             fromTask.subscribe(this);
             toTask.subscribe(this);
-
-
         },
         onupdate({ changed, current, previous }){
-            if(previous != null){
-                const { dependency } = this.get();
-                this.set({ 
-                    startX: dependency.startX,
-                    startY: dependency.startY,
-                    endX: dependency.endX,
-                    endY: dependency.endY
-                });
+            if(changed.dependency && previous && current.dependency !== previous.dependency){
+                previous.dependency.fromTask.unsubscribe(this);
+                previous.dependency.toTask.unsubscribe(this);
+
+                current.dependency.fromTask.subscribe(this);
+                current.dependency.toTask.subscribe(this);
             }
         },
         ondestroy() {
-            const { dependency } = this.get();
-            const { fromTask, toTask } =  dependency//this.get();
+            const { fromTask, toTask } = this.get().dependency;
             fromTask.unsubscribe(this);
             toTask.unsubscribe(this);
         },
         data() {
-            return {
-                startX: 0,
-                startY: 0,
-                endX: 100,
-                endY: 100
-            }
+            return {}
         },
         methods: {
             update() {
                 const { dependency } = this.get();
                 const result = dependency.update();
-                this.set(result);
+                //this.set(result);
+                this.set({ dependency });
             }
         }
     };

@@ -1,8 +1,12 @@
 export default class SvelteDependency {
-    constructor(gantt, dependency){
-        Object.assign(this, dependency);
-
+    constructor(gantt, model){
+        this.model = model;
         this.gantt = gantt;
+
+        const {_taskCache} = gantt.get();
+        this.fromTask = _taskCache[model.fromTask];
+        this.toTask = _taskCache[model.toTask];
+
         this.update();
     }
 
@@ -12,6 +16,7 @@ export default class SvelteDependency {
         let startX = this.fromTask.left + this.fromTask.width;
         let endX = this.toTask.left;
 
+        //can be sped up by caching indices of rows
         let startIndex = rows.indexOf(this.fromTask.row); 
         let endIndex = rows.indexOf(this.toTask.row); 
 
@@ -21,5 +26,11 @@ export default class SvelteDependency {
         const result = {startX, startY, endX, endY}
         Object.assign(this, result);
         return result;
+    }
+
+    updateView() {
+        if(this.component) {
+            this.component.set({dependency: this});
+        }
     }
 }

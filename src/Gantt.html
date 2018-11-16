@@ -131,38 +131,32 @@ real content
 
             SvelteGantt.create = function(target, data, options) {
 
+                // bind gantt modules
                 const ganttModules = {
                     ganttBodyModules: [],
                     ganttTableModules: [],
                     defaults: {}
                 }
 
-                // delete when each module gets built into separate js
-                //options.modules = [Table, ...options.modules]; // [Table, GanttDependencies];
                 if(options.modules) {
                     options.modules.forEach((module) => {
                         module.bindToGantt(ganttModules);
                     })
                 }
 
+                // initialize gantt state
                 const newData = {
                     initialRows: data.rows,
-                    dependencies: data.dependencies
-                }
-
-                Object.assign(newData, {
+                    initialDependencies: data.dependencies,
                     _ganttBodyModules: ganttModules.ganttBodyModules,
                     _ganttTableModules: ganttModules.ganttTableModules
-                });
+                };
 
-
+                // initialize all the gantt options
                 const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
                 
                 const store = new Store();
                 store.set(ganttOptions);
-                store.set({ 
-                    //rows: data.rows
-                });
 
                 return new SvelteGantt({
                     target,
@@ -175,33 +169,8 @@ real content
         oncreate(){
             this.initGantt();
             
-
-            const {rows, initialRows, dependencies} = this.get();
-            this.initData({rows: initialRows, dependencies});
-            // const _allTasks = [];
-            // const _taskCache = {};
-            // for(let i=0; i < initialRows.length; i++){
-            //     const currentRow = initialRows[i];
-            //     const row = new SvelteRow(this, currentRow);
-            //     for(let j=0; j < currentRow.tasks.length; j++){
-            //         const currentTask = currentRow.tasks[j];
-            //         currentTask.amountDone = currentTask.amountDone || 0;
-                    
-            //         const task = new SvelteTask(this, currentTask, row);
-            //         row.addTask(task);
-            //         _allTasks.push(task);
-            //         _taskCache[task.model.id] = task;
-            //     }
-            //     rows.push(row);
-            // }
-            // this.set({
-            //     _allTasks,
-            //     _taskCache,
-            //     rows
-            // });
-            // this.store.set({rows});
-
-
+            const {rows, initialRows, initialDependencies} = this.get();
+            this.initData({rows: initialRows, dependencies: initialDependencies});
             this.initColumns();
 
             this.refs.mainContainer.addEventListener('mouseup', function(event){
@@ -254,8 +223,6 @@ real content
 
                 function onscroll(event) {
                     const scrollAmount = node.scrollTop; 
-
-                    console.log(scrollAmount);
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
                         if(scrollable.orientation === 'horizontal') {
@@ -297,7 +264,6 @@ real content
                     const row = new SvelteRow(this, currentRow);
                     for(let j=0; j < currentRow.tasks.length; j++){
                         const currentTask = currentRow.tasks[j];
-                        currentTask.amountDone = currentTask.amountDone || 0;
                         
                         const task = new SvelteTask(this, currentTask, row);
                         row.addTask(task);
@@ -313,8 +279,8 @@ real content
                 });
                 this.store.set({rows});
                 this.selectionManager.clearSelection();
-                this.updateViewport();
                 this.broadcastModules('initData', data);
+                this.updateViewport();
             },
             initGantt(){
                 if(!this.store.get().gantt){
@@ -332,6 +298,7 @@ real content
                     this.api.registerEvent('tasks', 'move');
                     this.api.registerEvent('tasks', 'select');
                     this.api.registerEvent('tasks', 'switchRow');
+                    this.api.registerEvent('tasks', 'moveEnd');
                 }
             },
             initModule(module){
@@ -353,13 +320,10 @@ real content
                 });
             },
             updateVisibleRows(scrollTop, viewportHeight){
-                console.log('update v rows');
                 const { rows, rowHeight } = this.store.get();
 
                 let startIndex = Math.floor(scrollTop / rowHeight);
                 let endIndex = Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1);
-
-                console.log('['+startIndex+','+endIndex+']');
 
                 const paddingTop = startIndex * rowHeight;
                 const paddingBottom = (rows.length - endIndex - 1) * rowHeight;
@@ -392,7 +356,6 @@ real content
                 return visibleTasks;
             },
             updateViewport(){
-                console.log('update v port');
                 const {scrollTop, clientHeight} = this.refs.mainContainer;
 
                 this.updateVisibleRows(scrollTop, clientHeight);

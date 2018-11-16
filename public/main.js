@@ -84,9 +84,10 @@ let options = {
 
 var gantt = SvelteGantt.create(document.body, generateData(), options);
 
-gantt.api.tasks.on.move((task) => console.log('Listener: task moved', task));
+gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
 gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
 gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));
+gantt.api.tasks.on.moveEnd((task) => console.log('Listener: task move end', task));
 
 
 

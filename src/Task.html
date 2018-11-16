@@ -65,7 +65,6 @@
                 //console.log('current', current.task);
                 //console.log('previous', previous && previous.task);
                 //current.row.rowElement = this.refs.row;
-                console.log('update, generation:', current.task.model.generation, previous && previous.task.model.generation);
                 current.task.component = this;
             }
 
@@ -75,12 +74,12 @@
         },
         actions: {
 			drag(node) {
-                //PROBLEM: pri refreshu podataka ovdje su "stari" event handleri
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
 
                 let { task } = this.get();
-                this.on('update', ({ changed, current, previous }) => {
+                //update reference when tasks are loaded with new data
+                const listener = this.on('update', ({ changed, current, previous }) => {
                     if(changed.task){
                         task = current.task;
                     }
@@ -99,12 +98,8 @@
 
                     event.stopPropagation();
                     event.preventDefault();
-                    console.log('drag down, generation:', task.model.generation);
+                    
                     originalRow = task.row;
-
-                    if(originalRow.tasks.filter(t => t.model.id === task.model.id).length > 1){
-                        debugger;
-                    }
 
                     if(originalRow.model.enableDragging){
                         mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
@@ -128,7 +123,6 @@
                 }
                 
                 function onmousemove(event) {
-                    const self = task.component;
 
                     event.preventDefault();
                     if(task.resizing) {
@@ -157,59 +151,46 @@
                                 task.width = mousePos.x - task.left;
                             }
                         }
-
-                        console.log(mousePos.x, mouseStartPosX)
-
-                        self.updateTaskDate();
-                        self.updateTaskPosition();
-                        self.set({ task });
-                        self.fire('taskResized', { task: task });
                     }
 
                     if(task.dragging) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         task.left = mousePos.x - mouseStartPosX;
-
-                        self.updateTaskDate();//pomaknuti na kraj funkcije
-                        self.updateTaskPosition();
                         
                         //row switching
-                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2; //rowContainerElement.getBoundingClientRect().left + rowContainerElement.getBoundingClientRect().width / 2;
+                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
                         const sourceRow = task.row;
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-                            const { visibleRows } = self.store.get();
-
+                            const { visibleRows } = gantt.store.get();
                             const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
-                            console.log('move task to '+targetRow.label, targetRow);
 
                             if(targetRow.model.enableDragging){
-
                                 targetRow.moveTask(task);
-
-                                self.store.set({visibleRows: visibleRows});
                                 
-                                //targetRow.component.movedRow();
-                                //sourceRow.component.movedRow();
-                                self.fire('taskRemovedRow', { task: task, row: targetRow });
-                                gantt.api.tasks.raise.switchRow(task, targetRow, originalRow);
+                                sourceRow.component.taskRemoved();
                                 targetRow.component.taskAdded();
+                                gantt.api.tasks.raise.switchRow(task, targetRow, sourceRow);
                             }
                         }
-                        self.fire('taskMoved', { task: task });
-                        //task.component.fire('updateVisibleRows');
                     }
-                    self.truncate();
-                    self.set({task:task});
-                    task.notify();
-                    gantt.api.tasks.raise.move(task);
+
+                    if(task.dragging || task.resizing){
+                        const self = task.component;
+
+                        self.updateTaskDate();
+                        self.updateTaskPosition();
+                        self.set({task});
+                        self.truncate();
+                        task.notify();
+                        gantt.api.tasks.raise.move(task);
+                    }
                 }
 
                 function onmouseup(event) {
-                    console.log('drag up, generation:', task.model.generation); 
                     task.dragging = false;
                     task.resizing = false;
                     task.direction = null;
@@ -219,12 +200,9 @@
 
                     //code this better
                     if(originalRow && originalRow !== task.row) {
-                        console.log('moved from original row', originalRow);
-
-                        originalRow.component.taskMoved();
                         originalRow.component.handleOverlaps();
                     }
-                    console.log('drag up end, generation:', task.model.generation); 
+                    gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
@@ -253,7 +231,8 @@
 						node.removeEventListener('mousedown', onmousedown, false);
 						//windowElement.removeEventListener('mousemove', onmousemove, false);
 						node.removeEventListener('mousemove', onmousemove, false);
-						node.removeEventListener('mouseup', onmouseup, false);
+                        node.removeEventListener('mouseup', onmouseup, false);
+                        listener.cancel();
 					}
 				}
             },

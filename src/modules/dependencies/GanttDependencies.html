@@ -1,8 +1,10 @@
 <div class="dependency-container">
-    {#each visibleDependencies as dependency (dependency.id)}
-        <Dependency fromTask={dependency.fromTask} 
-            toTask={dependency.toTask}
-            {dependency}/>
+    {#each visibleDependencies as dependency (dependency.model.id)}
+        <Dependency {dependency}/>
+
+            <!-- //
+        fromTask={dependency.fromTask} 
+            toTask={dependency.toTask} -->
     {/each}
 </div>
 
@@ -67,21 +69,18 @@
                 //this.set({visibleDependencies});
             },
             initData(data){
-                const {_gantt} = this.get();
-                const {dependencies, _allTasks, _taskCache} = _gantt.get();
+                const {_gantt, visibleDependencies} = this.get();
 
+                const dependencies = [];
+                //this.set({dependencies: [], visibleDependencies: []});
                 for(let i=0; i < data.dependencies.length; i++){
-                    let dependency = dependencies[i];
-                    const fromTask = _taskCache[dependency.fromTask]; //_allTasks.find(t => t.id == dependency.fromTask);
-                    const toTask = _taskCache[dependency.toTask];//_allTasks.find(t => t.id == dependency.toTask);
-                    dependency.fromTask = fromTask;
-                    dependency.toTask = toTask;
-
-                    dependencies[i] = new SvelteDependency(_gantt, dependency);
+                    const dependency = data.dependencies[i];
+                    dependencies.push(new SvelteDependency(_gantt, dependency));
                 }
+                this.set({dependencies});
             },
             updateVisible({scrollAmount, viewportHeight}){
-                const { dependencies } = this.get()._options;
+                const { dependencies } = this.get()//._options;
 
                 //interval tree or just debounce a bit
                 const visibleDependencies = [];
@@ -114,13 +113,10 @@
                 this.set({ visibleDependencies });
             },
             updateView({from, to, headers}){
-                const {_gantt} = this.get();
-                const {dependencies} = _gantt.get();
-
+                const { dependencies } = this.get();
                 dependencies.forEach(dependency => {
                     dependency.update();
                 });
-
                 this.set({ visibleDependencies: this.get().visibleDependencies });
             }
         },
@@ -128,7 +124,8 @@
             return {
                 _gantt: null, //gantt this
                 _options: {}, //gantt this.get()
-                visibleDependencies: []
+                visibleDependencies: [],
+                dependencies: []
             }
         }
     };

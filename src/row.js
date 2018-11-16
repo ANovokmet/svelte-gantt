@@ -1,9 +1,19 @@
 export class SvelteRow {
 
     constructor(gantt, row){
+        // defaults
+        // id of task, every task needs to have a unique one
+        //row.id = row.id || undefined;
+        // css classes
+        row.classes = row.classes || '';
+        // html content of row
+        row.contentHtml = row.contentHtml || undefined;
+        // enable dragging of tasks to and from this row 
+        row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
+
         this.gantt = gantt;
         this.model = row;
-        this.tasks = [];//kasnije se init
+        this.tasks = [];
     }
 
     addTask(task) {
