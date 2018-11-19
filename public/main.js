@@ -75,6 +75,7 @@ function generateData() {
 
 let options = {
 	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
+	stretchTimelineWidthToFit: true,
 	width: 1000,
 	from: startOfToday,
 	to: moment().endOf('day'),
@@ -97,16 +98,18 @@ const currentEnd = moment().endOf('day');
 
 document.getElementById('setDayView').addEventListener('click', (event) => {
 	console.log('set day view');
+	gantt.store.set({stretchTimelineWidthToFit: true});
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
-		width: 1000,
+		//width: 1000,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
 });
 
 document.getElementById('setWeekView').addEventListener('click', (event) => {
 	console.log('set week view');
+	gantt.store.set({stretchTimelineWidthToFit: false});
 	gantt.updateView({
 		from: currentStart.clone().startOf('week'),
 		to: currentStart.clone().endOf('week'),
@@ -123,6 +126,7 @@ document.getElementById('setNextDay').addEventListener('click', (event) => {
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
+		width: 1000,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
 });
@@ -136,6 +140,7 @@ document.getElementById('setPreviousDay').addEventListener('click', (event) => {
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
+		width: 1000,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
 });

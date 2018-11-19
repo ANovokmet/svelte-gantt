@@ -9,7 +9,6 @@ import { DOMUtils } from "./domUtils.js";
         let successful = false;
         //TODO make these functions gantt instance specific
         const onmouseenter = (e) => {
-            console.log('iiii')
             successful = true; 
         };
         const onmouseleave = (e) => {

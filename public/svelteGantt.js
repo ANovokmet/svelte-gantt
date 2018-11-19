@@ -2351,34 +2351,48 @@ var SvelteGantt = (function () {
 	        this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
 	    },
 	    initColumns() {
-	        const {magnetOffset, magnetUnit, from, width} = this.store.get();
+	        const {magnetOffset, magnetUnit, from, width, headers} = this.store.get();
 	        const columnWidth = this.utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit));
-	        const columnCount = Math.ceil(width / columnWidth); 
+	        const columnCount = Math.ceil((width) / columnWidth); 
 
 	        const columns = [];
 	        for(let i = 0; i < columnCount; i++){
-	            columns.push({width: columnWidth});
+	            //const columnFrom = from.clone().add(magnetOffset, magnetUnit);
+	            columns.push({width: columnWidth, /*from: columnFrom*/});
 	        }
-
-	        this.set({ columns });
-	    },
-	    updateView({from, to, headers, width}){
-	        this.store.set({from, to, headers, width});
-	        this.initColumns();
 
 	        const {_allTasks} = this.get();
 	        _allTasks.forEach(task => {
 	            task.updatePosition();
 	            task.updateView();
 	        });
+	        this.broadcastModules('updateView', {});
 
-	        const {rows} = this.store.get();
+	        this.set({ columns });
+	        this.store.set({ headers });
+	    },
+	    updateView(options){ // {from, to, headers, width}
+	        this.store.set(options);
+	        if(this.store.get().stretchTimelineWidthToFit){
+	            this.onWindowResizeHandler(null);
+	        }
+	        else{
+	            this.initColumns();
+	        }
+
+	        const { _allTasks } = this.get();
+	        _allTasks.forEach(task => {
+	            task.updatePosition();
+	            task.updateView();
+	        });
+
+	        const { rows } = this.store.get();
 	        rows.forEach(row => {
 	            if(row.component)
 	                row.component.updateVisible();
 	        });
 
-	        this.broadcastModules('updateView', {from, to, headers});
+	        this.broadcastModules('updateView', options);//{ from, to, headers });
 	    }
 	};
 
@@ -2397,20 +2411,25 @@ var SvelteGantt = (function () {
 	        const parentWidth = this.refs.ganttElement.clientWidth;
 	        const parentHeight = this.refs.ganttElement.clientHeight;
 	        
+	        const stretchWidth = this.store.get().stretchTimelineWidthToFit;
 	        const tableWidth = this.store.get().tableWidth || 0;
 
 	        this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
 	        this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
 
-	        const height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+	        const update = {};
+	        update.height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+	        if(stretchWidth){
+	            update.width = parentWidth - tableWidth - 17;
+	        }
 
-	        this.store.set({
-	            //width, 
-	            height
-	        });
+	        this.store.set(update);
+	        if(stretchWidth){
+	            this.initColumns();
+	        }
 	    };
 
-	    window.addEventListener('resize', this.onWindowResizeHandler);
+	    window.addEventListener('resize', this.onWindowResizeHandler); // or this.onW... .bind(this);
 	    this.onWindowResizeHandler(null);
 	    
 	    this.broadcastModules('onGanttCreated');
@@ -2429,6 +2448,8 @@ var SvelteGantt = (function () {
 	        to: null,
 	        // width of main gantt area in px
 	        width: 800, //rename to timelinewidth
+	        // should timeline stretch width to fit, true overrides timelineWidth
+	        stretchTimelineWidthToFit: false,
 	        // height of main gantt area in px
 	        height: 400,
 	        // minimum unit of time task date values will round to 
@@ -2447,7 +2468,7 @@ var SvelteGantt = (function () {
 	        enableContextMenu: false,
 	        // sets top level gantt class which can be used for styling
 	        classes: '',
-	        // width of handle for resizing grid
+	        // width of handle for resizing task
 	        resizeHandleWidth: 5
 	    };
 
