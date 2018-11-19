@@ -15,7 +15,7 @@
         <div class="content" style="width:{$width}px">
             <div class="column-container">
                 {#each columns as column}
-                    <Column width={column.width}/>
+                    <Column {...column}/>
                 {/each}
             </div>
             <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
@@ -42,7 +42,7 @@
     .column-container {
         position: absolute;
         height: 100%;
-
+        width: 100%;
         float: left;
         overflow: hidden;
     }
@@ -109,6 +109,10 @@
                 magnetUnit: 'minute',
                 // amount of units task date values will round to
                 magnetOffset: 15,
+                // duration unit of columns
+                columnUnit: 'minute',
+                // duration width of column
+                columnOffset: 15,
                 // list of headers used for main gantt area
                 // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
                 // format: datetime format used for header cell label
@@ -365,14 +369,15 @@
                 this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
             },
             initColumns() {
-                const {magnetOffset, magnetUnit, from, width, headers} = this.store.get();
-                const columnWidth = this.utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit));
+                const {columnOffset, columnUnit, from, width, headers} = this.store.get();
+                const columnWidth = this.utils.getPositionByDate(from.clone().add(columnOffset, columnUnit));
                 const columnCount = Math.ceil((width) / columnWidth) 
 
                 const columns = [];
+                const columnFrom = from.clone();
                 for(let i = 0; i < columnCount; i++){
-                    //const columnFrom = from.clone().add(magnetOffset, magnetUnit);
-                    columns.push({width: columnWidth, /*from: columnFrom*/});
+                    columns.push({width: columnWidth, from: columnFrom.clone(), left: this.utils.getPositionByDate(columnFrom)});
+                    columnFrom.add(columnOffset, columnUnit);
                 }
 
                 const {_allTasks} = this.get();

@@ -98,7 +98,11 @@ const currentEnd = moment().endOf('day');
 
 document.getElementById('setDayView').addEventListener('click', (event) => {
 	console.log('set day view');
-	gantt.store.set({stretchTimelineWidthToFit: true});
+	gantt.store.set({
+		stretchTimelineWidthToFit: true,
+		columnUnit: 'minute',
+		columnOffset: 15
+	});
 	gantt.updateView({
 		from: currentStart,
 		to: currentEnd,
@@ -109,7 +113,11 @@ document.getElementById('setDayView').addEventListener('click', (event) => {
 
 document.getElementById('setWeekView').addEventListener('click', (event) => {
 	console.log('set week view');
-	gantt.store.set({stretchTimelineWidthToFit: false});
+	gantt.store.set({
+		stretchTimelineWidthToFit: false,
+		columnUnit: 'hour',
+		columnOffset: 1
+	});
 	gantt.updateView({
 		from: currentStart.clone().startOf('week'),
 		to: currentStart.clone().endOf('week'),

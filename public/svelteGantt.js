@@ -183,6 +183,44 @@ var SvelteGantt = (function () {
 		return new_blocks;
 	}
 
+	function getSpreadUpdate(levels, updates) {
+		var update = {};
+
+		var to_null_out = {};
+		var accounted_for = {};
+
+		var i = levels.length;
+		while (i--) {
+			var o = levels[i];
+			var n = updates[i];
+
+			if (n) {
+				for (var key in o) {
+					if (!(key in n)) to_null_out[key] = 1;
+				}
+
+				for (var key in n) {
+					if (!accounted_for[key]) {
+						update[key] = n[key];
+						accounted_for[key] = 1;
+					}
+				}
+
+				levels[i] = n;
+			} else {
+				for (var key in o) {
+					accounted_for[key] = 1;
+				}
+			}
+		}
+
+		for (var key in to_null_out) {
+			if (!(key in update)) update[key] = undefined;
+		}
+
+		return update;
+	}
+
 	function blankObject() {
 		return Object.create(null);
 	}
@@ -1481,8 +1519,9 @@ var SvelteGantt = (function () {
 		return {
 			c: function create() {
 				div = createElement("div");
-				div.className = "column svelte-gqf3br";
+				div.className = "column svelte-11nl46d";
 				setStyle(div, "width", "" + ctx.width + "px");
+				setStyle(div, "left", "" + ctx.left + "px");
 				addLoc(div, file$3, 0, 0, 0);
 			},
 
@@ -1494,6 +1533,10 @@ var SvelteGantt = (function () {
 			p: function update(changed, ctx) {
 				if (changed.width) {
 					setStyle(div, "width", "" + ctx.width + "px");
+				}
+
+				if (changed.left) {
+					setStyle(div, "left", "" + ctx.left + "px");
 				}
 			},
 
@@ -1519,6 +1562,7 @@ var SvelteGantt = (function () {
 		init(this, options);
 		this._state = assign(data$2(), options.data);
 		if (!('width' in this._state)) console.warn("<Column> was created without expected data property 'width'");
+		if (!('left' in this._state)) console.warn("<Column> was created without expected data property 'left'");
 		this._intro = !!options.intro;
 
 		this._fragment = create_main_fragment$3(this, this._state);
@@ -2351,14 +2395,15 @@ var SvelteGantt = (function () {
 	        this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
 	    },
 	    initColumns() {
-	        const {magnetOffset, magnetUnit, from, width, headers} = this.store.get();
-	        const columnWidth = this.utils.getPositionByDate(from.clone().add(magnetOffset, magnetUnit));
+	        const {columnOffset, columnUnit, from, width, headers} = this.store.get();
+	        const columnWidth = this.utils.getPositionByDate(from.clone().add(columnOffset, columnUnit));
 	        const columnCount = Math.ceil((width) / columnWidth); 
 
 	        const columns = [];
+	        const columnFrom = from.clone();
 	        for(let i = 0; i < columnCount; i++){
-	            //const columnFrom = from.clone().add(magnetOffset, magnetUnit);
-	            columns.push({width: columnWidth, /*from: columnFrom*/});
+	            columns.push({width: columnWidth, from: columnFrom.clone(), left: this.utils.getPositionByDate(columnFrom)});
+	            columnFrom.add(columnOffset, columnUnit);
 	        }
 
 	        const {_allTasks} = this.get();
@@ -2456,6 +2501,10 @@ var SvelteGantt = (function () {
 	        magnetUnit: 'minute',
 	        // amount of units task date values will round to
 	        magnetOffset: 15,
+	        // duration unit of columns
+	        columnUnit: 'minute',
+	        // duration width of column
+	        columnOffset: 15,
 	        // list of headers used for main gantt area
 	        // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
 	        // format: datetime format used for header cell label
@@ -2660,22 +2709,22 @@ var SvelteGantt = (function () {
 				div_2.className = "header-container";
 				setStyle(div_2, "width", "" + ctx.$width + "px");
 				addLoc(div_2, file$5, 6, 8, 331);
-				div_1.className = "main-header-container svelte-9qnrtp";
+				div_1.className = "main-header-container svelte-1pwno8k";
 				addLoc(div_1, file$5, 5, 4, 238);
-				div_5.className = "column-container svelte-9qnrtp";
+				div_5.className = "column-container svelte-1pwno8k";
 				addLoc(div_5, file$5, 15, 12, 690);
-				div_6.className = "row-container svelte-9qnrtp";
+				div_6.className = "row-container svelte-1pwno8k";
 				setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
 				setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
 				setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_6, file$5, 20, 12, 874);
-				div_4.className = "content svelte-9qnrtp";
+				addLoc(div_6, file$5, 20, 12, 865);
+				div_4.className = "content svelte-1pwno8k";
 				setStyle(div_4, "width", "" + ctx.$width + "px");
 				addLoc(div_4, file$5, 14, 8, 630);
-				div_3.className = "main-container svelte-9qnrtp";
+				div_3.className = "main-container svelte-1pwno8k";
 				setStyle(div_3, "height", "" + ctx.$height + "px");
 				addLoc(div_3, file$5, 13, 4, 532);
-				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-9qnrtp";
+				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-1pwno8k";
 				addLoc(div, file$5, 0, 0, 0);
 			},
 
@@ -2788,7 +2837,7 @@ var SvelteGantt = (function () {
 					setStyle(div_3, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-9qnrtp")) {
+				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-1pwno8k")) {
 					div.className = div_class_value;
 				}
 			},
@@ -3002,7 +3051,14 @@ var SvelteGantt = (function () {
 	function create_each_block_2(component, ctx) {
 		var current;
 
-		var column_initial_data = { width: ctx.column.width };
+		var column_spread_levels = [
+			ctx.column
+		];
+
+		var column_initial_data = {};
+		for (var i = 0; i < column_spread_levels.length; i += 1) {
+			column_initial_data = assign(column_initial_data, column_spread_levels[i]);
+		}
 		var column = new Column({
 			root: component.root,
 			store: component.store,
@@ -3020,8 +3076,9 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				var column_changes = {};
-				if (changed.columns) column_changes.width = ctx.column.width;
+				var column_changes = changed.columns ? getSpreadUpdate(column_spread_levels, [
+					ctx.column
+				]) : {};
 				column._set(column_changes);
 			},
 
