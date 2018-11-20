@@ -19,6 +19,7 @@
     export default {
         components: { Arrow },
         oncreate() { 
+            const a = this.get().dependency
             const { fromTask, toTask } = this.get().dependency;
             fromTask.subscribe(this);
             toTask.subscribe(this);

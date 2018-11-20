@@ -545,6 +545,8 @@ var SvelteGanttDependencies = (function () {
 	};
 
 	function oncreate$1() { 
+	    const a = this.get().dependency;
+	    if(!a)return;
 	    const { fromTask, toTask } = this.get().dependency;
 	    fromTask.subscribe(this);
 	    toTask.subscribe(this);

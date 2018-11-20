@@ -583,8 +583,8 @@ var SvelteGanttTable = (function () {
 	    return sum;
 	}
 
-	function height({$height}) {
-		return $height - 17;
+	function height({$height, $parentWidth, $width}) {
+		return $width > $parentWidth ? $height - 17 : $height;
 	}
 
 	function data$1() {
@@ -899,11 +899,13 @@ var SvelteGanttTable = (function () {
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["tableHeaders","height","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]), data$1()), options.data);
-		this.store._add(this, ["tableHeaders","height","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]);
-		this._recompute({ $tableHeaders: 1, $height: 1 }, this._state);
+		this._state = assign(assign(this.store._init(["tableHeaders","height","parentWidth","width","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]), data$1()), options.data);
+		this.store._add(this, ["tableHeaders","height","parentWidth","width","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]);
+		this._recompute({ $tableHeaders: 1, $height: 1, $parentWidth: 1, $width: 1 }, this._state);
 		if (!('$tableHeaders' in this._state)) console.warn("<Table> was created without expected data property '$tableHeaders'");
 		if (!('$height' in this._state)) console.warn("<Table> was created without expected data property '$height'");
+		if (!('$parentWidth' in this._state)) console.warn("<Table> was created without expected data property '$parentWidth'");
+		if (!('$width' in this._state)) console.warn("<Table> was created without expected data property '$width'");
 		if (!('$tableWidth' in this._state)) console.warn("<Table> was created without expected data property '$tableWidth'");
 
 
@@ -946,7 +948,7 @@ var SvelteGanttTable = (function () {
 			if (this._differs(state.scrollWidth, (state.scrollWidth = scrollWidth(state)))) changed.scrollWidth = true;
 		}
 
-		if (changed.$height) {
+		if (changed.$height || changed.$parentWidth || changed.$width) {
 			if (this._differs(state.height, (state.height = height(state)))) changed.height = true;
 		}
 	};

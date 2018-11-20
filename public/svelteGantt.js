@@ -2456,19 +2456,25 @@ var SvelteGantt = (function () {
 	        const parentWidth = this.refs.ganttElement.clientWidth;
 	        const parentHeight = this.refs.ganttElement.clientHeight;
 	        
+	        this.store.set({parentWidth});
+	        
 	        const stretchWidth = this.store.get().stretchTimelineWidthToFit;
 	        const tableWidth = this.store.get().tableWidth || 0;
 
-	        this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
-	        this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
+	        const height = parentHeight - this.refs.sideContainer.clientHeight;
 
-	        const update = {};
-	        update.height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+	        // -17 only if side scrollbar shows (rowContainerHeight > height)
+	        const { rowContainerHeight } = this.get();
+	        const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - 17 :  parentWidth - tableWidth;
+
 	        if(stretchWidth){
-	            update.width = parentWidth - tableWidth - 17;
+	            this.store.set({width: headerWidth});
 	        }
 
-	        this.store.set(update);
+	        this.store.set({
+	            height, headerWidth
+	        });
+
 	        if(stretchWidth){
 	            this.initColumns();
 	        }
@@ -2603,7 +2609,7 @@ var SvelteGantt = (function () {
 	const file$5 = "src\\Gantt.html";
 
 	function create_main_fragment$5(component, ctx) {
-		var div, each_blocks_1 = [], each_lookup = blankObject(), text, div_1, div_2, horizontalScrollListener_action, text_3, div_3, div_4, div_5, text_5, div_6, each_3_blocks_1 = [], each_3_lookup = blankObject(), text_7, each_4_blocks_1 = [], each_4_lookup = blankObject(), scrollable_action, div_class_value, disableContextMenu_action, current;
+		var div, each_blocks_1 = [], each_lookup = blankObject(), text, div_1, div_2, div_3, horizontalScrollListener_action, text_4, div_4, div_5, div_6, text_6, div_7, each_3_blocks_1 = [], each_3_lookup = blankObject(), text_8, each_4_blocks_1 = [], each_4_lookup = blankObject(), scrollable_action, div_class_value, disableContextMenu_action, current;
 
 		var each_value = ctx._ganttTableModules;
 
@@ -2684,47 +2690,51 @@ var SvelteGantt = (function () {
 				text = createText("\r\n\r\n    ");
 				div_1 = createElement("div");
 				div_2 = createElement("div");
+				div_3 = createElement("div");
 
 				for (var i = 0; i < each_1_blocks.length; i += 1) {
 					each_1_blocks[i].c();
 				}
 
-				text_3 = createText("\r\n\r\n    ");
-				div_3 = createElement("div");
+				text_4 = createText("\r\n\r\n    ");
 				div_4 = createElement("div");
 				div_5 = createElement("div");
+				div_6 = createElement("div");
 
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
 					each_2_blocks[i].c();
 				}
 
-				text_5 = createText("\r\n            ");
-				div_6 = createElement("div");
+				text_6 = createText("\r\n            ");
+				div_7 = createElement("div");
 
 				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].c();
 
-				text_7 = createText("\r\n            ");
+				text_8 = createText("\r\n            ");
 
 				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].c();
-				div_2.className = "header-container";
-				setStyle(div_2, "width", "" + ctx.$width + "px");
-				addLoc(div_2, file$5, 6, 8, 331);
-				div_1.className = "main-header-container svelte-1pwno8k";
+				div_3.className = "header-container";
+				setStyle(div_3, "width", "" + ctx.$width + "px");
+				addLoc(div_3, file$5, 7, 12, 408);
+				div_2.className = "header-intermezzo svelte-ispaiy";
+				setStyle(div_2, "width", "" + ctx.$headerWidth + "px");
+				addLoc(div_2, file$5, 6, 8, 301);
+				div_1.className = "main-header-container svelte-ispaiy";
 				addLoc(div_1, file$5, 5, 4, 238);
-				div_5.className = "column-container svelte-1pwno8k";
-				addLoc(div_5, file$5, 15, 12, 690);
-				div_6.className = "row-container svelte-1pwno8k";
-				setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
-				setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
-				setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div_6, file$5, 20, 12, 865);
-				div_4.className = "content svelte-1pwno8k";
-				setStyle(div_4, "width", "" + ctx.$width + "px");
-				addLoc(div_4, file$5, 14, 8, 630);
-				div_3.className = "main-container svelte-1pwno8k";
-				setStyle(div_3, "height", "" + ctx.$height + "px");
-				addLoc(div_3, file$5, 13, 4, 532);
-				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-1pwno8k";
+				div_6.className = "column-container svelte-ispaiy";
+				addLoc(div_6, file$5, 17, 12, 799);
+				div_7.className = "row-container svelte-ispaiy";
+				setStyle(div_7, "padding-top", "" + ctx.paddingTop + "px");
+				setStyle(div_7, "padding-bottom", "" + ctx.paddingBottom + "px");
+				setStyle(div_7, "height", "" + ctx.rowContainerHeight + "px");
+				addLoc(div_7, file$5, 22, 12, 974);
+				div_5.className = "content svelte-ispaiy";
+				setStyle(div_5, "width", "" + ctx.$width + "px");
+				addLoc(div_5, file$5, 16, 8, 739);
+				div_4.className = "main-container svelte-ispaiy";
+				setStyle(div_4, "height", "" + ctx.$height + "px");
+				addLoc(div_4, file$5, 15, 4, 641);
+				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-ispaiy";
 				addLoc(div, file$5, 0, 0, 0);
 			},
 
@@ -2736,34 +2746,35 @@ var SvelteGantt = (function () {
 				append(div, text);
 				append(div, div_1);
 				append(div_1, div_2);
+				append(div_2, div_3);
 
 				for (var i = 0; i < each_1_blocks.length; i += 1) {
-					each_1_blocks[i].i(div_2, null);
+					each_1_blocks[i].i(div_3, null);
 				}
 
+				horizontalScrollListener_action = horizontalScrollListener.call(component, div_2) || {};
 				component.refs.sideContainer = div_1;
-				horizontalScrollListener_action = horizontalScrollListener.call(component, div_1) || {};
-				append(div, text_3);
-				append(div, div_3);
-				append(div_3, div_4);
+				append(div, text_4);
+				append(div, div_4);
 				append(div_4, div_5);
+				append(div_5, div_6);
 
 				for (var i = 0; i < each_2_blocks.length; i += 1) {
-					each_2_blocks[i].i(div_5, null);
+					each_2_blocks[i].i(div_6, null);
 				}
 
-				append(div_4, text_5);
-				append(div_4, div_6);
+				append(div_5, text_6);
+				append(div_5, div_7);
 
-				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].i(div_6, null);
+				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].i(div_7, null);
 
-				component.refs.rowContainer = div_6;
-				append(div_4, text_7);
+				component.refs.rowContainer = div_7;
+				append(div_5, text_8);
 
-				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].i(div_4, null);
+				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].i(div_5, null);
 
-				component.refs.mainContainer = div_3;
-				scrollable_action = scrollable.call(component, div_3) || {};
+				component.refs.mainContainer = div_4;
+				scrollable_action = scrollable.call(component, div_4) || {};
 				component.refs.ganttElement = div;
 				disableContextMenu_action = disableContextMenu.call(component, div) || {};
 				current = true;
@@ -2785,13 +2796,17 @@ var SvelteGantt = (function () {
 							each_1_blocks[i] = create_each_block_1(component, child_ctx);
 							each_1_blocks[i].c();
 						}
-						each_1_blocks[i].i(div_2, null);
+						each_1_blocks[i].i(div_3, null);
 					}
 					for (; i < each_1_blocks.length; i += 1) outroBlock(i, 1);
 				}
 
 				if (!current || changed.$width) {
-					setStyle(div_2, "width", "" + ctx.$width + "px");
+					setStyle(div_3, "width", "" + ctx.$width + "px");
+				}
+
+				if (!current || changed.$headerWidth) {
+					setStyle(div_2, "width", "" + ctx.$headerWidth + "px");
 				}
 
 				if (changed.columns) {
@@ -2806,38 +2821,38 @@ var SvelteGantt = (function () {
 							each_2_blocks[i] = create_each_block_2(component, child_ctx);
 							each_2_blocks[i].c();
 						}
-						each_2_blocks[i].i(div_5, null);
+						each_2_blocks[i].i(div_6, null);
 					}
 					for (; i < each_2_blocks.length; i += 1) outroBlock_1(i, 1);
 				}
 
 				const each_value_3 = ctx.visibleRows;
-				each_3_blocks_1 = updateKeyedEach(each_3_blocks_1, component, changed, get_key_1, 1, ctx, each_value_3, each_3_lookup, div_6, outroAndDestroyBlock, create_each_block_3, "i", null, get_each_3_context);
+				each_3_blocks_1 = updateKeyedEach(each_3_blocks_1, component, changed, get_key_1, 1, ctx, each_value_3, each_3_lookup, div_7, outroAndDestroyBlock, create_each_block_3, "i", null, get_each_3_context);
 
 				if (!current || changed.paddingTop) {
-					setStyle(div_6, "padding-top", "" + ctx.paddingTop + "px");
+					setStyle(div_7, "padding-top", "" + ctx.paddingTop + "px");
 				}
 
 				if (!current || changed.paddingBottom) {
-					setStyle(div_6, "padding-bottom", "" + ctx.paddingBottom + "px");
+					setStyle(div_7, "padding-bottom", "" + ctx.paddingBottom + "px");
 				}
 
 				if (!current || changed.rowContainerHeight) {
-					setStyle(div_6, "height", "" + ctx.rowContainerHeight + "px");
+					setStyle(div_7, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
 				const each_value_4 = ctx._ganttBodyModules;
-				each_4_blocks_1 = updateKeyedEach(each_4_blocks_1, component, changed, get_key_2, 1, ctx, each_value_4, each_4_lookup, div_4, outroAndDestroyBlock, create_each_block_4, "i", null, get_each_4_context);
+				each_4_blocks_1 = updateKeyedEach(each_4_blocks_1, component, changed, get_key_2, 1, ctx, each_value_4, each_4_lookup, div_5, outroAndDestroyBlock, create_each_block_4, "i", null, get_each_4_context);
 
 				if (!current || changed.$width) {
-					setStyle(div_4, "width", "" + ctx.$width + "px");
+					setStyle(div_5, "width", "" + ctx.$width + "px");
 				}
 
 				if (!current || changed.$height) {
-					setStyle(div_3, "height", "" + ctx.$height + "px");
+					setStyle(div_4, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-1pwno8k")) {
+				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-ispaiy")) {
 					div.className = div_class_value;
 				}
 			},
@@ -2882,18 +2897,18 @@ var SvelteGantt = (function () {
 
 				destroyEach(each_1_blocks, detach);
 
-				if (component.refs.sideContainer === div_1) component.refs.sideContainer = null;
 				if (typeof horizontalScrollListener_action.destroy === 'function') horizontalScrollListener_action.destroy.call(component);
+				if (component.refs.sideContainer === div_1) component.refs.sideContainer = null;
 
 				destroyEach(each_2_blocks, detach);
 
 				for (i = 0; i < each_3_blocks_1.length; i += 1) each_3_blocks_1[i].d();
 
-				if (component.refs.rowContainer === div_6) component.refs.rowContainer = null;
+				if (component.refs.rowContainer === div_7) component.refs.rowContainer = null;
 
 				for (i = 0; i < each_4_blocks_1.length; i += 1) each_4_blocks_1[i].d();
 
-				if (component.refs.mainContainer === div_3) component.refs.mainContainer = null;
+				if (component.refs.mainContainer === div_4) component.refs.mainContainer = null;
 				if (typeof scrollable_action.destroy === 'function') scrollable_action.destroy.call(component);
 				if (component.refs.ganttElement === div) component.refs.ganttElement = null;
 				if (typeof disableContextMenu_action.destroy === 'function') disableContextMenu_action.destroy.call(component);
@@ -3001,7 +3016,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (8:12) {#each $headers as header}
+	// (9:16) {#each $headers as header}
 	function create_each_block_1(component, ctx) {
 		var current;
 
@@ -3047,7 +3062,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (17:16) {#each columns as column}
+	// (19:16) {#each columns as column}
 	function create_each_block_2(component, ctx) {
 		var current;
 
@@ -3101,7 +3116,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (23:16) {#each visibleRows as row (row.model.id)}
+	// (25:16) {#each visibleRows as row (row.model.id)}
 	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 
@@ -3162,7 +3177,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (28:12) {#each _ganttBodyModules as module (module.key)}
+	// (30:12) {#each _ganttBodyModules as module (module.key)}
 	function create_each_block_4(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -3298,14 +3313,15 @@ var SvelteGantt = (function () {
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["rowHeight","classes","width","headers","height"]), data$4()), options.data);
-		this.store._add(this, ["rowHeight","classes","width","headers","height"]);
+		this._state = assign(assign(this.store._init(["rowHeight","classes","headerWidth","width","headers","height"]), data$4()), options.data);
+		this.store._add(this, ["rowHeight","classes","headerWidth","width","headers","height"]);
 		this._recompute({ rows: 1, $rowHeight: 1 }, this._state);
 		if (!('rows' in this._state)) console.warn("<Gantt> was created without expected data property 'rows'");
 		if (!('$rowHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$rowHeight'");
 		if (!('$classes' in this._state)) console.warn("<Gantt> was created without expected data property '$classes'");
 		if (!('_ganttTableModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttTableModules'");
 		if (!('visibleRows' in this._state)) console.warn("<Gantt> was created without expected data property 'visibleRows'");
+		if (!('$headerWidth' in this._state)) console.warn("<Gantt> was created without expected data property '$headerWidth'");
 		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
 		if (!('$headers' in this._state)) console.warn("<Gantt> was created without expected data property '$headers'");
 		if (!('$height' in this._state)) console.warn("<Gantt> was created without expected data property '$height'");

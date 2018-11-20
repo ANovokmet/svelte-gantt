@@ -90,7 +90,8 @@
                 });
                 return sum;
             },
-            height: ({$height}) => $height - 17
+            // -17 if bottom scroll shows (this.refs.ganttElement.clientWidth > width)
+            height: ({$height, $parentWidth, $width}) => $width > $parentWidth ? $height - 17 : $height
         }
     }
 </script>

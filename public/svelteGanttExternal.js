@@ -50,6 +50,9 @@ var SvelteGanttExternal = (function () {
             
             function onmousedown(event) {
                 event.preventDefault();
+                if(!data.enabled){
+                    return;
+                }
                 
                 const element = data.elementContent();
                 Object.assign(element.style, {
@@ -132,6 +135,8 @@ var SvelteGanttExternal = (function () {
         SvelteGanttExternal = {};
 
         SvelteGanttExternal.defaults = {
+            // enabled
+            enabled: true,
             // draggable elements
             elements: [],
             // called when dragged over a row 
@@ -162,6 +167,7 @@ var SvelteGanttExternal = (function () {
             /*return new SvelteGanttExternal({
                 target: element,
             });*/
+            return data;
         };
 
         var SvelteGanttExternal$1 = SvelteGanttExternal;

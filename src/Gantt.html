@@ -3,11 +3,13 @@
         <svelte:component this={module} on:init="initModule(event.module)" {visibleRows}/>
     {/each}
 
-    <div class="main-header-container" use:horizontalScrollListener  ref:sideContainer>
-        <div class="header-container" style="width:{$width}px">
-            {#each $headers as header}
-                <ColumnHeader header={header}/>
-            {/each}
+    <div class="main-header-container" ref:sideContainer>
+        <div class="header-intermezzo" style="width:{$headerWidth}px;" use:horizontalScrollListener >
+            <div class="header-container" style="width:{$width}px">
+                {#each $headers as header}
+                    <ColumnHeader header={header}/>
+                {/each}
+            </div>
         </div>
     </div>
 
@@ -61,6 +63,10 @@
     .main-header-container {
         position: relative;
         overflow: hidden;
+    }
+
+    .header-intermezzo {
+        overflow:hidden;
     }
 
     .content {
@@ -181,19 +187,25 @@
                 const parentWidth = this.refs.ganttElement.clientWidth;
                 const parentHeight = this.refs.ganttElement.clientHeight;
                 
+                this.store.set({parentWidth});
+                
                 const stretchWidth = this.store.get().stretchTimelineWidthToFit;
                 const tableWidth = this.store.get().tableWidth || 0;
 
-                this.refs.sideContainer.style.width = parentWidth - tableWidth - 17 + 'px';
-                this.refs.mainContainer.style.width = parentWidth - tableWidth + 'px';
+                const height = parentHeight - this.refs.sideContainer.clientHeight;
 
-                const update = {};
-                update.height = parentHeight - this.refs.sideContainer.clientHeight - 17;
+                // -17 only if side scrollbar shows (rowContainerHeight > height)
+                const { rowContainerHeight } = this.get();
+                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - 17 :  parentWidth - tableWidth;
+
                 if(stretchWidth){
-                    update.width = parentWidth - tableWidth - 17;
+                    this.store.set({width: headerWidth});
                 }
 
-                this.store.set(update);
+                this.store.set({
+                    height, headerWidth
+                });
+
                 if(stretchWidth){
                     this.initColumns();
                 }
