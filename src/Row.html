@@ -51,12 +51,12 @@
             taskAdded() {
                 //when task moving to row, need to update row to show new task
                 const { row } = this.get();
-                console.log('Task moved to row', row);
+                //console.log('Task moved to row', row);
                 this.set({ row });
             },
             taskRemoved() {
                 const { row } = this.get();
-                console.log('Task removed from row', row);
+                //console.log('Task removed from row', row);
                 this.set({ row });
             },
             taskDropped(task) {

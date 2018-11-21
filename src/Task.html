@@ -11,8 +11,16 @@
     <div class="task-content">
         {#if task.model.html}
             {@html task.model.html}
+        {:elseif $taskContent}
+            {@html $taskContent(task)}
         {:else}
             {task.model.label}
+        {/if}
+
+        {#if task.model.showButton}
+            <span class="task-button {task.model.buttonClasses}" on:click="onclick(event)">
+                {@html task.model.buttonHtml}
+            </span>
         {/if}
     </div>
 </div>
@@ -89,6 +97,8 @@
                 let mouseStartRight;
                 
                 let originalRow;
+                let taskOriginalFrom, taskOriginalTo;
+                
                     
                 function onmousedown(event) {
                     if(event.which !== 1){
@@ -100,6 +110,8 @@
                     event.preventDefault();
                     
                     originalRow = task.row;
+                    taskOriginalFrom = task.model.from.clone();
+                    taskOriginalTo = task.model.to.clone();
 
                     if(originalRow.model.enableDragging){
                         mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
@@ -202,7 +214,11 @@
                     if(originalRow && originalRow !== task.row) {
                         originalRow.component.handleOverlaps();
                     }
+
                     gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
+                    if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
+                        gantt.api.tasks.raise.changed(task, task.row, originalRow);
+                    }
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
@@ -290,7 +306,22 @@
                     }
                 });
             }
-		},
+        },
+        // // could work but questionable if task updates, an action works... but too complex for end user
+        // events: {
+		// 	customHtmlElemHook(node) {
+        //         const elem = document.createElement('div');
+        //         elem.innerHTML = 'Custom dynamic template';
+        //         node.append(elem);
+		// 		const onclick = (event) => {debugger;}
+		// 		elem.addEventListener('click', onclick, false);
+		// 		return {
+		// 			destroy() {
+		// 				elem.removeEventListener('mousedown', onclick, false);
+		// 			}
+		// 		};
+		// 	}
+		// },
         methods: {
 			updateTaskPosition() {
                 const { task } = this.get();
@@ -303,6 +334,14 @@
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
+            },
+            onclick(event){
+                const { onTaskButtonClick } = this.store.get();
+                if(onTaskButtonClick) {
+                    event.stopPropagation();
+                    const { task } = this.get();
+                    onTaskButtonClick(task);
+                }
             },
             truncate(){
                 const { task } = this.get();

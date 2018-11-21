@@ -132,7 +132,11 @@
                 // sets top level gantt class which can be used for styling
                 classes: '',
                 // width of handle for resizing task
-                resizeHandleWidth: 5
+                resizeHandleWidth: 5,
+                // handler of button clicks
+                onTaskButtonClick: null, // e.g. (task) => {debugger},
+                // task content factory function
+                taskContent: null // e.g. (task) => '<div>Custom task content</div>'
             };
 
             SvelteGantt.create = function(target, data, options) {
@@ -179,9 +183,10 @@
             this.initData({rows: initialRows, dependencies: initialDependencies});
             this.initColumns();
 
-            this.refs.mainContainer.addEventListener('mouseup', function(event){
-                console.log('mouse up on ', event.target);
-            });
+            // // ag-grid uses an event for all the elements
+            // this.refs.mainContainer.addEventListener('mouseup', function(event){
+            //     console.log('mouse up on ', event.target);
+            // });
 
             this.onWindowResizeHandler = (event) => {
                 const parentWidth = this.refs.ganttElement.clientWidth;
@@ -315,6 +320,7 @@
                     this.api.registerEvent('tasks', 'select');
                     this.api.registerEvent('tasks', 'switchRow');
                     this.api.registerEvent('tasks', 'moveEnd');
+                    this.api.registerEvent('tasks', 'changed');
 
                     this.row = SvelteRow;
                     this.task = SvelteTask;

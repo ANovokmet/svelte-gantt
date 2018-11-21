@@ -16,6 +16,12 @@ export class SvelteTask {
         task.label = task.label || undefined;
         // html content of task, will override label
         task.html = task.html || undefined;
+        // show button bar
+        task.showButton = task.showButton || false 
+        // button classes, useful for fontawesome icons
+        task.buttonClasses = task.buttonClasses || ''
+        // html content of button
+        task.buttonHtml = task.buttonHtml || ''
 
         this.gantt = gantt;
         this.model = task;

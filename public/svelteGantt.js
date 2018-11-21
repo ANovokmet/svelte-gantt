@@ -640,6 +640,14 @@ var SvelteGantt = (function () {
 	        const element = this.refs.taskElement;
 	        element.style.cursor = cursor || 'default';
 	    },
+	    onclick(event){
+	        const { onTaskButtonClick } = this.store.get();
+	        if(onTaskButtonClick) {
+	            event.stopPropagation();
+	            const { task } = this.get();
+	            onTaskButtonClick(task);
+	        }
+	    },
 	    truncate(){
 	        const { task } = this.get();
 	        if(!task){
@@ -707,6 +715,8 @@ var SvelteGantt = (function () {
 	                let mouseStartRight;
 	                
 	                let originalRow;
+	                let taskOriginalFrom, taskOriginalTo;
+	                
 	                    
 	                function onmousedown(event) {
 	                    if(event.which !== 1){
@@ -718,6 +728,8 @@ var SvelteGantt = (function () {
 	                    event.preventDefault();
 	                    
 	                    originalRow = task.row;
+	                    taskOriginalFrom = task.model.from.clone();
+	                    taskOriginalTo = task.model.to.clone();
 
 	                    if(originalRow.model.enableDragging){
 	                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
@@ -820,7 +832,11 @@ var SvelteGantt = (function () {
 	                    if(originalRow && originalRow !== task.row) {
 	                        originalRow.component.handleOverlaps();
 	                    }
+
 	                    gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
+	                    if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
+	                        gantt.api.tasks.raise.changed(task, task.row, originalRow);
+	                    }
 	                }
 
 	                node.addEventListener('mousedown', onmousedown, false);
@@ -910,15 +926,18 @@ var SvelteGantt = (function () {
 	const file$1 = "src\\Task.html";
 
 	function create_main_fragment$1(component, ctx) {
-		var div, div_1, text, div_2, div_class_value, drag_action, contextMenu_action, selectable_action, current;
+		var div, div_1, text, div_2, text_1, div_class_value, drag_action, contextMenu_action, selectable_action, current;
 
 		function select_block_type(ctx) {
 			if (ctx.task.model.html) return create_if_block;
-			return create_if_block_1;
+			if (ctx.$taskContent) return create_if_block_1;
+			return create_if_block_2;
 		}
 
 		var current_block_type = select_block_type(ctx);
 		var if_block = current_block_type(component, ctx);
+
+		var if_block_2 = (ctx.task.model.showButton) && create_if_block_3(component, ctx);
 
 		return {
 			c: function create() {
@@ -927,6 +946,8 @@ var SvelteGantt = (function () {
 				text = createText("\r\n    ");
 				div_2 = createElement("div");
 				if_block.c();
+				text_1 = createText("\r\n\r\n        ");
+				if (if_block_2) if_block_2.c();
 				div_1.className = "task-background svelte-1mt96qt";
 				setStyle(div_1, "width", "" + ctx.task.model.amountDone + "%");
 				addLoc(div_1, file$1, 9, 4, 381);
@@ -947,6 +968,8 @@ var SvelteGantt = (function () {
 				append(div, text);
 				append(div, div_2);
 				if_block.m(div_2, null);
+				append(div_2, text_1);
+				if (if_block_2) if_block_2.m(div_2, null);
 				component.refs.taskElement = div;
 				drag_action = drag.call(component, div) || {};
 				contextMenu_action = contextMenu.call(component, div) || {};
@@ -965,7 +988,20 @@ var SvelteGantt = (function () {
 					if_block.d(1);
 					if_block = current_block_type(component, ctx);
 					if_block.c();
-					if_block.m(div_2, null);
+					if_block.m(div_2, text_1);
+				}
+
+				if (ctx.task.model.showButton) {
+					if (if_block_2) {
+						if_block_2.p(changed, ctx);
+					} else {
+						if_block_2 = create_if_block_3(component, ctx);
+						if_block_2.c();
+						if_block_2.m(div_2, null);
+					}
+				} else if (if_block_2) {
+					if_block_2.d(1);
+					if_block_2 = null;
 				}
 
 				if ((changed.task) && div_class_value !== (div_class_value = "task " + ctx.task.model.classes + " svelte-1mt96qt")) {
@@ -998,6 +1034,7 @@ var SvelteGantt = (function () {
 				}
 
 				if_block.d();
+				if (if_block_2) if_block_2.d();
 				if (component.refs.taskElement === div) component.refs.taskElement = null;
 				if (typeof drag_action.destroy === 'function') drag_action.destroy.call(component);
 				if (typeof contextMenu_action.destroy === 'function') contextMenu_action.destroy.call(component);
@@ -1039,8 +1076,41 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (14:8) {:else}
+	// (14:30) 
 	function create_if_block_1(component, ctx) {
+		var raw_value = ctx.$taskContent(ctx.task), raw_before, raw_after;
+
+		return {
+			c: function create() {
+				raw_before = createElement('noscript');
+				raw_after = createElement('noscript');
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, raw_before, anchor);
+				raw_before.insertAdjacentHTML("afterend", raw_value);
+				insert(target, raw_after, anchor);
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.$taskContent || changed.task) && raw_value !== (raw_value = ctx.$taskContent(ctx.task))) {
+					detachBetween(raw_before, raw_after);
+					raw_before.insertAdjacentHTML("afterend", raw_value);
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachBetween(raw_before, raw_after);
+					detachNode(raw_before);
+					detachNode(raw_after);
+				}
+			}
+		};
+	}
+
+	// (16:8) {:else}
+	function create_if_block_2(component, ctx) {
 		var text_value = ctx.task.model.label, text;
 
 		return {
@@ -1066,17 +1136,60 @@ var SvelteGantt = (function () {
 		};
 	}
 
+	// (20:8) {#if task.model.showButton}
+	function create_if_block_3(component, ctx) {
+		var span, raw_value = ctx.task.model.buttonHtml, span_class_value;
+
+		function click_handler(event) {
+			component.onclick(event);
+		}
+
+		return {
+			c: function create() {
+				span = createElement("span");
+				addListener(span, "click", click_handler);
+				span.className = span_class_value = "task-button " + ctx.task.model.buttonClasses + " svelte-1mt96qt";
+				addLoc(span, file$1, 20, 12, 744);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, span, anchor);
+				span.innerHTML = raw_value;
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.task) && raw_value !== (raw_value = ctx.task.model.buttonHtml)) {
+					span.innerHTML = raw_value;
+				}
+
+				if ((changed.task) && span_class_value !== (span_class_value = "task-button " + ctx.task.model.buttonClasses + " svelte-1mt96qt")) {
+					span.className = span_class_value;
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(span);
+				}
+
+				removeListener(span, "click", click_handler);
+			}
+		};
+	}
+
 	function Task(options) {
 		this._debugName = '<Task>';
 		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		init(this, options);
 		this.refs = {};
-		this._state = assign(data$1(), options.data);
+		this._state = assign(assign(this.store._init(["taskContent"]), data$1()), options.data);
+		this.store._add(this, ["taskContent"]);
 		if (!('task' in this._state)) console.warn("<Task> was created without expected data property 'task'");
+		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
 		this._intro = !!options.intro;
 		this._handlers.update = [onupdate];
 
-		this._handlers.destroy = [ondestroy];
+		this._handlers.destroy = [ondestroy, removeFromStore];
 
 		this._fragment = create_main_fragment$1(this, this._state);
 
@@ -1111,12 +1224,12 @@ var SvelteGantt = (function () {
 	    taskAdded() {
 	        //when task moving to row, need to update row to show new task
 	        const { row } = this.get();
-	        console.log('Task moved to row', row);
+	        //console.log('Task moved to row', row);
 	        this.set({ row });
 	    },
 	    taskRemoved() {
 	        const { row } = this.get();
-	        console.log('Task removed from row', row);
+	        //console.log('Task removed from row', row);
 	        this.set({ row });
 	    },
 	    taskDropped(task) {
@@ -2135,6 +2248,12 @@ var SvelteGantt = (function () {
 	        task.label = task.label || undefined;
 	        // html content of task, will override label
 	        task.html = task.html || undefined;
+	        // show button bar
+	        task.showButton = task.showButton || false; 
+	        // button classes, useful for fontawesome icons
+	        task.buttonClasses = task.buttonClasses || '';
+	        // html content of button
+	        task.buttonHtml = task.buttonHtml || '';
 
 	        this.gantt = gantt;
 	        this.model = task;
@@ -2329,6 +2448,7 @@ var SvelteGantt = (function () {
 	            this.api.registerEvent('tasks', 'select');
 	            this.api.registerEvent('tasks', 'switchRow');
 	            this.api.registerEvent('tasks', 'moveEnd');
+	            this.api.registerEvent('tasks', 'changed');
 
 	            this.row = SvelteRow;
 	            this.task = SvelteTask;
@@ -2448,9 +2568,10 @@ var SvelteGantt = (function () {
 	    this.initData({rows: initialRows, dependencies: initialDependencies});
 	    this.initColumns();
 
-	    this.refs.mainContainer.addEventListener('mouseup', function(event){
-	        console.log('mouse up on ', event.target);
-	    });
+	    // // ag-grid uses an event for all the elements
+	    // this.refs.mainContainer.addEventListener('mouseup', function(event){
+	    //     console.log('mouse up on ', event.target);
+	    // });
 
 	    this.onWindowResizeHandler = (event) => {
 	        const parentWidth = this.refs.ganttElement.clientWidth;
@@ -2524,7 +2645,11 @@ var SvelteGantt = (function () {
 	        // sets top level gantt class which can be used for styling
 	        classes: '',
 	        // width of handle for resizing task
-	        resizeHandleWidth: 5
+	        resizeHandleWidth: 5,
+	        // handler of button clicks
+	        onTaskButtonClick: null, // e.g. (task) => {debugger},
+	        // task content factory function
+	        taskContent: null // e.g. (task) => '<div>Custom task content</div>'
 	    };
 
 	    SvelteGantt.create = function(target, data, options) {
