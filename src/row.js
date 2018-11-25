@@ -14,6 +14,7 @@ export class SvelteRow {
         this.gantt = gantt;
         this.model = row;
         this.tasks = [];
+        this.visibleTasks = [];
     }
 
     addTask(task) {
@@ -52,5 +53,10 @@ export class SvelteRow {
         if(this.component) {
             this.component.set({row: this});
         }
+    }
+
+    updateVisibleTasks() {
+        const { from, to } = this.gantt.store.get();
+        this.visibleTasks = this.tasks.filter(task => !(task.model.to < from || task.model.from > to));
     }
 }

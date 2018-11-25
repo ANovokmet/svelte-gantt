@@ -53,6 +53,7 @@
         width: 100%;
         /* display: inline-block; */
         box-sizing: border-box;
+        overflow: hidden;
     }
 
     .main-container {
@@ -401,6 +402,7 @@
                 const {_allTasks} = this.get();
                 _allTasks.forEach(task => {
                     task.updatePosition();
+                    task.truncate();
                     task.updateView();
                 });
                 this.broadcastModules('updateView', {});
@@ -430,6 +432,14 @@
                 });
 
                 this.broadcastModules('updateView', options);//{ from, to, headers });
+            },
+            selectTask(id) {
+                const { _taskCache } = this.get();
+                const task = _taskCache[id];
+                if(task) {
+                    this.selectionManager.selectSingle(task);
+                    task.updateView();
+                }
             }
         },
         data() {

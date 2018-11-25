@@ -86,4 +86,22 @@ export class SvelteTask {
             this.component.set({task: this});
         }
     }
+
+    // questionable feature
+    truncate(){
+        const ganttWidth = this.gantt.store.get().width;
+        if(this.left < ganttWidth && this.left + this.width > ganttWidth){
+            this.truncated = true;
+            this.truncatedWidth = ganttWidth - this.left;
+            this.truncatedLeft = this.left;
+        }
+        else if(this.left < 0 && this.left + this.width > 0){
+            this.truncated = true;
+            this.truncatedLeft = 0;
+            this.truncatedWidth = this.width + this.left;
+        }
+        else{
+            this.truncated = false;
+        }
+    }
 }

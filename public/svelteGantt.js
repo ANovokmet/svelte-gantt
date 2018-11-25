@@ -628,14 +628,6 @@ var SvelteGantt = (function () {
 	    }
 	}
 	var methods$1 = {
-				updateTaskPosition() {
-	        const { task } = this.get();
-	        task.updatePosition();
-	    },
-	    updateTaskDate() {
-	        const { task } = this.get();
-	        task.updateDate();
-	    },
 	    updateCursor(cursor){
 	        const element = this.refs.taskElement;
 	        element.style.cursor = cursor || 'default';
@@ -646,31 +638,6 @@ var SvelteGantt = (function () {
 	            event.stopPropagation();
 	            const { task } = this.get();
 	            onTaskButtonClick(task);
-	        }
-	    },
-	    truncate(){
-	        const { task } = this.get();
-	        if(!task){
-	            return;
-	        }
-
-	        const ganttWidth = this.store.get().width;
-	        if(task.left + task.width > ganttWidth){
-	            task.truncated = true;
-	            task.truncatedWidth = ganttWidth - task.left;
-	            task.truncatedLeft = task.left;
-	        }
-	        /*else{
-	            task.truncated = false;
-	        }*/
-	        
-	        else if(task.left < 0){
-	            task.truncated = true;
-	            task.truncatedLeft = 0;
-	            task.truncatedWidth = task.width + task.left;
-	        }
-	        else{
-	            task.truncated = false;
 	        }
 	    }
 	};
@@ -811,10 +778,10 @@ var SvelteGantt = (function () {
 	                    if(task.dragging || task.resizing){
 	                        const self = task.component;
 
-	                        self.updateTaskDate();
-	                        self.updateTaskPosition();
+	                        task.updateDate();
+	                        task.updatePosition();
+	                        task.truncate();
 	                        self.set({task});
-	                        self.truncate();
 	                        task.notify();
 	                        gantt.api.tasks.raise.move(task);
 	                    }
@@ -1310,7 +1277,7 @@ var SvelteGantt = (function () {
 	                visibleTasks.push(task);
 	            }
 	        });
-	        console.log(visibleTasks.length);
+	        //console.log(visibleTasks.length);
 	        return visibleTasks;
 	    }
 	};
@@ -2318,6 +2285,24 @@ var SvelteGantt = (function () {
 	            this.component.set({task: this});
 	        }
 	    }
+
+	    // questionable feature
+	    truncate(){
+	        const ganttWidth = this.gantt.store.get().width;
+	        if(this.left < ganttWidth && this.left + this.width > ganttWidth){
+	            this.truncated = true;
+	            this.truncatedWidth = ganttWidth - this.left;
+	            this.truncatedLeft = this.left;
+	        }
+	        else if(this.left < 0 && this.left + this.width > 0){
+	            this.truncated = true;
+	            this.truncatedLeft = 0;
+	            this.truncatedWidth = this.width + this.left;
+	        }
+	        else{
+	            this.truncated = false;
+	        }
+	    }
 	}
 
 	class SvelteRow {
@@ -2336,6 +2321,7 @@ var SvelteGantt = (function () {
 	        this.gantt = gantt;
 	        this.model = row;
 	        this.tasks = [];
+	        this.visibleTasks = [];
 	    }
 
 	    addTask(task) {
@@ -2374,6 +2360,11 @@ var SvelteGantt = (function () {
 	        if(this.component) {
 	            this.component.set({row: this});
 	        }
+	    }
+
+	    updateVisibleTasks() {
+	        const { from, to } = this.gantt.store.get();
+	        this.visibleTasks = this.tasks.filter(task => !(task.model.to < from || task.model.from > to));
 	    }
 	}
 
@@ -2529,6 +2520,7 @@ var SvelteGantt = (function () {
 	        const {_allTasks} = this.get();
 	        _allTasks.forEach(task => {
 	            task.updatePosition();
+	            task.truncate();
 	            task.updateView();
 	        });
 	        this.broadcastModules('updateView', {});
@@ -2558,6 +2550,14 @@ var SvelteGantt = (function () {
 	        });
 
 	        this.broadcastModules('updateView', options);//{ from, to, headers });
+	    },
+	    selectTask(id) {
+	        const { _taskCache } = this.get();
+	        const task = _taskCache[id];
+	        if(task) {
+	            this.selectionManager.selectSingle(task);
+	            task.updateView();
+	        }
 	    }
 	};
 
@@ -2841,25 +2841,25 @@ var SvelteGantt = (function () {
 				div_3.className = "header-container";
 				setStyle(div_3, "width", "" + ctx.$width + "px");
 				addLoc(div_3, file$5, 7, 12, 408);
-				div_2.className = "header-intermezzo svelte-ispaiy";
+				div_2.className = "header-intermezzo svelte-1khl1zo";
 				setStyle(div_2, "width", "" + ctx.$headerWidth + "px");
 				addLoc(div_2, file$5, 6, 8, 301);
-				div_1.className = "main-header-container svelte-ispaiy";
+				div_1.className = "main-header-container svelte-1khl1zo";
 				addLoc(div_1, file$5, 5, 4, 238);
-				div_6.className = "column-container svelte-ispaiy";
+				div_6.className = "column-container svelte-1khl1zo";
 				addLoc(div_6, file$5, 17, 12, 799);
-				div_7.className = "row-container svelte-ispaiy";
+				div_7.className = "row-container svelte-1khl1zo";
 				setStyle(div_7, "padding-top", "" + ctx.paddingTop + "px");
 				setStyle(div_7, "padding-bottom", "" + ctx.paddingBottom + "px");
 				setStyle(div_7, "height", "" + ctx.rowContainerHeight + "px");
 				addLoc(div_7, file$5, 22, 12, 974);
-				div_5.className = "content svelte-ispaiy";
+				div_5.className = "content svelte-1khl1zo";
 				setStyle(div_5, "width", "" + ctx.$width + "px");
 				addLoc(div_5, file$5, 16, 8, 739);
-				div_4.className = "main-container svelte-ispaiy";
+				div_4.className = "main-container svelte-1khl1zo";
 				setStyle(div_4, "height", "" + ctx.$height + "px");
 				addLoc(div_4, file$5, 15, 4, 641);
-				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-ispaiy";
+				div.className = div_class_value = "gantt " + ctx.$classes + " svelte-1khl1zo";
 				addLoc(div, file$5, 0, 0, 0);
 			},
 
@@ -2977,7 +2977,7 @@ var SvelteGantt = (function () {
 					setStyle(div_4, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-ispaiy")) {
+				if ((!current || changed.$classes) && div_class_value !== (div_class_value = "gantt " + ctx.$classes + " svelte-1khl1zo")) {
 					div.className = div_class_value;
 				}
 			},

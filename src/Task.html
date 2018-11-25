@@ -193,10 +193,10 @@
                     if(task.dragging || task.resizing){
                         const self = task.component;
 
-                        self.updateTaskDate();
-                        self.updateTaskPosition();
+                        task.updateDate();
+                        task.updatePosition();
+                        task.truncate();
                         self.set({task});
-                        self.truncate();
                         task.notify();
                         gantt.api.tasks.raise.move(task);
                     }
@@ -323,14 +323,6 @@
 		// 	}
 		// },
         methods: {
-			updateTaskPosition() {
-                const { task } = this.get();
-                task.updatePosition();
-            },
-            updateTaskDate() {
-                const { task } = this.get();
-                task.updateDate();
-            },
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
@@ -342,34 +334,8 @@
                     const { task } = this.get();
                     onTaskButtonClick(task);
                 }
-            },
-            truncate(){
-                const { task } = this.get();
-                if(!task){
-                    return;
-                }
-
-                const ganttWidth = this.store.get().width;
-                if(task.left + task.width > ganttWidth){
-                    task.truncated = true;
-                    task.truncatedWidth = ganttWidth - task.left;
-                    task.truncatedLeft = task.left;
-                }
-                /*else{
-                    task.truncated = false;
-                }*/
-                
-                else if(task.left < 0){
-                    task.truncated = true;
-                    task.truncatedLeft = 0;
-                    task.truncatedWidth = task.width + task.left;
-                }
-                else{
-                    task.truncated = false;
-                }
             }
         },
-
         data() {
             return {
                 task: { dragging: false }
