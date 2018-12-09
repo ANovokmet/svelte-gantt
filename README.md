@@ -4,7 +4,7 @@
 ---
 
 # svelte-gantt
-A lightweight and fast interactive gantt chart/resource scheduling component made with [Svelte](https://svelte.technology/).
+A lightweight and fast interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/).
 
 Dependent on [Moment.js](https://momentjs.com/)
 
