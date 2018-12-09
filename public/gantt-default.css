@@ -6,7 +6,6 @@
     font-family: tahoma, arial, verdana, Sans-serif;
     font-size: 10px;
     color: #656565;
-    height: 90% !important;
 }
 
 .moving {
@@ -18,8 +17,8 @@
 }
 
 .task {
-    height: 80%;
-    margin: auto;
+    height: 24px;
+    /*margin: auto;*/
     background: rgb(116, 191, 255);
 }
 
