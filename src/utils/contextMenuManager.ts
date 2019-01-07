@@ -1,6 +1,15 @@
-import ContextMenu from './ContextMenu.html';
+import { ContextMenu } from '../components';
+import { SvelteGantt } from '../core/gantt';
+
+interface ContextMenu {
+    constructor(options: any);
+    close(): void;
+}
 
 export default class {
+    current: ContextMenu;
+    gantt: SvelteGantt;
+
     constructor(gantt) {
         this.current = null;
         this.gantt = gantt;
@@ -16,7 +25,7 @@ export default class {
             data: { actions },
             position: position,
             onactionend: () => contextMenu.close()
-        });
+        }) as ContextMenu;
 
         this.current = contextMenu;
         return this.current;

@@ -84,14 +84,14 @@
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
-    import ContextMenuManager from './contextMenuManager.js'
-    import SelectionManager from './selectionManager.js';
-    import GanttUtils from './utils.js';
-    import GanttApi from './api.js';
+    import ContextMenuManager from './utils/contextMenuManager'
+    import SelectionManager from './utils/selectionManager';
+    import GanttUtils from './utils/utils';
+    import GanttApi from './core/api';
 
     import Task from "./Task.html";
-    import { SvelteTask } from "./task.js";
-    import { SvelteRow } from "./row.js";
+    import { SvelteTask } from "./core/task";
+    import { SvelteRow } from "./core/row";
 
     //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     //import Table from './modules/table/Table.html';
@@ -166,8 +166,7 @@
                 // initialize all the gantt options
                 const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
                 
-                const store = new Store();
-                store.set(ganttOptions);
+                const store = new Store(ganttOptions);
 
                 return new SvelteGantt({
                     target,

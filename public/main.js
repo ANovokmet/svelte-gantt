@@ -29,7 +29,8 @@ function generateData() {
 		}
 	
 		let a = i % 3;
-	
+		let rand_bool = Math.random() < 0.1;
+
 		data.rows[i].tasks.push({
 			generation,
 			id: i,
@@ -37,7 +38,8 @@ function generateData() {
 			from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
 			to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
 			amountDone: Math.floor(Math.random() * 100),
-			classes: Math.random() < 0.1 ? 'task-status-1' : ''
+			classes: rand_bool ? 'task-status-1' : '',
+			enableDragging: !rand_bool
 			//h: Math.random() < 0.5
 		});
 	}

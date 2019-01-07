@@ -1,4 +1,6 @@
 export default class {
+    selection: any[];
+
     constructor() {
         this.selection = [];
     }

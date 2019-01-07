@@ -1,4 +1,10 @@
+import { SvelteGantt } from "./gantt";
+
 export default class {
+    gantt: SvelteGantt;
+    listeners: any[];
+    listenersMap: { [key:string]: any; };
+
     constructor(gantt){
         this.gantt = gantt;
         this.listeners = [];
@@ -10,7 +16,7 @@ export default class {
             this[featureName] = {}      
         }
     
-        let feature = this[featureName]
+        const feature = this[featureName]
         if (!feature.on) {
             feature.on = {}
             feature.raise = {}
@@ -38,8 +44,8 @@ export default class {
             this.listenersMap[eventId] = listener;
             this.listeners.push(listener)
     
-            let removeListener = () => {
-                let index = this.listeners.indexOf(listener)
+            const removeListener = () => {
+                const index = this.listeners.indexOf(listener)
                 this.listeners.splice(index, 1)
             }
     

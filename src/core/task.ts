@@ -1,7 +1,37 @@
-export class SvelteTask {
+import { SvelteRow } from "./row";
+import { SvelteGantt } from "./gantt";
 
-    constructor(gantt, task, row){
-        // defaults
+export interface TaskModel {
+    id: number; // | string;
+    from: any; // moment
+    to: any; // moment
+
+    amountDone?: number;
+    classes?: string | string[];
+    label?: string;
+    html?: string;
+    showButton?: boolean;
+    buttonClasses?: string | string[];
+    buttonHtml?: string;
+    enableDragging?: boolean;
+}
+
+export class SvelteTask {
+    gantt: SvelteGantt;
+    model: TaskModel;
+    component: SvelteGantt;
+    row: SvelteRow;
+    dependencies: Array<any>;
+
+    left: number;
+    width: number;
+    
+    truncated: boolean;
+    truncatedWidth: number;
+    truncatedLeft: number;
+
+    constructor(gantt: SvelteGantt, task: TaskModel, row: SvelteRow){
+        // defaults, todo object.assign these
         // id of task, every task needs to have a unique one
         //task.id = task.id || undefined;
         // completion %, indicated on task
@@ -22,6 +52,8 @@ export class SvelteTask {
         task.buttonClasses = task.buttonClasses || ''
         // html content of button
         task.buttonHtml = task.buttonHtml || ''
+        // enable dragging of task
+        task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
 
         this.gantt = gantt;
         this.model = task;

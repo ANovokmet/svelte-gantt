@@ -1,6 +1,24 @@
+import { SvelteGantt } from "./gantt";
+import { SvelteTask, TaskModel } from "./task";
+import { Component } from "./svelte";
+
+export interface RowModel {
+    id: number;
+    classes?: string | string[];
+    contentHtml?: string;
+    enableDragging?: boolean;
+    tasks: Array<TaskModel>;
+}
+
 export class SvelteRow {
 
-    constructor(gantt, row){
+    gantt: SvelteGantt;
+    model: RowModel;
+    tasks: Array<SvelteTask>;
+    visibleTasks: Array<SvelteTask>;
+    component: Component;
+
+    constructor(gantt: SvelteGantt, row: RowModel){
         // defaults
         // id of task, every task needs to have a unique one
         //row.id = row.id || undefined;

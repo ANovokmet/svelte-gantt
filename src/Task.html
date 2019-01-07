@@ -49,7 +49,7 @@
 </style>
 
 <script>
-    import { DOMUtils } from "./domUtils.js";
+    import { DOMUtils } from "./utils/domUtils";
     import ContextMenu from "./ContextMenu.html";
 
 
@@ -113,7 +113,7 @@
                     taskOriginalFrom = task.model.from.clone();
                     taskOriginalTo = task.model.to.clone();
 
-                    if(originalRow.model.enableDragging){
+                    if(originalRow.model.enableDragging && task.model.enableDragging){
                         mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
                         mouseStartRight = task.left + task.width;
 

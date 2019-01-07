@@ -1,4 +1,7 @@
+import { SvelteGantt } from "../core/gantt";
+
 export default class {
+    gantt: SvelteGantt;
 
     constructor(gantt) {
         this.gantt = gantt;

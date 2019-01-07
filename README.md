@@ -143,7 +143,9 @@ task = {
 	// button classes, useful for fontawesome icons
 	buttonClasses: ''
 	// html content of button
-	buttonHtml: undefined
+	buttonHtml: undefined,
+	// enable dragging of task
+	enableDragging:  true
 }
 ```
 
@@ -181,12 +183,29 @@ SvelteGanttExternal.create(
 	{
 		// reference to your svelte-gantt 
 		gantt,
+		// if enabled
+    	enabled: true,
 		// callback
 		// row: row element was dropped on
 		// date: date element was dropped on
 		// g: svelte-gantt
 		onsuccess: (row, date, g) => {
 			// here you can add a task to row, see './public/main.js'
+		}
+		// called when dragged outside main gantt area
+    	onfail: () => { },
+		// factory function, creates HTMLElement that will follow the mouse
+		elementContent: () => {
+			const element = document.createElement('div');
+			element.innerHTML = 'New Task';
+			Object.assign(element.style, {
+				position: 'absolute',
+				background: '#eee',
+				padding: '0.5em 1em',
+				fontSize: '12px',
+				pointerEvents: 'none',
+			});
+			return element;
 		}
 	}
 );
