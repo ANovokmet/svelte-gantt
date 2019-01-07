@@ -26,7 +26,6 @@ var SvelteGanttExternal = (function () {
             });
         }
     }
-    //# sourceMappingURL=domUtils.js.map
 
     let SvelteGanttExternal;
     function drag(node, data) {
