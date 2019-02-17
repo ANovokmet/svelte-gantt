@@ -55,11 +55,16 @@ export class SvelteTask {
         // enable dragging of task
         task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
 
+        //height, translateX, translateY, resourceId
+
         this.gantt = gantt;
         this.model = task;
         this.row = row;
         this.dependencies = [];
         this.updatePosition();
+
+        this.posX = this.left;
+        this.posY = this.model.resourceId * 24;
     }
 
     notify() {
@@ -136,4 +141,5 @@ export class SvelteTask {
             this.truncated = false;
         }
     }
+
 }

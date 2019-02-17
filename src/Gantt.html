@@ -20,11 +20,15 @@
                     <Column {...column}/>
                 {/each}
             </div>
-            <div class="row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
+            <div class="row-container" 
                 ref:rowContainer>
-                {#each visibleRows as row (row.model.id)}
+                <!-- style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;" -->
+                {#each $rows as row (row.model.id)}
                     <Row row={row}
                         on:updateVisibleRows="updateViewport()"/>
+                {/each}
+                {#each $tasks as task (task.model.id)}
+                    <TaskComponent task={task}/>
                 {/each}
             </div>
             {#each _ganttBodyModules as module (module.key)}
@@ -81,6 +85,7 @@
 
 <script>
     import Row from './Row.html';
+    import TaskComponent from './Task.html';
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
@@ -137,7 +142,10 @@
                 // handler of button clicks
                 onTaskButtonClick: null, // e.g. (task) => {debugger},
                 // task content factory function
-                taskContent: null // e.g. (task) => '<div>Custom task content</div>'
+                taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
+
+                rows: [],
+                tasks: []
             };
 
             SvelteGantt.create = function(target, data, options) {
@@ -158,6 +166,7 @@
                 // initialize gantt state
                 const newData = {
                     initialRows: data.rows,
+                    initialTasks: data.tasks,
                     initialDependencies: data.dependencies,
                     _ganttBodyModules: ganttModules.ganttBodyModules,
                     _ganttTableModules: ganttModules.ganttTableModules
@@ -175,12 +184,16 @@
                 });
             }
         },
-        components: { Row, Column, ColumnHeader },
+        components: { Row, Column, ColumnHeader, TaskComponent },
         oncreate(){
             this.initGantt();
             
-            const {rows, initialRows, initialDependencies} = this.get();
-            this.initData({rows: initialRows, dependencies: initialDependencies});
+            const {rows, initialRows, initialTasks, initialDependencies} = this.get();
+            this.initData({
+                rows: initialRows, 
+                dependencies: initialDependencies,
+                tasks: initialTasks
+            });
             this.initColumns();
 
             // // ag-grid uses an event for all the elements
@@ -279,26 +292,32 @@
             initData(data){
                 const rows = [];
                 const _allTasks = [];
+                const tasks = _allTasks;
                 const _taskCache = {};
+                const _rowCache = {};
+
                 for(let i=0; i < data.rows.length; i++){
                     const currentRow = data.rows[i];
                     const row = new SvelteRow(this, currentRow);
-                    for(let j=0; j < currentRow.tasks.length; j++){
-                        const currentTask = currentRow.tasks[j];
-                        
-                        const task = new SvelteTask(this, currentTask, row);
-                        row.addTask(task);
-                        _allTasks.push(task);
-                        _taskCache[task.model.id] = task;
-                    }
                     rows.push(row);
+                    _rowCache[row.model.id] = row;
                 }
+
+                for(let i=0; i < data.tasks.length; i++){
+                    const currentTask = data.tasks[i];
+                    const task = new SvelteTask(this, currentTask, null);
+                    _allTasks.push(task);
+                    _taskCache[task.model.id] = task;
+                }
+
                 this.set({
                     _allTasks,
+                    _rowCache,
                     _taskCache,
+                    tasks,
                     rows
                 });
-                this.store.set({rows});
+                this.store.set({rows, tasks});
                 this.selectionManager.clearSelection();
                 this.broadcastModules('initData', data);
                 this.updateViewport();
@@ -360,8 +379,14 @@
                     row.visibleTasks = this.visibleTasks(row);
                 });*/
 
-                this.set({ visibleRows, paddingTop, paddingBottom });
-                this.store.set({ visibleRows, paddingTop, paddingBottom });
+                const visibleTasks = []
+                visibleRows.forEach(row => {
+                    Array.prototype.push.apply(visibleTasks, row.tasks);
+                });
+                this.set
+
+                this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
+                this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
             },
             visibleTasks(row){
                 const scrollLeft = this.refs.mainContainer.scrollLeft;
@@ -446,6 +471,7 @@
                 columns: [],
                 scrollables: [],
                 visibleRows: [],
+                visibleTasks: [],
                 _ganttBodyModules: [],
                 _ganttTableModules: [],
                 _modules: [],

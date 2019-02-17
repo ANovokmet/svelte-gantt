@@ -1,6 +1,8 @@
 <div ref:taskElement
     class="task {task.model.classes}" 
-    style="left:{task.truncated ? task.truncatedLeft : task.left}px;width:{task.truncated ? task.truncatedWidth : task.width}px;"
+    style="
+    width:{task.truncated ? task.truncatedWidth : task.width}px;
+    transform: translate({task.posX}px, {task.posY}px);"
     use:drag 
     use:contextMenu
     use:selectable
@@ -30,9 +32,11 @@
 		position: absolute;     
         top: 0;
         bottom: 0;
-        margin: auto;  
+
         white-space: nowrap;
         overflow: hidden;
+
+        transition: background-color 0.2s;
 	}
 
     .task-background {
@@ -46,20 +50,74 @@
         height: 100%;
         top: 0;
     }
+
+    .task:not(.moving) {
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .task.moving{
+        z-index: 1;
+    }
+
+    .task:hover::before {
+        content: '';
+        width: 4px;
+        height: 50%;
+        top: 25%;
+        position: absolute;
+        cursor: ew-resize;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.5);
+            
+        margin-left: 3px;
+        left: 0;
+        border-width: 0 1px;
+    }
+
+    .task:hover::after {
+        content: '';
+        width: 4px;
+        height: 50%;
+        top: 25%;
+        position: absolute;
+        cursor: ew-resize;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.5);
+
+        margin-right: 3px;
+        right: 0;
+        border-width: 0 1px;
+    }
+
+    .task.selected {
+        outline: 2px solid rgba(3, 169, 244, 0.5);
+        outline-offset: 3px;
+
+    }
 </style>
 
 <script>
     import { DOMUtils } from "./utils/domUtils";
     import ContextMenu from "./ContextMenu.html";
 
+//left:{task.truncated ? task.truncatedLeft : task.left}px;
 
     export default {
         setup(component) {
         },
         oncreate() {
-            const { task, row } = this.get();
-            task.row = row;
+            const { task } = this.get();
+            const row = task.row;
             task.component = this;
+
+
+            const {rows, rowHeight} = this.store.get();
+            
+            let startIndex = rows.indexOf(row); 
+
+            let startY = startIndex * rowHeight;
+
+            this.set({startY});
         },
         ondestroy() {
             const { task } = this.get();
@@ -84,6 +142,7 @@
 			drag(node) {
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
+                const { _rowCache } = gantt.get();
 
                 let { task } = this.get();
                 //update reference when tasks are loaded with new data
@@ -93,7 +152,7 @@
                     }
                 });
 
-                let mouseStartPosX;
+                let mouseStartPosX, mouseStartPosY;
                 let mouseStartRight;
                 
                 let originalRow;
@@ -109,12 +168,13 @@
                     event.stopPropagation();
                     event.preventDefault();
                     
-                    originalRow = task.row;
+                    originalRow = _rowCache[task.model.resourceId];
                     taskOriginalFrom = task.model.from.clone();
                     taskOriginalTo = task.model.to.clone();
 
                     if(originalRow.model.enableDragging && task.model.enableDragging){
                         mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
+                        mouseStartPosY = DOMUtils.getRelativePos(rowContainerElement, event).y - task.posY;
                         mouseStartRight = task.left + task.width;
 
                         if(mouseStartPosX < resizeHandleWidth) {
@@ -169,16 +229,20 @@
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         task.left = mousePos.x - mouseStartPosX;
                         
+                        task.posX = mousePos.x - mouseStartPosX;
+                        task.posY = mousePos.y - mouseStartPosY;
+
+
                         //row switching
                         const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-                        const sourceRow = task.row;
+                        const sourceRow = _rowCache[task.model.resourceId];
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-                            const { visibleRows } = gantt.store.get();
-                            const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
+                            const { rows } = gantt.store.get(); //visibleRows
+                            const targetRow = rows.find((r) => r.rowElement === rowElement); //vr
 
                             if(targetRow.model.enableDragging){
                                 targetRow.moveTask(task);
@@ -197,21 +261,30 @@
                         task.updatePosition();
                         task.truncate();
                         self.set({task});
+                        self.setY(event)
                         task.notify();
                         gantt.api.tasks.raise.move(task);
                     }
                 }
 
                 function onmouseup(event) {
+                    
+                    task.updateDate();
+                    task.updatePosition();
+                    
+                    task.posX = task.left;
+                    task.posY = task.model.resourceId * 24;
+
                     task.dragging = false;
                     task.resizing = false;
                     task.direction = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
                     task.component.fire('taskDropped', { task });
                     task.component.set({task});
+                    task.component.setY()
 
                     //code this better
-                    if(originalRow && originalRow !== task.row) {
+                    if(originalRow && originalRow !== _rowCache[task.model.resourceId]) {
                         originalRow.component.handleOverlaps();
                     }
 
@@ -333,6 +406,24 @@
                     event.stopPropagation();
                     const { task } = this.get();
                     onTaskButtonClick(task);
+                }
+            },
+            setY(event){
+                const { task } = this.get();
+                const row = task.row;
+                const {rows, rowHeight} = this.store.get();
+                if(task.dragging){
+                    const { rowContainerElement } = this.store.get();
+                    const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+                    console.log(mousePos.y)
+                    
+                    this.set({startY: mousePos.y});
+                }
+                else{
+                    
+                    let startIndex = rows.indexOf(row); 
+                    let startY = startIndex * rowHeight;
+                    this.set({startY});
                 }
             }
         },

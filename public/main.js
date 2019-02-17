@@ -6,10 +6,11 @@ let generation = 0;
 function generateData() {
 	const data = {
 		rows: [],
+		tasks: [],
 		dependencies: []
 	}
 
-	for(let i = 0; i < 500; i++) {
+	for(let i = 0; i < 100; i++) {
 		data.rows.push({
 			generation,
 			id: i,
@@ -29,11 +30,11 @@ function generateData() {
 		}
 	
 		let a = i % 3;
-		let rand_bool = Math.random() < 0.1;
-
-		data.rows[i].tasks.push({
+	
+		data.tasks.push({
 			generation,
 			id: i,
+			resourceId: i,
 			label: 'Task #'+i,
 			from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
 			to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
@@ -46,13 +47,13 @@ function generateData() {
 
 	generation += 1;
 	
-	for(let i = 0; i < 499; i++) {
+	/*for(let i = 0; i < 499; i++) {
 		data.dependencies.push({
 			id: i, 
 			fromTask: i, 
 			toTask: i+1 
 		});
-	}
+	}*/
 
 	return data;
 }
@@ -85,12 +86,13 @@ let options = {
 	modules: [SvelteGanttTable, SvelteGanttDependencies]
 }
 
-var gantt = SvelteGantt.create(document.body, generateData(), options);
+var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
 
-gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
-gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
+//gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
+//gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
 gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));
-gantt.api.tasks.on.moveEnd((task) => console.log('Listener: task move end', task));
+//gantt.api.tasks.on.moveEnd((task) => console.log('Listener: task move end', task));
+gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task));
 
 
 

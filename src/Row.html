@@ -1,15 +1,15 @@
 <div class="row {row.model.classes}" ref:row style="height:{$rowHeight}px" use:contextMenu>
-    {#each row.tasks as task (task.model.id)}
+    <!-- {#each row.tasks as task (task.model.id)}
         <Task   row={row}
-                task={task}
-                on:taskMovedRow="taskAdded()"
-                on:taskRemovedRow="taskRemoved()"
-                on:taskDropped="taskDropped(task)"/>
-    {/each}
+        task={task}
+        on:taskMovedRow="taskAdded()"
+        on:taskRemovedRow="taskRemoved()"
+        on:taskDropped="taskDropped(task)"/>
+    {/each} -->
     {#if row.model.contentHtml}
         {@html row.model.contentHtml}
     {/if}
-</div>
+</div>    
 <style>
     .row {
         position: relative;

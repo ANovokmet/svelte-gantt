@@ -28,6 +28,9 @@ export class SvelteRow {
         row.contentHtml = row.contentHtml || undefined;
         // enable dragging of tasks to and from this row 
         row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
+        //
+        row.height = row.height || 24;
+        // translateY
 
         this.gantt = gantt;
         this.model = row;
@@ -47,10 +50,11 @@ export class SvelteRow {
     }
 
     moveTask(task) {
-        const sourceRow = task.row;
-        sourceRow.removeTask(task);
+        //const sourceRow = task.row;
+        //sourceRow.removeTask(task);
 
-        task.row = this;
+        //task.row = this;
+        task.model.resourceId = this.model.id;
         this.addTask(task);
     }
 
