@@ -364,7 +364,7 @@ var SvelteGanttTable = (function () {
 				for (var i = 0; i < each_blocks.length; i += 1) {
 					each_blocks[i].c();
 				}
-				div.className = "row-header-row svelte-1lph4sq";
+				div.className = "row-header-row svelte-tfbo74";
 				setStyle(div, "height", "" + ctx.$rowHeight + "px");
 				addLoc(div, file, 0, 0, 0);
 			},
@@ -426,26 +426,46 @@ var SvelteGanttTable = (function () {
 
 	// (6:12) {:else}
 	function create_else_block(component, ctx) {
-		var text_value = ctx.row.model[ctx.header.property], text;
+		var div1, img, img_src_value, text0, div0, text1_value = ctx.row.model[ctx.header.property], text1;
 
 		return {
 			c: function create() {
-				text = createText(text_value);
+				div1 = createElement("div");
+				img = createElement("img");
+				text0 = createText("\r\n                    ");
+				div0 = createElement("div");
+				text1 = createText(text1_value);
+				img.className = "s-g-resource-image svelte-tfbo74";
+				img.src = img_src_value = ctx.row.model.imageSrc;
+				img.alt = "";
+				addLoc(img, file, 7, 20, 337);
+				div0.className = "s-g-resource-title";
+				addLoc(div0, file, 8, 20, 426);
+				div1.className = "s-g-resource-info svelte-tfbo74";
+				addLoc(div1, file, 6, 16, 284);
 			},
 
 			m: function mount(target, anchor) {
-				insert(target, text, anchor);
+				insert(target, div1, anchor);
+				append(div1, img);
+				append(div1, text0);
+				append(div1, div0);
+				append(div0, text1);
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.row || changed.headers) && text_value !== (text_value = ctx.row.model[ctx.header.property])) {
-					setData(text, text_value);
+				if ((changed.row) && img_src_value !== (img_src_value = ctx.row.model.imageSrc)) {
+					img.src = img_src_value;
+				}
+
+				if ((changed.row || changed.headers) && text1_value !== (text1_value = ctx.row.model[ctx.header.property])) {
+					setData(text1, text1_value);
 				}
 			},
 
 			d: function destroy$$1(detach) {
 				if (detach) {
-					detachNode(text);
+					detachNode(div1);
 				}
 			}
 		};
@@ -681,19 +701,19 @@ var SvelteGanttTable = (function () {
 				div1 = createElement("div");
 
 				for (i = 0; i < each1_blocks_1.length; i += 1) each1_blocks_1[i].c();
-				div0.className = "table-header-container svelte-18vb6b9";
+				div0.className = "table-header-container svelte-odjq6n";
 				setStyle(div0, "width", "" + ctx.scrollWidth + "px");
 				addLoc(div0, file$1, 1, 4, 66);
-				div1.className = "table-row-container svelte-18vb6b9";
+				div1.className = "table-row-container svelte-odjq6n";
 				setStyle(div1, "padding-top", "" + ctx.$paddingTop + "px");
 				setStyle(div1, "padding-bottom", "" + ctx.$paddingBottom + "px");
 				setStyle(div1, "height", "" + ctx.$rowContainerHeight + "px");
 				setStyle(div1, "width", "" + ctx.scrollWidth + "px");
 				addLoc(div1, file$1, 10, 8, 448);
-				div2.className = "table-scroll-container svelte-18vb6b9";
+				div2.className = "table-scroll-container svelte-odjq6n";
 				setStyle(div2, "height", "" + ctx.height + "px");
 				addLoc(div2, file$1, 9, 4, 360);
-				div3.className = "table-container svelte-18vb6b9";
+				div3.className = "table-container svelte-odjq6n";
 				setStyle(div3, "width", "" + ctx.$tableWidth + "px");
 				addLoc(div3, file$1, 0, 0, 0);
 			},
@@ -810,7 +830,7 @@ var SvelteGanttTable = (function () {
 			c: function create() {
 				div = createElement("div");
 				text = createText(text_value);
-				div.className = "row-header-cell";
+				div.className = "row-header-cell svelte-odjq6n";
 				setStyle(div, "width", "" + ctx.header.width + "px");
 				addLoc(div, file$1, 3, 12, 211);
 			},

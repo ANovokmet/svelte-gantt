@@ -7,16 +7,19 @@ export interface RowModel {
     classes?: string | string[];
     contentHtml?: string;
     enableDragging?: boolean;
-    tasks: Array<TaskModel>;
+    height: number;
 }
 
 export class SvelteRow {
 
     gantt: SvelteGantt;
     model: RowModel;
-    tasks: Array<SvelteTask>;
-    visibleTasks: Array<SvelteTask>;
     component: Component;
+    
+    order: number;
+    posY: number;
+    height: number;
+    tasks: SvelteTask[];
 
     constructor(gantt: SvelteGantt, row: RowModel){
         // defaults
@@ -29,45 +32,31 @@ export class SvelteRow {
         // enable dragging of tasks to and from this row 
         row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
         //
-        row.height = row.height || 24;
+        this.height = row.height || gantt.store.get().rowHeight;
         // translateY
 
         this.gantt = gantt;
         this.model = row;
         this.tasks = [];
-        this.visibleTasks = [];
     }
 
-    addTask(task) {
-        this.tasks.push(task);
-
-        if (this.model.tasks === undefined) {
-            this.model.tasks = []
-        }
-        if (this.model.tasks.indexOf(task.model) === -1) {
-            this.model.tasks.push(task.model)
-        }
-    }
-
-    moveTask(task) {
-        //const sourceRow = task.row;
-        //sourceRow.removeTask(task);
-
-        //task.row = this;
+    addTask(task: SvelteTask) {
         task.model.resourceId = this.model.id;
+        task.row = this;
+        this.tasks.push(task);
+    }
+
+    moveTask(task: SvelteTask) {
+        task.row.removeTask(task);
         this.addTask(task);
     }
 
-    
-    removeTask(task) {
+    removeTask(task: SvelteTask) {
+        //task.model.resourceId
+        //task.row = this;
         const index = this.tasks.indexOf(task);
         if(index !== -1){
             this.tasks.splice(index, 1);
-        }
-
-        const modelIndex = this.model.tasks.indexOf(task.model);
-        if(modelIndex !== -1){
-            this.model.tasks.splice(modelIndex, 1);
         }
     }
 
@@ -77,8 +66,8 @@ export class SvelteRow {
         }
     }
 
-    updateVisibleTasks() {
-        const { from, to } = this.gantt.store.get();
-        this.visibleTasks = this.tasks.filter(task => !(task.model.to < from || task.model.from > to));
-    }
+    // updateVisibleTasks() {
+    //     const { from, to } = this.gantt.store.get();
+    //     this.visibleTasks = this.tasks.filter(task => !(task.model.to < from || task.model.from > to));
+    // }
 }

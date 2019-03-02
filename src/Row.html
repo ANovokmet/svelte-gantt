@@ -1,4 +1,4 @@
-<div class="row {row.model.classes}" ref:row style="height:{$rowHeight}px" use:contextMenu>
+<div class="row {row.model.classes}" ref:row style="height:{$rowHeight}px">
     <!-- {#each row.tasks as task (task.model.id)}
         <Task   row={row}
         task={task}
@@ -18,12 +18,9 @@
     }
 </style>
 <script>
-    import Task from './Task.html';
-    import ContextMenu from "./ContextMenu.html";
     import { DOMUtils } from "./utils/domUtils";
 
     export default {
-        components: { Task },
         oncreate() {
             const { row } = this.get();
             row.rowElement = this.refs.row;
@@ -60,7 +57,7 @@
                 this.set({ row });
             },
             taskDropped(task) {
-                this.handleOverlaps();
+                //this.handleOverlaps();
             },
             handleOverlaps(){
                 this.sortTasks();
@@ -139,45 +136,6 @@
                 });
                 //console.log(visibleTasks.length);
                 return visibleTasks;
-            }
-        },
-        actions: {
-            contextMenu(node){
-                const { gantt } = this.store.get();
-
-                if(gantt.enableContextMenu){
-                    const { row } = this.get();
-                    const options = [
-                        {
-                            label: 'Copy row',
-                            action: () => console.log('clicked action 1 for task ', row.id)
-                        },
-                        {
-                            label: 'Clear dependencies',
-                            action: () => console.log('clicked action 2 for task ', row.id)
-                        }
-                    ];
-
-                    function onClose(event) {
-                        //if(!contextMenu.isTarget(e))
-                        gantt.menuManager.close();
-                    }
-
-                    node.addEventListener('mouseup', (e) => {
-                        //e.stopPropagation();
-                        if(e.which === 3){
-                            gantt.menuManager.open(options, {x: e.x, y: e.y});
-
-                            DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
-                        }
-                    });
-                }
-                
-                return {
-                    destroy() {
-                        gantt.menuManager.close();
-                    }
-                }
             }
         }
     };

@@ -75,7 +75,7 @@ options = {
 	// format: datetime format used for header cell label
 	headers: [{unit:  'day', format:  'DD.MM.YYYY'}, {unit:  'hour', format:  'HH'}],
 	// height of a single row in px
-	rowHeight:  24,
+	rowHeight:  52,
 	// modules used in gantt
 	modules: [],
 	// enables right click context menu

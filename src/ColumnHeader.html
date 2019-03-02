@@ -8,9 +8,10 @@
 <style>
     .column-header-row {
         box-sizing: border-box;
-        border-top: 1px solid #ddd;
         white-space: nowrap;
         overflow: hidden;
+
+        height: 32px;
     }
 
     .column-header {
@@ -21,7 +22,20 @@
         text-overflow: clip;
         /* vertical-align: top; */
         text-align: center;
+
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1em;    
+        font-size: 14px;
+        font-weight: 300;
+        transition: background 0.2s;
     }
+
+    .column-header:hover {
+        background: #f9f9f9;
+    }
+    
 </style>
 <script>
     export default {

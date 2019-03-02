@@ -1,10 +1,10 @@
 <div ref:taskElement
     class="task {task.model.classes}" 
     style="
-    width:{task.truncated ? task.truncatedWidth : task.width}px;
+    width:{task.widthT}px;
+    height:{task.height}px;
     transform: translate({task.posX}px, {task.posY}px);"
     use:drag 
-    use:contextMenu
     use:selectable
     class:overlapping="task.overlapping"
     class:selected="task.selected"
@@ -49,10 +49,17 @@
         position: absolute;
         height: 100%;
         top: 0;
+
+        
+        padding-left: 14px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
     }
 
     .task:not(.moving) {
-        transition: transform 0.2s, background-color 0.2s;
+        transition: transform 0.2s, background-color 0.2s, width 0.2s;
     }
 
     .task.moving{
@@ -92,15 +99,13 @@
     .task.selected {
         outline: 2px solid rgba(3, 169, 244, 0.5);
         outline-offset: 3px;
-
+        z-index: 1;
     }
 </style>
 
 <script>
     import { DOMUtils } from "./utils/domUtils";
-    import ContextMenu from "./ContextMenu.html";
 
-//left:{task.truncated ? task.truncatedLeft : task.left}px;
 
     export default {
         setup(component) {
@@ -109,15 +114,6 @@
             const { task } = this.get();
             const row = task.row;
             task.component = this;
-
-
-            const {rows, rowHeight} = this.store.get();
-            
-            let startIndex = rows.indexOf(row); 
-
-            let startY = startIndex * rowHeight;
-
-            this.set({startY});
         },
         ondestroy() {
             const { task } = this.get();
@@ -142,7 +138,6 @@
 			drag(node) {
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
-                const { _rowCache } = gantt.get();
 
                 let { task } = this.get();
                 //update reference when tasks are loaded with new data
@@ -168,6 +163,7 @@
                     event.stopPropagation();
                     event.preventDefault();
                     
+                    const { _rowCache } = gantt.get();
                     originalRow = _rowCache[task.model.resourceId];
                     taskOriginalFrom = task.model.from.clone();
                     taskOriginalTo = task.model.to.clone();
@@ -180,13 +176,16 @@
                         if(mouseStartPosX < resizeHandleWidth) {
                             task.resizing = true;
                             task.direction = 'left';
+                            gantt.includeInRender = task;
                         }
                         else if(mouseStartPosX > task.width - resizeHandleWidth) {
                             task.resizing = true;
                             task.direction = 'right';
+                            gantt.includeInRender = task;
                         }
                         else {
                             task.dragging = true;
+                            gantt.includeInRender = task;
                         }
 
                         windowElement.addEventListener('mousemove', onmousemove, false);
@@ -203,28 +202,36 @@
                         if(task.direction === 'left') { //resize ulijevo
                             if(mousePos.x > task.left + task.width) {
                                 task.left = mouseStartRight; //mousePos.x //
+                                task.posX = mouseStartRight;
                                 task.width = task.left - mousePos.x;
+                                task.widthT = task.left - mousePos.x;
                                 task.direction = 'right'
                                 mouseStartRight = task.left + task.width;
                             }
                             else{
                                 task.left = mousePos.x;
+                                task.posX = mousePos.x;
                                 task.width = mouseStartRight - mousePos.x;
+                                task.widthT = mouseStartRight - mousePos.x;
                             }
                         }
                         else if(task.direction === 'right') {//resize desno
                             if(mousePos.x <= task.left) {
                                 task.width = task.left - mousePos.x;
+                                task.widthT = task.left - mousePos.x;
                                 task.left = mousePos.x;
+                                task.posX = mousePos.x;
                                 task.direction = 'left';
                                 mouseStartRight = task.left + task.width;
                             }
                             else {
                                 task.width = mousePos.x - task.left;
+                                task.widthT = mousePos.x - task.left;
                             }
                         }
                     }
 
+                    // mouseup
                     if(task.dragging) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
                         task.left = mousePos.x - mouseStartPosX;
@@ -232,9 +239,9 @@
                         task.posX = mousePos.x - mouseStartPosX;
                         task.posY = mousePos.y - mouseStartPosY;
 
-
                         //row switching
                         const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
+                        const { _rowCache } = gantt.get();
                         const sourceRow = _rowCache[task.model.resourceId];
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
@@ -259,10 +266,7 @@
 
                         task.updateDate();
                         task.updatePosition();
-                        task.truncate();
                         self.set({task});
-                        self.setY(event)
-                        task.notify();
                         gantt.api.tasks.raise.move(task);
                     }
                 }
@@ -272,20 +276,23 @@
                     task.updateDate();
                     task.updatePosition();
                     
-                    task.posX = task.left;
-                    task.posY = task.model.resourceId * 24;
+                    task.posX = Math.ceil(task.left);
+                    task.posY = task.model.resourceId * 52;
+                    task.widthT = Math.ceil(task.width);
 
                     task.dragging = false;
                     task.resizing = false;
+                    gantt.includeInRender = null;
                     task.direction = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
                     task.component.fire('taskDropped', { task });
                     task.component.set({task});
-                    task.component.setY()
 
                     //code this better
+                    const { _rowCache } = gantt.get();
                     if(originalRow && originalRow !== _rowCache[task.model.resourceId]) {
-                        originalRow.component.handleOverlaps();
+                        //originalRow.component.handleOverlaps();
+                        //_rowCache[task.model.resourceId].component.handleOverlaps();
                     }
 
                     gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
@@ -325,43 +332,6 @@
 					}
 				}
             },
-            contextMenu(node){
-                const { gantt } = this.store.get();
-
-                if(gantt.enableContextMenu){
-                    const { task } = this.get();
-                    const options = [
-                        {
-                            label: 'Copy',
-                            action: () => console.log('clicked action 1 for task ', task.model.id)
-                        },
-                        {
-                            label: 'Clear dependencies',
-                            action: () => console.log('clicked action 2 for task ', task.model.id)
-                        }
-                    ];
-
-                    function onClose(event) {
-                        //if(!contextMenu.isTarget(e))
-                        gantt.menuManager.close();
-                    }
-
-                    node.addEventListener('mouseup', (e) => {
-                        if(e.which === 3){
-                            e.stopPropagation();
-                            gantt.menuManager.open(options, {x: e.x, y: e.y})
-
-                            DOMUtils.addEventListenerOnce(node, 'mousedown', onClose); //document.body
-                        }
-                    });
-                }
-                
-				return {
-					destroy() {
-                        gantt.menuManager.close();
-					}
-				}
-            },
             selectable(node) {
                 const { gantt } = this.store.get();
                 const self = this;
@@ -380,22 +350,11 @@
                 });
             }
         },
-        // // could work but questionable if task updates, an action works... but too complex for end user
-        // events: {
-		// 	customHtmlElemHook(node) {
-        //         const elem = document.createElement('div');
-        //         elem.innerHTML = 'Custom dynamic template';
-        //         node.append(elem);
-		// 		const onclick = (event) => {debugger;}
-		// 		elem.addEventListener('click', onclick, false);
-		// 		return {
-		// 			destroy() {
-		// 				elem.removeEventListener('mousedown', onclick, false);
-		// 			}
-		// 		};
-		// 	}
-		// },
         methods: {
+            checkOverRow(task){
+
+            },
+
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
@@ -406,24 +365,6 @@
                     event.stopPropagation();
                     const { task } = this.get();
                     onTaskButtonClick(task);
-                }
-            },
-            setY(event){
-                const { task } = this.get();
-                const row = task.row;
-                const {rows, rowHeight} = this.store.get();
-                if(task.dragging){
-                    const { rowContainerElement } = this.store.get();
-                    const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-                    console.log(mousePos.y)
-                    
-                    this.set({startY: mousePos.y});
-                }
-                else{
-                    
-                    let startIndex = rows.indexOf(row); 
-                    let startY = startIndex * rowHeight;
-                    this.set({startY});
                 }
             }
         },

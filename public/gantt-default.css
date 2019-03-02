@@ -3,7 +3,8 @@
 }
 
 .gantt {
-    font-family: tahoma, arial, verdana, Sans-serif;
+    font-family: 'Lato', sans-serif;
+    /* font-family: tahoma, arial, verdana, Sans-serif; */
     font-size: 10px;
     color: #656565;
 }
@@ -17,13 +18,23 @@
 }
 
 .task {
-    height: 24px;
+    /* height: 24px; */
     /*margin: auto;*/
     background: rgb(116, 191, 255);
 }
 
+.task:hover {
+    background: rgb(98, 161, 216);
+}
+
 .selected {
-    background: rgb(255, 255, 82);
+    background: rgb(69, 112, 150);
+    color: white;
+    font-weight: 700;
+}
+
+.task.selected:hover {
+    background: rgb(60, 98, 131);
 }
 
 .overlapping {
@@ -40,12 +51,17 @@
     border-left: 1px solid #eee;
 }
 
-.column-header-row {
+/* .column-header-row {
     border-top: 1px solid #ddd;
+} */
+
+.column-header {    
+    border-left: #efefef 1px solid;
+    border-bottom: #efefef 1px solid;
 }
 
-.column-header {
-    border-left: #efefef 1px solid;
+.header-container {
+    border-top: #efefef 1px solid;
 }
 
 
@@ -63,9 +79,17 @@
 }
 
 .row-disabled {
-    background-color: rgb(235, 235, 235);
+    background: repeating-linear-gradient(45deg, rgba(55,55,55,0.1), rgba(55,55,55,0.1) 10px, transparent 10px, transparent 20px);
 }
 
 .task-status-1 {
     background-color: rgb(188, 235, 194);
+}
+
+.task-status-1.selected {
+    background: rgb(121, 150, 125);
+}
+
+.s-g-icon {
+    margin-right: 5px;
 }

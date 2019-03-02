@@ -17,6 +17,7 @@ function generateData() {
 			label: 'Row #'+i,
 			tasks: [],
 			enableDragging: true,
+			imageSrc: 'Content/joe.jpg'
 			//contentHtml: '<s>Test</s>'
 			//headerHtml: '<s>Test</s>'
 		});
@@ -29,16 +30,17 @@ function generateData() {
 			data.rows[i].enableDragging = true;
 		}
 	
-		let a = i % 3;
+		let a = i % 2;
+		let rand_bool = Math.random() > 0.9;
 	
 		data.tasks.push({
 			generation,
 			id: i,
 			resourceId: i,
 			label: 'Task #'+i,
-			from: startOfToday.clone().set({'hour': 3 + 5*a, 'minute': 0}),
-			to: startOfToday.clone().set({'hour': 6 + 5*a, 'minute': 0}),
-			amountDone: Math.floor(Math.random() * 100),
+			from: startOfToday.clone().set({'hour': 7 + 4*a, 'minute': 0}),
+			to: startOfToday.clone().set({'hour': 10 + 4*a, 'minute': 0}),
+			//amountDone: Math.floor(Math.random() * 100),
 			classes: rand_bool ? 'task-status-1' : '',
 			enableDragging: !rand_bool
 			//h: Math.random() < 0.5
@@ -75,15 +77,19 @@ function generateData() {
 	}
 }, 50)*/
 
+const currentStart = moment().set({hour: 6, minute: 0});
+const currentEnd = moment().set({hour: 18, minute: 0});
 
 let options = {
 	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
 	stretchTimelineWidthToFit: true,
 	width: 1000,
-	from: startOfToday,
-	to: moment().endOf('day'),
-	tableHeaders: [{title: 'ID', property: 'id', width: 20}, {title: 'Label', property: 'label', width: 80}],
-	modules: [SvelteGanttTable, SvelteGanttDependencies]
+	from: currentStart,
+	to: currentEnd,
+	tableHeaders: [{title: 'Label', property: 'label', width: 140}],
+	tableWidth: 140,
+	modules: [SvelteGanttTable, SvelteGanttDependencies],
+	taskContent: (task) => '<i class="s-g-icon fas fa-calendar"></i>' + task.model.label
 }
 
 var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
@@ -96,8 +102,6 @@ gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task)
 
 
 
-const currentStart = moment().startOf('day');
-const currentEnd = moment().endOf('day');
 
 
 document.getElementById('setDayView').addEventListener('click', (event) => {
@@ -160,7 +164,10 @@ document.getElementById('setPreviousDay').addEventListener('click', (event) => {
 document.getElementById('reInit').addEventListener('click', (event) => {
 	
 	console.log('re init');
-	gantt.initData(generateData());
+	const data = generateData();
+	gantt.initRows(data.rows);
+	gantt.initTasks(data.tasks);
+	gantt.updateViewport();
 });
 
 SvelteGanttExternal.create(document.getElementById('newTask'), {

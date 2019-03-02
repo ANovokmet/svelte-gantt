@@ -4,7 +4,12 @@
             {#if row.model.headerHtml}
                 {@html row.model.headerHtml}
             {:else}
-                {row.model[header.property]}
+                <div class="s-g-resource-info">
+                    <img class="s-g-resource-image" src="{row.model.imageSrc}" alt=""/>
+                    <div class="s-g-resource-title">
+                        {row.model[header.property]}
+                    </div>
+                </div>
             {/if}
         </div>
     {/each}
@@ -13,9 +18,30 @@
     .row-header-row {
         position: relative;
         box-sizing: border-box;
+
+        font-weight: 400;
+        font-size: 14px;
+    }
+
+    .s-g-resource-image {
+        width: 2.4em;
+        height: 2.4em;
+        border-radius: 50%;
+        margin-right: .6em;
+
+        background: #047c69;
+    }
+
+    .s-g-resource-info {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
     }
 
     :global(.row-header-cell) {
+        padding: 0 .5em;
         display: inline-block;  
         height: 100%;
         box-sizing: border-box;

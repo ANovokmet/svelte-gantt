@@ -3,6 +3,7 @@ import { SvelteGantt } from "./gantt";
 
 export interface TaskModel {
     id: number; // | string;
+    resourceId: number; // | string
     from: any; // moment
     to: any; // moment
 
@@ -21,16 +22,18 @@ export class SvelteTask {
     model: TaskModel;
     component: SvelteGantt;
     row: SvelteRow;
-    dependencies: Array<any>;
 
     left: number;
     width: number;
-    
-    truncated: boolean;
-    truncatedWidth: number;
-    truncatedLeft: number;
+    height: number;
+    posX: number;
+    posY: number;
+    widthT: number;
 
-    constructor(gantt: SvelteGantt, task: TaskModel, row: SvelteRow){
+    dragging: boolean;
+    resizing: boolean;
+    
+    constructor(gantt: SvelteGantt, task: TaskModel){
         // defaults, todo object.assign these
         // id of task, every task needs to have a unique one
         //task.id = task.id || undefined;
@@ -55,24 +58,28 @@ export class SvelteTask {
         // enable dragging of task
         task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
 
-        //height, translateX, translateY, resourceId
 
         this.gantt = gantt;
         this.model = task;
-        this.row = row;
-        this.dependencies = [];
+
+        this.row = gantt.get()._rowCache[task.resourceId];
+        this.row.addTask(this);
+
+        //height, translateX, translateY, resourceId
+        this.height = this.getHeight();
+
         this.updatePosition();
 
-        this.posX = this.left;
-        this.posY = this.model.resourceId * 24;
+        // TODO extract to update vertical position
+        this.posY = this.getPosY();
     }
 
-    notify() {
-        if(this.dependencies){
-            this.dependencies.forEach(dependency => {
-                dependency.update();
-            });
-        }
+    getHeight(){
+        return this.row.height;
+    }
+
+    getPosY(){
+        return this.row.posY;
     }
 
     updatePosition(){
@@ -81,6 +88,11 @@ export class SvelteTask {
 
         this.left = left;
         this.width = right - left;
+
+        if(!this.dragging && !this.resizing){
+            this.posX = Math.ceil(this.left);
+            this.widthT = Math.ceil(this.width);
+        }
     }
 
     updateDate(){
@@ -100,46 +112,9 @@ export class SvelteTask {
         return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
     }
 
-    subscribe(dependency) {
-        this.dependencies.push(dependency);
-    }
-
-    unsubscribe(dependency) {
-        let result = [];
-        for(let i = 0; i < this.dependencies.length; i++) {
-            if(this.dependencies[i] === dependency) {
-                result.push(dependency);
-            }
-        }
-
-        for(let i = 0; i < result.length; i++) {
-            let index = this.dependencies.indexOf(result[i]);
-            this.dependencies.splice(index, 1);
-        }
-    }
-
     updateView() {
         if(this.component) {
             this.component.set({task: this});
         }
     }
-
-    // questionable feature
-    truncate(){
-        const ganttWidth = this.gantt.store.get().width;
-        if(this.left < ganttWidth && this.left + this.width > ganttWidth){
-            this.truncated = true;
-            this.truncatedWidth = ganttWidth - this.left;
-            this.truncatedLeft = this.left;
-        }
-        else if(this.left < 0 && this.left + this.width > 0){
-            this.truncated = true;
-            this.truncatedLeft = 0;
-            this.truncatedWidth = this.width + this.left;
-        }
-        else{
-            this.truncated = false;
-        }
-    }
-
 }

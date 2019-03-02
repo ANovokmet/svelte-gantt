@@ -1,4 +1,4 @@
-<div class="gantt {$classes}" use:disableContextMenu ref:ganttElement>
+<div class="gantt {$classes}" ref:ganttElement>
     {#each _ganttTableModules as module (module.key)}
         <svelte:component this={module} on:init="initModule(event.module)" {visibleRows}/>
     {/each}
@@ -21,16 +21,20 @@
                 {/each}
             </div>
             <div class="row-container" 
-                ref:rowContainer>
-                <!-- style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;" -->
-                {#each $rows as row (row.model.id)}
+                ref:rowContainer style="height:{rowContainerHeight}px;">
+                <!--padding-bottom:{paddingBottom}px;padding-top:{paddingTop}px; -->
+                <div style="transform: translateY({paddingTop}px);">
+                {#each visibleRows as row (row.model.id)}
                     <Row row={row}
                         on:updateVisibleRows="updateViewport()"/>
                 {/each}
-                {#each $tasks as task (task.model.id)}
-                    <TaskComponent task={task}/>
-                {/each}
+                </div>
             </div>
+                <div class="s-g-foreground">
+                    {#each visibleTasks as task (task.model.id)}
+                        <TaskComponent task={task}/>
+                    {/each}
+                </div>
             {#each _ganttBodyModules as module (module.key)}
                 <svelte:component this={module} on:init="initModule(event.module)" />
             {/each}
@@ -43,6 +47,16 @@
         width: 100%;
         height: 100%;
         position: relative;
+    }
+
+    .s-g-foreground {
+        box-sizing: border-box;
+        overflow: hidden;
+        top: 0;
+        left: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
     }
 
     .column-container {
@@ -89,7 +103,6 @@
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
-    import ContextMenuManager from './utils/contextMenuManager'
     import SelectionManager from './utils/selectionManager';
     import GanttUtils from './utils/utils';
     import GanttApi from './core/api';
@@ -130,7 +143,7 @@
                 // format: datetime format used for header cell label
                 headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
                 // height of a single row in px
-                rowHeight: 24,
+                rowHeight: 52,
                 // modules used in gantt
                 modules: [],
                 // enables right click context menu
@@ -138,7 +151,7 @@
                 // sets top level gantt class which can be used for styling
                 classes: '',
                 // width of handle for resizing task
-                resizeHandleWidth: 5,
+                resizeHandleWidth: 10,
                 // handler of button clicks
                 onTaskButtonClick: null, // e.g. (task) => {debugger},
                 // task content factory function
@@ -186,71 +199,25 @@
         },
         components: { Row, Column, ColumnHeader, TaskComponent },
         oncreate(){
+            const {rows, initialRows, initialTasks, initialDependencies} = this.get();
+
             this.initGantt();
             
-            const {rows, initialRows, initialTasks, initialDependencies} = this.get();
-            this.initData({
-                rows: initialRows, 
-                dependencies: initialDependencies,
-                tasks: initialTasks
-            });
+            this.initRows(initialRows);
+            window.addEventListener('resize', this.onWindowResizeEventHandler.bind(this)); // or this.onW... .bind(this);
+            this.recalculateGanttDimensions();
             this.initColumns();
 
-            // // ag-grid uses an event for all the elements
-            // this.refs.mainContainer.addEventListener('mouseup', function(event){
-            //     console.log('mouse up on ', event.target);
-            // });
-
-            this.onWindowResizeHandler = (event) => {
-                const parentWidth = this.refs.ganttElement.clientWidth;
-                const parentHeight = this.refs.ganttElement.clientHeight;
-                
-                this.store.set({parentWidth});
-                
-                const stretchWidth = this.store.get().stretchTimelineWidthToFit;
-                const tableWidth = this.store.get().tableWidth || 0;
-
-                const height = parentHeight - this.refs.sideContainer.clientHeight;
-
-                // -17 only if side scrollbar shows (rowContainerHeight > height)
-                const { rowContainerHeight } = this.get();
-                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - 17 :  parentWidth - tableWidth;
-
-                if(stretchWidth){
-                    this.store.set({width: headerWidth});
-                }
-
-                this.store.set({
-                    height, headerWidth
-                });
-
-                if(stretchWidth){
-                    this.initColumns();
-                }
-            };
-
-            window.addEventListener('resize', this.onWindowResizeHandler); // or this.onW... .bind(this);
-            this.onWindowResizeHandler(null);
+            this.initTasks(initialTasks);
             
             this.broadcastModules('onGanttCreated');
             this.updateViewport();
         },
         ondestroy(){
             //remove event listener
-            window.removeEventListener('resize', this.onWindowResizeHandler)
+            window.removeEventListener('resize', this.onWindowResizeEventHandler)
         },
         actions: {
-            disableContextMenu(node) {
-                if(this.store.get().enableContextMenu){
-                    node.addEventListener('contextmenu', function(e) {
-                        e.preventDefault();
-                    }, false);
-                    //ovo dolje radi kad stvoriš svelte contextmenu, klikne na sam contextmenu TO DO remove
-                    document.addEventListener('contextmenu', function(e) {
-                        e.preventDefault();
-                    }, false);
-                }
-            },
             scrollable(node){
                 const { scrollables } = this.get();
                 const self = this;
@@ -279,48 +246,78 @@
 					}
                 }
             },
-            scrollListener(node){
-                const { scrollables } = this.get();
-                scrollables.push({node});
-            },
             horizontalScrollListener(node){
                 const { scrollables } = this.get();
                 scrollables.push({node, orientation: 'horizontal'});
             }
 		},
         methods: {
-            initData(data){
-                const rows = [];
-                const _allTasks = [];
-                const tasks = _allTasks;
-                const _taskCache = {};
-                const _rowCache = {};
+            onWindowResizeEventHandler(event){
+                this.recalculateGanttDimensions();
+                if(this.store.get().stretchTimelineWidthToFit){
+                    this.initColumns();
+                    this.refreshTasks();
+                }
+            },
+            recalculateGanttDimensions() {
+                const parentWidth = this.refs.ganttElement.clientWidth;
+                const parentHeight = this.refs.ganttElement.clientHeight;
+                
+                this.store.set({parentWidth});
+                
+                const tableWidth = this.store.get().tableWidth || 0;
 
-                for(let i=0; i < data.rows.length; i++){
-                    const currentRow = data.rows[i];
+                const height = parentHeight - this.refs.sideContainer.clientHeight;
+
+                // -17 only if side scrollbar shows (rowContainerHeight > height)
+                const { rowContainerHeight } = this.get();
+                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - 17 :  parentWidth - tableWidth;
+
+                this.store.set({
+                    height, headerWidth
+                });
+
+                if(this.store.get().stretchTimelineWidthToFit){
+                    this.store.set({width: headerWidth});
+                }
+            },
+            initRows(rowsData){
+                const rows = [];
+                const _rowCache = {};
+                let y = 0;
+                for(let i=0; i < rowsData.length; i++){
+                    const currentRow = rowsData[i];
                     const row = new SvelteRow(this, currentRow);
                     rows.push(row);
                     _rowCache[row.model.id] = row;
+                    row.posY = y;
+                    y += row.height;
                 }
+                this.set({
+                    _rowCache,
+                    rows
+                });
+                this.store.set({rows});
+            },
+            initTasks(taskData){
+                const _allTasks = [];
+                const tasks = _allTasks;
+                const _taskCache = {};
 
-                for(let i=0; i < data.tasks.length; i++){
-                    const currentTask = data.tasks[i];
-                    const task = new SvelteTask(this, currentTask, null);
+                for(let i=0; i < taskData.length; i++){
+                    const currentTask = taskData[i];
+                    const task = new SvelteTask(this, currentTask);
                     _allTasks.push(task);
                     _taskCache[task.model.id] = task;
                 }
 
                 this.set({
                     _allTasks,
-                    _rowCache,
                     _taskCache,
                     tasks,
-                    rows
                 });
-                this.store.set({rows, tasks});
+                this.store.set({tasks});
                 this.selectionManager.clearSelection();
-                this.broadcastModules('initData', data);
-                this.updateViewport();
             },
             initGantt(){
                 if(!this.store.get().gantt){
@@ -330,7 +327,6 @@
                         gantt: this
                     });
                     
-                    this.menuManager = new ContextMenuManager(this);
                     this.selectionManager = new SelectionManager();
                     this.utils = new GanttUtils(this);
                     this.api = new GanttApi(this);
@@ -374,36 +370,16 @@
 
                 const visibleRows = rows.slice(startIndex, endIndex + 1);
 
-                //only horizontal scroll
-                /*visibleRows.forEach(row => {
-                    row.visibleTasks = this.visibleTasks(row);
-                });*/
-
                 const visibleTasks = []
                 visibleRows.forEach(row => {
                     Array.prototype.push.apply(visibleTasks, row.tasks);
                 });
-                this.set
+                if(this.includeInRender || visibleTasks.indexOf(this.includeInRender) !== -1){
+                    visibleTasks.push(this.includeInRender);
+                }
 
                 this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
                 this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
-            },
-            visibleTasks(row){
-                const scrollLeft = this.refs.mainContainer.scrollLeft;
-                const clientWidth = this.refs.mainContainer.clientWidth;
-                //finish this
-                //this.store.set({scrollLeft, clientWidth});
-
-                //da su sortirani -> index prvog, zadnjeg, i onda slice
-                //da su sortirani -> nakon zadnjeg break
-                const visibleTasks = [];
-                row.tasks.forEach(task => {
-                    if(!(task.left + task.width < scrollLeft || task.left > scrollLeft + clientWidth)){
-                        visibleTasks.push(task);
-                    }
-                });
-                console.log(visibleTasks.length);
-                return visibleTasks;
             },
             updateViewport(){
                 const {scrollTop, clientHeight} = this.refs.mainContainer;
@@ -422,38 +398,27 @@
                     columns.push({width: columnWidth, from: columnFrom.clone(), left: this.utils.getPositionByDate(columnFrom)});
                     columnFrom.add(columnOffset, columnUnit);
                 }
-
-                const {_allTasks} = this.get();
-                _allTasks.forEach(task => {
-                    task.updatePosition();
-                    task.truncate();
-                    task.updateView();
-                });
-                this.broadcastModules('updateView', {});
-
+                
                 this.set({ columns });
                 this.store.set({ headers });
             },
-            updateView(options){ // {from, to, headers, width}
-                this.store.set(options);
-                if(this.store.get().stretchTimelineWidthToFit){
-                    this.onWindowResizeHandler(null);
-                }
-                else{
-                    this.initColumns();
-                }
-
+            refreshTasks(){
                 const { _allTasks } = this.get();
                 _allTasks.forEach(task => {
                     task.updatePosition();
                     task.updateView();
                 });
+            },
+            updateView(options){ // {from, to, headers, width}
+                this.store.set(options);
+                if(this.store.get().stretchTimelineWidthToFit){
+                    this.recalculateGanttDimensions();
+                }
+                else{
+                    this.initColumns();
+                }
 
-                const { rows } = this.store.get();
-                rows.forEach(row => {
-                    if(row.component)
-                        row.component.updateVisible();
-                });
+                this.refreshTasks();
 
                 this.broadcastModules('updateView', options);//{ from, to, headers });
             },
@@ -476,6 +441,7 @@
                 _ganttTableModules: [],
                 _modules: [],
 
+                _allTasks: [],
                 rows: [],
 
                 paddingTop: 0,
