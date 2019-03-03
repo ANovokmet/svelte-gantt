@@ -9,6 +9,9 @@
                 {#each $headers as header}
                     <ColumnHeader header={header}/>
                 {/each}
+                {#each $_timeRanges as timeRange (timeRange.id)}
+                    <TimeRangeHeader timeRange={timeRange}/>
+                {/each}
             </div>
         </div>
     </div>
@@ -31,6 +34,10 @@
                 </div>
             </div>
                 <div class="s-g-foreground">
+                    {#each $_timeRanges as timeRange (timeRange.id)}
+                        <TimeRange timeRange={timeRange}/>
+                    {/each}
+
                     {#each visibleTasks as task (task.model.id)}
                         <TaskComponent task={task}/>
                     {/each}
@@ -106,13 +113,17 @@
     import SelectionManager from './utils/selectionManager';
     import GanttUtils from './utils/utils';
     import GanttApi from './core/api';
+    import TimeRange from './TimeRange.html';
+    import TimeRangeHeader from './TimeRangeHeader.html';
 
     import Task from "./Task.html";
     import { SvelteTask } from "./core/task";
     import { SvelteRow } from "./core/row";
+    import { SvelteTimeRange } from "./core/timeRange";
 
     //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     //import Table from './modules/table/Table.html';
+
 
     let SvelteGantt;
 
@@ -158,7 +169,8 @@
                 taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
 
                 rows: [],
-                tasks: []
+                tasks: [],
+                _timeRanges: []
             };
 
             SvelteGantt.create = function(target, data, options) {
@@ -197,7 +209,7 @@
                 });
             }
         },
-        components: { Row, Column, ColumnHeader, TaskComponent },
+        components: { Row, Column, ColumnHeader, TaskComponent, TimeRange, TimeRangeHeader },
         oncreate(){
             const {rows, initialRows, initialTasks, initialDependencies} = this.get();
 
@@ -299,6 +311,19 @@
                 });
                 this.store.set({rows});
             },
+            initTimeRanges(timeRangeData){
+                const _timeRanges = [];
+                const _timeRangeCache = [];
+
+                for(let i = 0; i < timeRangeData.length; i++){
+                    const currentTimeRange = timeRangeData[i];
+                    const timeRange = new SvelteTimeRange(this, currentTimeRange);
+                    _timeRanges.push(timeRange);
+                    _timeRangeCache[currentTimeRange.id] = timeRange;
+                }
+
+                this.store.set({_timeRanges, _timeRangeCache})
+            },
             initTasks(taskData){
                 const _allTasks = [];
                 const tasks = _allTasks;
@@ -381,6 +406,13 @@
                 this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
                 this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
             },
+            updateVisibleEntities(){
+                const { _timeRanges } = this.store.get();
+                _timeRanges.forEach(timeRange => {
+                    timeRange.updatePosition();
+                    timeRange.updateView();
+                });
+            },
             updateViewport(){
                 const {scrollTop, clientHeight} = this.refs.mainContainer;
 
@@ -408,6 +440,7 @@
                     task.updatePosition();
                     task.updateView();
                 });
+                this.updateVisibleEntities();
             },
             updateView(options){ // {from, to, headers, width}
                 this.store.set(options);

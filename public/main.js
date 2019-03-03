@@ -94,6 +94,14 @@ let options = {
 
 var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
 
+gantt.initTimeRanges([{
+	id: 0, 
+	from: moment().set({hour: 10, minute: 0}),
+	to: moment().set({hour: 12, minute: 0}),
+	classes: null,
+	label: 'Lunch' //?
+}]);
+
 //gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
 //gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
 gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));

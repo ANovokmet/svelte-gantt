@@ -1,0 +1,43 @@
+<div class="s-g-time-range" class:moving="timeRange.resizing" style="width:{timeRange.width}px;left:{timeRange.left}px">
+    <div class="s-g-time-range-label">{timeRange.model.label}</div>
+</div>
+<style>
+    .s-g-time-range {
+        height: 100%;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        background-image: linear-gradient(-45deg, rgba(0, 0, 0, 0) 46%, #e03218 49%, #e03218 51%, rgba(0, 0, 0, 0) 55%);
+        background-size: 6px 6px !important;
+        color: red;
+        font-weight: 400;
+    }
+
+    .s-g-time-range-label {
+        margin-top: 10px;
+        background: #fff;
+        white-space: nowrap;
+        padding: 4px;
+        font-weight: 400;
+        font-size: 10px;
+    }
+</style>
+<script>
+    export default {
+        oncreate() {
+            const { timeRange } = this.get();
+            timeRange.component = this;
+        },
+        ondestroy(){
+            const { timeRange } = this.get();
+            timeRange.component = null;
+        },
+        data(){
+            return {
+                timeRange: null
+            }
+        }
+    }
+</script>

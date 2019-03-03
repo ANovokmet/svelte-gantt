@@ -54,4 +54,14 @@ export default class {
         }
         return date
     }
+
+    /**
+     * Returns ID of element 
+     * @param value 
+     * @param compareFn 
+     */
+    binarySearch(sortedArray, value, compareFn){
+
+    }
+
 }

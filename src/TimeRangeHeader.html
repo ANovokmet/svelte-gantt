@@ -1,0 +1,145 @@
+<div class="s-g-time-range-control" style="width:{timeRange.width}px;left:{timeRange.left}px">
+    <div class="s-g-time-range-handle-left" use:drag></div>
+    <div class="s-g-time-range-handle-right" use:drag></div>
+</div>
+<style>
+    .s-g-time-range-control {
+        position: absolute;
+    }
+
+    .s-g-time-range-handle-left {
+        position: absolute;
+        left: 0;
+    }
+
+    .s-g-time-range-handle-right {
+        position: absolute;
+        right: 0;
+    }
+
+    .s-g-time-range-handle-left::before, .s-g-time-range-handle-right::before {
+        position: absolute;
+        content: '';
+        bottom: 4px;
+        border-radius: 6px 6px 6px 0;
+        border: 2px solid #b0b0b7;
+        width: 9px;
+        height: 9px;
+        transform: translateX(-50%) rotate(-45deg);
+        background-color: #fff;
+
+        border-color: #e03218;
+        cursor: ew-resize;
+    }
+</style>
+<script>
+    import { DOMUtils } from "./utils/domUtils";
+
+    export default {
+        oncreate() {
+            const { timeRange } = this.get();
+            timeRange.handle = this;
+        },
+        actions: {
+            drag(node) {
+                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
+                const windowElement = window;
+
+                let mouseStartPosX;
+                let mouseStartRight;
+                
+                const { timeRange } = this.get();
+                
+                const onmousedown = (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    
+                    if(true){
+                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - timeRange.left;
+                        mouseStartRight = timeRange.left + timeRange.width;
+
+                        if(mouseStartPosX < resizeHandleWidth) {
+                            timeRange.resizing = true;
+                            timeRange.direction = 'left';
+                        }
+                        else if(mouseStartPosX > timeRange.width - resizeHandleWidth) {
+                            timeRange.resizing = true;
+                            timeRange.direction = 'right';
+                        }
+                        else {
+                            timeRange.dragging = true;
+                        }
+
+                        windowElement.addEventListener('mousemove', onmousemove, false);
+                        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+                    }
+                }
+                
+                const onmousemove = (event) => {
+                    event.preventDefault();
+                    if(timeRange.resizing) {
+                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+                        
+                        if(timeRange.direction === 'left') { 
+                            if(mousePos.x > timeRange.left + timeRange.width) {
+                                timeRange.left = mouseStartRight;
+                                timeRange.width = timeRange.left - mousePos.x;
+                                timeRange.direction = 'right'
+                                mouseStartRight = timeRange.left + timeRange.width;
+                            }
+                            else{
+                                timeRange.left = mousePos.x;
+                                timeRange.width = mouseStartRight - mousePos.x;
+                            }
+                        }
+                        else if(timeRange.direction === 'right') {//resize desno
+                            if(mousePos.x <= timeRange.left) {
+                                timeRange.width = timeRange.left - mousePos.x;
+                                timeRange.left = mousePos.x;
+                                timeRange.direction = 'left';
+                                mouseStartRight = timeRange.left + timeRange.width;
+                            }
+                            else {
+                                timeRange.width = mousePos.x - timeRange.left;
+                            }
+                        }
+                    }
+
+                    if(timeRange.resizing){
+                        timeRange.updateView();
+                    }
+                }
+
+                const onmouseup = (event) => {
+                    timeRange.updateDate();
+                    timeRange.updatePosition();
+                    
+                    timeRange.dragging = false;
+                    timeRange.resizing = false;
+                    timeRange.direction = null;
+                    timeRange.updateView();
+
+                    windowElement.removeEventListener('mousemove', onmousemove, false);
+                }
+
+                node.addEventListener('mousedown', onmousedown, false);
+
+				return {
+					update() {
+                        
+					},
+					destroy() {
+                        node.removeEventListener('mousedown', onmousedown, false);
+						node.removeEventListener('mousemove', onmousemove, false);
+                        node.removeEventListener('mouseup', onmouseup, false);
+					}
+				}
+            }
+        },
+        data(){
+            return {
+                timeRange: null
+            }
+        }
+    }
+</script>

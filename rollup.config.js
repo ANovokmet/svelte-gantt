@@ -71,11 +71,11 @@ export default [
 			sourcemap: true,
 			format: 'iife',
 			name: 'SvelteGantt',
-			file: 'public/svelteGantt.js',
+			file: 'public/dist/svelteGantt.js',
 			external: ['moment']
 		},
 		css: css => {
-			css.write('public/svelteGantt.css');
+			css.write('public/dist/svelteGantt.css');
 		}
 	}),
 	baseConfig({
@@ -84,11 +84,11 @@ export default [
 			sourcemap: true,
 			format: 'iife',
 			name: 'SvelteGanttDependencies',
-			file: 'public/svelteGanttDependencies.js',
+			file: 'public/dist/svelteGanttDependencies.js',
 			external: ['moment']
 		},
 		css: css => {
-			css.write('public/svelteGanttDependencies.css');
+			css.write('public/dist/svelteGanttDependencies.css');
 		}
 	}),
 	baseConfig({
@@ -97,11 +97,11 @@ export default [
 			sourcemap: true,
 			format: 'iife',
 			name: 'SvelteGanttTable',
-			file: 'public/svelteGanttTable.js',
+			file: 'public/dist/svelteGanttTable.js',
 			external: ['moment']
 		},
 		css: css => {
-			css.write('public/svelteGanttTable.css');
+			css.write('public/dist/svelteGanttTable.css');
 		}
 	}),
 	{
@@ -110,7 +110,7 @@ export default [
 			sourcemap: true,
 			format: 'iife',
 			name: 'SvelteGanttExternal',
-			file: 'public/svelteGanttExternal.js'
+			file: 'public/dist/svelteGanttExternal.js'
 		},
 		plugins: [
 			typescript({ tsconfigDefaults: tsconfig }),
