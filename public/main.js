@@ -10,7 +10,7 @@ function generateData() {
 		dependencies: []
 	}
 
-	for(let i = 0; i < 100; i++) {
+	for(let i = 0; i < 1000; i++) {
 		data.rows.push({
 			generation,
 			id: i,
@@ -40,6 +40,19 @@ function generateData() {
 			label: 'Task #'+i,
 			from: startOfToday.clone().set({'hour': 7 + 4*a, 'minute': 0}),
 			to: startOfToday.clone().set({'hour': 10 + 4*a, 'minute': 0}),
+			//amountDone: Math.floor(Math.random() * 100),
+			classes: rand_bool ? 'task-status-1' : '',
+			enableDragging: !rand_bool
+			//h: Math.random() < 0.5
+		});
+
+		data.tasks.push({
+			generation,
+			id: i + 1000,
+			resourceId: i,
+			label: 'Task #'+ (i + 1000),
+			from: startOfToday.clone().set({'hour': 12 + 4*a, 'minute': 0}),
+			to: startOfToday.clone().set({'hour': 14 + 4*a, 'minute': 0}),
 			//amountDone: Math.floor(Math.random() * 100),
 			classes: rand_bool ? 'task-status-1' : '',
 			enableDragging: !rand_bool

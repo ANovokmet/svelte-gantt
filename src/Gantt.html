@@ -202,6 +202,30 @@
                 
                 const store = new Store(ganttOptions);
 
+                // store.compute(
+                //     'paddingTop',
+                //     ['startIndex', 'rowHeight'],
+                //     (startIndex, rowHeight) => startIndex * rowHeight
+                // );
+
+                // store.compute(
+                //     'paddingBottom',
+                //     ['rows', 'endIndex', 'rowHeight'],
+                //     (rows, endIndex, rowHeight) => (rows.length - endIndex - 1) * rowHeight
+                // );
+
+                // store.compute(
+                //     'startIndex',
+                //     ['scrollTop', 'rowHeight'],
+                //     (scrollTop, rowHeight) => Math.floor(scrollTop / rowHeight)
+                // );
+                
+                // store.compute(
+                //     'endIndex',
+                //     ['startIndex', 'viewportHeight', 'rowHeight', 'rows'],
+                //     (startIndex, viewportHeight, rowHeight, rows) => Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1)
+                // );
+
                 return new SvelteGantt({
                     target,
                     data: newData,
@@ -246,7 +270,9 @@
                         }
                     }
                     //TODO: only for vertical scroll
-                    self.updateVisibleRows(scrollAmount, node.clientHeight);
+                    self.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+                    self.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+                    self.updateVisibleRows();
 
                     self.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
                 }
@@ -384,27 +410,21 @@
                     }
                 });
             },
-            updateVisibleRows(scrollTop, viewportHeight){
-                const { rows, rowHeight } = this.store.get();
+            updateVisibleRows(){
+                // const { scrollTop, viewportHeight } = this.get();
+                // const { rows, rowHeight } = this.store.get();
 
-                let startIndex = Math.floor(scrollTop / rowHeight);
-                let endIndex = Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1);
 
-                const paddingTop = startIndex * rowHeight;
-                const paddingBottom = (rows.length - endIndex - 1) * rowHeight;
 
-                const visibleRows = rows.slice(startIndex, endIndex + 1);
+                // const visibleRows = rows.slice(startIndex, endIndex + 1);
 
-                const visibleTasks = []
-                visibleRows.forEach(row => {
-                    Array.prototype.push.apply(visibleTasks, row.tasks);
-                });
-                if(this.includeInRender || visibleTasks.indexOf(this.includeInRender) !== -1){
-                    visibleTasks.push(this.includeInRender);
-                }
+                // const visibleTasks = []
+                // if(this.includeInRender || visibleTasks.indexOf(this.includeInRender) !== -1){
+                //     visibleTasks.push(this.includeInRender);
+                // }
 
-                this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
-                this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
+                // this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
+                // this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
             },
             updateVisibleEntities(){
                 const { _timeRanges } = this.store.get();
@@ -415,8 +435,9 @@
             },
             updateViewport(){
                 const {scrollTop, clientHeight} = this.refs.mainContainer;
-
-                this.updateVisibleRows(scrollTop, clientHeight);
+                this.store.set({scrollTop, viewportHeight: clientHeight});
+                this.set({scrollTop, viewportHeight: clientHeight});
+                this.updateVisibleRows();
                 this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
             },
             initColumns() {
@@ -481,8 +502,24 @@
                 paddingBottom: 0
             }
         },
+        onstate(){
+
+        },
         computed: {
-            rowContainerHeight: ({rows, $rowHeight}) => rows.length * $rowHeight
+            rowContainerHeight: ({$rows, $rowHeight}) => $rows.length * $rowHeight,
+            startIndex: ({scrollTop, $rowHeight}) => Math.floor(scrollTop / $rowHeight),
+            endIndex: ({startIndex, viewportHeight, $rowHeight, $rows}) => Math.min(startIndex + Math.ceil(viewportHeight / $rowHeight ), $rows.length - 1),
+            paddingTop: ({startIndex, $rowHeight}) => startIndex * $rowHeight,
+            paddingBottom: ({$rows, endIndex, $rowHeight}) => ($rows.length - endIndex - 1) * $rowHeight,
+
+            visibleRows: ({$rows, startIndex, endIndex}) => $rows.slice(startIndex, endIndex + 1),
+            visibleTasks: ({visibleRows}) => {
+                const visibleTasks = [];
+                visibleRows.forEach(row => {
+                    Array.prototype.push.apply(visibleTasks, row.tasks);
+                });
+                return visibleTasks;
+            }
         }
     };
 </script>
