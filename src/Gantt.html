@@ -1,6 +1,6 @@
 <div class="gantt {$classes}" ref:ganttElement>
     {#each _ganttTableModules as module (module.key)}
-        <svelte:component this={module} on:init="initModule(event.module)" {visibleRows}/>
+        <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} on:init="initModule(event.module)" {visibleRows}/>
     {/each}
 
     <div class="main-header-container" ref:sideContainer>
@@ -39,7 +39,13 @@
                     {/each}
 
                     {#each visibleTasks as task (task.model.id)}
-                        <TaskComponent task={task}/>
+                        <TaskComponent model="{task.model}" 
+                            bind:left="task.left" 
+                            bind:width="task.width"
+                            bind:height="task.height"
+                            bind:widthT="task.widthT"
+                            bind:posX="task.posX"
+                            bind:posY="task.posY"/>
                     {/each}
                 </div>
             {#each _ganttBodyModules as module (module.key)}
@@ -123,7 +129,9 @@
 
     //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     //import Table from './modules/table/Table.html';
+    import { GanttStore } from "./store";
 
+    window.test = new GanttStore();
 
     let SvelteGantt;
 
@@ -367,7 +375,7 @@
                     _taskCache,
                     tasks,
                 });
-                this.store.set({tasks});
+                this.store.set({tasks, _taskCache});
                 this.selectionManager.clearSelection();
             },
             initGantt(){
@@ -378,7 +386,7 @@
                         gantt: this
                     });
                     
-                    this.selectionManager = new SelectionManager();
+                    this.selectionManager = new SelectionManager(this.store);
                     this.utils = new GanttUtils(this);
                     this.api = new GanttApi(this);
 
@@ -499,7 +507,8 @@
                 rows: [],
 
                 paddingTop: 0,
-                paddingBottom: 0
+                paddingBottom: 0,
+                scrollTop: 0
             }
         },
         onstate(){
@@ -513,7 +522,7 @@
             paddingBottom: ({$rows, endIndex, $rowHeight}) => ($rows.length - endIndex - 1) * $rowHeight,
 
             visibleRows: ({$rows, startIndex, endIndex}) => $rows.slice(startIndex, endIndex + 1),
-            visibleTasks: ({visibleRows}) => {
+            visibleTasks: ({$_taskCache, visibleRows}) => {
                 const visibleTasks = [];
                 visibleRows.forEach(row => {
                     Array.prototype.push.apply(visibleTasks, row.tasks);

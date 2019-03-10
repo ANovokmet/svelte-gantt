@@ -1,27 +1,27 @@
 <div ref:taskElement
-    class="task {task.model.classes}" 
+    class="task {model.classes}" 
     style="
-    width:{task.widthT}px;
-    height:{task.height}px;
-    transform: translate({task.posX}px, {task.posY}px);"
+    width:{widthT}px;
+    height:{height}px;
+    transform: translate({posX}px, {posY}px);"
     use:drag 
     use:selectable
-    class:overlapping="task.overlapping"
-    class:selected="task.selected"
-    class:moving="task.dragging||task.resizing">
-    <div class="task-background" style="width:{task.model.amountDone}%"></div>
+    class:overlapping="overlapping"
+    class:selected="selected"
+    class:moving="dragging||resizing">
+    <div class="task-background" style="width:{model.amountDone}%"></div>
     <div class="task-content">
-        {#if task.model.html}
-            {@html task.model.html}
+        {#if model.html}
+            {@html model.html}
         {:elseif $taskContent}
-            {@html $taskContent(task)}
+            {@html $taskContent(this)}
         {:else}
-            {task.model.label}
+            {model.label}
         {/if}
 
-        {#if task.model.showButton}
-            <span class="task-button {task.model.buttonClasses}" on:click="onclick(event)">
-                {@html task.model.buttonHtml}
+        {#if model.showButton}
+            <span class="task-button {model.buttonClasses}" on:click="onclick(event)">
+                {@html model.buttonHtml}
             </span>
         {/if}
     </div>
@@ -111,16 +111,10 @@
         setup(component) {
         },
         oncreate() {
-            const { task } = this.get();
-            const row = task.row;
-            task.component = this;
+            
         },
         ondestroy() {
-            const { task } = this.get();
-            //does automatically (?)
-            if(task.component === this) {
-                task.component = null;
-            }
+            
         },
         onupdate({ changed, current, previous }) {
             if(changed.task){
@@ -139,13 +133,13 @@
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
 
-                let { task } = this.get();
+                let { model } = this.get();
                 //update reference when tasks are loaded with new data
-                const listener = this.on('update', ({ changed, current, previous }) => {
-                    if(changed.task){
-                        task = current.task;
-                    }
-                });
+                // const listener = this.on('update', ({ changed, current, previous }) => {
+                //     if(changed.task){
+                //         task = current.task;
+                //     }
+                // });
 
                 let mouseStartPosX, mouseStartPosY;
                 let mouseStartRight;
@@ -154,38 +148,47 @@
                 let taskOriginalFrom, taskOriginalTo;
                 
                     
-                function onmousedown(event) {
+                const onmousedown = (event) => {
                     if(event.which !== 1){
                         //debugger;
                         return;
                     }
 
+                    const { left, posY, width } = this.get();
+
                     event.stopPropagation();
                     event.preventDefault();
                     
                     const { _rowCache } = gantt.get();
-                    originalRow = _rowCache[task.model.resourceId];
-                    taskOriginalFrom = task.model.from.clone();
-                    taskOriginalTo = task.model.to.clone();
+                    originalRow = _rowCache[model.resourceId];
+                    taskOriginalFrom = model.from.clone();
+                    taskOriginalTo = model.to.clone();
 
-                    if(originalRow.model.enableDragging && task.model.enableDragging){
-                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - task.left;
-                        mouseStartPosY = DOMUtils.getRelativePos(rowContainerElement, event).y - task.posY;
-                        mouseStartRight = task.left + task.width;
+                    if(originalRow.model.enableDragging && model.enableDragging){
+                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - left;
+                        mouseStartPosY = DOMUtils.getRelativePos(rowContainerElement, event).y - posY;
+                        mouseStartRight = left + width;
 
                         if(mouseStartPosX < resizeHandleWidth) {
-                            task.resizing = true;
-                            task.direction = 'left';
-                            gantt.includeInRender = task;
+                            this.set({
+                                resizing: true,
+                                direction: 'left'
+                            })
+                            //gantt.includeInRender = task;
                         }
-                        else if(mouseStartPosX > task.width - resizeHandleWidth) {
-                            task.resizing = true;
-                            task.direction = 'right';
-                            gantt.includeInRender = task;
+                        else if(mouseStartPosX > width - resizeHandleWidth) {
+
+                            this.set({
+                                resizing: true,
+                                direction: 'right'
+                            })
+                            //gantt.includeInRender = task;
                         }
                         else {
-                            task.dragging = true;
-                            gantt.includeInRender = task;
+                            this.set({
+                                dragging: true
+                            })
+                            // gantt.includeInRender = task;
                         }
 
                         windowElement.addEventListener('mousemove', onmousemove, false);
@@ -193,56 +196,79 @@
                     }
                 }
                 
-                function onmousemove(event) {
+                const onmousemove = (event) => {
+
+                    const { resizing, dragging } = this.get()
 
                     event.preventDefault();
-                    if(task.resizing) {
+                    if(resizing) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+                        const { direction, left, width } = this.get()
                         
-                        if(task.direction === 'left') { //resize ulijevo
-                            if(mousePos.x > task.left + task.width) {
-                                task.left = mouseStartRight; //mousePos.x //
-                                task.posX = mouseStartRight;
-                                task.width = task.left - mousePos.x;
-                                task.widthT = task.left - mousePos.x;
-                                task.direction = 'right'
-                                mouseStartRight = task.left + task.width;
+                        if(direction === 'left') { //resize ulijevo
+                            if(mousePos.x > left + width) {
+                                this.set({
+                                    left: mouseStartRight,
+                                    posX: mouseStartRight,
+                                    width: mouseStartRight - mousePos.x,
+                                    widthT: mouseStartRight - mousePos.x,
+                                    direction: 'right',
+                                    mouseStartRight: mouseStartRight + width
+                                })
                             }
                             else{
-                                task.left = mousePos.x;
-                                task.posX = mousePos.x;
-                                task.width = mouseStartRight - mousePos.x;
-                                task.widthT = mouseStartRight - mousePos.x;
+                                this.set({
+                                    left: mousePos.x,
+                                    posX: mousePos.x,
+                                    width: mouseStartRight - mousePos.x,
+                                    widthT: mouseStartRight - mousePos.x
+                                })
                             }
                         }
-                        else if(task.direction === 'right') {//resize desno
-                            if(mousePos.x <= task.left) {
-                                task.width = task.left - mousePos.x;
-                                task.widthT = task.left - mousePos.x;
-                                task.left = mousePos.x;
-                                task.posX = mousePos.x;
-                                task.direction = 'left';
-                                mouseStartRight = task.left + task.width;
+                        else if(direction === 'right') {//resize desno
+                            if(mousePos.x <= left) {
+                                this.set({
+                                    width: left - mousePos.x,
+                                    widthT: left - mousePos.x,
+                                    left: mousePos.x,
+                                    posX: mousePos.x,
+                                    direction: 'left',
+                                    mouseStartRight: mousePos.x + left - mousePos.x
+                                })
                             }
                             else {
-                                task.width = mousePos.x - task.left;
-                                task.widthT = mousePos.x - task.left;
+                                this.set({
+                                    width: mousePos.x - left,
+                                    widthT: mousePos.x - left
+                                })
                             }
                         }
                     }
 
                     // mouseup
-                    if(task.dragging) {
+                    if(dragging) {
                         const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-                        task.left = mousePos.x - mouseStartPosX;
-                        
-                        task.posX = mousePos.x - mouseStartPosX;
-                        task.posY = mousePos.y - mouseStartPosY;
 
+                        this.set({
+                            left: mousePos.x - mouseStartPosX,
+                            posX: mousePos.x - mouseStartPosX,
+                            posY: mousePos.y - mouseStartPosY
+                        });
+                    }
+                    
+                }
+
+                const onmouseup = (event) => {
+                    
+                    const { left, width, dragging } = this.get()
+
+                    const { _taskCache, gantt } = this.store.get()
+
+                    if(dragging) {
                         //row switching
                         const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
                         const { _rowCache } = gantt.get();
-                        const sourceRow = _rowCache[task.model.resourceId];
+                        const sourceRow = _rowCache[model.resourceId];
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
                         let rowElement = elements.find((element) => element.classList.contains('row'));
@@ -252,62 +278,58 @@
                             const targetRow = rows.find((r) => r.rowElement === rowElement); //vr
 
                             if(targetRow.model.enableDragging){
-                                targetRow.moveTask(task);
+                                //targetRow.moveTask(this);
+                                model.resourceId = targetRow.model.id;
                                 
                                 sourceRow.component.taskRemoved();
                                 targetRow.component.taskAdded();
-                                gantt.api.tasks.raise.switchRow(task, targetRow, sourceRow);
+                                gantt.api.tasks.raise.switchRow(this, targetRow, sourceRow);
                             }
                         }
                     }
-
-                    if(task.dragging || task.resizing){
-                        const self = task.component;
-
-                        task.updateDate();
-                        task.updatePosition();
-                        self.set({task});
-                        gantt.api.tasks.raise.move(task);
-                    }
-                }
-
-                function onmouseup(event) {
                     
-                    task.updateDate();
-                    task.updatePosition();
-                    
-                    task.posX = Math.ceil(task.left);
-                    task.posY = task.model.resourceId * 52;
-                    task.widthT = Math.ceil(task.width);
+                    this.set({
+                        posX: Math.ceil(left),
+                        posY: model.resourceId * 52,
+                        widthT: Math.ceil(width),
+                        
+                        dragging: false,
+                        resizing: false,
+                        direction: null,
+                    });
 
-                    task.dragging = false;
-                    task.resizing = false;
-                    gantt.includeInRender = null;
-                    task.direction = null;
+                    _taskCache[model.id].updateDate();
+                    _taskCache[model.id].updatePosition();
+                    this.store.set({ _taskCache });
+
+
+                    //gantt.includeInRender = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
-                    task.component.fire('taskDropped', { task });
-                    task.component.set({task});
+                    //component.fire('taskDropped', { task });
+                    //component.set({task});
 
                     //code this better
                     const { _rowCache } = gantt.get();
-                    if(originalRow && originalRow !== _rowCache[task.model.resourceId]) {
+                    if(originalRow && originalRow !== _rowCache[model.resourceId]) {
                         //originalRow.component.handleOverlaps();
                         //_rowCache[task.model.resourceId].component.handleOverlaps();
                     }
 
-                    gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
-                    if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
-                        gantt.api.tasks.raise.changed(task, task.row, originalRow);
-                    }
+                    // gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
+                    // if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
+                    //     gantt.api.tasks.raise.changed(task, task.row, originalRow);
+                    // }
                 }
 
                 node.addEventListener('mousedown', onmousedown, false);
 
                 const cursorOnMove = (e) => {
-                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - task.left;
+                    const { left, width } = this.get()
+
+                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - left;
 
                     //TODO globally set cursor ON mousedown
-                    if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > task.width - resizeHandleWidth) {
+                    if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > width - resizeHandleWidth) {
                         this.updateCursor('e-resize');
                     }
                     else{
@@ -319,8 +341,7 @@
 
 				return {
 					update() {
-                        //ne radi??
-                        task = this.get().task;
+
 					},
 
 					destroy() {
@@ -328,7 +349,6 @@
 						//windowElement.removeEventListener('mousemove', onmousemove, false);
 						node.removeEventListener('mousemove', onmousemove, false);
                         node.removeEventListener('mouseup', onmouseup, false);
-                        listener.cancel();
 					}
 				}
             },
@@ -336,25 +356,21 @@
                 const { gantt } = this.store.get();
                 const self = this;
                 node.addEventListener('click', (e) => {
-                    const { task } = this.get();
+                    const { model } = this.get();
                     if(e.ctrlKey){
-                        gantt.selectionManager.toggleSelection(task);
+                        gantt.selectionManager.toggleSelection(model);
                     }
                     else{
-                        gantt.selectionManager.selectSingle(task);
+                        gantt.selectionManager.selectSingle(model);
                     }
 
-                    if(task.selected){
-                        gantt.api.tasks.raise.select(task);
+                    if(model.selected){
+                        gantt.api.tasks.raise.select(model);
                     }
                 });
             }
         },
         methods: {
-            checkOverRow(task){
-
-            },
-
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
@@ -370,8 +386,14 @@
         },
         data() {
             return {
-                task: { dragging: false }
+                dragging: false,
+                overlapping: false,
+                selected: false,
+                resizing: false
             }
+        },
+        computed: {
+            selected: ({$selection, model}) => $selection.indexOf(model) !== -1
         }
     };
 </script>

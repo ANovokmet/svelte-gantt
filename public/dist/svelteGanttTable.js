@@ -705,9 +705,9 @@ var SvelteGanttTable = (function () {
 				setStyle(div0, "width", "" + ctx.scrollWidth + "px");
 				addLoc(div0, file$1, 1, 4, 66);
 				div1.className = "table-row-container svelte-odjq6n";
-				setStyle(div1, "padding-top", "" + ctx.$paddingTop + "px");
-				setStyle(div1, "padding-bottom", "" + ctx.$paddingBottom + "px");
-				setStyle(div1, "height", "" + ctx.$rowContainerHeight + "px");
+				setStyle(div1, "padding-top", "" + ctx.paddingTop + "px");
+				setStyle(div1, "padding-bottom", "" + ctx.paddingBottom + "px");
+				setStyle(div1, "height", "" + ctx.rowContainerHeight + "px");
 				setStyle(div1, "width", "" + ctx.scrollWidth + "px");
 				addLoc(div1, file$1, 10, 8, 448);
 				div2.className = "table-scroll-container svelte-odjq6n";
@@ -766,16 +766,16 @@ var SvelteGanttTable = (function () {
 				const each1_value = ctx.visibleRows;
 				each1_blocks_1 = updateKeyedEach(each1_blocks_1, component, changed, get_key, 1, ctx, each1_value, each1_lookup, div1, outroAndDestroyBlock, create_each_block$1, "i", null, get_each1_context);
 
-				if (!current || changed.$paddingTop) {
-					setStyle(div1, "padding-top", "" + ctx.$paddingTop + "px");
+				if (!current || changed.paddingTop) {
+					setStyle(div1, "padding-top", "" + ctx.paddingTop + "px");
 				}
 
-				if (!current || changed.$paddingBottom) {
-					setStyle(div1, "padding-bottom", "" + ctx.$paddingBottom + "px");
+				if (!current || changed.paddingBottom) {
+					setStyle(div1, "padding-bottom", "" + ctx.paddingBottom + "px");
 				}
 
-				if (!current || changed.$rowContainerHeight) {
-					setStyle(div1, "height", "" + ctx.$rowContainerHeight + "px");
+				if (!current || changed.rowContainerHeight) {
+					setStyle(div1, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
 				if (!current || changed.scrollWidth) {
@@ -927,8 +927,8 @@ var SvelteGanttTable = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["tableHeaders","height","parentWidth","width","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]), data$1()), options.data);
-		this.store._add(this, ["tableHeaders","height","parentWidth","width","tableWidth","paddingTop","paddingBottom","rowContainerHeight"]);
+		this._state = assign(assign(this.store._init(["tableHeaders","height","parentWidth","width","tableWidth"]), data$1()), options.data);
+		this.store._add(this, ["tableHeaders","height","parentWidth","width","tableWidth"]);
 
 		this._recompute({ $tableHeaders: 1, $height: 1, $parentWidth: 1, $width: 1 }, this._state);
 		if (!('$tableHeaders' in this._state)) console.warn("<Table> was created without expected data property '$tableHeaders'");
@@ -938,9 +938,9 @@ var SvelteGanttTable = (function () {
 		if (!('$tableWidth' in this._state)) console.warn("<Table> was created without expected data property '$tableWidth'");
 
 
-		if (!('$paddingTop' in this._state)) console.warn("<Table> was created without expected data property '$paddingTop'");
-		if (!('$paddingBottom' in this._state)) console.warn("<Table> was created without expected data property '$paddingBottom'");
-		if (!('$rowContainerHeight' in this._state)) console.warn("<Table> was created without expected data property '$rowContainerHeight'");
+		if (!('paddingTop' in this._state)) console.warn("<Table> was created without expected data property 'paddingTop'");
+		if (!('paddingBottom' in this._state)) console.warn("<Table> was created without expected data property 'paddingBottom'");
+		if (!('rowContainerHeight' in this._state)) console.warn("<Table> was created without expected data property 'rowContainerHeight'");
 		if (!('visibleRows' in this._state)) console.warn("<Table> was created without expected data property 'visibleRows'");
 		this._intro = !!options.intro;
 

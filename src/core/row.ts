@@ -41,13 +41,13 @@ export class SvelteRow {
     }
 
     addTask(task: SvelteTask) {
-        task.model.resourceId = this.model.id;
+        //task.model.resourceId = this.model.id;
         task.row = this;
         this.tasks.push(task);
     }
 
     moveTask(task: SvelteTask) {
-        task.row.removeTask(task);
+        //task.row.removeTask(task);
         this.addTask(task);
     }
 

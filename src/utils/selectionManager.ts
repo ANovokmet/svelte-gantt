@@ -1,38 +1,30 @@
-export default class {
-    selection: any[];
+import { Store } from 'svelte/store.js';
 
-    constructor() {
-        this.selection = [];
+export default class {
+    store: Store;
+
+    constructor(store: Store) {
+        this.store = store;
+        this.store.set({selection: []});
     }
 
     selectSingle(item){
-        this.selection.forEach((selectionItem) => { 
-            this.updateSelected(selectionItem, false);
-        });
-        this.updateSelected(item, true);
-        this.selection = [item];
+        this.store.set({selection: [item]});
     }
 
     toggleSelection(item){
-        const index = this.selection.indexOf(item);
+        const { selection } = this.store.get();
+        const index = selection.indexOf(item);
         if(index !== -1){
-            this.updateSelected(item, false);
-            this.selection.splice(index, 1);
+            selection.splice(index, 1);
         }
         else{
-            this.updateSelected(item, true);
-            this.selection.push(item);
+            selection.push(item);
         }
-    }
-
-    updateSelected(item, value){
-        if(item.selected !== value){
-            item.selected = value;
-            item.updateView();
-        }
+        this.store.set({selection});
     }
 
     clearSelection(){
-        this.selection = [];
+        this.store.set({selection: []});
     }
 }

@@ -102,7 +102,7 @@ let options = {
 	tableHeaders: [{title: 'Label', property: 'label', width: 140}],
 	tableWidth: 140,
 	modules: [SvelteGanttTable, SvelteGanttDependencies],
-	taskContent: (task) => '<i class="s-g-icon fas fa-calendar"></i>' + task.model.label
+	//taskContent: (task) => '<i class="s-g-icon fas fa-calendar"></i>' + task.model.label
 }
 
 var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
