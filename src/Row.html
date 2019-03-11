@@ -45,17 +45,6 @@
             taskMoved() {
                 console.log('Task moved');
             },
-            taskAdded() {
-                //when task moving to row, need to update row to show new task
-                const { row } = this.get();
-                //console.log('Task moved to row', row);
-                this.set({ row });
-            },
-            taskRemoved() {
-                const { row } = this.get();
-                //console.log('Task removed from row', row);
-                this.set({ row });
-            },
             taskDropped(task) {
                 //this.handleOverlaps();
             },
@@ -71,11 +60,9 @@
                     {
                         if(current.overlapping !== true){
                             current.overlapping = true;
-                            current.component.set({ task: current });
                         }
                         if(previous.overlapping !== true){
                             previous.overlapping = true;
-                            previous.component.set({ task: previous });
                         }
 
                         if(overlaps.indexOf(current.id) === -1){
@@ -97,7 +84,6 @@
                     if(overlaps.indexOf(current.id) === -1){
                         if(!!current.overlapping) {
                             current.overlapping = false;
-                            current.component.set({ task: current });
                         }
                     }
                 }

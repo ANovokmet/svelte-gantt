@@ -108,26 +108,6 @@
 
 
     export default {
-        setup(component) {
-        },
-        oncreate() {
-            
-        },
-        ondestroy() {
-            
-        },
-        onupdate({ changed, current, previous }) {
-            if(changed.task){
-                //console.log('current', current.task);
-                //console.log('previous', previous && previous.task);
-                //current.row.rowElement = this.refs.row;
-                current.task.component = this;
-            }
-
-            if(changed.task && changed.row){
-                current.task.row = current.row;
-            }
-        },
         actions: {
 			drag(node) {
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
@@ -262,7 +242,7 @@
                     
                     const { left, width, dragging } = this.get()
 
-                    const { _taskCache, gantt } = this.store.get()
+                    const { _taskCache, gantt, rowHeight, rowMap } = this.store.get()
 
                     if(dragging) {
                         //row switching
@@ -280,17 +260,16 @@
                             if(targetRow.model.enableDragging){
                                 //targetRow.moveTask(this);
                                 model.resourceId = targetRow.model.id;
-                                
-                                sourceRow.component.taskRemoved();
-                                targetRow.component.taskAdded();
                                 gantt.api.tasks.raise.switchRow(this, targetRow, sourceRow);
                             }
                         }
                     }
                     
+                    
+
                     this.set({
                         posX: Math.ceil(left),
-                        posY: model.resourceId * 52,
+                        posY: rowMap[model.resourceId].posY,
                         widthT: Math.ceil(width),
                         
                         dragging: false,
@@ -298,23 +277,22 @@
                         direction: null,
                     });
 
-                    _taskCache[model.id].updateDate();
-                    _taskCache[model.id].updatePosition();
-                    this.store.set({ _taskCache });
+                    const task = _taskCache[model.id];
+                    
+
+                    task.left = left;
+                    task.width = width;
+                    task.posX = Math.ceil(left);
+                    task.posY = rowMap[model.resourceId].posY;
+
+                    task.updateDate();
+                    task.updatePosition();
+                    this.store.updateTask(task);
 
 
                     //gantt.includeInRender = null;
                     windowElement.removeEventListener('mousemove', onmousemove, false);
-                    //component.fire('taskDropped', { task });
-                    //component.set({task});
-
-                    //code this better
-                    const { _rowCache } = gantt.get();
-                    if(originalRow && originalRow !== _rowCache[model.resourceId]) {
-                        //originalRow.component.handleOverlaps();
-                        //_rowCache[task.model.resourceId].component.handleOverlaps();
-                    }
-
+                    
                     // gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
                     // if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
                     //     gantt.api.tasks.raise.changed(task, task.row, originalRow);
@@ -340,10 +318,6 @@
                 node.addEventListener('mousemove', cursorOnMove, false)
 
 				return {
-					update() {
-
-					},
-
 					destroy() {
 						node.removeEventListener('mousedown', onmousedown, false);
 						//windowElement.removeEventListener('mousemove', onmousemove, false);

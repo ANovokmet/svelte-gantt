@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer>
+    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer on:mousewheel="onwheel(event)">
         <div class="content" style="width:{$width}px">
             <div class="column-container">
                 {#each columns as column}
@@ -39,13 +39,13 @@
                     {/each}
 
                     {#each visibleTasks as task (task.model.id)}
-                        <TaskComponent model="{task.model}" 
-                            bind:left="task.left" 
-                            bind:width="task.width"
-                            bind:height="task.height"
-                            bind:widthT="task.widthT"
-                            bind:posX="task.posX"
-                            bind:posY="task.posY"/>
+                        <TaskComponent model={task.model}
+                            left={task.left} 
+                            width={task.width}
+                            height={task.height}
+                            widthT={task.widthT}
+                            posX={task.posX}
+                            posY={task.posY}/>
                     {/each}
                 </div>
             {#each _ganttBodyModules as module (module.key)}
@@ -97,6 +97,10 @@
         overflow: hidden;
     }
 
+    .header-container {
+        position: relative;
+    }
+
     .header-intermezzo {
         overflow:hidden;
     }
@@ -117,7 +121,7 @@
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
     import SelectionManager from './utils/selectionManager';
-    import GanttUtils from './utils/utils';
+    import { GanttUtils, getPositionByDate } from './utils/utils';
     import GanttApi from './core/api';
     import TimeRange from './TimeRange.html';
     import TimeRangeHeader from './TimeRangeHeader.html';
@@ -131,7 +135,6 @@
     //import Table from './modules/table/Table.html';
     import { GanttStore } from "./store";
 
-    window.test = new GanttStore();
 
     let SvelteGantt;
 
@@ -208,7 +211,7 @@
                 // initialize all the gantt options
                 const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
                 
-                const store = new Store(ganttOptions);
+                const store = new GanttStore(ganttOptions);
 
                 // store.compute(
                 //     'paddingTop',
@@ -250,7 +253,6 @@
             this.initRows(initialRows);
             window.addEventListener('resize', this.onWindowResizeEventHandler.bind(this)); // or this.onW... .bind(this);
             this.recalculateGanttDimensions();
-            this.initColumns();
 
             this.initTasks(initialTasks);
             
@@ -264,9 +266,8 @@
         actions: {
             scrollable(node){
                 const { scrollables } = this.get();
-                const self = this;
 
-                function onscroll(event) {
+                const onscroll = (event) => {
                     const scrollAmount = node.scrollTop; 
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
@@ -278,11 +279,10 @@
                         }
                     }
                     //TODO: only for vertical scroll
-                    self.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
-                    self.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
-                    self.updateVisibleRows();
+                    this.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+                    this.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
 
-                    self.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
+                    this.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
                 }
 
                 node.addEventListener('scroll', onscroll);
@@ -298,10 +298,22 @@
             }
 		},
         methods: {
+            onwheel(e){
+                console.log('skrol',e);
+                if(e.ctrlKey){
+                e.preventDefault();
+                    const { width } = this.store.get();
+                    if(event.deltaY > 0) {
+                        this.store.set({width: width - 30});
+                    }else {
+                        this.store.set({width: width + 30});
+                    }
+                    this.refreshTasks();
+                }
+            },
             onWindowResizeEventHandler(event){
                 this.recalculateGanttDimensions();
                 if(this.store.get().stretchTimelineWidthToFit){
-                    this.initColumns();
                     this.refreshTasks();
                 }
             },
@@ -338,25 +350,15 @@
                     _rowCache[row.model.id] = row;
                     row.posY = y;
                     y += row.height;
+
+                    //this.store.addRow(row);
                 }
                 this.set({
                     _rowCache,
                     rows
                 });
+                this.store.addAllRow(rows);
                 this.store.set({rows});
-            },
-            initTimeRanges(timeRangeData){
-                const _timeRanges = [];
-                const _timeRangeCache = [];
-
-                for(let i = 0; i < timeRangeData.length; i++){
-                    const currentTimeRange = timeRangeData[i];
-                    const timeRange = new SvelteTimeRange(this, currentTimeRange);
-                    _timeRanges.push(timeRange);
-                    _timeRangeCache[currentTimeRange.id] = timeRange;
-                }
-
-                this.store.set({_timeRanges, _timeRangeCache})
             },
             initTasks(taskData){
                 const _allTasks = [];
@@ -375,8 +377,23 @@
                     _taskCache,
                     tasks,
                 });
+
+                this.store.addAllTask(_allTasks);
                 this.store.set({tasks, _taskCache});
                 this.selectionManager.clearSelection();
+            },
+            initTimeRanges(timeRangeData){
+                const _timeRanges = [];
+                const _timeRangeCache = [];
+
+                for(let i = 0; i < timeRangeData.length; i++){
+                    const currentTimeRange = timeRangeData[i];
+                    const timeRange = new SvelteTimeRange(this, currentTimeRange);
+                    _timeRanges.push(timeRange);
+                    _timeRangeCache[currentTimeRange.id] = timeRange;
+                }
+
+                this.store.set({_timeRanges, _timeRangeCache})
             },
             initGantt(){
                 if(!this.store.get().gantt){
@@ -418,22 +435,6 @@
                     }
                 });
             },
-            updateVisibleRows(){
-                // const { scrollTop, viewportHeight } = this.get();
-                // const { rows, rowHeight } = this.store.get();
-
-
-
-                // const visibleRows = rows.slice(startIndex, endIndex + 1);
-
-                // const visibleTasks = []
-                // if(this.includeInRender || visibleTasks.indexOf(this.includeInRender) !== -1){
-                //     visibleTasks.push(this.includeInRender);
-                // }
-
-                // this.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
-                // this.store.set({ visibleRows, paddingTop, paddingBottom, visibleTasks });
-            },
             updateVisibleEntities(){
                 const { _timeRanges } = this.store.get();
                 _timeRanges.forEach(timeRange => {
@@ -445,23 +446,10 @@
                 const {scrollTop, clientHeight} = this.refs.mainContainer;
                 this.store.set({scrollTop, viewportHeight: clientHeight});
                 this.set({scrollTop, viewportHeight: clientHeight});
-                this.updateVisibleRows();
                 this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
             },
-            initColumns() {
-                const {columnOffset, columnUnit, from, width, headers} = this.store.get();
-                const columnWidth = this.utils.getPositionByDate(from.clone().add(columnOffset, columnUnit));
-                const columnCount = Math.ceil((width) / columnWidth) 
+            getPositionByDate(){
 
-                const columns = [];
-                const columnFrom = from.clone();
-                for(let i = 0; i < columnCount; i++){
-                    columns.push({width: columnWidth, from: columnFrom.clone(), left: this.utils.getPositionByDate(columnFrom)});
-                    columnFrom.add(columnOffset, columnUnit);
-                }
-                
-                this.set({ columns });
-                this.store.set({ headers });
             },
             refreshTasks(){
                 const { _allTasks } = this.get();
@@ -475,9 +463,6 @@
                 this.store.set(options);
                 if(this.store.get().stretchTimelineWidthToFit){
                     this.recalculateGanttDimensions();
-                }
-                else{
-                    this.initColumns();
                 }
 
                 this.refreshTasks();
@@ -511,10 +496,20 @@
                 scrollTop: 0
             }
         },
-        onstate(){
-
-        },
         computed: {
+            // exctract to columns component
+            columnWidth: ({$from, $to, $width, $columnOffset, $columnUnit}) => getPositionByDate($from.clone().add($columnOffset, $columnUnit), $from, $to, $width),
+            columnCount: ({$width, columnWidth}) => Math.ceil($width / columnWidth),
+            columns: ({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) => {
+                const columns = [];
+                const columnFrom = $from.clone();
+                for(let i = 0; i < columnCount; i++){
+                    columns.push({width: columnWidth, from: columnFrom.clone(), left: getPositionByDate(columnFrom, $from, $to, $width)});
+                    columnFrom.add($columnOffset, $columnUnit);
+                }
+                return columns;
+            },
+
             rowContainerHeight: ({$rows, $rowHeight}) => $rows.length * $rowHeight,
             startIndex: ({scrollTop, $rowHeight}) => Math.floor(scrollTop / $rowHeight),
             endIndex: ({startIndex, viewportHeight, $rowHeight, $rows}) => Math.min(startIndex + Math.ceil(viewportHeight / $rowHeight ), $rows.length - 1),
@@ -522,13 +517,27 @@
             paddingBottom: ({$rows, endIndex, $rowHeight}) => ($rows.length - endIndex - 1) * $rowHeight,
 
             visibleRows: ({$rows, startIndex, endIndex}) => $rows.slice(startIndex, endIndex + 1),
-            visibleTasks: ({$_taskCache, visibleRows}) => {
+            visibleTasks: ({$taskMap, visibleRows, rowTaskMap}) => {
                 const visibleTasks = [];
                 visibleRows.forEach(row => {
-                    Array.prototype.push.apply(visibleTasks, row.tasks);
+                    rowTaskMap[row.model.id].forEach(id => {
+                        visibleTasks.push($taskMap[id]);
+                    });
                 });
                 return visibleTasks;
-            }
+            },
+            rowTaskMap: ({_allTasks, $taskMap}) => {
+                const reducer = (cache, task) => {
+                    if(!cache[task.model.resourceId])
+                        cache[task.model.resourceId] = [];
+
+                    cache[task.model.resourceId].push(task.model.id);
+                    return cache;
+                }
+                console.log('recaculated map');
+                return _allTasks.reduce(reducer, {});
+            },
+
         }
     };
 </script>

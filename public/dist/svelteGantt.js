@@ -413,17 +413,6 @@ var SvelteGantt = (function () {
 	    taskMoved() {
 	        console.log('Task moved');
 	    },
-	    taskAdded() {
-	        //when task moving to row, need to update row to show new task
-	        const { row } = this.get();
-	        //console.log('Task moved to row', row);
-	        this.set({ row });
-	    },
-	    taskRemoved() {
-	        const { row } = this.get();
-	        //console.log('Task removed from row', row);
-	        this.set({ row });
-	    },
 	    taskDropped(task) {
 	        //this.handleOverlaps();
 	    },
@@ -439,11 +428,9 @@ var SvelteGantt = (function () {
 	            {
 	                if(current.overlapping !== true){
 	                    current.overlapping = true;
-	                    current.component.set({ task: current });
 	                }
 	                if(previous.overlapping !== true){
 	                    previous.overlapping = true;
-	                    previous.component.set({ task: previous });
 	                }
 
 	                if(overlaps.indexOf(current.id) === -1){
@@ -465,7 +452,6 @@ var SvelteGantt = (function () {
 	            if(overlaps.indexOf(current.id) === -1){
 	                if(!!current.overlapping) {
 	                    current.overlapping = false;
-	                    current.component.set({ task: current });
 	                }
 	            }
 	        }
@@ -698,24 +684,6 @@ var SvelteGantt = (function () {
 	    }
 	};
 
-	function oncreate$1() {
-	    
-	}
-	function ondestroy$1() {
-	    
-	}
-	function onupdate$1({ changed, current, previous }) {
-	    if(changed.task){
-	        //console.log('current', current.task);
-	        //console.log('previous', previous && previous.task);
-	        //current.row.rowElement = this.refs.row;
-	        current.task.component = this;
-	    }
-
-	    if(changed.task && changed.row){
-	        current.task.row = current.row;
-	    }
-	}
 	function drag(node) {
 	                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
 	                const windowElement = window;
@@ -849,7 +817,7 @@ var SvelteGantt = (function () {
 	                    
 	                    const { left, width, dragging } = this.get();
 
-	                    const { _taskCache, gantt } = this.store.get();
+	                    const { _taskCache, gantt, rowHeight, rowMap } = this.store.get();
 
 	                    if(dragging) {
 	                        //row switching
@@ -867,17 +835,16 @@ var SvelteGantt = (function () {
 	                            if(targetRow.model.enableDragging){
 	                                //targetRow.moveTask(this);
 	                                model.resourceId = targetRow.model.id;
-	                                
-	                                sourceRow.component.taskRemoved();
-	                                targetRow.component.taskAdded();
 	                                gantt.api.tasks.raise.switchRow(this, targetRow, sourceRow);
 	                            }
 	                        }
 	                    }
 	                    
+	                    
+
 	                    this.set({
 	                        posX: Math.ceil(left),
-	                        posY: model.resourceId * 52,
+	                        posY: rowMap[model.resourceId].posY,
 	                        widthT: Math.ceil(width),
 	                        
 	                        dragging: false,
@@ -885,20 +852,22 @@ var SvelteGantt = (function () {
 	                        direction: null,
 	                    });
 
-	                    _taskCache[model.id].updateDate();
-	                    _taskCache[model.id].updatePosition();
-	                    this.store.set({ _taskCache });
+	                    const task = _taskCache[model.id];
+	                    
+
+	                    task.left = left;
+	                    task.width = width;
+	                    task.posX = Math.ceil(left);
+	                    task.posY = rowMap[model.resourceId].posY;
+
+	                    task.updateDate();
+	                    task.updatePosition();
+	                    this.store.updateTask(task);
 
 
 	                    //gantt.includeInRender = null;
 	                    windowElement.removeEventListener('mousemove', onmousemove, false);
-	                    //component.fire('taskDropped', { task });
-	                    //component.set({task});
-
-	                    //code this better
-	                    const { _rowCache } = gantt.get();
-	                    if(originalRow && originalRow !== _rowCache[model.resourceId]) ;
-
+	                    
 	                    // gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
 	                    // if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
 	                    //     gantt.api.tasks.raise.changed(task, task.row, originalRow);
@@ -924,10 +893,6 @@ var SvelteGantt = (function () {
 	                node.addEventListener('mousemove', cursorOnMove, false);
 
 		return {
-			update() {
-
-			},
-
 			destroy() {
 				node.removeEventListener('mousedown', onmousedown, false);
 				//windowElement.removeEventListener('mousemove', onmousemove, false);
@@ -1245,23 +1210,15 @@ var SvelteGantt = (function () {
 		if (!('resizing' in this._state)) console.warn("<Task> was created without expected data property 'resizing'");
 		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
 		this._intro = !!options.intro;
-		this._handlers.update = [onupdate$1];
 
-		this._handlers.destroy = [ondestroy$1, removeFromStore];
+		this._handlers.destroy = [removeFromStore];
 
 		this._fragment = create_main_fragment$1(this, this._state);
-
-		this.root._oncreate.push(() => {
-			oncreate$1.call(this);
-			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
-		});
 
 		if (options.target) {
 			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 			this._fragment.c();
 			this._mount(options.target, options.anchor);
-
-			flush(this);
 		}
 
 		this._intro = true;
@@ -1285,7 +1242,7 @@ var SvelteGantt = (function () {
 	function data$1(){
 	    return {}
 	}
-	function oncreate$2() {
+	function oncreate$1() {
 	}
 	const file$2 = "src\\Column.html";
 
@@ -1347,7 +1304,7 @@ var SvelteGantt = (function () {
 		this._fragment = create_main_fragment$2(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$2.call(this);
+			oncreate$1.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -1367,40 +1324,88 @@ var SvelteGantt = (function () {
 	Column.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	};
 
+	class GanttUtils {
+	    constructor(gantt) {
+	        this.gantt = gantt;
+	    }
+	    /**
+	     * Returns position of date on a line if from and to represent length of width
+	     * @param {*} date
+	     */
+	    getPositionByDate(date) {
+	        const { from, to, width } = this.gantt.store.get();
+	        return getPositionByDate(date, from, to, width);
+	    }
+	    getDateByPosition(x) {
+	        const { from, to, width } = this.gantt.store.get();
+	        return getDateByPosition(x, from, to, width);
+	    }
+	    /**
+	     *
+	     * @param {Moment} date - Date
+	     * @returns {Moment} rounded date passed as parameter
+	     */
+	    roundTo(date) {
+	        const { magnetUnit, magnetOffset } = this.gantt.store.get();
+	        let value = date.get(magnetUnit);
+	        value = Math.round(value / magnetOffset);
+	        date.set(magnetUnit, value * magnetOffset);
+	        //round all smaller units to 0
+	        const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
+	        const indexOf = units.indexOf(magnetUnit);
+	        for (let i = 0; i < indexOf; i++) {
+	            date.set(units[i], 0);
+	        }
+	        return date;
+	    }
+	    /**
+	     * Returns ID of element
+	     * @param value
+	     * @param compareFn
+	     */
+	    binarySearch(sortedArray, value, compareFn) {
+	    }
+	}
+	function getPositionByDate(date, from, to, width) {
+	    if (!date) {
+	        return undefined;
+	    }
+	    let durationTo = date.diff(from, 'milliseconds');
+	    let durationToEnd = to.diff(from, 'milliseconds');
+	    return durationTo / durationToEnd * width;
+	}
+	function getDateByPosition(x, from, to, width) {
+	    let durationTo = x / width * to.diff(from, 'milliseconds');
+	    let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
+	    return dateAtPosition;
+	}
+	//# sourceMappingURL=utils.js.map
+
 	/* src\ColumnHeader.html generated by Svelte v2.16.0 */
+
+	function columnWidth({$from, $to, $width, header}) {
+	    return getPositionByDate($from.clone().add(1, header.unit), $from, $to, $width); //durationTo / durationToEnd * $width;
+	}
+
+	function columnCount({$width, columnWidth}) {
+		return Math.ceil($width / columnWidth);
+	}
+
+	function headers({$from, columnWidth, columnCount, header, $width}) {
+	    const headers = [];
+	    let headerTime = $from.clone();
+
+	    for(let i = 0; i < columnCount; i++){
+	        headers.push({width: Math.min(columnWidth, $width), label: headerTime.format(header.format)});
+	        headerTime.add(1, header.unit);
+	    }
+	    return headers;
+	}
 
 	function data$2(){
 	    return {
 	        headers: [],
 	        width: null
-	    }
-	}
-	var methods$2 = {
-	    initHeaders() {
-	        this.root.initGantt();
-	        const { header } = this.get();
-	        const { from, width, gantt } = this.store.get();
-	        const columnWidth = gantt.utils.getPositionByDate(from.clone().add(1, header.unit));
-	        const columnCount = Math.ceil(width / columnWidth); 
-
-	        const headers = [];
-	        let headerTime = from.clone();
-
-	        for(let i=0; i< columnCount; i++){
-	            headers.push({width: columnWidth, label: headerTime.format(header.format)});
-	            headerTime.add(1, header.unit);
-	        }
-
-	        this.set({headers});
-	    }
-	};
-
-	function oncreate$3() {
-	    this.initHeaders();
-	}
-	function onupdate$2({ changed, current, previous }){
-	    if(previous != null){
-	        this.initHeaders();
 	    }
 	}
 	const file$3 = "src\\ColumnHeader.html";
@@ -1532,36 +1537,57 @@ var SvelteGantt = (function () {
 		if (!options || (!options.target && !options.root)) {
 			throw new Error("'target' is a required option");
 		}
+		if (!options.store) {
+			throw new Error("<ColumnHeader> references store properties, but no store was provided");
+		}
 
 		init(this, options);
-		this._state = assign(data$2(), options.data);
+		this._state = assign(assign(this.store._init(["from","to","width"]), data$2()), options.data);
+		this.store._add(this, ["from","to","width"]);
+
+		this._recompute({ $from: 1, $to: 1, $width: 1, header: 1, columnWidth: 1, columnCount: 1 }, this._state);
+		if (!('$from' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$from'");
+		if (!('$to' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$to'");
+		if (!('$width' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$width'");
+		if (!('header' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'header'");
+
+
 		if (!('width' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'width'");
-		if (!('headers' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'headers'");
 		this._intro = !!options.intro;
-		this._handlers.update = [onupdate$2];
+
+		this._handlers.destroy = [removeFromStore];
 
 		this._fragment = create_main_fragment$3(this, this._state);
-
-		this.root._oncreate.push(() => {
-			oncreate$3.call(this);
-			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
-		});
 
 		if (options.target) {
 			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 			this._fragment.c();
 			this._mount(options.target, options.anchor);
-
-			flush(this);
 		}
 
 		this._intro = true;
 	}
 
 	assign(ColumnHeader.prototype, protoDev);
-	assign(ColumnHeader.prototype, methods$2);
 
 	ColumnHeader.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('columnWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeader>: Cannot set read-only property 'columnWidth'");
+		if ('columnCount' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeader>: Cannot set read-only property 'columnCount'");
+		if ('headers' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeader>: Cannot set read-only property 'headers'");
+	};
+
+	ColumnHeader.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$from || changed.$to || changed.$width || changed.header) {
+			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth(state)))) changed.columnWidth = true;
+		}
+
+		if (changed.$width || changed.columnWidth) {
+			if (this._differs(state.columnCount, (state.columnCount = columnCount(state)))) changed.columnCount = true;
+		}
+
+		if (changed.$from || changed.columnWidth || changed.columnCount || changed.header || changed.$width) {
+			if (this._differs(state.headers, (state.headers = headers(state)))) changed.headers = true;
+		}
 	};
 
 	function Store(state, options) {
@@ -1752,57 +1778,6 @@ var SvelteGantt = (function () {
 	}
 	//# sourceMappingURL=selectionManager.js.map
 
-	class GanttUtils {
-	    constructor(gantt) {
-	        this.gantt = gantt;
-	    }
-	    /**
-	     * Returns position of date on a line if from and to represent length of width
-	     * @param {*} date
-	     */
-	    getPositionByDate(date) {
-	        if (!date) {
-	            return undefined;
-	        }
-	        const { from, to, width } = this.gantt.store.get();
-	        let durationTo = date.diff(from, 'milliseconds');
-	        let durationToEnd = to.diff(from, 'milliseconds');
-	        return durationTo / durationToEnd * width;
-	    }
-	    getDateByPosition(x) {
-	        const { from, to, width } = this.gantt.store.get();
-	        let durationTo = x / width * to.diff(from, 'milliseconds');
-	        let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
-	        return dateAtPosition;
-	    }
-	    /**
-	     *
-	     * @param {Moment} date - Date
-	     * @returns {Moment} rounded date passed as parameter
-	     */
-	    roundTo(date) {
-	        const { magnetUnit, magnetOffset } = this.gantt.store.get();
-	        let value = date.get(magnetUnit);
-	        value = Math.round(value / magnetOffset);
-	        date.set(magnetUnit, value * magnetOffset);
-	        //round all smaller units to 0
-	        const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
-	        const indexOf = units.indexOf(magnetUnit);
-	        for (let i = 0; i < indexOf; i++) {
-	            date.set(units[i], 0);
-	        }
-	        return date;
-	    }
-	    /**
-	     * Returns ID of element
-	     * @param value
-	     * @param compareFn
-	     */
-	    binarySearch(sortedArray, value, compareFn) {
-	    }
-	}
-	//# sourceMappingURL=utils.js.map
-
 	class GanttApi {
 	    constructor(gantt) {
 	        this.gantt = gantt;
@@ -1853,11 +1828,11 @@ var SvelteGantt = (function () {
 	        timeRange: null
 	    }
 	}
-	function oncreate$4() {
+	function oncreate$2() {
 	    const { timeRange } = this.get();
 	    timeRange.component = this;
 	}
-	function ondestroy$2(){
+	function ondestroy$1(){
 	    const { timeRange } = this.get();
 	    timeRange.component = null;
 	}
@@ -1926,12 +1901,12 @@ var SvelteGantt = (function () {
 		if (!('timeRange' in this._state)) console.warn("<TimeRange> was created without expected data property 'timeRange'");
 		this._intro = !!options.intro;
 
-		this._handlers.destroy = [ondestroy$2];
+		this._handlers.destroy = [ondestroy$1];
 
 		this._fragment = create_main_fragment$4(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$4.call(this);
+			oncreate$2.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -1958,7 +1933,7 @@ var SvelteGantt = (function () {
 	        timeRange: null
 	    }
 	}
-	function oncreate$5() {
+	function oncreate$3() {
 	    const { timeRange } = this.get();
 	    timeRange.handle = this;
 	}
@@ -2127,7 +2102,7 @@ var SvelteGantt = (function () {
 		this._fragment = create_main_fragment$5(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$5.call(this);
+			oncreate$3.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -2175,7 +2150,6 @@ var SvelteGantt = (function () {
 	        this.gantt = gantt;
 	        this.model = task;
 	        this.row = gantt.get()._rowCache[task.resourceId];
-	        this.row.addTask(this);
 	        //height, translateX, translateY, resourceId
 	        this.height = this.getHeight();
 	        this.updatePosition();
@@ -2196,6 +2170,7 @@ var SvelteGantt = (function () {
 	        if (!this.dragging && !this.resizing) {
 	            this.posX = Math.ceil(this.left);
 	            this.widthT = Math.ceil(this.width);
+	            //console.log("task "+this.model.id, this.posX, this.widthT)
 	        }
 	    }
 	    updateDate() {
@@ -2212,9 +2187,7 @@ var SvelteGantt = (function () {
 	        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
 	    }
 	    updateView() {
-	        if (this.component) {
-	            this.component.set({ task: this });
-	        }
+	        if (this.component) ;
 	    }
 	}
 	//# sourceMappingURL=task.js.map
@@ -2298,71 +2271,134 @@ var SvelteGantt = (function () {
 	}
 	//# sourceMappingURL=timeRange.js.map
 
-	/*! *****************************************************************************
-	Copyright (c) Microsoft Corporation. All rights reserved.
-	Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-	this file except in compliance with the License. You may obtain a copy of the
-	License at http://www.apache.org/licenses/LICENSE-2.0
-
-	THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-	KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-	WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-	MERCHANTABLITY OR NON-INFRINGEMENT.
-
-	See the Apache Version 2.0 License for specific language governing permissions
-	and limitations under the License.
-	***************************************************************************** */
-
-	function __rest(s, e) {
-	    var t = {};
-	    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-	        t[p] = s[p];
-	    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-	        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
-	            t[p[i]] = s[p[i]];
-	    return t;
-	}
-
 	class GanttStore extends Store {
-	    constructor() {
-	        super({
-	            ids: [],
-	            entities: []
-	        }, { immutable: true });
-	        this.compute('selectAll', ['ids', 'entities'], (ids, entities) => {
-	            return ids.map(id => entities[id]);
+	    constructor(data) {
+	        super(Object.assign({
+	            taskIds: [],
+	            taskMap: {},
+	            rowIds: [],
+	            rowMap: {}
+	        }, data), {
+	            immutable: !true
 	        });
+	        // this.compute('selectAll', ['ids', 'entities'], (ids: string[], entities: {[key:string]:V}) => {
+	        //     return ids.map(id => entities[id]);
+	        // });
 	    }
-	    add(entity) {
-	        const { ids, entities } = this.get();
-	        this.set({
-	            ids: [...ids, entity.id],
-	            entities: Object.assign({}, entities, { [entity.id]: entity })
-	        });
+	    addTask(task) {
+	        const { taskIds, taskMap } = this.get();
+	        const newState = add(task, { ids: taskIds, entities: taskMap });
+	        this.set({ taskIds: newState.ids, taskMap: newState.entities });
 	    }
-	    update(entity) {
-	        const { entities } = this.get();
-	        this.set({
-	            entities: Object.assign({}, entities, { [entity.id]: entity })
-	        });
+	    addAllTask(tasks) {
+	        const newState = addAll(tasks);
+	        this.set({ taskIds: newState.ids, taskMap: newState.entities });
 	    }
-	    remove(id) {
-	        const { ids, entities } = this.get();
-	        const _a = id, entity = entities[_a], newEntities = __rest(entities, [typeof _a === "symbol" ? _a : _a + ""]);
-	        this.set({
-	            ids: ids.filter(i => i === id),
-	            entities: newEntities
-	        });
+	    addAllRow(rows) {
+	        const newState = addAll(rows);
+	        this.set({ rowIds: newState.ids, rowMap: newState.entities });
+	    }
+	    addRow(row) {
+	        const { rowIds, rowMap } = this.get();
+	        const newState = add(row, { ids: rowIds, entities: rowMap });
+	        this.set({ rowIds: newState.ids, rowMap: newState.entities });
+	    }
+	    updateTask(task) {
+	        const { taskMap } = this.get();
+	        this.set({ taskMap: update(task, { entities: taskMap }).entities });
+	    }
+	    updateRow(row) {
+	        const { rowMap } = this.get();
+	        this.set({ rowMap: update(row, { entities: rowMap }) });
 	    }
 	}
+	function add(entity, state) {
+	    return {
+	        ids: [...state.ids, entity.model.id],
+	        entities: Object.assign({}, state.entities, { [entity.model.id]: entity })
+	    };
+	}
+	function addAll(entities) {
+	    const ids = [];
+	    const newEntities = {};
+	    for (const entity of entities) {
+	        ids.push(entity.model.id);
+	        newEntities[entity.model.id] = entity;
+	    }
+	    return {
+	        ids: ids,
+	        entities: newEntities
+	    };
+	}
+	function update(entity, state) {
+	    return {
+	        entities: Object.assign({}, state.entities, { [entity.model.id]: entity })
+	    };
+	}
+	// add(entity){
+	//     const { ids, entities } = this.get();
+	//     this.set({
+	//         ids: [ ...ids, entity.id ],
+	//         entities: {
+	//             ...entities,
+	//             [entity.id]: entity
+	//         }
+	//     });
+	// }
+	// addMany(entityArr){
+	//     const { entities } = this.get();
+	//     const newEntities = {
+	//         ...entities,
+	//         ...entityArr
+	//     }
+	//     this.set({
+	//         ids: Object.keys(newEntities),
+	//         entities: newEntities
+	//     });
+	// }
+	// update(entity){
+	//     const { entities } = this.get();
+	//     this.set({
+	//         entities: {
+	//             ...entities,
+	//             [entity.id]: entity
+	//         }
+	//     });
+	// }
+	// remove(id){
+	//     const { ids, entities } = this.get();
+	//     const { [id]: entity, ...newEntities } = entities;
+	//     this.set({
+	//         ids: ids.filter(i => i === id),
+	//         entities: newEntities
+	//     });
+	// }
+	//# sourceMappingURL=store.js.map
 
 	/* src\Gantt.html generated by Svelte v2.16.0 */
 
 
 
-	window.test = new GanttStore();
 
 	let SvelteGantt;
+
+	function columnWidth$1({$from, $to, $width, $columnOffset, $columnUnit}) {
+		return getPositionByDate($from.clone().add($columnOffset, $columnUnit), $from, $to, $width);
+	}
+
+	function columnCount$1({$width, columnWidth}) {
+		return Math.ceil($width / columnWidth);
+	}
+
+	function columns({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) {
+	    const columns = [];
+	    const columnFrom = $from.clone();
+	    for(let i = 0; i < columnCount; i++){
+	        columns.push({width: columnWidth, from: columnFrom.clone(), left: getPositionByDate(columnFrom, $from, $to, $width)});
+	        columnFrom.add($columnOffset, $columnUnit);
+	    }
+	    return columns;
+	}
 
 	function rowContainerHeight({$rows, $rowHeight}) {
 		return $rows.length * $rowHeight;
@@ -2388,12 +2424,26 @@ var SvelteGantt = (function () {
 		return $rows.slice(startIndex, endIndex + 1);
 	}
 
-	function visibleTasks({$_taskCache, visibleRows}) {
+	function visibleTasks({$taskMap, visibleRows, rowTaskMap}) {
 	    const visibleTasks = [];
 	    visibleRows.forEach(row => {
-	        Array.prototype.push.apply(visibleTasks, row.tasks);
+	        rowTaskMap[row.model.id].forEach(id => {
+	            visibleTasks.push($taskMap[id]);
+	        });
 	    });
 	    return visibleTasks;
+	}
+
+	function rowTaskMap({_allTasks, $taskMap}) {
+	    const reducer = (cache, task) => {
+	        if(!cache[task.model.resourceId])
+	            cache[task.model.resourceId] = [];
+
+	        cache[task.model.resourceId].push(task.model.id);
+	        return cache;
+	    };
+	    console.log('recaculated map');
+	    return _allTasks.reduce(reducer, {});
 	}
 
 	function data$5() {
@@ -2414,11 +2464,23 @@ var SvelteGantt = (function () {
 	        scrollTop: 0
 	    }
 	}
-	var methods$3 = {
+	var methods$2 = {
+	    onwheel(e){
+	        console.log('skrol',e);
+	        if(e.ctrlKey){
+	        e.preventDefault();
+	            const { width } = this.store.get();
+	            if(event.deltaY > 0) {
+	                this.store.set({width: width - 30});
+	            }else {
+	                this.store.set({width: width + 30});
+	            }
+	            this.refreshTasks();
+	        }
+	    },
 	    onWindowResizeEventHandler(event){
 	        this.recalculateGanttDimensions();
 	        if(this.store.get().stretchTimelineWidthToFit){
-	            this.initColumns();
 	            this.refreshTasks();
 	        }
 	    },
@@ -2455,25 +2517,15 @@ var SvelteGantt = (function () {
 	            _rowCache[row.model.id] = row;
 	            row.posY = y;
 	            y += row.height;
+
+	            //this.store.addRow(row);
 	        }
 	        this.set({
 	            _rowCache,
 	            rows
 	        });
+	        this.store.addAllRow(rows);
 	        this.store.set({rows});
-	    },
-	    initTimeRanges(timeRangeData){
-	        const _timeRanges = [];
-	        const _timeRangeCache = [];
-
-	        for(let i = 0; i < timeRangeData.length; i++){
-	            const currentTimeRange = timeRangeData[i];
-	            const timeRange = new SvelteTimeRange(this, currentTimeRange);
-	            _timeRanges.push(timeRange);
-	            _timeRangeCache[currentTimeRange.id] = timeRange;
-	        }
-
-	        this.store.set({_timeRanges, _timeRangeCache});
 	    },
 	    initTasks(taskData){
 	        const _allTasks = [];
@@ -2492,8 +2544,23 @@ var SvelteGantt = (function () {
 	            _taskCache,
 	            tasks,
 	        });
+
+	        this.store.addAllTask(_allTasks);
 	        this.store.set({tasks, _taskCache});
 	        this.selectionManager.clearSelection();
+	    },
+	    initTimeRanges(timeRangeData){
+	        const _timeRanges = [];
+	        const _timeRangeCache = [];
+
+	        for(let i = 0; i < timeRangeData.length; i++){
+	            const currentTimeRange = timeRangeData[i];
+	            const timeRange = new SvelteTimeRange(this, currentTimeRange);
+	            _timeRanges.push(timeRange);
+	            _timeRangeCache[currentTimeRange.id] = timeRange;
+	        }
+
+	        this.store.set({_timeRanges, _timeRangeCache});
 	    },
 	    initGantt(){
 	        if(!this.store.get().gantt){
@@ -2565,20 +2632,8 @@ var SvelteGantt = (function () {
 	        this.updateVisibleRows();
 	        this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
 	    },
-	    initColumns() {
-	        const {columnOffset, columnUnit, from, width, headers} = this.store.get();
-	        const columnWidth = this.utils.getPositionByDate(from.clone().add(columnOffset, columnUnit));
-	        const columnCount = Math.ceil((width) / columnWidth); 
+	    getPositionByDate(){
 
-	        const columns = [];
-	        const columnFrom = from.clone();
-	        for(let i = 0; i < columnCount; i++){
-	            columns.push({width: columnWidth, from: columnFrom.clone(), left: this.utils.getPositionByDate(columnFrom)});
-	            columnFrom.add(columnOffset, columnUnit);
-	        }
-	        
-	        this.set({ columns });
-	        this.store.set({ headers });
 	    },
 	    refreshTasks(){
 	        const { _allTasks } = this.get();
@@ -2592,9 +2647,6 @@ var SvelteGantt = (function () {
 	        this.store.set(options);
 	        if(this.store.get().stretchTimelineWidthToFit){
 	            this.recalculateGanttDimensions();
-	        }
-	        else{
-	            this.initColumns();
 	        }
 
 	        this.refreshTasks();
@@ -2611,7 +2663,7 @@ var SvelteGantt = (function () {
 	    }
 	};
 
-	function oncreate$6(){
+	function oncreate$4(){
 	    const {rows, initialRows, initialTasks, initialDependencies} = this.get();
 
 	    this.initGantt();
@@ -2619,21 +2671,17 @@ var SvelteGantt = (function () {
 	    this.initRows(initialRows);
 	    window.addEventListener('resize', this.onWindowResizeEventHandler.bind(this)); // or this.onW... .bind(this);
 	    this.recalculateGanttDimensions();
-	    this.initColumns();
 
 	    this.initTasks(initialTasks);
 	    
 	    this.broadcastModules('onGanttCreated');
 	    this.updateViewport();
 	}
-	function ondestroy$3(){
+	function ondestroy$2(){
 	    //remove event listener
 	    window.removeEventListener('resize', this.onWindowResizeEventHandler);
 	}
-	function onstate(){
-
-	}
-	function setup$1(component){
+	function setup(component){
 	    SvelteGantt = component;
 	    SvelteGantt.defaults = {
 	        // datetime timeline starts on, currently moment-js object
@@ -2705,7 +2753,7 @@ var SvelteGantt = (function () {
 	        // initialize all the gantt options
 	        const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
 	        
-	        const store = new Store(ganttOptions);
+	        const store = new GanttStore(ganttOptions);
 
 	        // store.compute(
 	        //     'paddingTop',
@@ -2740,9 +2788,8 @@ var SvelteGantt = (function () {
 	}
 	function scrollable(node){
 	    const { scrollables } = this.get();
-	    const self = this;
 
-	    function onscroll(event) {
+	    const onscroll = (event) => {
 	        const scrollAmount = node.scrollTop; 
 	        for(let i=0; i< scrollables.length; i++){
 	            const scrollable = scrollables[i];
@@ -2754,12 +2801,12 @@ var SvelteGantt = (function () {
 	            }
 	        }
 	        //TODO: only for vertical scroll
-	        self.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
-	        self.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
-	        self.updateVisibleRows();
+	        this.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+	        this.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+	        this.updateVisibleRows();
 
-	        self.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
-	    }
+	        this.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
+	    };
 
 	    node.addEventListener('scroll', onscroll);
 	    return {
@@ -2783,8 +2830,6 @@ var SvelteGantt = (function () {
 	function get_each6_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.task = list[i];
-		child_ctx.each6_value = list;
-		child_ctx.task_index = i;
 		return child_ctx;
 	}
 
@@ -2927,6 +2972,10 @@ var SvelteGantt = (function () {
 			each7_blocks_1[i] = each7_lookup[key] = create_each_block$1(component, key, child_ctx);
 		}
 
+		function mousewheel_handler(event) {
+			component.onwheel(event);
+		}
+
 		return {
 			c: function create() {
 				div9 = createElement("div");
@@ -2973,30 +3022,31 @@ var SvelteGantt = (function () {
 				text6 = createText("\r\n            ");
 
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].c();
-				div0.className = "header-container";
+				div0.className = "header-container svelte-1uppnw4";
 				setStyle(div0, "width", "" + ctx.$width + "px");
 				addLoc(div0, file$6, 7, 12, 435);
-				div1.className = "header-intermezzo svelte-5w9ayr";
+				div1.className = "header-intermezzo svelte-1uppnw4";
 				setStyle(div1, "width", "" + ctx.$headerWidth + "px");
 				addLoc(div1, file$6, 6, 8, 328);
-				div2.className = "main-header-container svelte-5w9ayr";
+				div2.className = "main-header-container svelte-1uppnw4";
 				addLoc(div2, file$6, 5, 4, 265);
-				div3.className = "column-container svelte-5w9ayr";
-				addLoc(div3, file$6, 20, 12, 979);
+				div3.className = "column-container svelte-1uppnw4";
+				addLoc(div3, file$6, 20, 12, 1010);
 				setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
-				addLoc(div4, file$6, 28, 16, 1359);
-				div5.className = "row-container svelte-5w9ayr";
+				addLoc(div4, file$6, 28, 16, 1390);
+				div5.className = "row-container svelte-1uppnw4";
 				setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div5, file$6, 25, 12, 1154);
-				div6.className = "s-g-foreground svelte-5w9ayr";
-				addLoc(div6, file$6, 35, 16, 1660);
-				div7.className = "content svelte-5w9ayr";
+				addLoc(div5, file$6, 25, 12, 1185);
+				div6.className = "s-g-foreground svelte-1uppnw4";
+				addLoc(div6, file$6, 35, 16, 1691);
+				div7.className = "content svelte-1uppnw4";
 				setStyle(div7, "width", "" + ctx.$width + "px");
-				addLoc(div7, file$6, 19, 8, 919);
-				div8.className = "main-container svelte-5w9ayr";
+				addLoc(div7, file$6, 19, 8, 950);
+				addListener(div8, "mousewheel", mousewheel_handler);
+				div8.className = "main-container svelte-1uppnw4";
 				setStyle(div8, "height", "" + ctx.$height + "px");
 				addLoc(div8, file$6, 18, 4, 821);
-				div9.className = div9_class_value = "gantt " + ctx.$classes + " svelte-5w9ayr";
+				div9.className = div9_class_value = "gantt " + ctx.$classes + " svelte-1uppnw4";
 				addLoc(div9, file$6, 0, 0, 0);
 			},
 
@@ -3132,7 +3182,7 @@ var SvelteGantt = (function () {
 					setStyle(div8, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div9_class_value !== (div9_class_value = "gantt " + ctx.$classes + " svelte-5w9ayr")) {
+				if ((!current || changed.$classes) && div9_class_value !== (div9_class_value = "gantt " + ctx.$classes + " svelte-1uppnw4")) {
 					div9.className = div9_class_value;
 				}
 			},
@@ -3203,6 +3253,7 @@ var SvelteGantt = (function () {
 
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].d();
 
+				removeListener(div8, "mousewheel", mousewheel_handler);
 				if (component.refs.mainContainer === div8) component.refs.mainContainer = null;
 				if (scrollable_action && typeof scrollable_action.destroy === 'function') scrollable_action.destroy.call(component);
 				if (component.refs.ganttElement === div9) component.refs.ganttElement = null;
@@ -3595,81 +3646,21 @@ var SvelteGantt = (function () {
 
 	// (41:20) {#each visibleTasks as task (task.model.id)}
 	function create_each_block_1(component, key_1, ctx) {
-		var first, taskcomponent_updating = {}, current;
+		var first, current;
 
-		var taskcomponent_initial_data = { model: ctx.task.model };
-		if (ctx.task.left !== void 0) {
-			taskcomponent_initial_data.left = ctx.task.left;
-			taskcomponent_updating.left = true;
-		}
-		if (ctx.task.width !== void 0) {
-			taskcomponent_initial_data.width = ctx.task.width;
-			taskcomponent_updating.width = true;
-		}
-		if (ctx.task.height !== void 0) {
-			taskcomponent_initial_data.height = ctx.task.height;
-			taskcomponent_updating.height = true;
-		}
-		if (ctx.task.widthT !== void 0) {
-			taskcomponent_initial_data.widthT = ctx.task.widthT;
-			taskcomponent_updating.widthT = true;
-		}
-		if (ctx.task.posX !== void 0) {
-			taskcomponent_initial_data.posX = ctx.task.posX;
-			taskcomponent_updating.posX = true;
-		}
-		if (ctx.task.posY !== void 0) {
-			taskcomponent_initial_data.posY = ctx.task.posY;
-			taskcomponent_updating.posY = true;
-		}
+		var taskcomponent_initial_data = {
+		 	model: ctx.task.model,
+		 	left: ctx.task.left,
+		 	width: ctx.task.width,
+		 	height: ctx.task.height,
+		 	widthT: ctx.task.widthT,
+		 	posX: ctx.task.posX,
+		 	posY: ctx.task.posY
+		 };
 		var taskcomponent = new Task({
 			root: component.root,
 			store: component.store,
-			data: taskcomponent_initial_data,
-			_bind(changed, childState) {
-				var newState = {};
-				if (!taskcomponent_updating.left && changed.left) {
-					ctx.task.left = childState.left;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-
-				if (!taskcomponent_updating.width && changed.width) {
-					ctx.task.width = childState.width;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-
-				if (!taskcomponent_updating.height && changed.height) {
-					ctx.task.height = childState.height;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-
-				if (!taskcomponent_updating.widthT && changed.widthT) {
-					ctx.task.widthT = childState.widthT;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-
-				if (!taskcomponent_updating.posX && changed.posX) {
-					ctx.task.posX = childState.posX;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-
-				if (!taskcomponent_updating.posY && changed.posY) {
-					ctx.task.posY = childState.posY;
-
-					newState.visibleTasks = ctx.visibleTasks;
-				}
-				component._set(newState);
-				taskcomponent_updating = {};
-			}
-		});
-
-		component.root._beforecreate.push(() => {
-			taskcomponent._bind({ left: 1, width: 1, height: 1, widthT: 1, posX: 1, posY: 1 }, taskcomponent.get());
+			data: taskcomponent_initial_data
 		});
 
 		return {
@@ -3689,36 +3680,16 @@ var SvelteGantt = (function () {
 				current = true;
 			},
 
-			p: function update(changed, _ctx) {
-				ctx = _ctx;
+			p: function update(changed, ctx) {
 				var taskcomponent_changes = {};
 				if (changed.visibleTasks) taskcomponent_changes.model = ctx.task.model;
-				if (!taskcomponent_updating.left && changed.visibleTasks) {
-					taskcomponent_changes.left = ctx.task.left;
-					taskcomponent_updating.left = ctx.task.left !== void 0;
-				}
-				if (!taskcomponent_updating.width && changed.visibleTasks) {
-					taskcomponent_changes.width = ctx.task.width;
-					taskcomponent_updating.width = ctx.task.width !== void 0;
-				}
-				if (!taskcomponent_updating.height && changed.visibleTasks) {
-					taskcomponent_changes.height = ctx.task.height;
-					taskcomponent_updating.height = ctx.task.height !== void 0;
-				}
-				if (!taskcomponent_updating.widthT && changed.visibleTasks) {
-					taskcomponent_changes.widthT = ctx.task.widthT;
-					taskcomponent_updating.widthT = ctx.task.widthT !== void 0;
-				}
-				if (!taskcomponent_updating.posX && changed.visibleTasks) {
-					taskcomponent_changes.posX = ctx.task.posX;
-					taskcomponent_updating.posX = ctx.task.posX !== void 0;
-				}
-				if (!taskcomponent_updating.posY && changed.visibleTasks) {
-					taskcomponent_changes.posY = ctx.task.posY;
-					taskcomponent_updating.posY = ctx.task.posY !== void 0;
-				}
+				if (changed.visibleTasks) taskcomponent_changes.left = ctx.task.left;
+				if (changed.visibleTasks) taskcomponent_changes.width = ctx.task.width;
+				if (changed.visibleTasks) taskcomponent_changes.height = ctx.task.height;
+				if (changed.visibleTasks) taskcomponent_changes.widthT = ctx.task.widthT;
+				if (changed.visibleTasks) taskcomponent_changes.posX = ctx.task.posX;
+				if (changed.visibleTasks) taskcomponent_changes.posY = ctx.task.posY;
 				taskcomponent._set(taskcomponent_changes);
-				taskcomponent_updating = {};
 			},
 
 			i: function intro(target, anchor) {
@@ -3846,43 +3817,47 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["rows","rowHeight","_taskCache","classes","headerWidth","width","headers","_timeRanges","height"]), data$5()), options.data);
-		this.store._add(this, ["rows","rowHeight","_taskCache","classes","headerWidth","width","headers","_timeRanges","height"]);
+		this._state = assign(assign(this.store._init(["from","to","width","columnOffset","columnUnit","rows","rowHeight","taskMap","classes","headerWidth","headers","_timeRanges","height"]), data$5()), options.data);
+		this.store._add(this, ["from","to","width","columnOffset","columnUnit","rows","rowHeight","taskMap","classes","headerWidth","headers","_timeRanges","height"]);
 
-		this._recompute({ $rows: 1, $rowHeight: 1, scrollTop: 1, startIndex: 1, viewportHeight: 1, endIndex: 1, $_taskCache: 1, visibleRows: 1 }, this._state);
+		this._recompute({ $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1, $rows: 1, $rowHeight: 1, scrollTop: 1, startIndex: 1, viewportHeight: 1, endIndex: 1, _allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
+		if (!('$from' in this._state)) console.warn("<Gantt> was created without expected data property '$from'");
+		if (!('$to' in this._state)) console.warn("<Gantt> was created without expected data property '$to'");
+		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
+		if (!('$columnOffset' in this._state)) console.warn("<Gantt> was created without expected data property '$columnOffset'");
+		if (!('$columnUnit' in this._state)) console.warn("<Gantt> was created without expected data property '$columnUnit'");
+
+
 		if (!('$rows' in this._state)) console.warn("<Gantt> was created without expected data property '$rows'");
 		if (!('$rowHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$rowHeight'");
 		if (!('scrollTop' in this._state)) console.warn("<Gantt> was created without expected data property 'scrollTop'");
 
 		if (!('viewportHeight' in this._state)) console.warn("<Gantt> was created without expected data property 'viewportHeight'");
 
-		if (!('$_taskCache' in this._state)) console.warn("<Gantt> was created without expected data property '$_taskCache'");
+		if (!('$taskMap' in this._state)) console.warn("<Gantt> was created without expected data property '$taskMap'");
 
+
+		if (!('_allTasks' in this._state)) console.warn("<Gantt> was created without expected data property '_allTasks'");
 		if (!('$classes' in this._state)) console.warn("<Gantt> was created without expected data property '$classes'");
 		if (!('_ganttTableModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttTableModules'");
 
 
 
 		if (!('$headerWidth' in this._state)) console.warn("<Gantt> was created without expected data property '$headerWidth'");
-		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
 		if (!('$headers' in this._state)) console.warn("<Gantt> was created without expected data property '$headers'");
 		if (!('$_timeRanges' in this._state)) console.warn("<Gantt> was created without expected data property '$_timeRanges'");
 		if (!('$height' in this._state)) console.warn("<Gantt> was created without expected data property '$height'");
-		if (!('columns' in this._state)) console.warn("<Gantt> was created without expected data property 'columns'");
+
 
 		if (!('_ganttBodyModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttBodyModules'");
 		this._intro = !!options.intro;
 
-		this._handlers.state = [onstate];
-
-		this._handlers.destroy = [ondestroy$3, removeFromStore];
-
-		onstate.call(this, { changed: assignTrue({}, this._state), current: this._state });
+		this._handlers.destroy = [ondestroy$2, removeFromStore];
 
 		this._fragment = create_main_fragment$6(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$6.call(this);
+			oncreate$4.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -3898,19 +3873,35 @@ var SvelteGantt = (function () {
 	}
 
 	assign(Gantt.prototype, protoDev);
-	assign(Gantt.prototype, methods$3);
+	assign(Gantt.prototype, methods$2);
 
 	Gantt.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('columnWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columnWidth'");
+		if ('columnCount' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columnCount'");
+		if ('columns' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columns'");
 		if ('rowContainerHeight' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rowContainerHeight'");
 		if ('startIndex' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'startIndex'");
 		if ('endIndex' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'endIndex'");
 		if ('paddingTop' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'paddingTop'");
 		if ('paddingBottom' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'paddingBottom'");
 		if ('visibleRows' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'visibleRows'");
+		if ('rowTaskMap' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rowTaskMap'");
 		if ('visibleTasks' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'visibleTasks'");
 	};
 
 	Gantt.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$from || changed.$to || changed.$width || changed.$columnOffset || changed.$columnUnit) {
+			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth$1(state)))) changed.columnWidth = true;
+		}
+
+		if (changed.$width || changed.columnWidth) {
+			if (this._differs(state.columnCount, (state.columnCount = columnCount$1(state)))) changed.columnCount = true;
+		}
+
+		if (changed.$from || changed.columnWidth || changed.columnCount || changed.$columnOffset || changed.$columnUnit || changed.$to || changed.$width) {
+			if (this._differs(state.columns, (state.columns = columns(state)))) changed.columns = true;
+		}
+
 		if (changed.$rows || changed.$rowHeight) {
 			if (this._differs(state.rowContainerHeight, (state.rowContainerHeight = rowContainerHeight(state)))) changed.rowContainerHeight = true;
 		}
@@ -3935,12 +3926,16 @@ var SvelteGantt = (function () {
 			if (this._differs(state.visibleRows, (state.visibleRows = visibleRows(state)))) changed.visibleRows = true;
 		}
 
-		if (changed.$_taskCache || changed.visibleRows) {
+		if (changed._allTasks || changed.$taskMap) {
+			if (this._differs(state.rowTaskMap, (state.rowTaskMap = rowTaskMap(state)))) changed.rowTaskMap = true;
+		}
+
+		if (changed.$taskMap || changed.visibleRows || changed.rowTaskMap) {
 			if (this._differs(state.visibleTasks, (state.visibleTasks = visibleTasks(state)))) changed.visibleTasks = true;
 		}
 	};
 
-	setup$1(Gantt);
+	setup(Gantt);
 
 	return Gantt;
 

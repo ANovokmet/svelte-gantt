@@ -63,7 +63,6 @@ export class SvelteTask {
         this.model = task;
 
         this.row = gantt.get()._rowCache[task.resourceId];
-        this.row.addTask(this);
 
         //height, translateX, translateY, resourceId
         this.height = this.getHeight();
@@ -92,6 +91,7 @@ export class SvelteTask {
         if(!this.dragging && !this.resizing){
             this.posX = Math.ceil(this.left);
             this.widthT = Math.ceil(this.width);
+            //console.log("task "+this.model.id, this.posX, this.widthT)
         }
     }
 
@@ -114,7 +114,7 @@ export class SvelteTask {
 
     updateView() {
         if(this.component) {
-            this.component.set({task: this});
+            //this.component.set({task: this});
         }
     }
 }
