@@ -89,9 +89,8 @@ export class SvelteTask {
         this.width = right - left;
 
         if(!this.dragging && !this.resizing){
-            this.posX = Math.ceil(this.left);
-            this.widthT = Math.ceil(this.width);
-            //console.log("task "+this.model.id, this.posX, this.widthT)
+            this.posX = this.left// Math.ceil(this.left);
+            this.widthT = this.width //Math.ceil(this.width);
         }
     }
 

@@ -10,7 +10,7 @@ function generateData() {
 		dependencies: []
 	}
 
-	for(let i = 0; i < 1000; i++) {
+	for(let i = 0; i < 20; i++) {
 		data.rows.push({
 			generation,
 			id: i,
@@ -46,18 +46,18 @@ function generateData() {
 			//h: Math.random() < 0.5
 		});
 
-		data.tasks.push({
-			generation,
-			id: i + 1000,
-			resourceId: i,
-			label: 'Task #'+ (i + 1000),
-			from: startOfToday.clone().set({'hour': 12 + 4*a, 'minute': 0}),
-			to: startOfToday.clone().set({'hour': 14 + 4*a, 'minute': 0}),
-			//amountDone: Math.floor(Math.random() * 100),
-			classes: rand_bool ? 'task-status-1' : '',
-			enableDragging: !rand_bool
-			//h: Math.random() < 0.5
-		});
+		// data.tasks.push({
+		// 	generation,
+		// 	id: i + 1000,
+		// 	resourceId: i,
+		// 	label: 'Task #'+ (i + 1000),
+		// 	from: startOfToday.clone().set({'hour': 12 + 4*a, 'minute': 0}),
+		// 	to: startOfToday.clone().set({'hour': 14 + 4*a, 'minute': 0}),
+		// 	//amountDone: Math.floor(Math.random() * 100),
+		// 	classes: rand_bool ? 'task-status-1' : '',
+		// 	enableDragging: !rand_bool
+		// 	//h: Math.random() < 0.5
+		// });
 	}
 
 	generation += 1;
@@ -90,8 +90,8 @@ function generateData() {
 	}
 }, 50)*/
 
-const currentStart = moment().set({hour: 6, minute: 0});
-const currentEnd = moment().set({hour: 18, minute: 0});
+const currentStart = startOfToday.clone().set({hour: 6, minute: 0});
+const currentEnd = startOfToday.clone().set({hour: 18, minute: 0});
 
 let options = {
 	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
@@ -109,8 +109,8 @@ var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), op
 
 gantt.initTimeRanges([{
 	id: 0, 
-	from: moment().set({hour: 10, minute: 0}),
-	to: moment().set({hour: 12, minute: 0}),
+	from: startOfToday.clone().set({hour: 10, minute: 0}),
+	to: startOfToday.clone().set({hour: 12, minute: 0}),
 	classes: null,
 	label: 'Lunch' //?
 }]);

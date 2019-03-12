@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer on:mousewheel="onwheel(event)">
+    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer on:mousewheel="onwheel(event)" bind:clientWidth="$cw">
         <div class="content" style="width:{$width}px">
             <div class="column-container">
                 {#each columns as column}
@@ -304,9 +304,9 @@
                 e.preventDefault();
                     const { width } = this.store.get();
                     if(event.deltaY > 0) {
-                        this.store.set({width: width - 30});
+                        this.store.set({width: width - 100});
                     }else {
-                        this.store.set({width: width + 30});
+                        this.store.set({width: width + 100});
                     }
                     this.refreshTasks();
                 }
@@ -457,6 +457,7 @@
                     task.updatePosition();
                     task.updateView();
                 });
+                this.store.set({taskMap: this.store.get().taskMap});
                 this.updateVisibleEntities();
             },
             updateView(options){ // {from, to, headers, width}
@@ -520,6 +521,9 @@
             visibleTasks: ({$taskMap, visibleRows, rowTaskMap}) => {
                 const visibleTasks = [];
                 visibleRows.forEach(row => {
+                    if(!rowTaskMap[row.model.id])
+                        return;
+
                     rowTaskMap[row.model.id].forEach(id => {
                         visibleTasks.push($taskMap[id]);
                     });

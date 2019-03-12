@@ -193,8 +193,8 @@
                                     width: mouseStartRight - mousePos.x,
                                     widthT: mouseStartRight - mousePos.x,
                                     direction: 'right',
-                                    mouseStartRight: mouseStartRight + width
-                                })
+                                });
+                                mouseStartRight = mouseStartRight + width;
                             }
                             else{
                                 this.set({
@@ -202,7 +202,7 @@
                                     posX: mousePos.x,
                                     width: mouseStartRight - mousePos.x,
                                     widthT: mouseStartRight - mousePos.x
-                                })
+                                });
                             }
                         }
                         else if(direction === 'right') {//resize desno
@@ -212,15 +212,15 @@
                                     widthT: left - mousePos.x,
                                     left: mousePos.x,
                                     posX: mousePos.x,
-                                    direction: 'left',
-                                    mouseStartRight: mousePos.x + left - mousePos.x
-                                })
+                                    direction: 'left'
+                                });
+                                mouseStartRight = left;
                             }
                             else {
                                 this.set({
                                     width: mousePos.x - left,
                                     widthT: mousePos.x - left
-                                })
+                                });
                             }
                         }
                     }
@@ -268,9 +268,9 @@
                     
 
                     this.set({
-                        posX: Math.ceil(left),
+                        posX: left, //Math.ceil(left),
                         posY: rowMap[model.resourceId].posY,
-                        widthT: Math.ceil(width),
+                        widthT: width, // Math.ceil(width),
                         
                         dragging: false,
                         resizing: false,
