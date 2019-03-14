@@ -16,21 +16,21 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px" use:scrollable ref:mainContainer on:mousewheel="onwheel(event)" bind:clientWidth="$cw">
+    <div class="main-container" style="height:{$height}px" ref:mainContainer use:scrollable  
+        on:mousewheel="onwheel(event)"
+        bind:clientHeight="$visibleHeight" 
+        bind:clientWidth="$visibleWidth">
         <div class="content" style="width:{$width}px">
             <div class="column-container">
                 {#each columns as column}
                     <Column {...column}/>
                 {/each}
             </div>
-            <div class="row-container" 
-                ref:rowContainer style="height:{rowContainerHeight}px;">
-                <!--padding-bottom:{paddingBottom}px;padding-top:{paddingTop}px; -->
+            <div class="row-container" ref:rowContainer style="height:{rowContainerHeight}px;">
                 <div style="transform: translateY({paddingTop}px);">
-                {#each visibleRows as row (row.model.id)}
-                    <Row row={row}
-                        on:updateVisibleRows="updateViewport()"/>
-                {/each}
+                    {#each visibleRows as row (row.model.id)}
+                        <Row row={row}/>
+                    {/each}
                 </div>
             </div>
                 <div class="s-g-foreground">
@@ -209,33 +209,12 @@
                 };
 
                 // initialize all the gantt options
-                const ganttOptions = Object.assign({}, SvelteGantt.defaults, ganttModules.defaults, options);
+                const ganttOptions = Object.assign({
+                    scrollTop: 0
+                }, SvelteGantt.defaults, ganttModules.defaults, options);
                 
                 const store = new GanttStore(ganttOptions);
 
-                // store.compute(
-                //     'paddingTop',
-                //     ['startIndex', 'rowHeight'],
-                //     (startIndex, rowHeight) => startIndex * rowHeight
-                // );
-
-                // store.compute(
-                //     'paddingBottom',
-                //     ['rows', 'endIndex', 'rowHeight'],
-                //     (rows, endIndex, rowHeight) => (rows.length - endIndex - 1) * rowHeight
-                // );
-
-                // store.compute(
-                //     'startIndex',
-                //     ['scrollTop', 'rowHeight'],
-                //     (scrollTop, rowHeight) => Math.floor(scrollTop / rowHeight)
-                // );
-                
-                // store.compute(
-                //     'endIndex',
-                //     ['startIndex', 'viewportHeight', 'rowHeight', 'rows'],
-                //     (startIndex, viewportHeight, rowHeight, rows) => Math.min(startIndex + Math.ceil(viewportHeight / rowHeight ), rows.length - 1)
-                // );
 
                 return new SvelteGantt({
                     target,
@@ -257,7 +236,6 @@
             this.initTasks(initialTasks);
             
             this.broadcastModules('onGanttCreated');
-            this.updateViewport();
         },
         ondestroy(){
             //remove event listener
@@ -268,21 +246,20 @@
                 const { scrollables } = this.get();
 
                 const onscroll = (event) => {
-                    const scrollAmount = node.scrollTop; 
+                    const scrollTop = node.scrollTop; 
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
                         if(scrollable.orientation === 'horizontal') {
                             scrollable.node.scrollLeft = node.scrollLeft;
                         }
                         else {
-                            scrollable.node.scrollTop = scrollAmount;
+                            scrollable.node.scrollTop = scrollTop;
                         }
                     }
                     //TODO: only for vertical scroll
-                    this.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
-                    this.store.set({scrollTop: scrollAmount, clientHeight: node.clientHeight});
+                    this.store.set({scrollTop});
 
-                    this.broadcastModules('updateVisible', {scrollAmount, viewportHeight: node.clientHeight});
+                    this.broadcastModules('updateVisible', {scrollTop});
                 }
 
                 node.addEventListener('scroll', onscroll);
@@ -299,9 +276,8 @@
 		},
         methods: {
             onwheel(e){
-                console.log('skrol',e);
                 if(e.ctrlKey){
-                e.preventDefault();
+                    e.preventDefault();
                     const { width } = this.store.get();
                     if(event.deltaY > 0) {
                         this.store.set({width: width - 100});
@@ -442,15 +418,6 @@
                     timeRange.updateView();
                 });
             },
-            updateViewport(){
-                const {scrollTop, clientHeight} = this.refs.mainContainer;
-                this.store.set({scrollTop, viewportHeight: clientHeight});
-                this.set({scrollTop, viewportHeight: clientHeight});
-                this.broadcastModules('updateVisible', {scrollAmount: scrollTop, viewportHeight: clientHeight});
-            },
-            getPositionByDate(){
-
-            },
             refreshTasks(){
                 const { _allTasks } = this.get();
                 _allTasks.forEach(task => {
@@ -512,8 +479,8 @@
             },
 
             rowContainerHeight: ({$rows, $rowHeight}) => $rows.length * $rowHeight,
-            startIndex: ({scrollTop, $rowHeight}) => Math.floor(scrollTop / $rowHeight),
-            endIndex: ({startIndex, viewportHeight, $rowHeight, $rows}) => Math.min(startIndex + Math.ceil(viewportHeight / $rowHeight ), $rows.length - 1),
+            startIndex: ({$scrollTop, $rowHeight}) => Math.floor($scrollTop / $rowHeight),
+            endIndex: ({startIndex, $visibleHeight, $rowHeight, $rows}) => Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $rows.length - 1),
             paddingTop: ({startIndex, $rowHeight}) => startIndex * $rowHeight,
             paddingBottom: ({$rows, endIndex, $rowHeight}) => ($rows.length - endIndex - 1) * $rowHeight,
 

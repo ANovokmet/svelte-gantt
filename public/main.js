@@ -10,7 +10,7 @@ function generateData() {
 		dependencies: []
 	}
 
-	for(let i = 0; i < 20; i++) {
+	for(let i = 0; i < 1000; i++) {
 		data.rows.push({
 			generation,
 			id: i,
@@ -188,7 +188,6 @@ document.getElementById('reInit').addEventListener('click', (event) => {
 	const data = generateData();
 	gantt.initRows(data.rows);
 	gantt.initTasks(data.tasks);
-	gantt.updateViewport();
 });
 
 SvelteGanttExternal.create(document.getElementById('newTask'), {
@@ -206,7 +205,5 @@ SvelteGanttExternal.create(document.getElementById('newTask'), {
 		const { _allTasks, _taskCache } = g.get();
 		_allTasks.push(task);
 		_taskCache[task.model.id] = task;
-
-		g.updateViewport();
 	}
 });
