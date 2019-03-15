@@ -108,18 +108,18 @@
 
 
     export default {
+        onstate({ changed, current, previous }) {
+            // before first render
+            // if(!previous){
+            //     const left = this.root.utils.getPositionByDate(current.model.from);
+            //     const right = this.root.utils.getPositionByDate(current.model.to); 
+            //     this.set({posX:left, widthT:right-left, left, width:right-left});
+            // }
+		},
         actions: {
 			drag(node) {
                 const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
                 const windowElement = window;
-
-                let { model } = this.get();
-                //update reference when tasks are loaded with new data
-                // const listener = this.on('update', ({ changed, current, previous }) => {
-                //     if(changed.task){
-                //         task = current.task;
-                //     }
-                // });
 
                 let mouseStartPosX, mouseStartPosY;
                 let mouseStartRight;
@@ -134,13 +134,13 @@
                         return;
                     }
 
-                    const { left, posY, width } = this.get();
+                    const { left, posY, width, model } = this.get();
 
                     event.stopPropagation();
                     event.preventDefault();
                     
-                    const { _rowCache } = gantt.get();
-                    originalRow = _rowCache[model.resourceId];
+                    const { rowMap } = this.store.get();
+                    originalRow = rowMap[model.resourceId];
                     taskOriginalFrom = model.from.clone();
                     taskOriginalTo = model.to.clone();
 
@@ -240,22 +240,21 @@
 
                 const onmouseup = (event) => {
                     
-                    const { left, width, dragging } = this.get()
+                    const { left, width, dragging, model } = this.get()
 
-                    const { _taskCache, gantt, rowHeight, rowMap } = this.store.get()
+                    const { taskMap, gantt, rowHeight, rowPadding, rowMap } = this.store.get()
 
                     if(dragging) {
                         //row switching
                         const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-                        const { _rowCache } = gantt.get();
-                        const sourceRow = _rowCache[model.resourceId];
+                        const sourceRow = rowMap[model.resourceId];
 
                         let elements = document.elementsFromPoint(rowCenterX, event.clientY);
                         let rowElement = elements.find((element) => element.classList.contains('row'));
                         if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-                            const { rows } = gantt.store.get(); //visibleRows
-                            const targetRow = rows.find((r) => r.rowElement === rowElement); //vr
+                            const { allRows } = this.store.get(); //visibleRows
+                            const targetRow = allRows.find((r) => r.rowElement === rowElement); //vr
 
                             if(targetRow.model.enableDragging){
                                 //targetRow.moveTask(this);
@@ -269,7 +268,7 @@
 
                     this.set({
                         posX: left, //Math.ceil(left),
-                        posY: rowMap[model.resourceId].posY,
+                        posY: rowPadding + rowMap[model.resourceId].posY,
                         widthT: width, // Math.ceil(width),
                         
                         dragging: false,
@@ -277,13 +276,13 @@
                         direction: null,
                     });
 
-                    const task = _taskCache[model.id];
+                    const task = taskMap[model.id];
                     
 
                     task.left = left;
                     task.width = width;
                     task.posX = Math.ceil(left);
-                    task.posY = rowMap[model.resourceId].posY;
+                    task.posY = rowPadding + rowMap[model.resourceId].posY;
 
                     task.updateDate();
                     task.updatePosition();
@@ -367,7 +366,9 @@
             }
         },
         computed: {
-            selected: ({$selection, model}) => $selection.indexOf(model) !== -1
+            selected: ({$selection, model}) => $selection.indexOf(model) !== -1,
+            row: ({$rowMap, model}) => $rowMap[model.resourceId],
+            // height: ({row}) => row.height
         }
     };
 </script>

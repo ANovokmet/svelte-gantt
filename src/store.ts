@@ -15,6 +15,13 @@ export class GanttStore extends Store {
         // this.compute('selectAll', ['ids', 'entities'], (ids: string[], entities: {[key:string]:V}) => {
         //     return ids.map(id => entities[id]);
         // });
+
+        this.compute('allTasks', ['taskIds', 'taskMap'], (ids: string[], entities: {[key:string]:any}) => {
+            return ids.map(id => entities[id]);
+        });
+        this.compute('allRows', ['rowIds', 'rowMap'], (ids: string[], entities: {[key:string]:any}) => {
+            return ids.map(id => entities[id]);
+        });
     }
 
     addTask(task: any) {

@@ -11,27 +11,25 @@ function generateData() {
 	}
 
 	for(let i = 0; i < 1000; i++) {
+
+		let rand_bool = Math.random() < 0.2;
+
+
 		data.rows.push({
 			generation,
 			id: i,
 			label: 'Row #'+i,
 			tasks: [],
 			enableDragging: true,
-			imageSrc: 'Content/joe.jpg'
+			imageSrc: 'Content/joe.jpg',
 			//contentHtml: '<s>Test</s>'
 			//headerHtml: '<s>Test</s>'
+			classes: rand_bool ? ['row-disabled'] : undefined,
+			enableDragging: !rand_bool
 		});
-	
-		if(Math.random() < 0.2) {
-			data.rows[i].classes = ['row-disabled'];
-			data.rows[i].enableDragging = false;
-		}
-		else{
-			data.rows[i].enableDragging = true;
-		}
-	
+
 		let a = i % 2;
-		let rand_bool = Math.random() > 0.9;
+		rand_bool = Math.random() > 0.9;
 	
 		data.tasks.push({
 			generation,

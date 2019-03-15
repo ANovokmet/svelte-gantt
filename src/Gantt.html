@@ -1,3 +1,4 @@
+<svelte:window on:resize="onWindowResizeEventHandler(event)"/>
 <div class="gantt {$classes}" ref:ganttElement>
     {#each _ganttTableModules as module (module.key)}
         <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} on:init="initModule(event.module)" {visibleRows}/>
@@ -166,6 +167,7 @@
                 headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
                 // height of a single row in px
                 rowHeight: 52,
+                rowPadding: 6,
                 // modules used in gantt
                 modules: [],
                 // enables right click context menu
@@ -228,18 +230,10 @@
             const {rows, initialRows, initialTasks, initialDependencies} = this.get();
 
             this.initGantt();
-            
             this.initRows(initialRows);
-            window.addEventListener('resize', this.onWindowResizeEventHandler.bind(this)); // or this.onW... .bind(this);
             this.recalculateGanttDimensions();
-
             this.initTasks(initialTasks);
-            
             this.broadcastModules('onGanttCreated');
-        },
-        ondestroy(){
-            //remove event listener
-            window.removeEventListener('resize', this.onWindowResizeEventHandler)
         },
         actions: {
             scrollable(node){
@@ -317,45 +311,27 @@
             },
             initRows(rowsData){
                 const rows = [];
-                const _rowCache = {};
                 let y = 0;
                 for(let i=0; i < rowsData.length; i++){
                     const currentRow = rowsData[i];
                     const row = new SvelteRow(this, currentRow);
                     rows.push(row);
-                    _rowCache[row.model.id] = row;
                     row.posY = y;
                     y += row.height;
-
-                    //this.store.addRow(row);
                 }
-                this.set({
-                    _rowCache,
-                    rows
-                });
+
                 this.store.addAllRow(rows);
-                this.store.set({rows});
             },
             initTasks(taskData){
-                const _allTasks = [];
-                const tasks = _allTasks;
-                const _taskCache = {};
+                const allTasks = [];
 
                 for(let i=0; i < taskData.length; i++){
                     const currentTask = taskData[i];
                     const task = new SvelteTask(this, currentTask);
-                    _allTasks.push(task);
-                    _taskCache[task.model.id] = task;
+                    allTasks.push(task);
                 }
 
-                this.set({
-                    _allTasks,
-                    _taskCache,
-                    tasks,
-                });
-
-                this.store.addAllTask(_allTasks);
-                this.store.set({tasks, _taskCache});
+                this.store.addAllTask(allTasks);
                 this.selectionManager.clearSelection();
             },
             initTimeRanges(timeRangeData){
@@ -419,8 +395,8 @@
                 });
             },
             refreshTasks(){
-                const { _allTasks } = this.get();
-                _allTasks.forEach(task => {
+                const { allTasks } = this.store.get();
+                allTasks.forEach(task => {
                     task.updatePosition();
                     task.updateView();
                 });
@@ -438,8 +414,8 @@
                 this.broadcastModules('updateView', options);//{ from, to, headers });
             },
             selectTask(id) {
-                const { _taskCache } = this.get();
-                const task = _taskCache[id];
+                const { taskMap } = this.get();
+                const task = taskMap[id];
                 if(task) {
                     this.selectionManager.selectSingle(task);
                     task.updateView();
@@ -478,13 +454,13 @@
                 return columns;
             },
 
-            rowContainerHeight: ({$rows, $rowHeight}) => $rows.length * $rowHeight,
+            rowContainerHeight: ({$allRows, $rowHeight}) => $allRows.length * $rowHeight,
             startIndex: ({$scrollTop, $rowHeight}) => Math.floor($scrollTop / $rowHeight),
-            endIndex: ({startIndex, $visibleHeight, $rowHeight, $rows}) => Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $rows.length - 1),
+            endIndex: ({startIndex, $visibleHeight, $rowHeight, $allRows}) => Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $allRows.length - 1),
             paddingTop: ({startIndex, $rowHeight}) => startIndex * $rowHeight,
-            paddingBottom: ({$rows, endIndex, $rowHeight}) => ($rows.length - endIndex - 1) * $rowHeight,
+            paddingBottom: ({$allRows, endIndex, $rowHeight}) => ($allRows.length - endIndex - 1) * $rowHeight,
 
-            visibleRows: ({$rows, startIndex, endIndex}) => $rows.slice(startIndex, endIndex + 1),
+            visibleRows: ({$allRows, startIndex, endIndex}) => $allRows.slice(startIndex, endIndex + 1),
             visibleTasks: ({$taskMap, visibleRows, rowTaskMap}) => {
                 const visibleTasks = [];
                 visibleRows.forEach(row => {
@@ -497,7 +473,7 @@
                 });
                 return visibleTasks;
             },
-            rowTaskMap: ({_allTasks, $taskMap}) => {
+            rowTaskMap: ({$allTasks}) => {
                 const reducer = (cache, task) => {
                     if(!cache[task.model.resourceId])
                         cache[task.model.resourceId] = [];
@@ -506,7 +482,7 @@
                     return cache;
                 }
                 console.log('recaculated map');
-                return _allTasks.reduce(reducer, {});
+                return $allTasks.reduce(reducer, {});
             },
 
         }

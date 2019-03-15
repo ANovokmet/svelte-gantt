@@ -693,6 +693,10 @@ var SvelteGantt = (function () {
 		return $selection.indexOf(model) !== -1;
 	}
 
+	function row({$rowMap, model}) {
+		return $rowMap[model.resourceId];
+	}
+
 	function data() {
 	    return {
 	        dragging: false,
@@ -716,17 +720,17 @@ var SvelteGantt = (function () {
 	    }
 	};
 
+	function onstate({ changed, current, previous }) {
+	    // before first render
+	    // if(!previous){
+	    //     const left = this.root.utils.getPositionByDate(current.model.from);
+	    //     const right = this.root.utils.getPositionByDate(current.model.to); 
+	    //     this.set({posX:left, widthT:right-left, left, width:right-left});
+	    // }
+			}
 	function drag(node) {
 	                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
 	                const windowElement = window;
-
-	                let { model } = this.get();
-	                //update reference when tasks are loaded with new data
-	                // const listener = this.on('update', ({ changed, current, previous }) => {
-	                //     if(changed.task){
-	                //         task = current.task;
-	                //     }
-	                // });
 
 	                let mouseStartPosX, mouseStartPosY;
 	                let mouseStartRight;
@@ -741,13 +745,13 @@ var SvelteGantt = (function () {
 	                        return;
 	                    }
 
-	                    const { left, posY, width } = this.get();
+	                    const { left, posY, width, model } = this.get();
 
 	                    event.stopPropagation();
 	                    event.preventDefault();
 	                    
-	                    const { _rowCache } = gantt.get();
-	                    originalRow = _rowCache[model.resourceId];
+	                    const { rowMap } = this.store.get();
+	                    originalRow = rowMap[model.resourceId];
 	                    taskOriginalFrom = model.from.clone();
 	                    taskOriginalTo = model.to.clone();
 
@@ -847,22 +851,21 @@ var SvelteGantt = (function () {
 
 	                const onmouseup = (event) => {
 	                    
-	                    const { left, width, dragging } = this.get();
+	                    const { left, width, dragging, model } = this.get();
 
-	                    const { _taskCache, gantt, rowHeight, rowMap } = this.store.get();
+	                    const { taskMap, gantt, rowHeight, rowPadding, rowMap } = this.store.get();
 
 	                    if(dragging) {
 	                        //row switching
 	                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-	                        const { _rowCache } = gantt.get();
-	                        const sourceRow = _rowCache[model.resourceId];
+	                        const sourceRow = rowMap[model.resourceId];
 
 	                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
 	                        let rowElement = elements.find((element) => element.classList.contains('row'));
 	                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
 
-	                            const { rows } = gantt.store.get(); //visibleRows
-	                            const targetRow = rows.find((r) => r.rowElement === rowElement); //vr
+	                            const { allRows } = this.store.get(); //visibleRows
+	                            const targetRow = allRows.find((r) => r.rowElement === rowElement); //vr
 
 	                            if(targetRow.model.enableDragging){
 	                                //targetRow.moveTask(this);
@@ -876,7 +879,7 @@ var SvelteGantt = (function () {
 
 	                    this.set({
 	                        posX: left, //Math.ceil(left),
-	                        posY: rowMap[model.resourceId].posY,
+	                        posY: rowPadding + rowMap[model.resourceId].posY,
 	                        widthT: width, // Math.ceil(width),
 	                        
 	                        dragging: false,
@@ -884,13 +887,13 @@ var SvelteGantt = (function () {
 	                        direction: null,
 	                    });
 
-	                    const task = _taskCache[model.id];
+	                    const task = taskMap[model.id];
 	                    
 
 	                    task.left = left;
 	                    task.width = width;
 	                    task.posX = Math.ceil(left);
-	                    task.posY = rowMap[model.resourceId].posY;
+	                    task.posY = rowPadding + rowMap[model.resourceId].posY;
 
 	                    task.updateDate();
 	                    task.updatePosition();
@@ -952,7 +955,7 @@ var SvelteGantt = (function () {
 	const file$1 = "src\\Task.html";
 
 	function create_main_fragment$1(component, ctx) {
-		var div2, div0, text0, div1, text1, div2_class_value, drag_action, selectable_action, current;
+		var div2, div0, text0, div1, text1, text2_value = ctx.row.model.label, text2, text3, div2_class_value, drag_action, selectable_action, current;
 
 		function select_block_type(ctx) {
 			if (ctx.model.html) return create_if_block_1;
@@ -972,7 +975,9 @@ var SvelteGantt = (function () {
 				text0 = createText("\r\n    ");
 				div1 = createElement("div");
 				if_block0.c();
-				text1 = createText("\r\n\r\n        ");
+				text1 = createText("\r\n        ");
+				text2 = createText(text2_value);
+				text3 = createText("\r\n\r\n        ");
 				if (if_block1) if_block1.c();
 				div0.className = "task-background svelte-1j9ey43";
 				setStyle(div0, "width", "" + ctx.model.amountDone + "%");
@@ -996,6 +1001,8 @@ var SvelteGantt = (function () {
 				append(div2, div1);
 				if_block0.m(div1, null);
 				append(div1, text1);
+				append(div1, text2);
+				append(div1, text3);
 				if (if_block1) if_block1.m(div1, null);
 				component.refs.taskElement = div2;
 				drag_action = drag.call(component, div2) || {};
@@ -1015,6 +1022,10 @@ var SvelteGantt = (function () {
 					if_block0 = current_block_type(component, ctx);
 					if_block0.c();
 					if_block0.m(div1, text1);
+				}
+
+				if ((changed.row) && text2_value !== (text2_value = ctx.row.model.label)) {
+					setData(text2, text2_value);
 				}
 
 				if (ctx.model.showButton) {
@@ -1174,7 +1185,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (22:8) {#if model.showButton}
+	// (23:8) {#if model.showButton}
 	function create_if_block$1(component, ctx) {
 		var span, raw_value = ctx.model.buttonHtml, span_class_value;
 
@@ -1187,7 +1198,7 @@ var SvelteGantt = (function () {
 				span = createElement("span");
 				addListener(span, "click", click_handler);
 				span.className = span_class_value = "task-button " + ctx.model.buttonClasses + " svelte-1j9ey43";
-				addLoc(span, file$1, 22, 12, 650);
+				addLoc(span, file$1, 23, 12, 677);
 			},
 
 			m: function mount(target, anchor) {
@@ -1226,12 +1237,13 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["selection","taskContent"]), data()), options.data);
-		this.store._add(this, ["selection","taskContent"]);
+		this._state = assign(assign(this.store._init(["selection","rowMap","taskContent"]), data()), options.data);
+		this.store._add(this, ["selection","rowMap","taskContent"]);
 
-		this._recompute({ $selection: 1, model: 1 }, this._state);
+		this._recompute({ $selection: 1, model: 1, $rowMap: 1 }, this._state);
 		if (!('$selection' in this._state)) console.warn("<Task> was created without expected data property '$selection'");
 		if (!('model' in this._state)) console.warn("<Task> was created without expected data property 'model'");
+		if (!('$rowMap' in this._state)) console.warn("<Task> was created without expected data property '$rowMap'");
 		if (!('widthT' in this._state)) console.warn("<Task> was created without expected data property 'widthT'");
 		if (!('height' in this._state)) console.warn("<Task> was created without expected data property 'height'");
 		if (!('posX' in this._state)) console.warn("<Task> was created without expected data property 'posX'");
@@ -1243,14 +1255,24 @@ var SvelteGantt = (function () {
 		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
 		this._intro = !!options.intro;
 
+		this._handlers.state = [onstate];
+
 		this._handlers.destroy = [removeFromStore];
 
+		onstate.call(this, { changed: assignTrue({}, this._state), current: this._state });
+
 		this._fragment = create_main_fragment$1(this, this._state);
+
+		this.root._oncreate.push(() => {
+			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
+		});
 
 		if (options.target) {
 			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 			this._fragment.c();
 			this._mount(options.target, options.anchor);
+
+			flush(this);
 		}
 
 		this._intro = true;
@@ -1261,11 +1283,16 @@ var SvelteGantt = (function () {
 
 	Task.prototype._checkReadOnly = function _checkReadOnly(newState) {
 		if ('selected' in newState && !this._updatingReadonlyProperty) throw new Error("<Task>: Cannot set read-only property 'selected'");
+		if ('row' in newState && !this._updatingReadonlyProperty) throw new Error("<Task>: Cannot set read-only property 'row'");
 	};
 
 	Task.prototype._recompute = function _recompute(changed, state) {
 		if (changed.$selection || changed.model) {
 			if (this._differs(state.selected, (state.selected = selected(state)))) changed.selected = true;
+		}
+
+		if (changed.$rowMap || changed.model) {
+			if (this._differs(state.row, (state.row = row(state)))) changed.row = true;
 		}
 	};
 
@@ -2181,7 +2208,7 @@ var SvelteGantt = (function () {
 	        task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
 	        this.gantt = gantt;
 	        this.model = task;
-	        this.row = gantt.get()._rowCache[task.resourceId];
+	        this.row = gantt.store.get().rowMap[task.resourceId];
 	        //height, translateX, translateY, resourceId
 	        this.height = this.getHeight();
 	        this.updatePosition();
@@ -2189,10 +2216,10 @@ var SvelteGantt = (function () {
 	        this.posY = this.getPosY();
 	    }
 	    getHeight() {
-	        return this.row.height;
+	        return this.row.height - 2 * this.gantt.store.get().rowPadding;
 	    }
 	    getPosY() {
-	        return this.row.posY;
+	        return this.row.posY + this.gantt.store.get().rowPadding;
 	    }
 	    updatePosition() {
 	        const left = this.gantt.utils.getPositionByDate(this.model.from);
@@ -2315,6 +2342,12 @@ var SvelteGantt = (function () {
 	        // this.compute('selectAll', ['ids', 'entities'], (ids: string[], entities: {[key:string]:V}) => {
 	        //     return ids.map(id => entities[id]);
 	        // });
+	        this.compute('allTasks', ['taskIds', 'taskMap'], (ids, entities) => {
+	            return ids.map(id => entities[id]);
+	        });
+	        this.compute('allRows', ['rowIds', 'rowMap'], (ids, entities) => {
+	            return ids.map(id => entities[id]);
+	        });
 	    }
 	    addTask(task) {
 	        const { taskIds, taskMap } = this.get();
@@ -2431,28 +2464,28 @@ var SvelteGantt = (function () {
 	    return columns;
 	}
 
-	function rowContainerHeight({$rows, $rowHeight}) {
-		return $rows.length * $rowHeight;
+	function rowContainerHeight({$allRows, $rowHeight}) {
+		return $allRows.length * $rowHeight;
 	}
 
 	function startIndex({$scrollTop, $rowHeight}) {
 		return Math.floor($scrollTop / $rowHeight);
 	}
 
-	function endIndex({startIndex, $visibleHeight, $rowHeight, $rows}) {
-		return Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $rows.length - 1);
+	function endIndex({startIndex, $visibleHeight, $rowHeight, $allRows}) {
+		return Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $allRows.length - 1);
 	}
 
 	function paddingTop({startIndex, $rowHeight}) {
 		return startIndex * $rowHeight;
 	}
 
-	function paddingBottom({$rows, endIndex, $rowHeight}) {
-		return ($rows.length - endIndex - 1) * $rowHeight;
+	function paddingBottom({$allRows, endIndex, $rowHeight}) {
+		return ($allRows.length - endIndex - 1) * $rowHeight;
 	}
 
-	function visibleRows({$rows, startIndex, endIndex}) {
-		return $rows.slice(startIndex, endIndex + 1);
+	function visibleRows({$allRows, startIndex, endIndex}) {
+		return $allRows.slice(startIndex, endIndex + 1);
 	}
 
 	function visibleTasks({$taskMap, visibleRows, rowTaskMap}) {
@@ -2468,7 +2501,7 @@ var SvelteGantt = (function () {
 	    return visibleTasks;
 	}
 
-	function rowTaskMap({_allTasks, $taskMap}) {
+	function rowTaskMap({$allTasks}) {
 	    const reducer = (cache, task) => {
 	        if(!cache[task.model.resourceId])
 	            cache[task.model.resourceId] = [];
@@ -2477,7 +2510,7 @@ var SvelteGantt = (function () {
 	        return cache;
 	    };
 	    console.log('recaculated map');
-	    return _allTasks.reduce(reducer, {});
+	    return $allTasks.reduce(reducer, {});
 	}
 
 	function data$5() {
@@ -2541,45 +2574,27 @@ var SvelteGantt = (function () {
 	    },
 	    initRows(rowsData){
 	        const rows = [];
-	        const _rowCache = {};
 	        let y = 0;
 	        for(let i=0; i < rowsData.length; i++){
 	            const currentRow = rowsData[i];
 	            const row = new SvelteRow(this, currentRow);
 	            rows.push(row);
-	            _rowCache[row.model.id] = row;
 	            row.posY = y;
 	            y += row.height;
-
-	            //this.store.addRow(row);
 	        }
-	        this.set({
-	            _rowCache,
-	            rows
-	        });
+
 	        this.store.addAllRow(rows);
-	        this.store.set({rows});
 	    },
 	    initTasks(taskData){
-	        const _allTasks = [];
-	        const tasks = _allTasks;
-	        const _taskCache = {};
+	        const allTasks = [];
 
 	        for(let i=0; i < taskData.length; i++){
 	            const currentTask = taskData[i];
 	            const task = new SvelteTask(this, currentTask);
-	            _allTasks.push(task);
-	            _taskCache[task.model.id] = task;
+	            allTasks.push(task);
 	        }
 
-	        this.set({
-	            _allTasks,
-	            _taskCache,
-	            tasks,
-	        });
-
-	        this.store.addAllTask(_allTasks);
-	        this.store.set({tasks, _taskCache});
+	        this.store.addAllTask(allTasks);
 	        this.selectionManager.clearSelection();
 	    },
 	    initTimeRanges(timeRangeData){
@@ -2643,8 +2658,8 @@ var SvelteGantt = (function () {
 	        });
 	    },
 	    refreshTasks(){
-	        const { _allTasks } = this.get();
-	        _allTasks.forEach(task => {
+	        const { allTasks } = this.store.get();
+	        allTasks.forEach(task => {
 	            task.updatePosition();
 	            task.updateView();
 	        });
@@ -2662,8 +2677,8 @@ var SvelteGantt = (function () {
 	        this.broadcastModules('updateView', options);//{ from, to, headers });
 	    },
 	    selectTask(id) {
-	        const { _taskCache } = this.get();
-	        const task = _taskCache[id];
+	        const { taskMap } = this.get();
+	        const task = taskMap[id];
 	        if(task) {
 	            this.selectionManager.selectSingle(task);
 	            task.updateView();
@@ -2675,18 +2690,10 @@ var SvelteGantt = (function () {
 	    const {rows, initialRows, initialTasks, initialDependencies} = this.get();
 
 	    this.initGantt();
-	    
 	    this.initRows(initialRows);
-	    window.addEventListener('resize', this.onWindowResizeEventHandler.bind(this)); // or this.onW... .bind(this);
 	    this.recalculateGanttDimensions();
-
 	    this.initTasks(initialTasks);
-	    
 	    this.broadcastModules('onGanttCreated');
-	}
-	function ondestroy$2(){
-	    //remove event listener
-	    window.removeEventListener('resize', this.onWindowResizeEventHandler);
 	}
 	function setup(component){
 	    SvelteGantt = component;
@@ -2715,6 +2722,7 @@ var SvelteGantt = (function () {
 	        headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
 	        // height of a single row in px
 	        rowHeight: 52,
+	        rowPadding: 6,
 	        // modules used in gantt
 	        modules: [],
 	        // enables right click context menu
@@ -2855,6 +2863,10 @@ var SvelteGantt = (function () {
 
 	function create_main_fragment$6(component, ctx) {
 		var div9, each0_blocks_1 = [], each0_lookup = blankObject(), text0, div2, div1, div0, text1, each2_blocks_1 = [], each2_lookup = blankObject(), horizontalScrollListener_action, text2, div8, div7, div3, text3, div5, div4, each4_blocks_1 = [], each4_lookup = blankObject(), text4, div6, each5_blocks_1 = [], each5_lookup = blankObject(), text5, each6_blocks_1 = [], each6_lookup = blankObject(), text6, each7_blocks_1 = [], each7_lookup = blankObject(), div8_resize_listener, scrollable_action, div9_class_value, current;
+
+		function onwindowresize(event) {
+			component.onWindowResizeEventHandler(event);	}
+		window.addEventListener("resize", onwindowresize);
 
 		var each0_value = ctx._ganttTableModules;
 
@@ -3012,31 +3024,31 @@ var SvelteGantt = (function () {
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].c();
 				div0.className = "header-container svelte-1uppnw4";
 				setStyle(div0, "width", "" + ctx.$width + "px");
-				addLoc(div0, file$6, 7, 12, 435);
+				addLoc(div0, file$6, 8, 12, 499);
 				div1.className = "header-intermezzo svelte-1uppnw4";
 				setStyle(div1, "width", "" + ctx.$headerWidth + "px");
-				addLoc(div1, file$6, 6, 8, 328);
+				addLoc(div1, file$6, 7, 8, 392);
 				div2.className = "main-header-container svelte-1uppnw4";
-				addLoc(div2, file$6, 5, 4, 265);
+				addLoc(div2, file$6, 6, 4, 329);
 				div3.className = "column-container svelte-1uppnw4";
-				addLoc(div3, file$6, 23, 12, 1108);
+				addLoc(div3, file$6, 24, 12, 1172);
 				setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
-				addLoc(div4, file$6, 29, 16, 1384);
+				addLoc(div4, file$6, 30, 16, 1448);
 				div5.className = "row-container svelte-1uppnw4";
 				setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div5, file$6, 28, 12, 1283);
+				addLoc(div5, file$6, 29, 12, 1347);
 				div6.className = "s-g-foreground svelte-1uppnw4";
-				addLoc(div6, file$6, 35, 16, 1632);
+				addLoc(div6, file$6, 36, 16, 1696);
 				div7.className = "content svelte-1uppnw4";
 				setStyle(div7, "width", "" + ctx.$width + "px");
-				addLoc(div7, file$6, 22, 8, 1048);
+				addLoc(div7, file$6, 23, 8, 1112);
 				component.root._aftercreate.push(div8_resize_handler);
 				addListener(div8, "mousewheel", mousewheel_handler);
 				div8.className = "main-container svelte-1uppnw4";
 				setStyle(div8, "height", "" + ctx.$height + "px");
-				addLoc(div8, file$6, 18, 4, 821);
+				addLoc(div8, file$6, 19, 4, 885);
 				div9.className = div9_class_value = "gantt " + ctx.$classes + " svelte-1uppnw4";
-				addLoc(div9, file$6, 0, 0, 0);
+				addLoc(div9, file$6, 1, 0, 64);
 			},
 
 			m: function mount(target, anchor) {
@@ -3218,6 +3230,8 @@ var SvelteGantt = (function () {
 			},
 
 			d: function destroy$$1(detach) {
+				window.removeEventListener("resize", onwindowresize);
+
 				if (detach) {
 					detachNode(div9);
 				}
@@ -3252,7 +3266,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (2:4) {#each _ganttTableModules as module (module.key)}
+	// (3:4) {#each _ganttTableModules as module (module.key)}
 	function create_each_block_7(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -3360,7 +3374,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (9:16) {#each $headers as header}
+	// (10:16) {#each $headers as header}
 	function create_each_block_6(component, ctx) {
 		var current;
 
@@ -3406,7 +3420,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (12:16) {#each $_timeRanges as timeRange (timeRange.id)}
+	// (13:16) {#each $_timeRanges as timeRange (timeRange.id)}
 	function create_each_block_5(component, key_1, ctx) {
 		var first, current;
 
@@ -3463,7 +3477,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (25:16) {#each columns as column}
+	// (26:16) {#each columns as column}
 	function create_each_block_4(component, ctx) {
 		var current;
 
@@ -3517,7 +3531,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (31:20) {#each visibleRows as row (row.model.id)}
+	// (32:20) {#each visibleRows as row (row.model.id)}
 	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 
@@ -3574,7 +3588,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (37:20) {#each $_timeRanges as timeRange (timeRange.id)}
+	// (38:20) {#each $_timeRanges as timeRange (timeRange.id)}
 	function create_each_block_2(component, key_1, ctx) {
 		var first, current;
 
@@ -3631,7 +3645,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (41:20) {#each visibleTasks as task (task.model.id)}
+	// (42:20) {#each visibleTasks as task (task.model.id)}
 	function create_each_block_1(component, key_1, ctx) {
 		var first, current;
 
@@ -3702,7 +3716,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (51:12) {#each _ganttBodyModules as module (module.key)}
+	// (52:12) {#each _ganttBodyModules as module (module.key)}
 	function create_each_block$1(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -3804,10 +3818,10 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["from","to","width","columnOffset","columnUnit","rows","rowHeight","scrollTop","visibleHeight","taskMap","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]), data$5()), options.data);
-		this.store._add(this, ["from","to","width","columnOffset","columnUnit","rows","rowHeight","scrollTop","visibleHeight","taskMap","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]);
+		this._state = assign(assign(this.store._init(["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]), data$5()), options.data);
+		this.store._add(this, ["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]);
 
-		this._recompute({ $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1, $rows: 1, $rowHeight: 1, $scrollTop: 1, startIndex: 1, $visibleHeight: 1, endIndex: 1, _allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
+		this._recompute({ $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1, $allRows: 1, $rowHeight: 1, $scrollTop: 1, startIndex: 1, $visibleHeight: 1, endIndex: 1, $allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
 		if (!('$from' in this._state)) console.warn("<Gantt> was created without expected data property '$from'");
 		if (!('$to' in this._state)) console.warn("<Gantt> was created without expected data property '$to'");
 		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
@@ -3815,7 +3829,7 @@ var SvelteGantt = (function () {
 		if (!('$columnUnit' in this._state)) console.warn("<Gantt> was created without expected data property '$columnUnit'");
 
 
-		if (!('$rows' in this._state)) console.warn("<Gantt> was created without expected data property '$rows'");
+		if (!('$allRows' in this._state)) console.warn("<Gantt> was created without expected data property '$allRows'");
 		if (!('$rowHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$rowHeight'");
 		if (!('$scrollTop' in this._state)) console.warn("<Gantt> was created without expected data property '$scrollTop'");
 
@@ -3824,7 +3838,7 @@ var SvelteGantt = (function () {
 		if (!('$taskMap' in this._state)) console.warn("<Gantt> was created without expected data property '$taskMap'");
 
 
-		if (!('_allTasks' in this._state)) console.warn("<Gantt> was created without expected data property '_allTasks'");
+		if (!('$allTasks' in this._state)) console.warn("<Gantt> was created without expected data property '$allTasks'");
 		if (!('$classes' in this._state)) console.warn("<Gantt> was created without expected data property '$classes'");
 		if (!('_ganttTableModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttTableModules'");
 
@@ -3840,7 +3854,7 @@ var SvelteGantt = (function () {
 		if (!('_ganttBodyModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttBodyModules'");
 		this._intro = !!options.intro;
 
-		this._handlers.destroy = [ondestroy$2, removeFromStore];
+		this._handlers.destroy = [removeFromStore];
 
 		this._fragment = create_main_fragment$6(this, this._state);
 
@@ -3890,7 +3904,7 @@ var SvelteGantt = (function () {
 			if (this._differs(state.columns, (state.columns = columns(state)))) changed.columns = true;
 		}
 
-		if (changed.$rows || changed.$rowHeight) {
+		if (changed.$allRows || changed.$rowHeight) {
 			if (this._differs(state.rowContainerHeight, (state.rowContainerHeight = rowContainerHeight(state)))) changed.rowContainerHeight = true;
 		}
 
@@ -3898,7 +3912,7 @@ var SvelteGantt = (function () {
 			if (this._differs(state.startIndex, (state.startIndex = startIndex(state)))) changed.startIndex = true;
 		}
 
-		if (changed.startIndex || changed.$visibleHeight || changed.$rowHeight || changed.$rows) {
+		if (changed.startIndex || changed.$visibleHeight || changed.$rowHeight || changed.$allRows) {
 			if (this._differs(state.endIndex, (state.endIndex = endIndex(state)))) changed.endIndex = true;
 		}
 
@@ -3906,15 +3920,15 @@ var SvelteGantt = (function () {
 			if (this._differs(state.paddingTop, (state.paddingTop = paddingTop(state)))) changed.paddingTop = true;
 		}
 
-		if (changed.$rows || changed.endIndex || changed.$rowHeight) {
+		if (changed.$allRows || changed.endIndex || changed.$rowHeight) {
 			if (this._differs(state.paddingBottom, (state.paddingBottom = paddingBottom(state)))) changed.paddingBottom = true;
 		}
 
-		if (changed.$rows || changed.startIndex || changed.endIndex) {
+		if (changed.$allRows || changed.startIndex || changed.endIndex) {
 			if (this._differs(state.visibleRows, (state.visibleRows = visibleRows(state)))) changed.visibleRows = true;
 		}
 
-		if (changed._allTasks || changed.$taskMap) {
+		if (changed.$allTasks) {
 			if (this._differs(state.rowTaskMap, (state.rowTaskMap = rowTaskMap(state)))) changed.rowTaskMap = true;
 		}
 

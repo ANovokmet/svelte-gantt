@@ -21,7 +21,6 @@ export class SvelteTask {
     gantt: SvelteGantt;
     model: TaskModel;
     component: SvelteGantt;
-    row: SvelteRow;
 
     left: number;
     width: number;
@@ -62,7 +61,6 @@ export class SvelteTask {
         this.gantt = gantt;
         this.model = task;
 
-        this.row = gantt.get()._rowCache[task.resourceId];
 
         //height, translateX, translateY, resourceId
         this.height = this.getHeight();
@@ -73,12 +71,16 @@ export class SvelteTask {
         this.posY = this.getPosY();
     }
 
+    get row(): SvelteRow{
+        return gantt.store.get().rowMap[this.model.resourceId];
+    }
+
     getHeight(){
-        return this.row.height;
+        return this.row.height - 2 * this.gantt.store.get().rowPadding;
     }
 
     getPosY(){
-        return this.row.posY;
+        return this.row.posY + this.gantt.store.get().rowPadding;
     }
 
     updatePosition(){
