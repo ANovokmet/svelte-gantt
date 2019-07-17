@@ -10,8 +10,8 @@
                 {#each $headers as header}
                     <ColumnHeader header={header}/>
                 {/each}
-                {#each $_timeRanges as timeRange (timeRange.id)}
-                    <TimeRangeHeader timeRange={timeRange}/>
+                {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+                    <TimeRangeHeader {...timeRange}/>
                 {/each}
             </div>
         </div>
@@ -34,9 +34,9 @@
                     {/each}
                 </div>
             </div>
-                <div class="s-g-foreground">
-                    {#each $_timeRanges as timeRange (timeRange.id)}
-                        <TimeRange timeRange={timeRange}/>
+                <div class="sg-foreground">
+                    {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+                        <TimeRange {...timeRange}/>
                     {/each}
 
                     {#each visibleTasks as task (task.model.id)}
@@ -44,9 +44,11 @@
                             left={task.left} 
                             width={task.width}
                             height={task.height}
-                            widthT={task.widthT}
-                            posX={task.posX}
-                            posY={task.posY}/>
+                            top={task.top}/>
+                    {/each}
+
+                    {#each $milestones as milestone (milestone.id)}
+                        <Milestone model={milestone}/>
                     {/each}
                 </div>
             {#each _ganttBodyModules as module (module.key)}
@@ -63,7 +65,7 @@
         position: relative;
     }
 
-    .s-g-foreground {
+    .sg-foreground {
         box-sizing: border-box;
         overflow: hidden;
         top: 0;
@@ -126,11 +128,12 @@
     import GanttApi from './core/api';
     import TimeRange from './TimeRange.html';
     import TimeRangeHeader from './TimeRangeHeader.html';
+    import Milestone from './Milestone.html';
 
     import Task from "./Task.html";
-    import { SvelteTask } from "./core/task";
+    import { TaskFactory } from "./core/task";
     import { SvelteRow } from "./core/row";
-    import { SvelteTimeRange } from "./core/timeRange";
+    import { TimeRangeFactory } from "./core/timeRange";
 
     //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
     //import Table from './modules/table/Table.html';
@@ -183,6 +186,7 @@
 
                 rows: [],
                 tasks: [],
+                milestones: [],
                 _timeRanges: []
             };
 
@@ -225,9 +229,13 @@
                 });
             }
         },
-        components: { Row, Column, ColumnHeader, TaskComponent, TimeRange, TimeRangeHeader },
+        components: { Row, Column, ColumnHeader, TaskComponent, TimeRange, TimeRangeHeader, Milestone },
         oncreate(){
-            const {rows, initialRows, initialTasks, initialDependencies} = this.get();
+            const {initialRows, initialTasks, initialDependencies} = this.get();
+
+            this.refreshTasksDebounced = debounce(() => {
+                this.refreshTasks();
+            }, 250, false);
 
             this.initGantt();
             this.initRows(initialRows);
@@ -323,29 +331,31 @@
                 this.store.addAllRow(rows);
             },
             initTasks(taskData){
-                const allTasks = [];
+                const tasks = [];
 
                 for(let i=0; i < taskData.length; i++){
                     const currentTask = taskData[i];
-                    const task = new SvelteTask(this, currentTask);
-                    allTasks.push(task);
+                    const task = this.taskFactory.createTask(currentTask);
+                    tasks.push(task);
                 }
 
-                this.store.addAllTask(allTasks);
-                this.selectionManager.clearSelection();
+                this.store.addAllTask(tasks);
+                //this.selectionManager.clearSelection();
+            },
+            initMilestones(milestoneData){
+                const milestones = [...milestoneData];
+                this.store.set({milestones});
             },
             initTimeRanges(timeRangeData){
-                const _timeRanges = [];
-                const _timeRangeCache = [];
+                const timeRangeMap = {};
 
                 for(let i = 0; i < timeRangeData.length; i++){
                     const currentTimeRange = timeRangeData[i];
-                    const timeRange = new SvelteTimeRange(this, currentTimeRange);
-                    _timeRanges.push(timeRange);
-                    _timeRangeCache[currentTimeRange.id] = timeRange;
+                    const timeRange = this.timeRangeFactory.create(currentTimeRange);
+                    timeRangeMap[currentTimeRange.id] = timeRange;
                 }
 
-                this.store.set({_timeRanges, _timeRangeCache})
+                this.store.set({timeRangeMap})
             },
             initGantt(){
                 if(!this.store.get().gantt){
@@ -358,6 +368,8 @@
                     this.selectionManager = new SelectionManager(this.store);
                     this.utils = new GanttUtils(this);
                     this.api = new GanttApi(this);
+                    this.taskFactory = new TaskFactory(this);
+                    this.timeRangeFactory = new TimeRangeFactory(this);
 
                     this.api.registerEvent('tasks', 'move');
                     this.api.registerEvent('tasks', 'select');
@@ -366,7 +378,6 @@
                     this.api.registerEvent('tasks', 'changed');
 
                     this.row = SvelteRow;
-                    this.task = SvelteTask;
                 }
             },
             initModule(module){
@@ -397,8 +408,12 @@
             refreshTasks(){
                 const { allTasks } = this.store.get();
                 allTasks.forEach(task => {
-                    task.updatePosition();
-                    task.updateView();
+
+                    const newLeft = this.root.utils.getPositionByDate(task.model.from);
+                    const newRight = this.root.utils.getPositionByDate(task.model.to);
+
+                    task.left = newLeft;
+                    task.width = newRight - newLeft;
                 });
                 this.store.set({taskMap: this.store.get().taskMap});
                 this.updateVisibleEntities();
@@ -418,7 +433,6 @@
                 const task = taskMap[id];
                 if(task) {
                     this.selectionManager.selectSingle(task);
-                    task.updateView();
                 }
             }
         },
@@ -432,7 +446,6 @@
                 _ganttTableModules: [],
                 _modules: [],
 
-                _allTasks: [],
                 rows: [],
 
                 paddingTop: 0,
@@ -486,5 +499,20 @@
             },
 
         }
+    };
+
+    function debounce(func, wait, immediate) {
+        var timeout;
+        return function() {
+            var context = this, args = arguments;
+            var later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
     };
 </script>

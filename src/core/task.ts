@@ -17,105 +17,73 @@ export interface TaskModel {
     enableDragging?: boolean;
 }
 
-export class SvelteTask {
-    gantt: SvelteGantt;
+export interface SvelteTask {
     model: TaskModel;
-    component: SvelteGantt;
 
     left: number;
+    top: number;
     width: number;
-    height: number;
-    posX: number;
-    posY: number;
-    widthT: number;
 
-    dragging: boolean;
-    resizing: boolean;
-    
-    constructor(gantt: SvelteGantt, task: TaskModel){
-        // defaults, todo object.assign these
+    height: number;
+}
+
+export class TaskFactory {
+    gantt: SvelteGantt;
+
+    constructor(gantt: SvelteGantt) {
+        this.gantt = gantt;
+    }
+
+    createTask(model: TaskModel): SvelteTask {
+        
         // id of task, every task needs to have a unique one
         //task.id = task.id || undefined;
         // completion %, indicated on task
-        task.amountDone = task.amountDone || 0;
+        model.amountDone = model.amountDone || 0;
         // css classes
-        task.classes = task.classes || '';
+        model.classes = model.classes || '';
         // datetime task starts on, currently moment-js object
-        task.from = task.from || null;
+        model.from = model.from || null;
         // datetime task ends on, currently moment-js object
-        task.to = task.to || null;
+        model.to = model.to || null;
         // label of task
-        task.label = task.label || undefined;
+        model.label = model.label || undefined;
         // html content of task, will override label
-        task.html = task.html || undefined;
+        model.html = model.html || undefined;
         // show button bar
-        task.showButton = task.showButton || false 
+        model.showButton = model.showButton || false 
         // button classes, useful for fontawesome icons
-        task.buttonClasses = task.buttonClasses || ''
+        model.buttonClasses = model.buttonClasses || ''
         // html content of button
-        task.buttonHtml = task.buttonHtml || ''
+        model.buttonHtml = model.buttonHtml || ''
         // enable dragging of task
-        task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
+        model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
+        
+        const left = this.gantt.utils.getPositionByDate(model.from);
+        const right = this.gantt.utils.getPositionByDate(model.to); 
 
-
-        this.gantt = gantt;
-        this.model = task;
-
-
-        //height, translateX, translateY, resourceId
-        this.height = this.getHeight();
-
-        this.updatePosition();
-
-        // TODO extract to update vertical position
-        this.posY = this.getPosY();
-    }
-
-    get row(): SvelteRow{
-        return gantt.store.get().rowMap[this.model.resourceId];
-    }
-
-    getHeight(){
-        return this.row.height - 2 * this.gantt.store.get().rowPadding;
-    }
-
-    getPosY(){
-        return this.row.posY + this.gantt.store.get().rowPadding;
-    }
-
-    updatePosition(){
-        const left = this.gantt.utils.getPositionByDate(this.model.from);
-        const right = this.gantt.utils.getPositionByDate(this.model.to); 
-
-        this.left = left;
-        this.width = right - left;
-
-        if(!this.dragging && !this.resizing){
-            this.posX = this.left// Math.ceil(this.left);
-            this.widthT = this.width //Math.ceil(this.width);
+        return {
+            model,
+            left: left,
+            width: right-left,
+            height: this.getHeight(model),
+            top: this.getPosY(model)
         }
     }
 
-    updateDate(){
-        const from = this.gantt.utils.getDateByPosition(this.left);
-        const to = this.gantt.utils.getDateByPosition(this.left + this.width);
-                   
-        const roundedFrom = this.gantt.utils.roundTo(from);
-        const roundedTo = this.gantt.utils.roundTo(to);
-
-        if(!roundedFrom.isSame(roundedTo)){
-            this.model.from = roundedFrom;
-            this.model.to = roundedTo;
-        }
+    row(resourceId): SvelteRow{
+        return this.gantt.store.get().rowMap[resourceId];
     }
 
-    overlaps(other) {
-        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
+    getHeight(model){
+        return this.row(model.resourceId).height - 2 * this.gantt.store.get().rowPadding;
     }
 
-    updateView() {
-        if(this.component) {
-            //this.component.set({task: this});
-        }
+    getPosY(model){
+        return this.row(model.resourceId).posY + this.gantt.store.get().rowPadding;
     }
+}
+
+function overlap(one: SvelteTask, other: SvelteTask){
+    return !(one.left + one.width <= other.left || one.left >= other.left + other.width);
 }

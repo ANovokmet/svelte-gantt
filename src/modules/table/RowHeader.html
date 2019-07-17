@@ -4,9 +4,9 @@
             {#if row.model.headerHtml}
                 {@html row.model.headerHtml}
             {:else}
-                <div class="s-g-resource-info">
-                    <img class="s-g-resource-image" src="{row.model.imageSrc}" alt=""/>
-                    <div class="s-g-resource-title">
+                <div class="sg-resource-info">
+                    <img class="sg-resource-image" src="{row.model.imageSrc}" alt=""/>
+                    <div class="sg-resource-title">
                         {row.model[header.property]}
                     </div>
                 </div>
@@ -23,7 +23,7 @@
         font-size: 14px;
     }
 
-    .s-g-resource-image {
+    .sg-resource-image {
         width: 2.4em;
         height: 2.4em;
         border-radius: 50%;
@@ -32,7 +32,7 @@
         background: #047c69;
     }
 
-    .s-g-resource-info {
+    .sg-resource-info {
         flex: 1;
         height: 100%;
         display: flex;

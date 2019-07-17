@@ -1,16 +1,16 @@
 <div ref:taskElement
-    class="task {model.classes}" 
+    class="sg-task {model.classes}" 
     style="
     width:{widthT}px;
     height:{height}px;
     transform: translate({posX}px, {posY}px);"
     use:drag 
-    use:selectable
+    on:click="select(event)"
     class:overlapping="overlapping"
     class:selected="selected"
     class:moving="dragging||resizing">
-    <div class="task-background" style="width:{model.amountDone}%"></div>
-    <div class="task-content">
+    <div class="sg-task-background" style="width:{model.amountDone}%"></div>
+    <div class="sg-task-content">
         {#if model.html}
             {@html model.html}
         {:elseif $taskContent}
@@ -18,9 +18,11 @@
         {:else}
             {model.label}
         {/if}
+        <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span>
+        
 
         {#if model.showButton}
-            <span class="task-button {model.buttonClasses}" on:click="onclick(event)">
+            <span class="sg-task-button {model.buttonClasses}" on:click="onclick(event)">
                 {@html model.buttonHtml}
             </span>
         {/if}
@@ -28,24 +30,32 @@
 </div>
 
 <style>
-    .task {
+    .debug {
+        position: absolute;
+        top: -10px;
+        right: 0;
+        font-size:8px;
+        color: black;
+    }
+
+    .sg-task {
 		position: absolute;     
         top: 0;
         bottom: 0;
 
         white-space: nowrap;
-        overflow: hidden;
+        /* overflow: hidden; */
 
         transition: background-color 0.2s;
 	}
 
-    .task-background {
+    .sg-task-background {
         position: absolute;
         height: 100%;
         top: 0;
     }
 
-    .task-content {
+    .sg-task-content {
         position: absolute;
         height: 100%;
         top: 0;
@@ -58,15 +68,15 @@
         justify-content: flex-start;
     }
 
-    .task:not(.moving) {
+    .sg-task:not(.moving) {
         transition: transform 0.2s, background-color 0.2s, width 0.2s;
     }
 
-    .task.moving{
+    .sg-task.moving{
         z-index: 1;
     }
 
-    .task:hover::before {
+    .sg-task:hover::before {
         content: '';
         width: 4px;
         height: 50%;
@@ -79,9 +89,10 @@
         margin-left: 3px;
         left: 0;
         border-width: 0 1px;
+        z-index: 1;
     }
 
-    .task:hover::after {
+    .sg-task:hover::after {
         content: '';
         width: 4px;
         height: 50%;
@@ -94,9 +105,10 @@
         margin-right: 3px;
         right: 0;
         border-width: 0 1px;
+        z-index: 1;
     }
 
-    .task.selected {
+    .sg-task.selected {
         outline: 2px solid rgba(3, 169, 244, 0.5);
         outline-offset: 3px;
         z-index: 1;
@@ -105,248 +117,140 @@
 
 <script>
     import { DOMUtils } from "./utils/domUtils";
-
+    import { draggable } from "./core/drag/draggable";
+    import { ComponentPosProvider } from "./core/drag/componentPosProvider";
 
     export default {
+        oncreate(){
+        },
         onstate({ changed, current, previous }) {
-            // before first render
-            // if(!previous){
-            //     const left = this.root.utils.getPositionByDate(current.model.from);
-            //     const right = this.root.utils.getPositionByDate(current.model.to); 
-            //     this.set({posX:left, widthT:right-left, left, width:right-left});
-            // }
+            if(!current.dragging && !current.resizing){
+                this.set({
+                    posX: current.left,
+                    widthT: current.width,
+                    posY: current.top,
+                });
+            }
 		},
         actions: {
 			drag(node) {
-                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
-                const windowElement = window;
+                const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-                let mouseStartPosX, mouseStartPosY;
-                let mouseStartRight;
-                
-                let originalRow;
-                let taskOriginalFrom, taskOriginalTo;
-                
+                const ondrop = ({ posX, posY, widthT, event }) => {
+                    const { model } = this.get();
+                    const { taskMap, rowMap, rowPadding } = this.store.get();
+
+                    let rowChangeValid = true;
+                    //row switching
+                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+                    const sourceRow = rowMap[model.resourceId];
                     
-                const onmousedown = (event) => {
-                    if(event.which !== 1){
-                        //debugger;
-                        return;
-                    }
+                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+                        const targetRow = rowMap[rowId];
 
-                    const { left, posY, width, model } = this.get();
-
-                    event.stopPropagation();
-                    event.preventDefault();
-                    
-                    const { rowMap } = this.store.get();
-                    originalRow = rowMap[model.resourceId];
-                    taskOriginalFrom = model.from.clone();
-                    taskOriginalTo = model.to.clone();
-
-                    if(originalRow.model.enableDragging && model.enableDragging){
-                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - left;
-                        mouseStartPosY = DOMUtils.getRelativePos(rowContainerElement, event).y - posY;
-                        mouseStartRight = left + width;
-
-                        if(mouseStartPosX < resizeHandleWidth) {
-                            this.set({
-                                resizing: true,
-                                direction: 'left'
-                            })
-                            //gantt.includeInRender = task;
-                        }
-                        else if(mouseStartPosX > width - resizeHandleWidth) {
-
-                            this.set({
-                                resizing: true,
-                                direction: 'right'
-                            })
-                            //gantt.includeInRender = task;
+                        if(targetRow.model.enableDragging){
+                            //targetRow.moveTask(this);
+                            model.resourceId = targetRow.model.id;
+                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
                         }
                         else {
-                            this.set({
-                                dragging: true
-                            })
-                            // gantt.includeInRender = task;
+                            rowChangeValid = false;
                         }
-
-                        windowElement.addEventListener('mousemove', onmousemove, false);
-                        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
                     }
-                }
-                
-                const onmousemove = (event) => {
+                    
+                    this.set({dragging: false});
+                    const task = taskMap[model.id];
 
-                    const { resizing, dragging } = this.get()
+                    if(rowChangeValid) {
+                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+                        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+                        const newRight = this.root.utils.getPositionByDate(newTo);
 
-                    event.preventDefault();
-                    if(resizing) {
-                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-                        const { direction, left, width } = this.get()
+                        Object.assign(model, {
+                            from: newFrom,
+                            to: newTo
+                        });
                         
-                        if(direction === 'left') { //resize ulijevo
-                            if(mousePos.x > left + width) {
-                                this.set({
-                                    left: mouseStartRight,
-                                    posX: mouseStartRight,
-                                    width: mouseStartRight - mousePos.x,
-                                    widthT: mouseStartRight - mousePos.x,
-                                    direction: 'right',
-                                });
-                                mouseStartRight = mouseStartRight + width;
-                            }
-                            else{
-                                this.set({
-                                    left: mousePos.x,
-                                    posX: mousePos.x,
-                                    width: mouseStartRight - mousePos.x,
-                                    widthT: mouseStartRight - mousePos.x
-                                });
-                            }
-                        }
-                        else if(direction === 'right') {//resize desno
-                            if(mousePos.x <= left) {
-                                this.set({
-                                    width: left - mousePos.x,
-                                    widthT: left - mousePos.x,
-                                    left: mousePos.x,
-                                    posX: mousePos.x,
-                                    direction: 'left'
-                                });
-                                mouseStartRight = left;
-                            }
-                            else {
-                                this.set({
-                                    width: mousePos.x - left,
-                                    widthT: mousePos.x - left
-                                });
-                            }
-                        }
-                    }
-
-                    // mouseup
-                    if(dragging) {
-                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-
-                        this.set({
-                            left: mousePos.x - mouseStartPosX,
-                            posX: mousePos.x - mouseStartPosX,
-                            posY: mousePos.y - mouseStartPosY
+                        this.store.updateTask({
+                            ...task,
+                            left: newLeft,
+                            width: newRight - newLeft,
+                            top: rowPadding + rowMap[model.resourceId].posY,
+                            model
                         });
                     }
-                    
+                    else {
+                        // reset position
+                        this.store.updateTask({
+                            ...task
+                        });
+                    }
                 }
 
-                const onmouseup = (event) => {
-                    
-                    const { left, width, dragging, model } = this.get()
-
-                    const { taskMap, gantt, rowHeight, rowPadding, rowMap } = this.store.get()
-
-                    if(dragging) {
-                        //row switching
-                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-                        const sourceRow = rowMap[model.resourceId];
-
-                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-                        let rowElement = elements.find((element) => element.classList.contains('row'));
-                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-
-                            const { allRows } = this.store.get(); //visibleRows
-                            const targetRow = allRows.find((r) => r.rowElement === rowElement); //vr
-
-                            if(targetRow.model.enableDragging){
-                                //targetRow.moveTask(this);
-                                model.resourceId = targetRow.model.id;
-                                gantt.api.tasks.raise.switchRow(this, targetRow, sourceRow);
-                            }
-                        }
-                    }
-                    
-                    
-
-                    this.set({
-                        posX: left, //Math.ceil(left),
-                        posY: rowPadding + rowMap[model.resourceId].posY,
-                        widthT: width, // Math.ceil(width),
-                        
-                        dragging: false,
-                        resizing: false,
-                        direction: null,
-                    });
-
-                    const task = taskMap[model.id];
-                    
-
-                    task.left = left;
-                    task.width = width;
-                    task.posX = Math.ceil(left);
-                    task.posY = rowPadding + rowMap[model.resourceId].posY;
-
-                    task.updateDate();
-                    task.updatePosition();
-                    this.store.updateTask(task);
-
-
-                    //gantt.includeInRender = null;
-                    windowElement.removeEventListener('mousemove', onmousemove, false);
-                    
-                    // gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
-                    // if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
-                    //     gantt.api.tasks.raise.changed(task, task.row, originalRow);
-                    // }
-                }
-
-                node.addEventListener('mousedown', onmousedown, false);
-
-                const cursorOnMove = (e) => {
-                    const { left, width } = this.get()
-
-                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - left;
-
-                    //TODO globally set cursor ON mousedown
-                    if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > width - resizeHandleWidth) {
-                        this.updateCursor('e-resize');
-                    }
-                    else{
-                        this.updateCursor();
-                    }
-
-                };
-                node.addEventListener('mousemove', cursorOnMove, false)
-
-				return {
-					destroy() {
-						node.removeEventListener('mousedown', onmousedown, false);
-						//windowElement.removeEventListener('mousemove', onmousemove, false);
-						node.removeEventListener('mousemove', onmousemove, false);
-                        node.removeEventListener('mouseup', onmouseup, false);
-					}
-				}
-            },
-            selectable(node) {
-                const { gantt } = this.store.get();
-                const self = this;
-                node.addEventListener('click', (e) => {
-                    const { model } = this.get();
-                    if(e.ctrlKey){
-                        gantt.selectionManager.toggleSelection(model);
-                    }
-                    else{
-                        gantt.selectionManager.selectSingle(model);
-                    }
-
-                    if(model.selected){
-                        gantt.api.tasks.raise.select(model);
-                    }
-                });
+                return draggable(node, {
+                    onDown: (state) => {
+                        this.set({dragging: true});
+                    }, 
+                    onResize: (state) => {
+                        this.set(state);
+                        const { posX, posY, widthT } = this.get();
+                        console.log('resize', {posX, posY, widthT})
+                    }, 
+                    onDrag: ({posX, posY}) => {
+                        this.set({posX, posY});
+                        console.log('drag', this.get().posX, this.get().posY, this.get().widthT)
+                    }, 
+                    dragAllowed: () => {
+                        const { model } = this.get();
+                        const { rowMap } = this.store.get();
+                        const row = rowMap[model.resourceId];
+                        return row.model.enableDragging && model.enableDragging
+                    },
+                    resizeAllowed: () => {
+                        const { model } = this.get();
+                        const { rowMap } = this.store.get();
+                        const row = rowMap[model.resourceId];
+                        return row.model.enableDragging && model.enableDragging
+                    },
+                    onDrop: ondrop, 
+                    container: rowContainerElement, 
+                    resizeHandleWidth
+                }, new ComponentPosProvider(this));
             }
         },
         methods: {
+            select(event){
+                const { model } = this.get();
+                if(event.ctrlKey){
+                    this.root.selectionManager.toggleSelection(model.id);
+                }
+                else{
+                    this.root.selectionManager.selectSingle(model.id);
+                }
+                
+                if(this.get().selected){
+                    this.root.api.tasks.raise.select(model);
+                }
+            },
             updateCursor(cursor){
                 const element = this.refs.taskElement;
                 element.style.cursor = cursor || 'default';
+                // const cursorOnMove = (e) => {
+                //     const { posX, widthT } = this.get()
+
+                //     const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - posX;
+
+                //     //TODO globally set cursor ON mousedown
+                //     if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > widthT - resizeHandleWidth) {
+                //         this.updateCursor('e-resize');
+                //     }
+                //     else{
+                //         this.updateCursor();
+                //     }
             },
             onclick(event){
                 const { onTaskButtonClick } = this.store.get();
@@ -362,13 +266,16 @@
                 dragging: false,
                 overlapping: false,
                 selected: false,
-                resizing: false
+                resizing: false,
+
+                widthT: null,
+                posX: null,
+                posY: null
             }
         },
         computed: {
-            selected: ({$selection, model}) => $selection.indexOf(model) !== -1,
-            row: ({$rowMap, model}) => $rowMap[model.resourceId],
-            // height: ({row}) => row.height
+            selected: ({$selection, model}) => $selection.indexOf(model.id) !== -1,
+            row: ({$rowMap, model}) => $rowMap[model.resourceId]
         }
     };
 </script>

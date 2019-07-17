@@ -33,8 +33,8 @@ export default class SvelteDependency {
         let endX = this.toTask.left;
 
         //can be sped up by caching indices of rows
-        let startIndex = rows.indexOf(this.fromTask.row); 
-        let endIndex = rows.indexOf(this.toTask.row); 
+        let startIndex = 0 //rows.indexOf(this.fromTask.row); 
+        let endIndex = 0 //rows.indexOf(this.toTask.row); 
 
         let startY = (startIndex + 0.5) * rowHeight;
         let endY = (endIndex + 0.5) * rowHeight;

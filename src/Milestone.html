@@ -1,0 +1,192 @@
+<div ref:milestoneElement
+    class="sg-milestone {model.classes}" 
+    style="transform: translate({posX}px, {posY}px);height:{height}px;width:{height}px"
+    use:drag 
+    on:click="select(event)"
+    class:selected="selected"
+    class:moving="dragging">
+    <div class="inside"></div>
+        <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span>
+</div>
+
+<style>
+    .sg-milestone {
+		position: absolute;     
+        top: 0;
+        bottom: 0;
+
+        white-space: nowrap;
+        /* overflow: hidden; */
+
+        height: 20px;
+        width: 20px;
+
+        min-width: 40px;
+        margin-left: -20px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+
+        transition: background-color 0.2s;
+    }
+
+    .sg-milestone .inside {
+        position: relative;
+    }
+
+    .sg-milestone .inside:before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        content: ' ';
+        height: 28px;
+        width: 28px;
+        transform-origin: 0 0;
+        transform: rotate(45deg); 
+/* //after -45 */
+        background-color: #feac31;
+        border-color: #feac31;
+    }
+
+    .sg-milestone:not(.moving) {
+        transition: transform 0.2s, background-color 0.2s, width 0.2s;
+    }
+
+    .sg-milestone.moving{
+        z-index: 1;
+    }
+
+    .sg-milestone.selected {
+        outline: 2px solid rgba(3, 169, 244, 0.5);
+        outline-offset: 3px;
+        z-index: 1;
+    }
+</style>
+
+<script>
+    import { DOMUtils } from "./utils/domUtils";
+    import { draggable } from "./core/drag/draggable";
+    import { ComponentPosProvider } from "./core/drag/componentPosProvider";
+
+
+    export default {
+        oncreate(){
+
+            const { model } = this.get();
+
+            const left = this.root.utils.getPositionByDate(model.from);
+            const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
+            const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
+
+            this.set({
+                left,
+                top,
+                height
+            });
+
+        },
+        onstate({ changed, current, previous }) {
+            if(!current.dragging){
+                this.set({
+                    posX: current.left,
+                    posY: current.top,
+                });
+            }
+		},
+        actions: {
+			drag(node) {
+                const { rowContainerElement } = this.store.get();
+                
+                const ondrop = ({ posX, posY, widthT, event }) => {
+                    const { model } = this.get();
+                    const { rowMap, rowPadding } = this.store.get();
+
+                    let rowChangeValid = true;
+                    //row switching
+                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+                    const sourceRow = rowMap[model.resourceId];
+                    
+                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+                        const targetRow = rowMap[rowId];
+
+                        if(targetRow.model.enableDragging){
+                            //targetRow.moveTask(this);
+                            model.resourceId = targetRow.model.id;
+                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                        }
+                        else {
+                            rowChangeValid = false;
+                        }
+                    }
+                    
+                    this.set({dragging: false});
+
+                    if(rowChangeValid) {
+                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX));
+                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+
+                        Object.assign(model, {
+                            from: newFrom,
+                        });
+                        
+                        this.set({
+                            left: newLeft,
+                            top: rowPadding + rowMap[model.resourceId].posY,
+                            model
+                        });
+                    }
+                    else {
+                        // reset position
+                        const { left, top } = this.get();
+                        this.set({ left, top });
+                    }
+                }
+
+                return draggable(node, {
+                    onDown: (state) => {
+                        this.set({...state, dragging: true});
+                    }, 
+                    onDrag: ({posX, posY}) => {
+                        this.set({posX, posY});
+                    },
+                    dragAllowed: true,
+                    resizeAllowed: false,
+                    onDrop: ondrop, 
+                    container: rowContainerElement, 
+                }, new ComponentPosProvider(this));
+            }
+        },
+        methods: {
+            select(event){
+                const { model } = this.get();
+                if(event.ctrlKey){
+                    this.root.selectionManager.toggleSelection(model.id);
+                }
+                else{
+                    this.root.selectionManager.selectSingle(model.id);
+                }
+                
+                if(this.get().selected){
+                    this.root.api.tasks.raise.select(model);
+                }
+            }
+        },
+        data() {
+            return {
+                dragging: false,
+                selected: false,
+
+                posX: null,
+                posY: null,
+                height: 20
+            }
+        },
+        computed: {
+            selected: ({$selection, model}) => $selection.indexOf(model.id) !== -1,
+            row: ({$rowMap, model}) => $rowMap[model.resourceId]
+        }
+    };
+</script>

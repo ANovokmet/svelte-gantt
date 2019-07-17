@@ -417,6 +417,9 @@ var SvelteGantt = (function () {
 	    }
 	    isRowVisible() {
 	    }
+	    static isLeftClick(event) {
+	        return event.which === 1;
+	    }
 	    //get mouse position within the element
 	    static getRelativePos(node, event) {
 	        const rect = node.getBoundingClientRect();
@@ -548,7 +551,7 @@ var SvelteGantt = (function () {
 	const file = "src\\Row.html";
 
 	function create_main_fragment(component, ctx) {
-		var div, div_class_value, current;
+		var div, div_class_value, div_data_row_id_value, current;
 
 		var if_block = (ctx.row.model.contentHtml) && create_if_block(component, ctx);
 
@@ -558,6 +561,7 @@ var SvelteGantt = (function () {
 				if (if_block) if_block.c();
 				div.className = div_class_value = "row " + ctx.row.model.classes + " svelte-1jglin1";
 				setStyle(div, "height", "" + ctx.$rowHeight + "px");
+				div.dataset.rowId = div_data_row_id_value = ctx.row.model.id;
 				addLoc(div, file, 0, 0, 0);
 			},
 
@@ -588,6 +592,10 @@ var SvelteGantt = (function () {
 
 				if (changed.$rowHeight) {
 					setStyle(div, "height", "" + ctx.$rowHeight + "px");
+				}
+
+				if ((changed.row) && div_data_row_id_value !== (div_data_row_id_value = ctx.row.model.id)) {
+					div.dataset.rowId = div_data_row_id_value;
 				}
 			},
 
@@ -687,10 +695,151 @@ var SvelteGantt = (function () {
 	Row.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	};
 
+	function draggable(node, settings, provider) {
+	    const { onDown, onResize, onDrag, onDrop, dragAllowed, resizeAllowed } = settings;
+	    let mouseStartPosX, mouseStartPosY;
+	    let mouseStartRight;
+	    let direction;
+	    let dragging = false, resizing = false;
+	    const onmousedown = (event) => {
+	        if (!DOMUtils.isLeftClick(event)) {
+	            return;
+	        }
+	        const { posX, posY } = provider.getPos();
+	        const widthT = provider.getWidth();
+	        event.stopPropagation();
+	        event.preventDefault();
+	        const canDrag = typeof (dragAllowed) === 'function' ? dragAllowed() : dragAllowed;
+	        const canResize = typeof (resizeAllowed) === 'function' ? resizeAllowed() : resizeAllowed;
+	        if (canDrag || canResize) {
+	            mouseStartPosX = DOMUtils.getRelativePos(settings.container, event).x - posX;
+	            mouseStartPosY = DOMUtils.getRelativePos(settings.container, event).y - posY;
+	            mouseStartRight = posX + widthT;
+	            if (canResize && mouseStartPosX < settings.resizeHandleWidth) {
+	                direction = 'left';
+	                resizing = true;
+	                onDown({
+	                    posX,
+	                    widthT,
+	                    posY
+	                });
+	            }
+	            else if (canResize && mouseStartPosX > widthT - settings.resizeHandleWidth) {
+	                direction = 'right';
+	                resizing = true;
+	                onDown({
+	                    posX,
+	                    widthT,
+	                    posY
+	                });
+	            }
+	            else if (canDrag) {
+	                dragging = true;
+	                onDown({
+	                    posX,
+	                    widthT,
+	                    posY
+	                });
+	            }
+	            window.addEventListener('mousemove', onmousemove, false);
+	            DOMUtils.addEventListenerOnce(window, 'mouseup', onmouseup);
+	        }
+	    };
+	    const onmousemove = (event) => {
+	        event.preventDefault();
+	        if (resizing) {
+	            const mousePos = DOMUtils.getRelativePos(settings.container, event);
+	            const { posX } = provider.getPos();
+	            const widthT = provider.getWidth();
+	            if (direction === 'left') { //resize ulijevo
+	                if (mousePos.x > posX + widthT) {
+	                    direction = 'right';
+	                    onResize({
+	                        posX: mouseStartRight,
+	                        widthT: mouseStartRight - mousePos.x
+	                    });
+	                    mouseStartRight = mouseStartRight + widthT;
+	                }
+	                else {
+	                    onResize({
+	                        posX: mousePos.x,
+	                        widthT: mouseStartRight - mousePos.x
+	                    });
+	                }
+	            }
+	            else if (direction === 'right') { //resize desno
+	                if (mousePos.x <= posX) {
+	                    direction = 'left';
+	                    onResize({
+	                        posX: mousePos.x,
+	                        widthT: posX - mousePos.x
+	                    });
+	                    mouseStartRight = posX;
+	                }
+	                else {
+	                    onResize({
+	                        posX,
+	                        widthT: mousePos.x - posX
+	                    });
+	                }
+	            }
+	        }
+	        // mouseup
+	        if (dragging) {
+	            const mousePos = DOMUtils.getRelativePos(settings.container, event);
+	            onDrag({
+	                posX: mousePos.x - mouseStartPosX,
+	                posY: mousePos.y - mouseStartPosY
+	            });
+	            console.log("post ondrag", provider.getPos().posX, provider.getPos().posY);
+	        }
+	    };
+	    const onmouseup = (event) => {
+	        const { posX, posY } = provider.getPos();
+	        const widthT = provider.getWidth();
+	        dragging = false;
+	        resizing = false;
+	        direction = null;
+	        onDrop({
+	            posX,
+	            posY,
+	            widthT,
+	            event
+	        });
+	        window.removeEventListener('mousemove', onmousemove, false);
+	    };
+	    node.addEventListener('mousedown', onmousedown, false);
+	    return {
+	        destroy() {
+	            node.removeEventListener('mousedown', onmousedown, false);
+	            node.removeEventListener('mousemove', onmousemove, false);
+	            node.removeEventListener('mouseup', onmouseup, false);
+	        }
+	    };
+	}
+	//# sourceMappingURL=draggable.js.map
+
+	class ComponentPosProvider {
+	    constructor(component) {
+	        this.component = component;
+	    }
+	    getPos() {
+	        const { posX, posY } = this.component.get();
+	        return { posX, posY };
+	    }
+	    getWidth() {
+	        const { widthT } = this.component.get();
+	        return widthT;
+	    }
+	}
+	//# sourceMappingURL=componentPosProvider.js.map
+
 	/* src\Task.html generated by Svelte v2.16.0 */
 
+
+
 	function selected({$selection, model}) {
-		return $selection.indexOf(model) !== -1;
+		return $selection.indexOf(model.id) !== -1;
 	}
 
 	function row({$rowMap, model}) {
@@ -702,13 +851,42 @@ var SvelteGantt = (function () {
 	        dragging: false,
 	        overlapping: false,
 	        selected: false,
-	        resizing: false
+	        resizing: false,
+
+	        widthT: null,
+	        posX: null,
+	        posY: null
 	    }
 	}
 	var methods$1 = {
+	    select(event){
+	        const { model } = this.get();
+	        if(event.ctrlKey){
+	            this.root.selectionManager.toggleSelection(model.id);
+	        }
+	        else{
+	            this.root.selectionManager.selectSingle(model.id);
+	        }
+	        
+	        if(this.get().selected){
+	            this.root.api.tasks.raise.select(model);
+	        }
+	    },
 	    updateCursor(cursor){
 	        const element = this.refs.taskElement;
 	        element.style.cursor = cursor || 'default';
+	        // const cursorOnMove = (e) => {
+	        //     const { posX, widthT } = this.get()
+
+	        //     const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - posX;
+
+	        //     //TODO globally set cursor ON mousedown
+	        //     if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > widthT - resizeHandleWidth) {
+	        //         this.updateCursor('e-resize');
+	        //     }
+	        //     else{
+	        //         this.updateCursor();
+	        //     }
 	    },
 	    onclick(event){
 	        const { onTaskButtonClick } = this.store.get();
@@ -720,242 +898,109 @@ var SvelteGantt = (function () {
 	    }
 	};
 
+	function oncreate$1(){
+	}
 	function onstate({ changed, current, previous }) {
-	    // before first render
-	    // if(!previous){
-	    //     const left = this.root.utils.getPositionByDate(current.model.from);
-	    //     const right = this.root.utils.getPositionByDate(current.model.to); 
-	    //     this.set({posX:left, widthT:right-left, left, width:right-left});
-	    // }
+	    if(!current.dragging && !current.resizing){
+	        this.set({
+	            posX: current.left,
+	            widthT: current.width,
+	            posY: current.top,
+	        });
+	    }
 			}
 	function drag(node) {
-	                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
-	                const windowElement = window;
+	                const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-	                let mouseStartPosX, mouseStartPosY;
-	                let mouseStartRight;
-	                
-	                let originalRow;
-	                let taskOriginalFrom, taskOriginalTo;
-	                
+	                const ondrop = ({ posX, posY, widthT, event }) => {
+	                    const { model } = this.get();
+	                    const { taskMap, rowMap, rowPadding } = this.store.get();
+
+	                    let rowChangeValid = true;
+	                    //row switching
+	                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+	                    const sourceRow = rowMap[model.resourceId];
 	                    
-	                const onmousedown = (event) => {
-	                    if(event.which !== 1){
-	                        //debugger;
-	                        return;
-	                    }
+	                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+	                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+	                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+	                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+	                        const targetRow = rowMap[rowId];
 
-	                    const { left, posY, width, model } = this.get();
-
-	                    event.stopPropagation();
-	                    event.preventDefault();
-	                    
-	                    const { rowMap } = this.store.get();
-	                    originalRow = rowMap[model.resourceId];
-	                    taskOriginalFrom = model.from.clone();
-	                    taskOriginalTo = model.to.clone();
-
-	                    if(originalRow.model.enableDragging && model.enableDragging){
-	                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - left;
-	                        mouseStartPosY = DOMUtils.getRelativePos(rowContainerElement, event).y - posY;
-	                        mouseStartRight = left + width;
-
-	                        if(mouseStartPosX < resizeHandleWidth) {
-	                            this.set({
-	                                resizing: true,
-	                                direction: 'left'
-	                            });
-	                            //gantt.includeInRender = task;
-	                        }
-	                        else if(mouseStartPosX > width - resizeHandleWidth) {
-
-	                            this.set({
-	                                resizing: true,
-	                                direction: 'right'
-	                            });
-	                            //gantt.includeInRender = task;
+	                        if(targetRow.model.enableDragging){
+	                            //targetRow.moveTask(this);
+	                            model.resourceId = targetRow.model.id;
+	                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
 	                        }
 	                        else {
-	                            this.set({
-	                                dragging: true
-	                            });
-	                            // gantt.includeInRender = task;
+	                            rowChangeValid = false;
 	                        }
-
-	                        windowElement.addEventListener('mousemove', onmousemove, false);
-	                        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
 	                    }
-	                };
-	                
-	                const onmousemove = (event) => {
+	                    
+	                    this.set({dragging: false});
+	                    const task = taskMap[model.id];
 
-	                    const { resizing, dragging } = this.get();
+	                    if(rowChangeValid) {
+	                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+	                        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+	                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+	                        const newRight = this.root.utils.getPositionByDate(newTo);
 
-	                    event.preventDefault();
-	                    if(resizing) {
-	                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-	                        const { direction, left, width } = this.get();
+	                        Object.assign(model, {
+	                            from: newFrom,
+	                            to: newTo
+	                        });
 	                        
-	                        if(direction === 'left') { //resize ulijevo
-	                            if(mousePos.x > left + width) {
-	                                this.set({
-	                                    left: mouseStartRight,
-	                                    posX: mouseStartRight,
-	                                    width: mouseStartRight - mousePos.x,
-	                                    widthT: mouseStartRight - mousePos.x,
-	                                    direction: 'right',
-	                                });
-	                                mouseStartRight = mouseStartRight + width;
-	                            }
-	                            else{
-	                                this.set({
-	                                    left: mousePos.x,
-	                                    posX: mousePos.x,
-	                                    width: mouseStartRight - mousePos.x,
-	                                    widthT: mouseStartRight - mousePos.x
-	                                });
-	                            }
-	                        }
-	                        else if(direction === 'right') {//resize desno
-	                            if(mousePos.x <= left) {
-	                                this.set({
-	                                    width: left - mousePos.x,
-	                                    widthT: left - mousePos.x,
-	                                    left: mousePos.x,
-	                                    posX: mousePos.x,
-	                                    direction: 'left'
-	                                });
-	                                mouseStartRight = left;
-	                            }
-	                            else {
-	                                this.set({
-	                                    width: mousePos.x - left,
-	                                    widthT: mousePos.x - left
-	                                });
-	                            }
-	                        }
-	                    }
-
-	                    // mouseup
-	                    if(dragging) {
-	                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-
-	                        this.set({
-	                            left: mousePos.x - mouseStartPosX,
-	                            posX: mousePos.x - mouseStartPosX,
-	                            posY: mousePos.y - mouseStartPosY
+	                        this.store.updateTask({
+	                            ...task,
+	                            left: newLeft,
+	                            width: newRight - newLeft,
+	                            top: rowPadding + rowMap[model.resourceId].posY,
+	                            model
 	                        });
 	                    }
-	                    
+	                    else {
+	                        // reset position
+	                        this.store.updateTask({
+	                            ...task
+	                        });
+	                    }
 	                };
 
-	                const onmouseup = (event) => {
-	                    
-	                    const { left, width, dragging, model } = this.get();
-
-	                    const { taskMap, gantt, rowHeight, rowPadding, rowMap } = this.store.get();
-
-	                    if(dragging) {
-	                        //row switching
-	                        const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-	                        const sourceRow = rowMap[model.resourceId];
-
-	                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-	                        let rowElement = elements.find((element) => element.classList.contains('row'));
-	                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-
-	                            const { allRows } = this.store.get(); //visibleRows
-	                            const targetRow = allRows.find((r) => r.rowElement === rowElement); //vr
-
-	                            if(targetRow.model.enableDragging){
-	                                //targetRow.moveTask(this);
-	                                model.resourceId = targetRow.model.id;
-	                                gantt.api.tasks.raise.switchRow(this, targetRow, sourceRow);
-	                            }
-	                        }
-	                    }
-	                    
-	                    
-
-	                    this.set({
-	                        posX: left, //Math.ceil(left),
-	                        posY: rowPadding + rowMap[model.resourceId].posY,
-	                        widthT: width, // Math.ceil(width),
-	                        
-	                        dragging: false,
-	                        resizing: false,
-	                        direction: null,
-	                    });
-
-	                    const task = taskMap[model.id];
-	                    
-
-	                    task.left = left;
-	                    task.width = width;
-	                    task.posX = Math.ceil(left);
-	                    task.posY = rowPadding + rowMap[model.resourceId].posY;
-
-	                    task.updateDate();
-	                    task.updatePosition();
-	                    this.store.updateTask(task);
-
-
-	                    //gantt.includeInRender = null;
-	                    windowElement.removeEventListener('mousemove', onmousemove, false);
-	                    
-	                    // gantt.api.tasks.raise.moveEnd(task, task.row, originalRow);
-	                    // if(!taskOriginalFrom.isSame(task.model.from) || !taskOriginalTo.isSame(task.model.to) || (originalRow && originalRow !== task.row)) {
-	                    //     gantt.api.tasks.raise.changed(task, task.row, originalRow);
-	                    // }
-	                };
-
-	                node.addEventListener('mousedown', onmousedown, false);
-
-	                const cursorOnMove = (e) => {
-	                    const { left, width } = this.get();
-
-	                    const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - left;
-
-	                    //TODO globally set cursor ON mousedown
-	                    if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > width - resizeHandleWidth) {
-	                        this.updateCursor('e-resize');
-	                    }
-	                    else{
-	                        this.updateCursor();
-	                    }
-
-	                };
-	                node.addEventListener('mousemove', cursorOnMove, false);
-
-		return {
-			destroy() {
-				node.removeEventListener('mousedown', onmousedown, false);
-				//windowElement.removeEventListener('mousemove', onmousemove, false);
-				node.removeEventListener('mousemove', onmousemove, false);
-	                        node.removeEventListener('mouseup', onmouseup, false);
-			}
-		}
+	                return draggable(node, {
+	                    onDown: (state) => {
+	                        this.set({dragging: true});
+	                    }, 
+	                    onResize: (state) => {
+	                        this.set(state);
+	                        const { posX, posY, widthT } = this.get();
+	                        console.log('resize', {posX, posY, widthT});
+	                    }, 
+	                    onDrag: ({posX, posY}) => {
+	                        this.set({posX, posY});
+	                        console.log('drag', this.get().posX, this.get().posY, this.get().widthT);
+	                    }, 
+	                    dragAllowed: () => {
+	                        const { model } = this.get();
+	                        const { rowMap } = this.store.get();
+	                        const row = rowMap[model.resourceId];
+	                        return row.model.enableDragging && model.enableDragging
+	                    },
+	                    resizeAllowed: () => {
+	                        const { model } = this.get();
+	                        const { rowMap } = this.store.get();
+	                        const row = rowMap[model.resourceId];
+	                        return row.model.enableDragging && model.enableDragging
+	                    },
+	                    onDrop: ondrop, 
+	                    container: rowContainerElement, 
+	                    resizeHandleWidth
+	                }, new ComponentPosProvider(this));
 	            }
-	function selectable(node) {
-	    const { gantt } = this.store.get();
-	    node.addEventListener('click', (e) => {
-	        const { model } = this.get();
-	        if(e.ctrlKey){
-	            gantt.selectionManager.toggleSelection(model);
-	        }
-	        else{
-	            gantt.selectionManager.selectSingle(model);
-	        }
-
-	        if(model.selected){
-	            gantt.api.tasks.raise.select(model);
-	        }
-	    });
-	}
 	const file$1 = "src\\Task.html";
 
 	function create_main_fragment$1(component, ctx) {
-		var div2, div0, text0, div1, text1, text2_value = ctx.row.model.label, text2, text3, div2_class_value, drag_action, selectable_action, current;
+		var div2, div0, text0, div1, text1, span, text2, text3_value = ctx.posX|0, text3, text4, text5_value = ctx.posY|0, text5, text6, text7_value = ctx.left|0, text7, text8, text9_value = ctx.top|0, text9, text10, div2_class_value, drag_action, current;
 
 		function select_block_type(ctx) {
 			if (ctx.model.html) return create_if_block_1;
@@ -968,6 +1013,10 @@ var SvelteGantt = (function () {
 
 		var if_block1 = (ctx.model.showButton) && create_if_block$1(component, ctx);
 
+		function click_handler(event) {
+			component.select(event);
+		}
+
 		return {
 			c: function create() {
 				div2 = createElement("div");
@@ -976,15 +1025,26 @@ var SvelteGantt = (function () {
 				div1 = createElement("div");
 				if_block0.c();
 				text1 = createText("\r\n        ");
-				text2 = createText(text2_value);
-				text3 = createText("\r\n\r\n        ");
+				span = createElement("span");
+				text2 = createText("x:");
+				text3 = createText(text3_value);
+				text4 = createText(" y:");
+				text5 = createText(text5_value);
+				text6 = createText(", x:");
+				text7 = createText(text7_value);
+				text8 = createText(" y:");
+				text9 = createText(text9_value);
+				text10 = createText("\r\n        \r\n\r\n        ");
 				if (if_block1) if_block1.c();
-				div0.className = "task-background svelte-1j9ey43";
+				div0.className = "sg-task-background svelte-1vo4mn7";
 				setStyle(div0, "width", "" + ctx.model.amountDone + "%");
-				addLoc(div0, file$1, 11, 4, 312);
-				div1.className = "task-content svelte-1j9ey43";
-				addLoc(div1, file$1, 12, 4, 387);
-				div2.className = div2_class_value = "task " + ctx.model.classes + " svelte-1j9ey43";
+				addLoc(div0, file$1, 11, 4, 325);
+				span.className = "debug svelte-1vo4mn7";
+				addLoc(span, file$1, 20, 8, 631);
+				div1.className = "sg-task-content svelte-1vo4mn7";
+				addLoc(div1, file$1, 12, 4, 403);
+				addListener(div2, "click", click_handler);
+				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-1vo4mn7";
 				setStyle(div2, "width", "" + ctx.widthT + "px");
 				setStyle(div2, "height", "" + ctx.height + "px");
 				setStyle(div2, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
@@ -1001,12 +1061,19 @@ var SvelteGantt = (function () {
 				append(div2, div1);
 				if_block0.m(div1, null);
 				append(div1, text1);
-				append(div1, text2);
-				append(div1, text3);
+				append(div1, span);
+				append(span, text2);
+				append(span, text3);
+				append(span, text4);
+				append(span, text5);
+				append(span, text6);
+				append(span, text7);
+				append(span, text8);
+				append(span, text9);
+				append(div1, text10);
 				if (if_block1) if_block1.m(div1, null);
 				component.refs.taskElement = div2;
 				drag_action = drag.call(component, div2) || {};
-				selectable_action = selectable.call(component, div2) || {};
 				current = true;
 			},
 
@@ -1024,8 +1091,20 @@ var SvelteGantt = (function () {
 					if_block0.m(div1, text1);
 				}
 
-				if ((changed.row) && text2_value !== (text2_value = ctx.row.model.label)) {
-					setData(text2, text2_value);
+				if ((changed.posX) && text3_value !== (text3_value = ctx.posX|0)) {
+					setData(text3, text3_value);
+				}
+
+				if ((changed.posY) && text5_value !== (text5_value = ctx.posY|0)) {
+					setData(text5, text5_value);
+				}
+
+				if ((changed.left) && text7_value !== (text7_value = ctx.left|0)) {
+					setData(text7, text7_value);
+				}
+
+				if ((changed.top) && text9_value !== (text9_value = ctx.top|0)) {
+					setData(text9, text9_value);
 				}
 
 				if (ctx.model.showButton) {
@@ -1041,7 +1120,7 @@ var SvelteGantt = (function () {
 					if_block1 = null;
 				}
 
-				if ((changed.model) && div2_class_value !== (div2_class_value = "task " + ctx.model.classes + " svelte-1j9ey43")) {
+				if ((changed.model) && div2_class_value !== (div2_class_value = "sg-task " + ctx.model.classes + " svelte-1vo4mn7")) {
 					div2.className = div2_class_value;
 				}
 
@@ -1085,9 +1164,9 @@ var SvelteGantt = (function () {
 
 				if_block0.d();
 				if (if_block1) if_block1.d();
+				removeListener(div2, "click", click_handler);
 				if (component.refs.taskElement === div2) component.refs.taskElement = null;
 				if (drag_action && typeof drag_action.destroy === 'function') drag_action.destroy.call(component);
-				if (selectable_action && typeof selectable_action.destroy === 'function') selectable_action.destroy.call(component);
 			}
 		};
 	}
@@ -1185,7 +1264,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (23:8) {#if model.showButton}
+	// (24:8) {#if model.showButton}
 	function create_if_block$1(component, ctx) {
 		var span, raw_value = ctx.model.buttonHtml, span_class_value;
 
@@ -1197,8 +1276,8 @@ var SvelteGantt = (function () {
 			c: function create() {
 				span = createElement("span");
 				addListener(span, "click", click_handler);
-				span.className = span_class_value = "task-button " + ctx.model.buttonClasses + " svelte-1j9ey43";
-				addLoc(span, file$1, 23, 12, 677);
+				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1vo4mn7";
+				addLoc(span, file$1, 24, 12, 759);
 			},
 
 			m: function mount(target, anchor) {
@@ -1211,7 +1290,7 @@ var SvelteGantt = (function () {
 					span.innerHTML = raw_value;
 				}
 
-				if ((changed.model) && span_class_value !== (span_class_value = "task-button " + ctx.model.buttonClasses + " svelte-1j9ey43")) {
+				if ((changed.model) && span_class_value !== (span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1vo4mn7")) {
 					span.className = span_class_value;
 				}
 			},
@@ -1253,6 +1332,8 @@ var SvelteGantt = (function () {
 		if (!('dragging' in this._state)) console.warn("<Task> was created without expected data property 'dragging'");
 		if (!('resizing' in this._state)) console.warn("<Task> was created without expected data property 'resizing'");
 		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
+		if (!('left' in this._state)) console.warn("<Task> was created without expected data property 'left'");
+		if (!('top' in this._state)) console.warn("<Task> was created without expected data property 'top'");
 		this._intro = !!options.intro;
 
 		this._handlers.state = [onstate];
@@ -1264,6 +1345,7 @@ var SvelteGantt = (function () {
 		this._fragment = create_main_fragment$1(this, this._state);
 
 		this.root._oncreate.push(() => {
+			oncreate$1.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -1301,7 +1383,7 @@ var SvelteGantt = (function () {
 	function data$1(){
 	    return {}
 	}
-	function oncreate$1() {
+	function oncreate$2() {
 	}
 	const file$2 = "src\\Column.html";
 
@@ -1363,7 +1445,7 @@ var SvelteGantt = (function () {
 		this._fragment = create_main_fragment$2(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$1.call(this);
+			oncreate$2.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -1882,35 +1964,33 @@ var SvelteGantt = (function () {
 
 	/* src\TimeRange.html generated by Svelte v2.16.0 */
 
-	function data$3(){
-	    return {
-	        timeRange: null
+	function oncreate$3() {
+	}
+	function ondestroy$1(){ }
+	function onstate$1({ changed, current, previous }) {
+	    if(!current.resizing){
+	        this.set({
+	            posX: current.left,
+	            widthT: current.width
+	        });
 	    }
-	}
-	function oncreate$2() {
-	    const { timeRange } = this.get();
-	    timeRange.component = this;
-	}
-	function ondestroy$1(){
-	    const { timeRange } = this.get();
-	    timeRange.component = null;
-	}
+			}
 	const file$4 = "src\\TimeRange.html";
 
 	function create_main_fragment$4(component, ctx) {
-		var div1, div0, text_value = ctx.timeRange.model.label, text, current;
+		var div1, div0, text_value = ctx.model.label, text, current;
 
 		return {
 			c: function create() {
 				div1 = createElement("div");
 				div0 = createElement("div");
 				text = createText(text_value);
-				div0.className = "s-g-time-range-label svelte-jnqdw2";
-				addLoc(div0, file$4, 1, 4, 126);
-				div1.className = "s-g-time-range svelte-jnqdw2";
-				setStyle(div1, "width", "" + ctx.timeRange.width + "px");
-				setStyle(div1, "left", "" + ctx.timeRange.left + "px");
-				toggleClass(div1, "moving", ctx.timeRange.resizing);
+				div0.className = "sg-time-range-label svelte-18yq9be";
+				addLoc(div0, file$4, 1, 4, 96);
+				div1.className = "sg-time-range svelte-18yq9be";
+				setStyle(div1, "width", "" + ctx.widthT + "px");
+				setStyle(div1, "left", "" + ctx.posX + "px");
+				toggleClass(div1, "moving", ctx.resizing);
 				addLoc(div1, file$4, 0, 0, 0);
 			},
 
@@ -1922,14 +2002,20 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.timeRange) && text_value !== (text_value = ctx.timeRange.model.label)) {
+				if ((changed.model) && text_value !== (text_value = ctx.model.label)) {
 					setData(text, text_value);
 				}
 
-				if (changed.timeRange) {
-					setStyle(div1, "width", "" + ctx.timeRange.width + "px");
-					setStyle(div1, "left", "" + ctx.timeRange.left + "px");
-					toggleClass(div1, "moving", ctx.timeRange.resizing);
+				if (changed.widthT) {
+					setStyle(div1, "width", "" + ctx.widthT + "px");
+				}
+
+				if (changed.posX) {
+					setStyle(div1, "left", "" + ctx.posX + "px");
+				}
+
+				if (changed.resizing) {
+					toggleClass(div1, "moving", ctx.resizing);
 				}
 			},
 
@@ -1956,16 +2042,23 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(data$3(), options.data);
-		if (!('timeRange' in this._state)) console.warn("<TimeRange> was created without expected data property 'timeRange'");
+		this._state = assign({}, options.data);
+		if (!('resizing' in this._state)) console.warn("<TimeRange> was created without expected data property 'resizing'");
+		if (!('widthT' in this._state)) console.warn("<TimeRange> was created without expected data property 'widthT'");
+		if (!('posX' in this._state)) console.warn("<TimeRange> was created without expected data property 'posX'");
+		if (!('model' in this._state)) console.warn("<TimeRange> was created without expected data property 'model'");
 		this._intro = !!options.intro;
 
+		this._handlers.state = [onstate$1];
+
 		this._handlers.destroy = [ondestroy$1];
+
+		onstate$1.call(this, { changed: assignTrue({}, this._state), current: this._state });
 
 		this._fragment = create_main_fragment$4(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$2.call(this);
+			oncreate$3.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -1987,108 +2080,71 @@ var SvelteGantt = (function () {
 
 	/* src\TimeRangeHeader.html generated by Svelte v2.16.0 */
 
-	function data$4(){
+
+
+	function data$3(){
 	    return {
-	        timeRange: null
+	        resizing: false,
+	        widthT: null,
+	        posX: null
 	    }
 	}
-	function oncreate$3() {
-	    const { timeRange } = this.get();
-	    timeRange.handle = this;
-	}
+	function onstate$2({ changed, current, previous }) {
+	    if(!current.resizing){
+	        this.set({
+	            posX: current.left,
+	            widthT: current.width
+	        });
+	    }
+			}
 	function drag$1(node) {
-	    const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
-	    const windowElement = window;
+	    const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-	    let mouseStartPosX;
-	    let mouseStartRight;
-	    
-	    const { timeRange } = this.get();
-	    
-	    const onmousedown = (event) => {
-	        event.stopPropagation();
-	        event.preventDefault();
+
+	    const ondrop = ({ posX, widthT, event }) => {
+	        const { model } = this.get();
 	        
-	        {
-	            mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - timeRange.left;
-	            mouseStartRight = timeRange.left + timeRange.width;
-
-	            if(mouseStartPosX < resizeHandleWidth) {
-	                timeRange.resizing = true;
-	                timeRange.direction = 'left';
-	            }
-	            else if(mouseStartPosX > timeRange.width - resizeHandleWidth) {
-	                timeRange.resizing = true;
-	                timeRange.direction = 'right';
-	            }
-	            else {
-	                timeRange.dragging = true;
-	            }
-
-	            windowElement.addEventListener('mousemove', onmousemove, false);
-	            DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
-	        }
-	    };
-	    
-	    const onmousemove = (event) => {
-	        event.preventDefault();
-	        if(timeRange.resizing) {
-	            const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-	            
-	            if(timeRange.direction === 'left') { 
-	                if(mousePos.x > timeRange.left + timeRange.width) {
-	                    timeRange.left = mouseStartRight;
-	                    timeRange.width = timeRange.left - mousePos.x;
-	                    timeRange.direction = 'right';
-	                    mouseStartRight = timeRange.left + timeRange.width;
-	                }
-	                else{
-	                    timeRange.left = mousePos.x;
-	                    timeRange.width = mouseStartRight - mousePos.x;
-	                }
-	            }
-	            else if(timeRange.direction === 'right') {//resize desno
-	                if(mousePos.x <= timeRange.left) {
-	                    timeRange.width = timeRange.left - mousePos.x;
-	                    timeRange.left = mousePos.x;
-	                    timeRange.direction = 'left';
-	                    mouseStartRight = timeRange.left + timeRange.width;
-	                }
-	                else {
-	                    timeRange.width = mousePos.x - timeRange.left;
-	                }
-	            }
-	        }
-
-	        if(timeRange.resizing){
-	            timeRange.updateView();
-	        }
-	    };
-
-	    const onmouseup = (event) => {
-	        timeRange.updateDate();
-	        timeRange.updatePosition();
+	        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+	        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+	        const newLeft = this.root.utils.getPositionByDate(newFrom);
+	        const newRight = this.root.utils.getPositionByDate(newTo);
 	        
-	        timeRange.dragging = false;
-	        timeRange.resizing = false;
-	        timeRange.direction = null;
-	        timeRange.updateView();
+	        Object.assign(model, {
+	            from: newFrom,
+	            to: newTo
+	        });
 
-	        windowElement.removeEventListener('mousemove', onmousemove, false);
+	        var state = {
+	            resizing: false,
+	            left: newLeft,
+	            width: newRight - newLeft,
+	            model
+	        };
+
+	        updateEntity(state);
+	        window.removeEventListener('mousemove', onmousemove, false);
 	    };
 
-	    node.addEventListener('mousedown', onmousedown, false);
+	    const updateEntity = (state) => {
+	        const { model } = this.get();
+	        const { timeRangeMap } = this.store.get();
+	        const entity = timeRangeMap[model.id];
+	        this.store.updateTimeRange({...entity, ...state});
+	    };
 
-					return {
-						update() {
-	            
-						},
-						destroy() {
-	            node.removeEventListener('mousedown', onmousedown, false);
-							node.removeEventListener('mousemove', onmousemove, false);
-	            node.removeEventListener('mouseup', onmouseup, false);
-						}
-					}
+	    return draggable(node, {
+	        onDown: (state) => {
+	            updateEntity({...state, resizing: true});
+	        }, 
+	        onResize: ({posX, widthT}) => {
+	            updateEntity({posX, widthT});
+	        },
+	        dragAllowed: false,
+	        resizeAllowed: true,
+	        onDrop: ondrop, 
+	        container: rowContainerElement, 
+	        resizeHandleWidth
+	    }, new ComponentPosProvider(this));
 	}
 	const file$5 = "src\\TimeRangeHeader.html";
 
@@ -2101,13 +2157,13 @@ var SvelteGantt = (function () {
 				div0 = createElement("div");
 				text = createText("\r\n    ");
 				div1 = createElement("div");
-				div0.className = "s-g-time-range-handle-left svelte-yev7ut";
-				addLoc(div0, file$5, 1, 4, 100);
-				div1.className = "s-g-time-range-handle-right svelte-yev7ut";
-				addLoc(div1, file$5, 2, 4, 161);
-				div2.className = "s-g-time-range-control svelte-yev7ut";
-				setStyle(div2, "width", "" + ctx.timeRange.width + "px");
-				setStyle(div2, "left", "" + ctx.timeRange.left + "px");
+				div0.className = "sg-time-range-handle-left svelte-16dwney";
+				addLoc(div0, file$5, 1, 4, 80);
+				div1.className = "sg-time-range-handle-right svelte-16dwney";
+				addLoc(div1, file$5, 2, 4, 140);
+				div2.className = "sg-time-range-control svelte-16dwney";
+				setStyle(div2, "width", "" + ctx.widthT + "px");
+				setStyle(div2, "left", "" + ctx.posX + "px");
 				addLoc(div2, file$5, 0, 0, 0);
 			},
 
@@ -2122,9 +2178,12 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.timeRange) {
-					setStyle(div2, "width", "" + ctx.timeRange.width + "px");
-					setStyle(div2, "left", "" + ctx.timeRange.left + "px");
+				if (changed.widthT) {
+					setStyle(div2, "width", "" + ctx.widthT + "px");
+				}
+
+				if (changed.posX) {
+					setStyle(div2, "left", "" + ctx.posX + "px");
 				}
 			},
 
@@ -2154,14 +2213,18 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(data$4(), options.data);
-		if (!('timeRange' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'timeRange'");
+		this._state = assign(data$3(), options.data);
+		if (!('widthT' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'widthT'");
+		if (!('posX' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'posX'");
 		this._intro = !!options.intro;
+
+		this._handlers.state = [onstate$2];
+
+		onstate$2.call(this, { changed: assignTrue({}, this._state), current: this._state });
 
 		this._fragment = create_main_fragment$5(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$3.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -2181,71 +2244,360 @@ var SvelteGantt = (function () {
 	TimeRangeHeader.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	};
 
-	class SvelteTask {
-	    constructor(gantt, task) {
-	        // defaults, todo object.assign these
+	/* src\Milestone.html generated by Svelte v2.16.0 */
+
+
+
+
+	function selected$1({$selection, model}) {
+		return $selection.indexOf(model.id) !== -1;
+	}
+
+	function row$1({$rowMap, model}) {
+		return $rowMap[model.resourceId];
+	}
+
+	function data$4() {
+	    return {
+	        dragging: false,
+	        selected: false,
+
+	        posX: null,
+	        posY: null,
+	        height: 20
+	    }
+	}
+	var methods$2 = {
+	    select(event){
+	        const { model } = this.get();
+	        if(event.ctrlKey){
+	            this.root.selectionManager.toggleSelection(model.id);
+	        }
+	        else{
+	            this.root.selectionManager.selectSingle(model.id);
+	        }
+	        
+	        if(this.get().selected){
+	            this.root.api.tasks.raise.select(model);
+	        }
+	    }
+	};
+
+	function oncreate$4(){
+
+	    const { model } = this.get();
+
+	    const left = this.root.utils.getPositionByDate(model.from);
+	    const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
+	    const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
+
+	    this.set({
+	        left,
+	        top,
+	        height
+	    });
+
+	}
+	function onstate$3({ changed, current, previous }) {
+	    if(!current.dragging){
+	        this.set({
+	            posX: current.left,
+	            posY: current.top,
+	        });
+	    }
+			}
+	function drag$2(node) {
+	                const { rowContainerElement } = this.store.get();
+	                
+	                const ondrop = ({ posX, posY, widthT, event }) => {
+	                    const { model } = this.get();
+	                    const { rowMap, rowPadding } = this.store.get();
+
+	                    let rowChangeValid = true;
+	                    //row switching
+	                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+	                    const sourceRow = rowMap[model.resourceId];
+	                    
+	                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+	                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+	                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+	                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+	                        const targetRow = rowMap[rowId];
+
+	                        if(targetRow.model.enableDragging){
+	                            //targetRow.moveTask(this);
+	                            model.resourceId = targetRow.model.id;
+	                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
+	                        }
+	                        else {
+	                            rowChangeValid = false;
+	                        }
+	                    }
+	                    
+	                    this.set({dragging: false});
+
+	                    if(rowChangeValid) {
+	                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX));
+	                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+
+	                        Object.assign(model, {
+	                            from: newFrom,
+	                        });
+	                        
+	                        this.set({
+	                            left: newLeft,
+	                            top: rowPadding + rowMap[model.resourceId].posY,
+	                            model
+	                        });
+	                    }
+	                    else {
+	                        // reset position
+	                        const { left, top } = this.get();
+	                        this.set({ left, top });
+	                    }
+	                };
+
+	                return draggable(node, {
+	                    onDown: (state) => {
+	                        this.set({...state, dragging: true});
+	                    }, 
+	                    onDrag: ({posX, posY}) => {
+	                        this.set({posX, posY});
+	                    },
+	                    dragAllowed: true,
+	                    resizeAllowed: false,
+	                    onDrop: ondrop, 
+	                    container: rowContainerElement, 
+	                }, new ComponentPosProvider(this));
+	            }
+	const file$6 = "src\\Milestone.html";
+
+	function create_main_fragment$6(component, ctx) {
+		var div1, div0, text0, span, text1, text2_value = ctx.posX|0, text2, text3, text4_value = ctx.posY|0, text4, text5, text6_value = ctx.left|0, text6, text7, text8_value = ctx.top|0, text8, div1_class_value, drag_action, current;
+
+		function click_handler(event) {
+			component.select(event);
+		}
+
+		return {
+			c: function create() {
+				div1 = createElement("div");
+				div0 = createElement("div");
+				text0 = createText("\r\n        ");
+				span = createElement("span");
+				text1 = createText("x:");
+				text2 = createText(text2_value);
+				text3 = createText(" y:");
+				text4 = createText(text4_value);
+				text5 = createText(", x:");
+				text6 = createText(text6_value);
+				text7 = createText(" y:");
+				text8 = createText(text8_value);
+				div0.className = "inside svelte-ofxzsb";
+				addLoc(div0, file$6, 7, 4, 269);
+				span.className = "debug";
+				addLoc(span, file$6, 8, 8, 305);
+				addListener(div1, "click", click_handler);
+				div1.className = div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-ofxzsb";
+				setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				setStyle(div1, "height", "" + ctx.height + "px");
+				setStyle(div1, "width", "" + ctx.height + "px");
+				toggleClass(div1, "selected", ctx.selected);
+				toggleClass(div1, "moving", ctx.dragging);
+				addLoc(div1, file$6, 0, 0, 0);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div1, anchor);
+				append(div1, div0);
+				append(div1, text0);
+				append(div1, span);
+				append(span, text1);
+				append(span, text2);
+				append(span, text3);
+				append(span, text4);
+				append(span, text5);
+				append(span, text6);
+				append(span, text7);
+				append(span, text8);
+				component.refs.milestoneElement = div1;
+				drag_action = drag$2.call(component, div1) || {};
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.posX) && text2_value !== (text2_value = ctx.posX|0)) {
+					setData(text2, text2_value);
+				}
+
+				if ((changed.posY) && text4_value !== (text4_value = ctx.posY|0)) {
+					setData(text4, text4_value);
+				}
+
+				if ((changed.left) && text6_value !== (text6_value = ctx.left|0)) {
+					setData(text6, text6_value);
+				}
+
+				if ((changed.top) && text8_value !== (text8_value = ctx.top|0)) {
+					setData(text8, text8_value);
+				}
+
+				if ((changed.model) && div1_class_value !== (div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-ofxzsb")) {
+					div1.className = div1_class_value;
+				}
+
+				if (changed.posX || changed.posY) {
+					setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				}
+
+				if (changed.height) {
+					setStyle(div1, "height", "" + ctx.height + "px");
+					setStyle(div1, "width", "" + ctx.height + "px");
+				}
+
+				if ((changed.model || changed.selected)) {
+					toggleClass(div1, "selected", ctx.selected);
+				}
+
+				if ((changed.model || changed.dragging)) {
+					toggleClass(div1, "moving", ctx.dragging);
+				}
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: run,
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div1);
+				}
+
+				removeListener(div1, "click", click_handler);
+				if (component.refs.milestoneElement === div1) component.refs.milestoneElement = null;
+				if (drag_action && typeof drag_action.destroy === 'function') drag_action.destroy.call(component);
+			}
+		};
+	}
+
+	function Milestone(options) {
+		this._debugName = '<Milestone>';
+		if (!options || (!options.target && !options.root)) {
+			throw new Error("'target' is a required option");
+		}
+		if (!options.store) {
+			throw new Error("<Milestone> references store properties, but no store was provided");
+		}
+
+		init(this, options);
+		this.refs = {};
+		this._state = assign(assign(this.store._init(["selection","rowMap"]), data$4()), options.data);
+		this.store._add(this, ["selection","rowMap"]);
+
+		this._recompute({ $selection: 1, model: 1, $rowMap: 1 }, this._state);
+		if (!('$selection' in this._state)) console.warn("<Milestone> was created without expected data property '$selection'");
+		if (!('model' in this._state)) console.warn("<Milestone> was created without expected data property 'model'");
+		if (!('$rowMap' in this._state)) console.warn("<Milestone> was created without expected data property '$rowMap'");
+		if (!('posX' in this._state)) console.warn("<Milestone> was created without expected data property 'posX'");
+		if (!('posY' in this._state)) console.warn("<Milestone> was created without expected data property 'posY'");
+		if (!('height' in this._state)) console.warn("<Milestone> was created without expected data property 'height'");
+
+		if (!('dragging' in this._state)) console.warn("<Milestone> was created without expected data property 'dragging'");
+		if (!('left' in this._state)) console.warn("<Milestone> was created without expected data property 'left'");
+		if (!('top' in this._state)) console.warn("<Milestone> was created without expected data property 'top'");
+		this._intro = !!options.intro;
+
+		this._handlers.state = [onstate$3];
+
+		this._handlers.destroy = [removeFromStore];
+
+		onstate$3.call(this, { changed: assignTrue({}, this._state), current: this._state });
+
+		this._fragment = create_main_fragment$6(this, this._state);
+
+		this.root._oncreate.push(() => {
+			oncreate$4.call(this);
+			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
+		});
+
+		if (options.target) {
+			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			this._fragment.c();
+			this._mount(options.target, options.anchor);
+
+			flush(this);
+		}
+
+		this._intro = true;
+	}
+
+	assign(Milestone.prototype, protoDev);
+	assign(Milestone.prototype, methods$2);
+
+	Milestone.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('selected' in newState && !this._updatingReadonlyProperty) throw new Error("<Milestone>: Cannot set read-only property 'selected'");
+		if ('row' in newState && !this._updatingReadonlyProperty) throw new Error("<Milestone>: Cannot set read-only property 'row'");
+	};
+
+	Milestone.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$selection || changed.model) {
+			if (this._differs(state.selected, (state.selected = selected$1(state)))) changed.selected = true;
+		}
+
+		if (changed.$rowMap || changed.model) {
+			if (this._differs(state.row, (state.row = row$1(state)))) changed.row = true;
+		}
+	};
+
+	class TaskFactory {
+	    constructor(gantt) {
+	        this.gantt = gantt;
+	    }
+	    createTask(model) {
 	        // id of task, every task needs to have a unique one
 	        //task.id = task.id || undefined;
 	        // completion %, indicated on task
-	        task.amountDone = task.amountDone || 0;
+	        model.amountDone = model.amountDone || 0;
 	        // css classes
-	        task.classes = task.classes || '';
+	        model.classes = model.classes || '';
 	        // datetime task starts on, currently moment-js object
-	        task.from = task.from || null;
+	        model.from = model.from || null;
 	        // datetime task ends on, currently moment-js object
-	        task.to = task.to || null;
+	        model.to = model.to || null;
 	        // label of task
-	        task.label = task.label || undefined;
+	        model.label = model.label || undefined;
 	        // html content of task, will override label
-	        task.html = task.html || undefined;
+	        model.html = model.html || undefined;
 	        // show button bar
-	        task.showButton = task.showButton || false;
+	        model.showButton = model.showButton || false;
 	        // button classes, useful for fontawesome icons
-	        task.buttonClasses = task.buttonClasses || '';
+	        model.buttonClasses = model.buttonClasses || '';
 	        // html content of button
-	        task.buttonHtml = task.buttonHtml || '';
+	        model.buttonHtml = model.buttonHtml || '';
 	        // enable dragging of task
-	        task.enableDragging = task.enableDragging === undefined ? true : task.enableDragging;
-	        this.gantt = gantt;
-	        this.model = task;
-	        this.row = gantt.store.get().rowMap[task.resourceId];
-	        //height, translateX, translateY, resourceId
-	        this.height = this.getHeight();
-	        this.updatePosition();
-	        // TODO extract to update vertical position
-	        this.posY = this.getPosY();
+	        model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
+	        const left = this.gantt.utils.getPositionByDate(model.from);
+	        const right = this.gantt.utils.getPositionByDate(model.to);
+	        return {
+	            model,
+	            left: left,
+	            width: right - left,
+	            height: this.getHeight(model),
+	            top: this.getPosY(model)
+	        };
 	    }
-	    getHeight() {
-	        return this.row.height - 2 * this.gantt.store.get().rowPadding;
+	    row(resourceId) {
+	        return this.gantt.store.get().rowMap[resourceId];
 	    }
-	    getPosY() {
-	        return this.row.posY + this.gantt.store.get().rowPadding;
+	    getHeight(model) {
+	        return this.row(model.resourceId).height - 2 * this.gantt.store.get().rowPadding;
 	    }
-	    updatePosition() {
-	        const left = this.gantt.utils.getPositionByDate(this.model.from);
-	        const right = this.gantt.utils.getPositionByDate(this.model.to);
-	        this.left = left;
-	        this.width = right - left;
-	        if (!this.dragging && !this.resizing) {
-	            this.posX = this.left; // Math.ceil(this.left);
-	            this.widthT = this.width; //Math.ceil(this.width);
-	        }
-	    }
-	    updateDate() {
-	        const from = this.gantt.utils.getDateByPosition(this.left);
-	        const to = this.gantt.utils.getDateByPosition(this.left + this.width);
-	        const roundedFrom = this.gantt.utils.roundTo(from);
-	        const roundedTo = this.gantt.utils.roundTo(to);
-	        if (!roundedFrom.isSame(roundedTo)) {
-	            this.model.from = roundedFrom;
-	            this.model.to = roundedTo;
-	        }
-	    }
-	    overlaps(other) {
-	        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
-	    }
-	    updateView() {
-	        if (this.component) ;
+	    getPosY(model) {
+	        return this.row(model.resourceId).posY + this.gantt.store.get().rowPadding;
 	    }
 	}
 	//# sourceMappingURL=task.js.map
@@ -2270,7 +2622,6 @@ var SvelteGantt = (function () {
 	    }
 	    addTask(task) {
 	        //task.model.resourceId = this.model.id;
-	        task.row = this;
 	        this.tasks.push(task);
 	    }
 	    moveTask(task) {
@@ -2293,38 +2644,21 @@ var SvelteGantt = (function () {
 	}
 	//# sourceMappingURL=row.js.map
 
-	class SvelteTimeRange {
-	    constructor(gantt, timeRange) {
+	class TimeRangeFactory {
+	    constructor(gantt) {
 	        this.gantt = gantt;
-	        this.model = timeRange;
-	        this.updatePosition();
 	    }
-	    updatePosition() {
-	        const left = this.gantt.utils.getPositionByDate(this.model.from);
-	        const right = this.gantt.utils.getPositionByDate(this.model.to);
-	        this.left = left;
-	        this.width = right - left;
-	    }
-	    updateDate() {
-	        const from = this.gantt.utils.getDateByPosition(this.left);
-	        const to = this.gantt.utils.getDateByPosition(this.left + this.width);
-	        const roundedFrom = this.gantt.utils.roundTo(from);
-	        const roundedTo = this.gantt.utils.roundTo(to);
-	        if (!roundedFrom.isSame(roundedTo)) {
-	            this.model.from = roundedFrom;
-	            this.model.to = roundedTo;
-	        }
-	    }
-	    overlaps(other) {
-	        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
-	    }
-	    updateView() {
-	        if (this.component) {
-	            this.component.set({ timeRange: this });
-	        }
-	        if (this.handle) {
-	            this.handle.set({ timeRange: this });
-	        }
+	    create(model) {
+	        // enable dragging
+	        model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
+	        const left = this.gantt.utils.getPositionByDate(model.from);
+	        const right = this.gantt.utils.getPositionByDate(model.to);
+	        return {
+	            model,
+	            left: left,
+	            width: right - left,
+	            resizing: false
+	        };
 	    }
 	}
 	//# sourceMappingURL=timeRange.js.map
@@ -2335,7 +2669,8 @@ var SvelteGantt = (function () {
 	            taskIds: [],
 	            taskMap: {},
 	            rowIds: [],
-	            rowMap: {}
+	            rowMap: {},
+	            timeRangeMap: {}
 	        }, data), {
 	            immutable: !true
 	        });
@@ -2374,6 +2709,24 @@ var SvelteGantt = (function () {
 	    updateRow(row) {
 	        const { rowMap } = this.get();
 	        this.set({ rowMap: update(row, { entities: rowMap }) });
+	    }
+	    addTimeRange(timeRange) {
+	        const { timeRangeMap } = this.get();
+	        const newState = add(timeRange, { ids: [], entities: timeRangeMap });
+	        this.set({ timeRangeMap: newState.entities });
+	    }
+	    updateTimeRange(timeRange) {
+	        const { timeRangeMap } = this.get();
+	        const n = update(timeRange, { entities: timeRangeMap });
+	        this.set({ timeRangeMap: n.entities });
+	    }
+	    updateAllTask(tasks) {
+	        const { taskIds, taskMap } = this.get();
+	        // for(const task of tasks) {
+	        //     if(taskIds)
+	        //     state.ids.push(entity.model.id);
+	        //     state.entities[entity.model.id] = entity;
+	        // }
 	    }
 	}
 	function add(entity, state) {
@@ -2523,7 +2876,6 @@ var SvelteGantt = (function () {
 	        _ganttTableModules: [],
 	        _modules: [],
 
-	        _allTasks: [],
 	        rows: [],
 
 	        paddingTop: 0,
@@ -2531,7 +2883,7 @@ var SvelteGantt = (function () {
 	        scrollTop: 0
 	    }
 	}
-	var methods$2 = {
+	var methods$3 = {
 	    onwheel(e){
 	        if(e.ctrlKey){
 	            e.preventDefault();
@@ -2586,29 +2938,31 @@ var SvelteGantt = (function () {
 	        this.store.addAllRow(rows);
 	    },
 	    initTasks(taskData){
-	        const allTasks = [];
+	        const tasks = [];
 
 	        for(let i=0; i < taskData.length; i++){
 	            const currentTask = taskData[i];
-	            const task = new SvelteTask(this, currentTask);
-	            allTasks.push(task);
+	            const task = this.taskFactory.createTask(currentTask);
+	            tasks.push(task);
 	        }
 
-	        this.store.addAllTask(allTasks);
-	        this.selectionManager.clearSelection();
+	        this.store.addAllTask(tasks);
+	        //this.selectionManager.clearSelection();
+	    },
+	    initMilestones(milestoneData){
+	        const milestones = [...milestoneData];
+	        this.store.set({milestones});
 	    },
 	    initTimeRanges(timeRangeData){
-	        const _timeRanges = [];
-	        const _timeRangeCache = [];
+	        const timeRangeMap = {};
 
 	        for(let i = 0; i < timeRangeData.length; i++){
 	            const currentTimeRange = timeRangeData[i];
-	            const timeRange = new SvelteTimeRange(this, currentTimeRange);
-	            _timeRanges.push(timeRange);
-	            _timeRangeCache[currentTimeRange.id] = timeRange;
+	            const timeRange = this.timeRangeFactory.create(currentTimeRange);
+	            timeRangeMap[currentTimeRange.id] = timeRange;
 	        }
 
-	        this.store.set({_timeRanges, _timeRangeCache});
+	        this.store.set({timeRangeMap});
 	    },
 	    initGantt(){
 	        if(!this.store.get().gantt){
@@ -2621,6 +2975,8 @@ var SvelteGantt = (function () {
 	            this.selectionManager = new SelectionManager(this.store);
 	            this.utils = new GanttUtils(this);
 	            this.api = new GanttApi(this);
+	            this.taskFactory = new TaskFactory(this);
+	            this.timeRangeFactory = new TimeRangeFactory(this);
 
 	            this.api.registerEvent('tasks', 'move');
 	            this.api.registerEvent('tasks', 'select');
@@ -2629,7 +2985,6 @@ var SvelteGantt = (function () {
 	            this.api.registerEvent('tasks', 'changed');
 
 	            this.row = SvelteRow;
-	            this.task = SvelteTask;
 	        }
 	    },
 	    initModule(module){
@@ -2660,8 +3015,12 @@ var SvelteGantt = (function () {
 	    refreshTasks(){
 	        const { allTasks } = this.store.get();
 	        allTasks.forEach(task => {
-	            task.updatePosition();
-	            task.updateView();
+
+	            const newLeft = this.root.utils.getPositionByDate(task.model.from);
+	            const newRight = this.root.utils.getPositionByDate(task.model.to);
+
+	            task.left = newLeft;
+	            task.width = newRight - newLeft;
 	        });
 	        this.store.set({taskMap: this.store.get().taskMap});
 	        this.updateVisibleEntities();
@@ -2681,13 +3040,16 @@ var SvelteGantt = (function () {
 	        const task = taskMap[id];
 	        if(task) {
 	            this.selectionManager.selectSingle(task);
-	            task.updateView();
 	        }
 	    }
 	};
 
-	function oncreate$4(){
-	    const {rows, initialRows, initialTasks, initialDependencies} = this.get();
+	function oncreate$5(){
+	    const {initialRows, initialTasks, initialDependencies} = this.get();
+
+	    this.refreshTasksDebounced = debounce(() => {
+	        this.refreshTasks();
+	    }, 250, false);
 
 	    this.initGantt();
 	    this.initRows(initialRows);
@@ -2738,6 +3100,7 @@ var SvelteGantt = (function () {
 
 	        rows: [],
 	        tasks: [],
+	        milestones: [],
 	        _timeRanges: []
 	    };
 
@@ -2811,11 +3174,31 @@ var SvelteGantt = (function () {
 	    const { scrollables } = this.get();
 	    scrollables.push({node, orientation: 'horizontal'});
 	}
-	const file$6 = "src\\Gantt.html";
+	function debounce(func, wait, immediate) {
+	    var timeout;
+	    return function() {
+	        var context = this, args = arguments;
+	        var later = function() {
+	            timeout = null;
+	            if (!immediate) func.apply(context, args);
+	        };
+	        var callNow = immediate && !timeout;
+	        clearTimeout(timeout);
+	        timeout = setTimeout(later, wait);
+	        if (callNow) func.apply(context, args);
+	    };
+	}
+	const file$7 = "src\\Gantt.html";
+
+	function get_each8_context(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.module = list[i];
+		return child_ctx;
+	}
 
 	function get_each7_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.module = list[i];
+		child_ctx.milestone = list[i];
 		return child_ctx;
 	}
 
@@ -2827,7 +3210,8 @@ var SvelteGantt = (function () {
 
 	function get_each5_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.timeRange = list[i];
+		child_ctx.id = list[i][0];
+		child_ctx.timeRange = list[i][1];
 		return child_ctx;
 	}
 
@@ -2845,7 +3229,8 @@ var SvelteGantt = (function () {
 
 	function get_each2_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.timeRange = list[i];
+		child_ctx.id = list[i][0];
+		child_ctx.timeRange = list[i][1];
 		return child_ctx;
 	}
 
@@ -2861,8 +3246,8 @@ var SvelteGantt = (function () {
 		return child_ctx;
 	}
 
-	function create_main_fragment$6(component, ctx) {
-		var div9, each0_blocks_1 = [], each0_lookup = blankObject(), text0, div2, div1, div0, text1, each2_blocks_1 = [], each2_lookup = blankObject(), horizontalScrollListener_action, text2, div8, div7, div3, text3, div5, div4, each4_blocks_1 = [], each4_lookup = blankObject(), text4, div6, each5_blocks_1 = [], each5_lookup = blankObject(), text5, each6_blocks_1 = [], each6_lookup = blankObject(), text6, each7_blocks_1 = [], each7_lookup = blankObject(), div8_resize_listener, scrollable_action, div9_class_value, current;
+	function create_main_fragment$7(component, ctx) {
+		var div9, each0_blocks_1 = [], each0_lookup = blankObject(), text0, div2, div1, div0, text1, each2_blocks_1 = [], each2_lookup = blankObject(), horizontalScrollListener_action, text2, div8, div7, div3, text3, div5, div4, each4_blocks_1 = [], each4_lookup = blankObject(), text4, div6, each5_blocks_1 = [], each5_lookup = blankObject(), text5, each6_blocks_1 = [], each6_lookup = blankObject(), text6, each7_blocks_1 = [], each7_lookup = blankObject(), text7, each8_blocks_1 = [], each8_lookup = blankObject(), div8_resize_listener, scrollable_action, div9_class_value, current;
 
 		function onwindowresize(event) {
 			component.onWindowResizeEventHandler(event);	}
@@ -2875,7 +3260,7 @@ var SvelteGantt = (function () {
 		for (var i = 0; i < each0_value.length; i += 1) {
 			let child_ctx = get_each0_context(ctx, each0_value, i);
 			let key = get_key(child_ctx);
-			each0_blocks_1[i] = each0_lookup[key] = create_each_block_7(component, key, child_ctx);
+			each0_blocks_1[i] = each0_lookup[key] = create_each_block_8(component, key, child_ctx);
 		}
 
 		var each1_value = ctx.$headers;
@@ -2883,7 +3268,7 @@ var SvelteGantt = (function () {
 		var each1_blocks = [];
 
 		for (var i = 0; i < each1_value.length; i += 1) {
-			each1_blocks[i] = create_each_block_6(component, get_each1_context(ctx, each1_value, i));
+			each1_blocks[i] = create_each_block_7(component, get_each1_context(ctx, each1_value, i));
 		}
 
 		function outroBlock(i, detach, fn) {
@@ -2898,14 +3283,14 @@ var SvelteGantt = (function () {
 			}
 		}
 
-		var each2_value = ctx.$_timeRanges;
+		var each2_value = ctx.Object.entries(ctx.$timeRangeMap);
 
 		const get_key_1 = ctx => ctx.timeRange.id;
 
 		for (var i = 0; i < each2_value.length; i += 1) {
 			let child_ctx = get_each2_context(ctx, each2_value, i);
 			let key = get_key_1(child_ctx);
-			each2_blocks_1[i] = each2_lookup[key] = create_each_block_5(component, key, child_ctx);
+			each2_blocks_1[i] = each2_lookup[key] = create_each_block_6(component, key, child_ctx);
 		}
 
 		var each3_value = ctx.columns;
@@ -2913,7 +3298,7 @@ var SvelteGantt = (function () {
 		var each3_blocks = [];
 
 		for (var i = 0; i < each3_value.length; i += 1) {
-			each3_blocks[i] = create_each_block_4(component, get_each3_context(ctx, each3_value, i));
+			each3_blocks[i] = create_each_block_5(component, get_each3_context(ctx, each3_value, i));
 		}
 
 		function outroBlock_1(i, detach, fn) {
@@ -2935,17 +3320,17 @@ var SvelteGantt = (function () {
 		for (var i = 0; i < each4_value.length; i += 1) {
 			let child_ctx = get_each4_context(ctx, each4_value, i);
 			let key = get_key_2(child_ctx);
-			each4_blocks_1[i] = each4_lookup[key] = create_each_block_3(component, key, child_ctx);
+			each4_blocks_1[i] = each4_lookup[key] = create_each_block_4(component, key, child_ctx);
 		}
 
-		var each5_value = ctx.$_timeRanges;
+		var each5_value = ctx.Object.entries(ctx.$timeRangeMap);
 
 		const get_key_3 = ctx => ctx.timeRange.id;
 
 		for (var i = 0; i < each5_value.length; i += 1) {
 			let child_ctx = get_each5_context(ctx, each5_value, i);
 			let key = get_key_3(child_ctx);
-			each5_blocks_1[i] = each5_lookup[key] = create_each_block_2(component, key, child_ctx);
+			each5_blocks_1[i] = each5_lookup[key] = create_each_block_3(component, key, child_ctx);
 		}
 
 		var each6_value = ctx.visibleTasks;
@@ -2955,17 +3340,27 @@ var SvelteGantt = (function () {
 		for (var i = 0; i < each6_value.length; i += 1) {
 			let child_ctx = get_each6_context(ctx, each6_value, i);
 			let key = get_key_4(child_ctx);
-			each6_blocks_1[i] = each6_lookup[key] = create_each_block_1(component, key, child_ctx);
+			each6_blocks_1[i] = each6_lookup[key] = create_each_block_2(component, key, child_ctx);
 		}
 
-		var each7_value = ctx._ganttBodyModules;
+		var each7_value = ctx.$milestones;
 
-		const get_key_5 = ctx => ctx.module.key;
+		const get_key_5 = ctx => ctx.milestone.id;
 
 		for (var i = 0; i < each7_value.length; i += 1) {
 			let child_ctx = get_each7_context(ctx, each7_value, i);
 			let key = get_key_5(child_ctx);
-			each7_blocks_1[i] = each7_lookup[key] = create_each_block$1(component, key, child_ctx);
+			each7_blocks_1[i] = each7_lookup[key] = create_each_block_1(component, key, child_ctx);
+		}
+
+		var each8_value = ctx._ganttBodyModules;
+
+		const get_key_6 = ctx => ctx.module.key;
+
+		for (var i = 0; i < each8_value.length; i += 1) {
+			let child_ctx = get_each8_context(ctx, each8_value, i);
+			let key = get_key_6(child_ctx);
+			each8_blocks_1[i] = each8_lookup[key] = create_each_block$1(component, key, child_ctx);
 		}
 
 		function div8_resize_handler() {
@@ -3019,36 +3414,40 @@ var SvelteGantt = (function () {
 
 				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].c();
 
-				text6 = createText("\r\n            ");
+				text6 = createText("\r\n\r\n                    ");
 
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].c();
-				div0.className = "header-container svelte-1uppnw4";
+
+				text7 = createText("\r\n            ");
+
+				for (i = 0; i < each8_blocks_1.length; i += 1) each8_blocks_1[i].c();
+				div0.className = "header-container svelte-fyfedv";
 				setStyle(div0, "width", "" + ctx.$width + "px");
-				addLoc(div0, file$6, 8, 12, 499);
-				div1.className = "header-intermezzo svelte-1uppnw4";
+				addLoc(div0, file$7, 8, 12, 499);
+				div1.className = "header-intermezzo svelte-fyfedv";
 				setStyle(div1, "width", "" + ctx.$headerWidth + "px");
-				addLoc(div1, file$6, 7, 8, 392);
-				div2.className = "main-header-container svelte-1uppnw4";
-				addLoc(div2, file$6, 6, 4, 329);
-				div3.className = "column-container svelte-1uppnw4";
-				addLoc(div3, file$6, 24, 12, 1172);
+				addLoc(div1, file$7, 7, 8, 392);
+				div2.className = "main-header-container svelte-fyfedv";
+				addLoc(div2, file$7, 6, 4, 329);
+				div3.className = "column-container svelte-fyfedv";
+				addLoc(div3, file$7, 24, 12, 1188);
 				setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
-				addLoc(div4, file$6, 30, 16, 1448);
-				div5.className = "row-container svelte-1uppnw4";
+				addLoc(div4, file$7, 30, 16, 1464);
+				div5.className = "row-container svelte-fyfedv";
 				setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div5, file$6, 29, 12, 1347);
-				div6.className = "s-g-foreground svelte-1uppnw4";
-				addLoc(div6, file$6, 36, 16, 1696);
-				div7.className = "content svelte-1uppnw4";
+				addLoc(div5, file$7, 29, 12, 1363);
+				div6.className = "sg-foreground svelte-fyfedv";
+				addLoc(div6, file$7, 36, 16, 1712);
+				div7.className = "content svelte-fyfedv";
 				setStyle(div7, "width", "" + ctx.$width + "px");
-				addLoc(div7, file$6, 23, 8, 1112);
+				addLoc(div7, file$7, 23, 8, 1128);
 				component.root._aftercreate.push(div8_resize_handler);
 				addListener(div8, "mousewheel", mousewheel_handler);
-				div8.className = "main-container svelte-1uppnw4";
+				div8.className = "main-container svelte-fyfedv";
 				setStyle(div8, "height", "" + ctx.$height + "px");
-				addLoc(div8, file$6, 19, 4, 885);
-				div9.className = div9_class_value = "gantt " + ctx.$classes + " svelte-1uppnw4";
-				addLoc(div9, file$6, 1, 0, 64);
+				addLoc(div8, file$7, 19, 4, 901);
+				div9.className = div9_class_value = "gantt " + ctx.$classes + " svelte-fyfedv";
+				addLoc(div9, file$7, 1, 0, 64);
 			},
 
 			m: function mount(target, anchor) {
@@ -3096,9 +3495,13 @@ var SvelteGantt = (function () {
 
 				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].i(div6, null);
 
-				append(div7, text6);
+				append(div6, text6);
 
-				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].i(div7, null);
+				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].i(div6, null);
+
+				append(div7, text7);
+
+				for (i = 0; i < each8_blocks_1.length; i += 1) each8_blocks_1[i].i(div7, null);
 
 				div8_resize_listener = addResizeListener(div8, div8_resize_handler);
 				component.refs.mainContainer = div8;
@@ -3109,7 +3512,7 @@ var SvelteGantt = (function () {
 
 			p: function update(changed, ctx) {
 				const each0_value = ctx._ganttTableModules;
-				each0_blocks_1 = updateKeyedEach(each0_blocks_1, component, changed, get_key, 1, ctx, each0_value, each0_lookup, div9, outroAndDestroyBlock, create_each_block_7, "i", text0, get_each0_context);
+				each0_blocks_1 = updateKeyedEach(each0_blocks_1, component, changed, get_key, 1, ctx, each0_value, each0_lookup, div9, outroAndDestroyBlock, create_each_block_8, "i", text0, get_each0_context);
 
 				if (changed.$headers) {
 					each1_value = ctx.$headers;
@@ -3120,7 +3523,7 @@ var SvelteGantt = (function () {
 						if (each1_blocks[i]) {
 							each1_blocks[i].p(changed, child_ctx);
 						} else {
-							each1_blocks[i] = create_each_block_6(component, child_ctx);
+							each1_blocks[i] = create_each_block_7(component, child_ctx);
 							each1_blocks[i].c();
 						}
 						each1_blocks[i].i(div0, text1);
@@ -3128,8 +3531,8 @@ var SvelteGantt = (function () {
 					for (; i < each1_blocks.length; i += 1) outroBlock(i, 1);
 				}
 
-				const each2_value = ctx.$_timeRanges;
-				each2_blocks_1 = updateKeyedEach(each2_blocks_1, component, changed, get_key_1, 1, ctx, each2_value, each2_lookup, div0, outroAndDestroyBlock, create_each_block_5, "i", null, get_each2_context);
+				const each2_value = ctx.Object.entries(ctx.$timeRangeMap);
+				each2_blocks_1 = updateKeyedEach(each2_blocks_1, component, changed, get_key_1, 1, ctx, each2_value, each2_lookup, div0, outroAndDestroyBlock, create_each_block_6, "i", null, get_each2_context);
 
 				if (!current || changed.$width) {
 					setStyle(div0, "width", "" + ctx.$width + "px");
@@ -3148,7 +3551,7 @@ var SvelteGantt = (function () {
 						if (each3_blocks[i]) {
 							each3_blocks[i].p(changed, child_ctx);
 						} else {
-							each3_blocks[i] = create_each_block_4(component, child_ctx);
+							each3_blocks[i] = create_each_block_5(component, child_ctx);
 							each3_blocks[i].c();
 						}
 						each3_blocks[i].i(div3, null);
@@ -3157,7 +3560,7 @@ var SvelteGantt = (function () {
 				}
 
 				const each4_value = ctx.visibleRows;
-				each4_blocks_1 = updateKeyedEach(each4_blocks_1, component, changed, get_key_2, 1, ctx, each4_value, each4_lookup, div4, outroAndDestroyBlock, create_each_block_3, "i", null, get_each4_context);
+				each4_blocks_1 = updateKeyedEach(each4_blocks_1, component, changed, get_key_2, 1, ctx, each4_value, each4_lookup, div4, outroAndDestroyBlock, create_each_block_4, "i", null, get_each4_context);
 
 				if (!current || changed.paddingTop) {
 					setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
@@ -3167,14 +3570,17 @@ var SvelteGantt = (function () {
 					setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
-				const each5_value = ctx.$_timeRanges;
-				each5_blocks_1 = updateKeyedEach(each5_blocks_1, component, changed, get_key_3, 1, ctx, each5_value, each5_lookup, div6, outroAndDestroyBlock, create_each_block_2, "i", text5, get_each5_context);
+				const each5_value = ctx.Object.entries(ctx.$timeRangeMap);
+				each5_blocks_1 = updateKeyedEach(each5_blocks_1, component, changed, get_key_3, 1, ctx, each5_value, each5_lookup, div6, outroAndDestroyBlock, create_each_block_3, "i", text5, get_each5_context);
 
 				const each6_value = ctx.visibleTasks;
-				each6_blocks_1 = updateKeyedEach(each6_blocks_1, component, changed, get_key_4, 1, ctx, each6_value, each6_lookup, div6, outroAndDestroyBlock, create_each_block_1, "i", null, get_each6_context);
+				each6_blocks_1 = updateKeyedEach(each6_blocks_1, component, changed, get_key_4, 1, ctx, each6_value, each6_lookup, div6, outroAndDestroyBlock, create_each_block_2, "i", text6, get_each6_context);
 
-				const each7_value = ctx._ganttBodyModules;
-				each7_blocks_1 = updateKeyedEach(each7_blocks_1, component, changed, get_key_5, 1, ctx, each7_value, each7_lookup, div7, outroAndDestroyBlock, create_each_block$1, "i", null, get_each7_context);
+				const each7_value = ctx.$milestones;
+				each7_blocks_1 = updateKeyedEach(each7_blocks_1, component, changed, get_key_5, 1, ctx, each7_value, each7_lookup, div6, outroAndDestroyBlock, create_each_block_1, "i", null, get_each7_context);
+
+				const each8_value = ctx._ganttBodyModules;
+				each8_blocks_1 = updateKeyedEach(each8_blocks_1, component, changed, get_key_6, 1, ctx, each8_value, each8_lookup, div7, outroAndDestroyBlock, create_each_block$1, "i", null, get_each8_context);
 
 				if (!current || changed.$width) {
 					setStyle(div7, "width", "" + ctx.$width + "px");
@@ -3184,7 +3590,7 @@ var SvelteGantt = (function () {
 					setStyle(div8, "height", "" + ctx.$height + "px");
 				}
 
-				if ((!current || changed.$classes) && div9_class_value !== (div9_class_value = "gantt " + ctx.$classes + " svelte-1uppnw4")) {
+				if ((!current || changed.$classes) && div9_class_value !== (div9_class_value = "gantt " + ctx.$classes + " svelte-fyfedv")) {
 					div9.className = div9_class_value;
 				}
 			},
@@ -3198,7 +3604,7 @@ var SvelteGantt = (function () {
 			o: function outro(outrocallback) {
 				if (!current) return;
 
-				outrocallback = callAfter(outrocallback, 8);
+				outrocallback = callAfter(outrocallback, 9);
 
 				const countdown = callAfter(outrocallback, each0_blocks_1.length);
 				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].o(countdown);
@@ -3225,6 +3631,9 @@ var SvelteGantt = (function () {
 
 				const countdown_7 = callAfter(outrocallback, each7_blocks_1.length);
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].o(countdown_7);
+
+				const countdown_8 = callAfter(outrocallback, each8_blocks_1.length);
+				for (i = 0; i < each8_blocks_1.length; i += 1) each8_blocks_1[i].o(countdown_8);
 
 				current = false;
 			},
@@ -3257,6 +3666,8 @@ var SvelteGantt = (function () {
 
 				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].d();
 
+				for (i = 0; i < each8_blocks_1.length; i += 1) each8_blocks_1[i].d();
+
 				div8_resize_listener.cancel();
 				removeListener(div8, "mousewheel", mousewheel_handler);
 				if (component.refs.mainContainer === div8) component.refs.mainContainer = null;
@@ -3267,7 +3678,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (3:4) {#each _ganttTableModules as module (module.key)}
-	function create_each_block_7(component, key_1, ctx) {
+	function create_each_block_8(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
 		var switch_value = ctx.module;
@@ -3375,7 +3786,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (10:16) {#each $headers as header}
-	function create_each_block_6(component, ctx) {
+	function create_each_block_7(component, ctx) {
 		var current;
 
 		var columnheader_initial_data = { header: ctx.header };
@@ -3420,11 +3831,18 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (13:16) {#each $_timeRanges as timeRange (timeRange.id)}
-	function create_each_block_5(component, key_1, ctx) {
+	// (13:16) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+	function create_each_block_6(component, key_1, ctx) {
 		var first, current;
 
-		var timerangeheader_initial_data = { timeRange: ctx.timeRange };
+		var timerangeheader_spread_levels = [
+			ctx.timeRange
+		];
+
+		var timerangeheader_initial_data = {};
+		for (var i = 0; i < timerangeheader_spread_levels.length; i += 1) {
+			timerangeheader_initial_data = assign(timerangeheader_initial_data, timerangeheader_spread_levels[i]);
+		}
 		var timerangeheader = new TimeRangeHeader({
 			root: component.root,
 			store: component.store,
@@ -3449,8 +3867,9 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				var timerangeheader_changes = {};
-				if (changed.$_timeRanges) timerangeheader_changes.timeRange = ctx.timeRange;
+				var timerangeheader_changes = (changed.Object || changed.$timeRangeMap) ? getSpreadUpdate(timerangeheader_spread_levels, [
+					ctx.timeRange
+				]) : {};
 				timerangeheader._set(timerangeheader_changes);
 			},
 
@@ -3478,7 +3897,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (26:16) {#each columns as column}
-	function create_each_block_4(component, ctx) {
+	function create_each_block_5(component, ctx) {
 		var current;
 
 		var column_spread_levels = [
@@ -3532,7 +3951,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (32:20) {#each visibleRows as row (row.model.id)}
-	function create_each_block_3(component, key_1, ctx) {
+	function create_each_block_4(component, key_1, ctx) {
 		var first, current;
 
 		var row_initial_data = { row: ctx.row };
@@ -3588,11 +4007,18 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (38:20) {#each $_timeRanges as timeRange (timeRange.id)}
-	function create_each_block_2(component, key_1, ctx) {
+	// (38:20) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 
-		var timerange_initial_data = { timeRange: ctx.timeRange };
+		var timerange_spread_levels = [
+			ctx.timeRange
+		];
+
+		var timerange_initial_data = {};
+		for (var i = 0; i < timerange_spread_levels.length; i += 1) {
+			timerange_initial_data = assign(timerange_initial_data, timerange_spread_levels[i]);
+		}
 		var timerange = new TimeRange({
 			root: component.root,
 			store: component.store,
@@ -3617,8 +4043,9 @@ var SvelteGantt = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				var timerange_changes = {};
-				if (changed.$_timeRanges) timerange_changes.timeRange = ctx.timeRange;
+				var timerange_changes = (changed.Object || changed.$timeRangeMap) ? getSpreadUpdate(timerange_spread_levels, [
+					ctx.timeRange
+				]) : {};
 				timerange._set(timerange_changes);
 			},
 
@@ -3646,7 +4073,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (42:20) {#each visibleTasks as task (task.model.id)}
-	function create_each_block_1(component, key_1, ctx) {
+	function create_each_block_2(component, key_1, ctx) {
 		var first, current;
 
 		var taskcomponent_initial_data = {
@@ -3654,9 +4081,7 @@ var SvelteGantt = (function () {
 		 	left: ctx.task.left,
 		 	width: ctx.task.width,
 		 	height: ctx.task.height,
-		 	widthT: ctx.task.widthT,
-		 	posX: ctx.task.posX,
-		 	posY: ctx.task.posY
+		 	top: ctx.task.top
 		 };
 		var taskcomponent = new Task({
 			root: component.root,
@@ -3687,9 +4112,7 @@ var SvelteGantt = (function () {
 				if (changed.visibleTasks) taskcomponent_changes.left = ctx.task.left;
 				if (changed.visibleTasks) taskcomponent_changes.width = ctx.task.width;
 				if (changed.visibleTasks) taskcomponent_changes.height = ctx.task.height;
-				if (changed.visibleTasks) taskcomponent_changes.widthT = ctx.task.widthT;
-				if (changed.visibleTasks) taskcomponent_changes.posX = ctx.task.posX;
-				if (changed.visibleTasks) taskcomponent_changes.posY = ctx.task.posY;
+				if (changed.visibleTasks) taskcomponent_changes.top = ctx.task.top;
 				taskcomponent._set(taskcomponent_changes);
 			},
 
@@ -3716,7 +4139,64 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (52:12) {#each _ganttBodyModules as module (module.key)}
+	// (50:20) {#each $milestones as milestone (milestone.id)}
+	function create_each_block_1(component, key_1, ctx) {
+		var first, current;
+
+		var milestone_initial_data = { model: ctx.milestone };
+		var milestone = new Milestone({
+			root: component.root,
+			store: component.store,
+			data: milestone_initial_data
+		});
+
+		return {
+			key: key_1,
+
+			first: null,
+
+			c: function create() {
+				first = createComment();
+				milestone._fragment.c();
+				this.first = first;
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, first, anchor);
+				milestone._mount(target, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				var milestone_changes = {};
+				if (changed.$milestones) milestone_changes.model = ctx.milestone;
+				milestone._set(milestone_changes);
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				if (milestone) milestone._fragment.o(outrocallback);
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(first);
+				}
+
+				milestone.destroy(detach);
+			}
+		};
+	}
+
+	// (54:12) {#each _ganttBodyModules as module (module.key)}
 	function create_each_block$1(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -3818,8 +4298,8 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]), data$5()), options.data);
-		this.store._add(this, ["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","_timeRanges","height","visibleWidth"]);
+		this._state = assign(assign(assign({ Object : Object }, this.store._init(["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","timeRangeMap","height","visibleWidth","milestones"])), data$5()), options.data);
+		this.store._add(this, ["from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","visibleHeight","taskMap","allTasks","classes","headerWidth","headers","timeRangeMap","height","visibleWidth","milestones"]);
 
 		this._recompute({ $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1, $allRows: 1, $rowHeight: 1, $scrollTop: 1, startIndex: 1, $visibleHeight: 1, endIndex: 1, $allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
 		if (!('$from' in this._state)) console.warn("<Gantt> was created without expected data property '$from'");
@@ -3846,20 +4326,22 @@ var SvelteGantt = (function () {
 
 		if (!('$headerWidth' in this._state)) console.warn("<Gantt> was created without expected data property '$headerWidth'");
 		if (!('$headers' in this._state)) console.warn("<Gantt> was created without expected data property '$headers'");
-		if (!('$_timeRanges' in this._state)) console.warn("<Gantt> was created without expected data property '$_timeRanges'");
+
+		if (!('$timeRangeMap' in this._state)) console.warn("<Gantt> was created without expected data property '$timeRangeMap'");
 		if (!('$height' in this._state)) console.warn("<Gantt> was created without expected data property '$height'");
 		if (!('$visibleWidth' in this._state)) console.warn("<Gantt> was created without expected data property '$visibleWidth'");
 
 
+		if (!('$milestones' in this._state)) console.warn("<Gantt> was created without expected data property '$milestones'");
 		if (!('_ganttBodyModules' in this._state)) console.warn("<Gantt> was created without expected data property '_ganttBodyModules'");
 		this._intro = !!options.intro;
 
 		this._handlers.destroy = [removeFromStore];
 
-		this._fragment = create_main_fragment$6(this, this._state);
+		this._fragment = create_main_fragment$7(this, this._state);
 
 		this.root._oncreate.push(() => {
-			oncreate$4.call(this);
+			oncreate$5.call(this);
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 		});
 
@@ -3875,7 +4357,7 @@ var SvelteGantt = (function () {
 	}
 
 	assign(Gantt.prototype, protoDev);
-	assign(Gantt.prototype, methods$2);
+	assign(Gantt.prototype, methods$3);
 
 	Gantt.prototype._checkReadOnly = function _checkReadOnly(newState) {
 		if ('columnWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columnWidth'");

@@ -42,7 +42,6 @@ export class SvelteRow {
 
     addTask(task: SvelteTask) {
         //task.model.resourceId = this.model.id;
-        task.row = this;
         this.tasks.push(task);
     }
 

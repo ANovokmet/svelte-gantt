@@ -7,7 +7,8 @@ export class GanttStore extends Store {
             taskIds: [],
             taskMap: {},
             rowIds: [],
-            rowMap: {}
+            rowMap: {},
+            timeRangeMap: {}
         }, data),{ 
             immutable: !true 
         });
@@ -54,6 +55,30 @@ export class GanttStore extends Store {
     updateRow(row: any) {
         const { rowMap } = this.get();
         this.set({rowMap: update(row, {entities: rowMap})});
+    }
+
+
+    addTimeRange(timeRange: any) {
+        const { timeRangeMap } = this.get();
+        const newState = add(timeRange, {ids: [], entities: timeRangeMap});
+        this.set({timeRangeMap: newState.entities});
+    }
+
+    updateTimeRange(timeRange: any) {
+        const { timeRangeMap } = this.get();
+        const n = update(timeRange, {entities: timeRangeMap})
+        this.set({timeRangeMap: n.entities});
+    }
+
+    updateAllTask(tasks: any[]){
+        
+        const { taskIds, taskMap } = this.get();
+
+        // for(const task of tasks) {
+        //     if(taskIds)
+        //     state.ids.push(entity.model.id);
+        //     state.entities[entity.model.id] = entity;
+        // }
     }
 }
 

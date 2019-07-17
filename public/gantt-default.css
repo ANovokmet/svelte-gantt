@@ -13,27 +13,26 @@
     opacity: 0.5;
 }
 
-.task-background {
+.sg-task-background {
     background: rgba(0, 0, 0, 0.2);
 }
 
-.task {
+.sg-task {
     /* height: 24px; */
     /*margin: auto;*/
     background: rgb(116, 191, 255);
 }
 
-.task:hover {
+.sg-task:hover {
     background: rgb(98, 161, 216);
 }
 
 .selected {
-    background: rgb(69, 112, 150);
     color: white;
     font-weight: 700;
 }
 
-.task.selected:hover {
+.sg-task.selected:hover {
     background: rgb(60, 98, 131);
 }
 
@@ -86,10 +85,14 @@
     background-color: rgb(188, 235, 194);
 }
 
+.task.selected {
+    background: rgb(69, 112, 150);
+}
+
 .task-status-1.selected {
     background: rgb(121, 150, 125);
 }
 
-.s-g-icon {
+.sg-icon {
     margin-right: 5px;
 }

@@ -1,8 +1,8 @@
-<div class="s-g-time-range" class:moving="timeRange.resizing" style="width:{timeRange.width}px;left:{timeRange.left}px">
-    <div class="s-g-time-range-label">{timeRange.model.label}</div>
+<div class="sg-time-range" class:moving="resizing" style="width:{widthT}px;left:{posX}px">
+    <div class="sg-time-range-label">{model.label}</div>
 </div>
 <style>
-    .s-g-time-range {
+    .sg-time-range {
         height: 100%;
         position: absolute;
         display: flex;
@@ -15,7 +15,7 @@
         font-weight: 400;
     }
 
-    .s-g-time-range-label {
+    .sg-time-range-label {
         margin-top: 10px;
         background: #fff;
         white-space: nowrap;
@@ -27,17 +27,15 @@
 <script>
     export default {
         oncreate() {
-            const { timeRange } = this.get();
-            timeRange.component = this;
         },
-        ondestroy(){
-            const { timeRange } = this.get();
-            timeRange.component = null;
-        },
-        data(){
-            return {
-                timeRange: null
+        onstate({ changed, current, previous }) {
+            if(!current.resizing){
+                this.set({
+                    posX: current.left,
+                    widthT: current.width
+                });
             }
-        }
+		},
+        ondestroy(){ }
     }
 </script>

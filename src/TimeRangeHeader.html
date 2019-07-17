@@ -1,23 +1,23 @@
-<div class="s-g-time-range-control" style="width:{timeRange.width}px;left:{timeRange.left}px">
-    <div class="s-g-time-range-handle-left" use:drag></div>
-    <div class="s-g-time-range-handle-right" use:drag></div>
+<div class="sg-time-range-control" style="width:{widthT}px;left:{posX}px">
+    <div class="sg-time-range-handle-left" use:drag></div>
+    <div class="sg-time-range-handle-right" use:drag></div>
 </div>
 <style>
-    .s-g-time-range-control {
+    .sg-time-range-control {
         position: absolute;
     }
 
-    .s-g-time-range-handle-left {
+    .sg-time-range-handle-left {
         position: absolute;
         left: 0;
     }
 
-    .s-g-time-range-handle-right {
+    .sg-time-range-handle-right {
         position: absolute;
         right: 0;
     }
 
-    .s-g-time-range-handle-left::before, .s-g-time-range-handle-right::before {
+    .sg-time-range-handle-left::before, .sg-time-range-handle-right::before {
         position: absolute;
         content: '';
         bottom: 4px;
@@ -34,111 +34,74 @@
 </style>
 <script>
     import { DOMUtils } from "./utils/domUtils";
+    import { draggable } from "./core/drag/draggable";
+    import { ComponentPosProvider } from "./core/drag/componentPosProvider";
 
     export default {
-        oncreate() {
-            const { timeRange } = this.get();
-            timeRange.handle = this;
-        },
+        onstate({ changed, current, previous }) {
+            if(!current.resizing){
+                this.set({
+                    posX: current.left,
+                    widthT: current.width
+                });
+            }
+		},
         actions: {
             drag(node) {
-                const { rowContainerElement, ganttUtils, gantt, resizeHandleWidth } = this.store.get();
-                const windowElement = window;
+                const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-                let mouseStartPosX;
-                let mouseStartRight;
-                
-                const { timeRange } = this.get();
-                
-                const onmousedown = (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
+
+                const ondrop = ({ posX, widthT, event }) => {
+                    const { model } = this.get();
                     
-                    if(true){
-                        mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, event).x - timeRange.left;
-                        mouseStartRight = timeRange.left + timeRange.width;
-
-                        if(mouseStartPosX < resizeHandleWidth) {
-                            timeRange.resizing = true;
-                            timeRange.direction = 'left';
-                        }
-                        else if(mouseStartPosX > timeRange.width - resizeHandleWidth) {
-                            timeRange.resizing = true;
-                            timeRange.direction = 'right';
-                        }
-                        else {
-                            timeRange.dragging = true;
-                        }
-
-                        windowElement.addEventListener('mousemove', onmousemove, false);
-                        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
-                    }
-                }
-                
-                const onmousemove = (event) => {
-                    event.preventDefault();
-                    if(timeRange.resizing) {
-                        const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
-                        
-                        if(timeRange.direction === 'left') { 
-                            if(mousePos.x > timeRange.left + timeRange.width) {
-                                timeRange.left = mouseStartRight;
-                                timeRange.width = timeRange.left - mousePos.x;
-                                timeRange.direction = 'right'
-                                mouseStartRight = timeRange.left + timeRange.width;
-                            }
-                            else{
-                                timeRange.left = mousePos.x;
-                                timeRange.width = mouseStartRight - mousePos.x;
-                            }
-                        }
-                        else if(timeRange.direction === 'right') {//resize desno
-                            if(mousePos.x <= timeRange.left) {
-                                timeRange.width = timeRange.left - mousePos.x;
-                                timeRange.left = mousePos.x;
-                                timeRange.direction = 'left';
-                                mouseStartRight = timeRange.left + timeRange.width;
-                            }
-                            else {
-                                timeRange.width = mousePos.x - timeRange.left;
-                            }
-                        }
-                    }
-
-                    if(timeRange.resizing){
-                        timeRange.updateView();
-                    }
-                }
-
-                const onmouseup = (event) => {
-                    timeRange.updateDate();
-                    timeRange.updatePosition();
+                    const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+                    const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+                    const newLeft = this.root.utils.getPositionByDate(newFrom);
+                    const newRight = this.root.utils.getPositionByDate(newTo);
                     
-                    timeRange.dragging = false;
-                    timeRange.resizing = false;
-                    timeRange.direction = null;
-                    timeRange.updateView();
+                    Object.assign(model, {
+                        from: newFrom,
+                        to: newTo
+                    });
 
-                    windowElement.removeEventListener('mousemove', onmousemove, false);
+                    var state = {
+                        resizing: false,
+                        left: newLeft,
+                        width: newRight - newLeft,
+                        model
+                    }
+
+                    updateEntity(state);
+                    window.removeEventListener('mousemove', onmousemove, false);
                 }
 
-                node.addEventListener('mousedown', onmousedown, false);
+                const updateEntity = (state) => {
+                    const { model } = this.get();
+                    const { timeRangeMap } = this.store.get();
+                    const entity = timeRangeMap[model.id];
+                    this.store.updateTimeRange({...entity, ...state});
+                }
 
-				return {
-					update() {
-                        
-					},
-					destroy() {
-                        node.removeEventListener('mousedown', onmousedown, false);
-						node.removeEventListener('mousemove', onmousemove, false);
-                        node.removeEventListener('mouseup', onmouseup, false);
-					}
-				}
+                return draggable(node, {
+                    onDown: (state) => {
+                        updateEntity({...state, resizing: true});
+                    }, 
+                    onResize: ({posX, widthT}) => {
+                        updateEntity({posX, widthT});
+                    },
+                    dragAllowed: false,
+                    resizeAllowed: true,
+                    onDrop: ondrop, 
+                    container: rowContainerElement, 
+                    resizeHandleWidth
+                }, new ComponentPosProvider(this));
             }
         },
         data(){
             return {
-                timeRange: null
+                resizing: false,
+                widthT: null,
+                posX: null
             }
         }
     }

@@ -364,7 +364,7 @@ var SvelteGanttTable = (function () {
 				for (var i = 0; i < each_blocks.length; i += 1) {
 					each_blocks[i].c();
 				}
-				div.className = "row-header-row svelte-tfbo74";
+				div.className = "row-header-row svelte-1wuii9i";
 				setStyle(div, "height", "" + ctx.$rowHeight + "px");
 				addLoc(div, file, 0, 0, 0);
 			},
@@ -435,13 +435,13 @@ var SvelteGanttTable = (function () {
 				text0 = createText("\r\n                    ");
 				div0 = createElement("div");
 				text1 = createText(text1_value);
-				img.className = "s-g-resource-image svelte-tfbo74";
+				img.className = "sg-resource-image svelte-1wuii9i";
 				img.src = img_src_value = ctx.row.model.imageSrc;
 				img.alt = "";
-				addLoc(img, file, 7, 20, 337);
-				div0.className = "s-g-resource-title";
-				addLoc(div0, file, 8, 20, 426);
-				div1.className = "s-g-resource-info svelte-tfbo74";
+				addLoc(img, file, 7, 20, 336);
+				div0.className = "sg-resource-title";
+				addLoc(div0, file, 8, 20, 424);
+				div1.className = "sg-resource-info svelte-1wuii9i";
 				addLoc(div1, file, 6, 16, 284);
 			},
 

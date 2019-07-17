@@ -7,6 +7,10 @@ export class DOMUtils {
 
     }
 
+    static isLeftClick(event) {
+        return event.which === 1;
+    }
+
     //get mouse position within the element
     static getRelativePos(node: HTMLElement, event: MouseEvent) {
         const rect = node.getBoundingClientRect();

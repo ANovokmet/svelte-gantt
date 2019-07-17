@@ -1,6 +1,4 @@
-import { SvelteRow } from "./row";
 import { SvelteGantt } from "./gantt";
-import { Component } from "./svelte";
 
 export interface TimeRangeModel {
     id: number; // | string;
@@ -9,58 +7,35 @@ export interface TimeRangeModel {
 
     classes?: string | string[];
     label?: string;
-    enableDragging?: boolean;
+    enableResizing?: boolean;
 }
 
-export class SvelteTimeRange {
-    gantt: SvelteGantt;
+export interface SvelteTimeRange {
     model: TimeRangeModel;
-    component: Component;
-    handle: Component;
-    row: SvelteRow;
-
     left: number;
     width: number;
-
     resizing: boolean;
-    
-    constructor(gantt: SvelteGantt, timeRange: TimeRangeModel){
+}
+
+export class TimeRangeFactory {
+    gantt: SvelteGantt;
+
+    constructor(gantt: SvelteGantt) {
         this.gantt = gantt;
-        this.model = timeRange;
-        this.updatePosition();
     }
 
-    updatePosition(){
-        const left = this.gantt.utils.getPositionByDate(this.model.from);
-        const right = this.gantt.utils.getPositionByDate(this.model.to); 
+    create(model: TimeRangeModel): SvelteTimeRange {
+        // enable dragging
+        model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
 
-        this.left = left;
-        this.width = right - left;
-    }
+        const left = this.gantt.utils.getPositionByDate(model.from);
+        const right = this.gantt.utils.getPositionByDate(model.to); 
 
-    updateDate(){
-        const from = this.gantt.utils.getDateByPosition(this.left);
-        const to = this.gantt.utils.getDateByPosition(this.left + this.width);
-                   
-        const roundedFrom = this.gantt.utils.roundTo(from);
-        const roundedTo = this.gantt.utils.roundTo(to);
-
-        if(!roundedFrom.isSame(roundedTo)){
-            this.model.from = roundedFrom;
-            this.model.to = roundedTo;
-        }
-    }
-
-    overlaps(other) {
-        return !(this.left + this.width <= other.left || this.left >= other.left + other.width);
-    }
-
-    updateView() {
-        if(this.component) {
-            this.component.set({timeRange: this});
-        }
-        if(this.handle) {
-            this.handle.set({timeRange: this});
+        return {
+            model,
+            left: left,
+            width: right-left,
+            resizing: false
         }
     }
 }

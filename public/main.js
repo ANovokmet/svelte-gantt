@@ -10,7 +10,10 @@ function generateData() {
 		dependencies: []
 	}
 
-	for(let i = 0; i < 1000; i++) {
+	const ids = [ ...Array(10).keys() ];
+	shuffleArray(ids);
+
+	for(let i = 0; i < 10; i++) {
 
 		let rand_bool = Math.random() < 0.2;
 
@@ -31,16 +34,20 @@ function generateData() {
 		let a = i % 2;
 		rand_bool = Math.random() > 0.9;
 	
+		const rand_h = (Math.random() * 10) | 0
+		const rand_d = (Math.random() * 5) | 0 + 1
+
+		if(i === 5)
 		data.tasks.push({
 			generation,
-			id: i,
+			id: ids[i],
 			resourceId: i,
-			label: 'Task #'+i,
-			from: startOfToday.clone().set({'hour': 7 + 4*a, 'minute': 0}),
-			to: startOfToday.clone().set({'hour': 10 + 4*a, 'minute': 0}),
+			label: 'Task #'+ids[i],
+			from: startOfToday.clone().set({'hour': 7 + rand_h, 'minute': 0}),
+			to: startOfToday.clone().set({'hour': 7 + rand_h + rand_d, 'minute': 0}),
 			//amountDone: Math.floor(Math.random() * 100),
 			classes: rand_bool ? 'task-status-1' : '',
-			enableDragging: !rand_bool
+			//enableDragging: !rand_bool
 			//h: Math.random() < 0.5
 		});
 
@@ -71,6 +78,11 @@ function generateData() {
 	return data;
 }
 
+// setInterval(() => {
+// 	var data = generateData();
+// 	gantt.initTasks(data.tasks);
+// }, 1000);
+
 /*setInterval(() => {
 	for(let i = 0; i < 500; i++){
 		let t = data.rows[i].tasks[0];
@@ -100,7 +112,7 @@ let options = {
 	tableHeaders: [{title: 'Label', property: 'label', width: 140}],
 	tableWidth: 140,
 	modules: [SvelteGanttTable, SvelteGanttDependencies],
-	//taskContent: (task) => '<i class="s-g-icon fas fa-calendar"></i>' + task.model.label
+	//taskContent: (task) => '<i class="sg-icon fas fa-calendar"></i>' + task.model.label
 }
 
 var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
@@ -111,6 +123,13 @@ gantt.initTimeRanges([{
 	to: startOfToday.clone().set({hour: 12, minute: 0}),
 	classes: null,
 	label: 'Lunch' //?
+}]);
+
+gantt.initMilestones([{
+	id: 4321,
+	from: startOfToday.clone().set({hour: 13, minute: 0}),
+	resourceId: 2,
+	enableDragging: true
 }]);
 
 //gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
@@ -191,7 +210,7 @@ document.getElementById('reInit').addEventListener('click', (event) => {
 SvelteGanttExternal.create(document.getElementById('newTask'), {
 	gantt,
 	onsuccess: (row, date, g) => {
-		const task = new g.task(gantt, {
+		const task = g.taskFactory.createTask({
 			id: 5000+Math.floor(Math.random() * 1000),
 			label: 'Task #'+4343,
 			from: date,
@@ -205,3 +224,12 @@ SvelteGanttExternal.create(document.getElementById('newTask'), {
 		_taskCache[task.model.id] = task;
 	}
 });
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}

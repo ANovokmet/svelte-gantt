@@ -6,6 +6,9 @@ var SvelteGanttExternal = (function () {
         }
         isRowVisible() {
         }
+        static isLeftClick(event) {
+            return event.which === 1;
+        }
         //get mouse position within the element
         static getRelativePos(node, event) {
             const rect = node.getBoundingClientRect();
