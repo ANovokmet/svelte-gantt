@@ -26,8 +26,6 @@
 </style>
 <script>
     export default {
-        oncreate() {
-        },
         onstate({ changed, current, previous }) {
             if(!current.resizing){
                 this.set({
@@ -35,7 +33,13 @@
                     widthT: current.width
                 });
             }
-		},
-        ondestroy(){ }
+        },
+        data(){
+            return {
+                resizing: false,
+                widthT: null,
+                posX: null
+            }
+        }
     }
 </script>

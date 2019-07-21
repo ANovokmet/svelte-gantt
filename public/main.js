@@ -39,6 +39,7 @@ function generateData() {
 
 		if(i === 5)
 		data.tasks.push({
+			type: 'task',
 			generation,
 			id: ids[i],
 			resourceId: i,
@@ -49,6 +50,15 @@ function generateData() {
 			classes: rand_bool ? 'task-status-1' : '',
 			//enableDragging: !rand_bool
 			//h: Math.random() < 0.5
+		});
+
+		if(i === 3)
+		data.tasks.push({
+			type: 'milestone',
+			id: 4321,
+			from: startOfToday.clone().set({hour: 13, minute: 0}),
+			resourceId: 2,
+			enableDragging: true
 		});
 
 		// data.tasks.push({
@@ -104,7 +114,7 @@ const currentStart = startOfToday.clone().set({hour: 6, minute: 0});
 const currentEnd = startOfToday.clone().set({hour: 18, minute: 0});
 
 let options = {
-	headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
+	//headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
 	stretchTimelineWidthToFit: true,
 	width: 1000,
 	from: currentStart,
@@ -125,12 +135,7 @@ gantt.initTimeRanges([{
 	label: 'Lunch' //?
 }]);
 
-gantt.initMilestones([{
-	id: 4321,
-	from: startOfToday.clone().set({hour: 13, minute: 0}),
-	resourceId: 2,
-	enableDragging: true
-}]);
+//gantt.initMilestones([]);
 
 //gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
 //gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));

@@ -1,11 +1,4 @@
 <div class="row {row.model.classes}" ref:row style="height:{$rowHeight}px" data-row-id="{row.model.id}">
-    <!-- {#each row.tasks as task (task.model.id)}
-        <Task   row={row}
-        task={task}
-        on:taskMovedRow="taskAdded()"
-        on:taskRemovedRow="taskRemoved()"
-        on:taskDropped="taskDropped(task)"/>
-    {/each} -->
     {#if row.model.contentHtml}
         {@html row.model.contentHtml}
     {/if}
@@ -18,7 +11,7 @@
     }
 </style>
 <script>
-    import { DOMUtils } from "./utils/domUtils";
+    import { sortFn } from "./utils/domUtils";
 
     export default {
         oncreate() {
@@ -40,89 +33,6 @@
             const { row } = this.get();
             row.rowElement = null;
             row.component = null;
-        },
-        methods: {
-            taskMoved() {
-                console.log('Task moved');
-            },
-            taskDropped(task) {
-                //this.handleOverlaps();
-            },
-            handleOverlaps(){
-                this.sortTasks();
-                const { row } = this.get();
-                const overlaps = [];
-                let previous = row.tasks[0];
-                for(let i = 1; i < row.tasks.length; i++){
-                    const current = row.tasks[i];
-
-                    if(current.overlaps(previous))
-                    {
-                        if(current.overlapping !== true){
-                            current.overlapping = true;
-                        }
-                        if(previous.overlapping !== true){
-                            previous.overlapping = true;
-                        }
-
-                        if(overlaps.indexOf(current.id) === -1){
-                            overlaps.push(current.id);
-                        }
-
-                        if(overlaps.indexOf(previous.id) === -1){
-                            overlaps.push(previous.id);
-                        }
-                    }
-
-                    if (previous.left + previous.width < current.left + current.width) {
-                        previous = current;
-                    }
-                }
-
-                for(let i = 0; i < row.tasks.length; i++){
-                    const current = row.tasks[i];
-                    if(overlaps.indexOf(current.id) === -1){
-                        if(!!current.overlapping) {
-                            current.overlapping = false;
-                        }
-                    }
-                }
-            },
-            sortTasks() {
-                const { row } =  this.get();
-                row.tasks.sort(function (a, b) {
-                    if (a.left < b.left) {
-                        return -1
-                    } else if (a.left > b.left) {
-                        return 1
-                    }
-                    return 0
-                });
-            },
-            updateVisible(){
-                const { row } = this.get();
-
-                const visibleTasks = this.visibleTasks(row);
-                this.set({visibleTasks});
-            },
-            visibleTasks(row){
-                const { gantt, from, to } = this.store.get();
-                const scrollLeft = gantt.refs.mainContainer.scrollLeft;
-                const clientWidth = gantt.refs.mainContainer.clientWidth;
-                //finish this
-                //this.store.set({scrollLeft, clientWidth});
-
-                //da su sortirani -> index prvog, zadnjeg, i onda slice
-                //da su sortirani -> nakon zadnjeg break
-                const visibleTasks = [];
-                row.tasks.forEach(task => {
-                    if(!(task.to < from || task.from > to)){
-                        visibleTasks.push(task);
-                    }
-                });
-                //console.log(visibleTasks.length);
-                return visibleTasks;
-            }
         }
     };
 </script>

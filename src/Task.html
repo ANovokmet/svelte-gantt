@@ -6,7 +6,6 @@
     transform: translate({posX}px, {posY}px);"
     use:drag 
     on:click="select(event)"
-    class:overlapping="overlapping"
     class:selected="selected"
     class:moving="dragging||resizing">
     <div class="sg-task-background" style="width:{model.amountDone}%"></div>
@@ -116,13 +115,11 @@
 </style>
 
 <script>
-    import { DOMUtils } from "./utils/domUtils";
+    import { setCursor } from "./utils/domUtils";
     import { draggable } from "./core/drag/draggable";
     import { ComponentPosProvider } from "./core/drag/componentPosProvider";
 
     export default {
-        oncreate(){
-        },
         onstate({ changed, current, previous }) {
             if(!current.dragging && !current.resizing){
                 this.set({
@@ -136,32 +133,34 @@
 			drag(node) {
                 const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-                const ondrop = ({ posX, posY, widthT, event }) => {
+                const ondrop = ({ posX, posY, widthT, event, dragging, resizing }) => {
                     const { model } = this.get();
                     const { taskMap, rowMap, rowPadding } = this.store.get();
 
                     let rowChangeValid = true;
                     //row switching
-                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
-                    const sourceRow = rowMap[model.resourceId];
-                    
-                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
-                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-                        const targetRow = rowMap[rowId];
+                    if(dragging){
+                        const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+                        const sourceRow = rowMap[model.resourceId];
+                        
+                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
+                        let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
+                            const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+                            const targetRow = rowMap[rowId];
 
-                        if(targetRow.model.enableDragging){
-                            //targetRow.moveTask(this);
-                            model.resourceId = targetRow.model.id;
-                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
-                        }
-                        else {
-                            rowChangeValid = false;
+                            if(targetRow.model.enableDragging){
+                                //targetRow.moveTask(this);
+                                model.resourceId = targetRow.model.id;
+                                this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                            }
+                            else {
+                                rowChangeValid = false;
+                            }
                         }
                     }
                     
-                    this.set({dragging: false});
+                    this.set({dragging: false, resizing: false});
                     const task = taskMap[model.id];
 
                     if(rowChangeValid) {
@@ -189,20 +188,26 @@
                             ...task
                         });
                     }
+
+                    setCursor('default');
                 }
 
                 return draggable(node, {
-                    onDown: (state) => {
-                        this.set({dragging: true});
+                    onDown: ({dragging, resizing}) => {
+                        this.set({dragging, resizing});
+                        if(dragging) {
+                            setCursor('move');
+                        }
+                        if(resizing) {
+                            setCursor('e-resize');
+                        }
                     }, 
                     onResize: (state) => {
                         this.set(state);
                         const { posX, posY, widthT } = this.get();
-                        console.log('resize', {posX, posY, widthT})
                     }, 
                     onDrag: ({posX, posY}) => {
                         this.set({posX, posY});
-                        console.log('drag', this.get().posX, this.get().posY, this.get().widthT)
                     }, 
                     dragAllowed: () => {
                         const { model } = this.get();
@@ -236,22 +241,6 @@
                     this.root.api.tasks.raise.select(model);
                 }
             },
-            updateCursor(cursor){
-                const element = this.refs.taskElement;
-                element.style.cursor = cursor || 'default';
-                // const cursorOnMove = (e) => {
-                //     const { posX, widthT } = this.get()
-
-                //     const mouseStartPosX = DOMUtils.getRelativePos(rowContainerElement, e).x - posX;
-
-                //     //TODO globally set cursor ON mousedown
-                //     if(mouseStartPosX < resizeHandleWidth || mouseStartPosX > widthT - resizeHandleWidth) {
-                //         this.updateCursor('e-resize');
-                //     }
-                //     else{
-                //         this.updateCursor();
-                //     }
-            },
             onclick(event){
                 const { onTaskButtonClick } = this.store.get();
                 if(onTaskButtonClick) {
@@ -264,7 +253,6 @@
         data() {
             return {
                 dragging: false,
-                overlapping: false,
                 selected: false,
                 resizing: false,
 

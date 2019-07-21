@@ -1,33 +1,33 @@
 var SvelteGanttExternal = (function () {
     'use strict';
 
-    class DOMUtils {
-        isTaskVisible() {
-        }
-        isRowVisible() {
-        }
-        static isLeftClick(event) {
-            return event.which === 1;
-        }
-        //get mouse position within the element
-        static getRelativePos(node, event) {
-            const rect = node.getBoundingClientRect();
-            const x = event.clientX - rect.left; //x position within the element.
-            const y = event.clientY - rect.top; //y position within the element.
-            return {
-                x: x,
-                y: y
-            };
-        }
-        //does mouse position intersect element
-        static intersects(node, event) {
-        }
-        static addEventListenerOnce(target, type, listener, addOptions, removeOptions) {
-            target.addEventListener(type, function fn(event) {
-                target.removeEventListener(type, fn, removeOptions);
-                listener.apply(this, arguments, addOptions);
-            });
-        }
+    /**
+     * Gets mouse position within an element
+     * @param node
+     * @param event
+     */
+    function getRelativePos(node, event) {
+        const rect = node.getBoundingClientRect();
+        const x = event.clientX - rect.left; //x position within the element.
+        const y = event.clientY - rect.top; //y position within the element.
+        return {
+            x: x,
+            y: y
+        };
+    }
+    /**
+     * Adds an event listener that triggers once.
+     * @param target
+     * @param type
+     * @param listener
+     * @param addOptions
+     * @param removeOptions
+     */
+    function addEventListenerOnce(target, type, listener, addOptions, removeOptions) {
+        target.addEventListener(type, function fn(event) {
+            target.removeEventListener(type, fn, removeOptions);
+            listener.apply(this, arguments, addOptions);
+        });
     }
 
     let SvelteGanttExternal;
@@ -59,7 +59,7 @@ var SvelteGanttExternal = (function () {
             rowContainerElement.addEventListener('mouseenter', onmouseenter);
             rowContainerElement.addEventListener('mouseleave', onmouseleave);
             windowElement.addEventListener('mousemove', onmousemove, false);
-            DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+            addEventListenerOnce(windowElement, 'mouseup', onmouseup);
         }
         function onmousemove(event) {
             event.preventDefault();
@@ -81,7 +81,7 @@ var SvelteGanttExternal = (function () {
             if (successful) {
                 //create task
                 const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-                const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+                const mousePos = getRelativePos(rowContainerElement, event);
                 const dropDate = gantt.utils.getDateByPosition(mousePos.x);
                 //TODO extract into helper, used in Task
                 let elements = document.elementsFromPoint(rowCenterX, event.clientY);

@@ -43,7 +43,7 @@
         width: 28px;
         transform-origin: 0 0;
         transform: rotate(45deg); 
-/* //after -45 */
+        /* //after -45 */
         background-color: #feac31;
         border-color: #feac31;
     }
@@ -64,10 +64,8 @@
 </style>
 
 <script>
-    import { DOMUtils } from "./utils/domUtils";
     import { draggable } from "./core/drag/draggable";
     import { ComponentPosProvider } from "./core/drag/componentPosProvider";
-
 
     export default {
         oncreate(){
@@ -96,10 +94,10 @@
         actions: {
 			drag(node) {
                 const { rowContainerElement } = this.store.get();
-                
+
                 const ondrop = ({ posX, posY, widthT, event }) => {
                     const { model } = this.get();
-                    const { rowMap, rowPadding } = this.store.get();
+                    const { taskMap, rowMap, rowPadding } = this.store.get();
 
                     let rowChangeValid = true;
                     //row switching
@@ -123,16 +121,17 @@
                     }
                     
                     this.set({dragging: false});
-
+                    const task = taskMap[model.id];
                     if(rowChangeValid) {
-                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX));
+                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
                         const newLeft = this.root.utils.getPositionByDate(newFrom);
 
                         Object.assign(model, {
-                            from: newFrom,
+                            from: newFrom
                         });
                         
-                        this.set({
+                        this.store.updateTask({
+                            ...task,
                             left: newLeft,
                             top: rowPadding + rowMap[model.resourceId].posY,
                             model
@@ -140,8 +139,9 @@
                     }
                     else {
                         // reset position
-                        const { left, top } = this.get();
-                        this.set({ left, top });
+                        this.store.updateTask({
+                            ...task
+                        });
                     }
                 }
 
@@ -152,7 +152,12 @@
                     onDrag: ({posX, posY}) => {
                         this.set({posX, posY});
                     },
-                    dragAllowed: true,
+                    dragAllowed: () => {
+                        const { model } = this.get();
+                        const { rowMap } = this.store.get();
+                        const row = rowMap[model.resourceId];
+                        return row.model.enableDragging && model.enableDragging
+                    },
                     resizeAllowed: false,
                     onDrop: ondrop, 
                     container: rowContainerElement, 

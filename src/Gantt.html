@@ -8,7 +8,7 @@
         <div class="header-intermezzo" style="width:{$headerWidth}px;" use:horizontalScrollListener >
             <div class="header-container" style="width:{$width}px">
                 {#each $headers as header}
-                    <ColumnHeader header={header}/>
+                    <ColumnHeader header={header} on:selectDateTime="adjustVisibleDateRange(event)"/>
                 {/each}
                 {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
                     <TimeRangeHeader {...timeRange}/>
@@ -17,8 +17,9 @@
         </div>
     </div>
 
-    <div class="main-container" style="height:{$height}px" ref:mainContainer use:scrollable  
-        on:mousewheel="onwheel(event)"
+    <div class="main-container" style="height:{$height}px;" ref:mainContainer use:scrollable 
+        class:zooming="zooming" 
+        on:wheel="onwheel(event)"
         bind:clientHeight="$visibleHeight" 
         bind:clientWidth="$visibleWidth">
         <div class="content" style="width:{$width}px">
@@ -40,15 +41,11 @@
                     {/each}
 
                     {#each visibleTasks as task (task.model.id)}
-                        <TaskComponent model={task.model}
+                        <svelte:component this="{task.model.type === 'milestone' ? Milestone : Task}" model={task.model}
                             left={task.left} 
                             width={task.width}
                             height={task.height}
                             top={task.top}/>
-                    {/each}
-
-                    {#each $milestones as milestone (milestone.id)}
-                        <Milestone model={milestone}/>
                     {/each}
                 </div>
             {#each _ganttBodyModules as module (module.key)}
@@ -59,6 +56,13 @@
 </div>
 
 <style>
+
+
+    .zooming :global(.sg-milestone), .zooming :global(.sg-task)  {
+        transition: transform 0s, background-color 0.2s, width 0s !important;
+    }
+
+
     .gantt {
         width: 100%;
         height: 100%;
@@ -118,8 +122,8 @@
 </style>
 
 <script>
+    import Task from './Task.html';
     import Row from './Row.html';
-    import TaskComponent from './Task.html';
     import Column from './Column.html';
     import ColumnHeader from './ColumnHeader.html';
     import { Store } from 'svelte/store.js';
@@ -130,15 +134,13 @@
     import TimeRangeHeader from './TimeRangeHeader.html';
     import Milestone from './Milestone.html';
 
-    import Task from "./Task.html";
-    import { TaskFactory } from "./core/task";
-    import { SvelteRow } from "./core/row";
-    import { TimeRangeFactory } from "./core/timeRange";
+    import { TaskFactory } from './core/task';
+    import { SvelteRow } from './core/row';
+    import { TimeRangeFactory } from './core/timeRange';
 
-    //import GanttDependencies from './modules/dependencies/GanttDependencies.html';
-    //import Table from './modules/table/Table.html';
-    import { GanttStore } from "./store";
-
+    import { GanttStore } from './store';
+    import { getRelativePos, debounce } from './utils/domUtils';
+    import { V_SCROLLBAR_WIDTH } from './core/constants';
 
     let SvelteGantt;
 
@@ -168,6 +170,18 @@
                 // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
                 // format: datetime format used for header cell label
                 headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+                zoomLevels: [
+                    {
+                        headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
+                        stretchTimelineWidthToFit: true
+                    },
+                    {
+                        headers: [{unit: 'hour', format: 'ddd D/M, H A'}, {unit: 'minute', format: 'mm', offset: 15}],
+                        width: 5000,
+                        stretchTimelineWidthToFit: false
+                    }
+                ],
+                zoom: 0,
                 // height of a single row in px
                 rowHeight: 52,
                 rowPadding: 6,
@@ -186,7 +200,6 @@
 
                 rows: [],
                 tasks: [],
-                milestones: [],
                 _timeRanges: []
             };
 
@@ -216,7 +229,8 @@
 
                 // initialize all the gantt options
                 const ganttOptions = Object.assign({
-                    scrollTop: 0
+                    scrollTop: 0,
+                    scrollLeft: 0
                 }, SvelteGantt.defaults, ganttModules.defaults, options);
                 
                 const store = new GanttStore(ganttOptions);
@@ -229,12 +243,16 @@
                 });
             }
         },
-        components: { Row, Column, ColumnHeader, TaskComponent, TimeRange, TimeRangeHeader, Milestone },
+        components: { Row, Column, ColumnHeader, TimeRange, TimeRangeHeader },
         oncreate(){
             const {initialRows, initialTasks, initialDependencies} = this.get();
 
             this.refreshTasksDebounced = debounce(() => {
                 this.refreshTasks();
+            }, 250, false);
+
+            this.stoppedZooming = debounce(() => {
+                this.set({zooming:false});
             }, 250, false);
 
             this.initGantt();
@@ -248,18 +266,18 @@
                 const { scrollables } = this.get();
 
                 const onscroll = (event) => {
-                    const scrollTop = node.scrollTop; 
+                    const {scrollTop, scrollLeft} = node; 
                     for(let i=0; i< scrollables.length; i++){
                         const scrollable = scrollables[i];
                         if(scrollable.orientation === 'horizontal') {
-                            scrollable.node.scrollLeft = node.scrollLeft;
+                            scrollable.node.scrollLeft = scrollLeft;
                         }
                         else {
                             scrollable.node.scrollTop = scrollTop;
                         }
                     }
                     //TODO: only for vertical scroll
-                    this.store.set({scrollTop});
+                    this.store.set({scrollTop, scrollLeft});
 
                     this.broadcastModules('updateVisible', {scrollTop});
                 }
@@ -280,12 +298,42 @@
             onwheel(e){
                 if(e.ctrlKey){
                     e.preventDefault();
-                    const { width } = this.store.get();
+                    const { width, zoom, zoomLevels } = this.store.get();
+                    this.set({zooming:true});
+
+                    let columnOptions = {
+                        columnUnit: 'minute',
+                        columnOffset: 15,
+                        width
+                    };
+
+                    let newZoom = zoom;
                     if(event.deltaY > 0) {
-                        this.store.set({width: width - 100});
+                        newZoom --;
                     }else {
-                        this.store.set({width: width + 100});
+                        newZoom ++;
                     }
+
+                    if(zoomLevels[newZoom]){
+                        Object.assign(
+                            columnOptions, 
+                            zoomLevels[newZoom],
+                            { zoom: newZoom }
+                        );
+                    }
+
+                    const scale = columnOptions.width / width;
+                    const node = this.refs.mainContainer;
+                    const mousepos = getRelativePos(node, e);
+                    const before = node.scrollLeft + mousepos.x;
+                    const after = before * scale;
+                    const scrollLeft = after - mousepos.x;
+
+                    this.store.set(columnOptions);
+                    this.root.api.gantt.raise.viewChanged();
+                    this.recalculateGanttDimensions();
+                    node.scrollLeft = scrollLeft;
+                    this.stoppedZooming();
                     this.refreshTasks();
                 }
             },
@@ -294,6 +342,16 @@
                 if(this.store.get().stretchTimelineWidthToFit){
                     this.refreshTasks();
                 }
+            },
+            adjustVisibleDateRange({from, to, unit}){
+                console.log(from.format(), to.format());
+
+                this.store.set({
+                    from: from.clone(), 
+                    to: to.clone()
+                });
+                this.refreshTasks();
+
             },
             recalculateGanttDimensions() {
                 const parentWidth = this.refs.ganttElement.clientWidth;
@@ -307,7 +365,7 @@
 
                 // -17 only if side scrollbar shows (rowContainerHeight > height)
                 const { rowContainerHeight } = this.get();
-                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - 17 :  parentWidth - tableWidth;
+                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - V_SCROLLBAR_WIDTH :  parentWidth - tableWidth;
 
                 this.store.set({
                     height, headerWidth
@@ -342,10 +400,6 @@
                 this.store.addAllTask(tasks);
                 //this.selectionManager.clearSelection();
             },
-            initMilestones(milestoneData){
-                const milestones = [...milestoneData];
-                this.store.set({milestones});
-            },
             initTimeRanges(timeRangeData){
                 const timeRangeMap = {};
 
@@ -367,7 +421,7 @@
                     
                     this.selectionManager = new SelectionManager(this.store);
                     this.utils = new GanttUtils(this);
-                    this.api = new GanttApi(this);
+                    this.api = new GanttApi();
                     this.taskFactory = new TaskFactory(this);
                     this.timeRangeFactory = new TimeRangeFactory(this);
 
@@ -376,6 +430,8 @@
                     this.api.registerEvent('tasks', 'switchRow');
                     this.api.registerEvent('tasks', 'moveEnd');
                     this.api.registerEvent('tasks', 'changed');
+                    
+                    this.api.registerEvent('gantt', 'viewChanged');
 
                     this.row = SvelteRow;
                 }
@@ -450,7 +506,9 @@
 
                 paddingTop: 0,
                 paddingBottom: 0,
-                scrollTop: 0
+                Task, Milestone,
+
+                zooming: false
             }
         },
         computed: {
@@ -499,20 +557,5 @@
             },
 
         }
-    };
-
-    function debounce(func, wait, immediate) {
-        var timeout;
-        return function() {
-            var context = this, args = arguments;
-            var later = function() {
-                timeout = null;
-                if (!immediate) func.apply(context, args);
-            };
-            var callNow = immediate && !timeout;
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-            if (callNow) func.apply(context, args);
-        };
     };
 </script>

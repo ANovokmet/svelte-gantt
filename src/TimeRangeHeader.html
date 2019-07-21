@@ -33,7 +33,6 @@
     }
 </style>
 <script>
-    import { DOMUtils } from "./utils/domUtils";
     import { draggable } from "./core/drag/draggable";
     import { ComponentPosProvider } from "./core/drag/componentPosProvider";
 
@@ -49,7 +48,6 @@
         actions: {
             drag(node) {
                 const { rowContainerElement, resizeHandleWidth } = this.store.get();
-
 
                 const ondrop = ({ posX, widthT, event }) => {
                     const { model } = this.get();
@@ -73,8 +71,8 @@
 
                     updateEntity(state);
                     window.removeEventListener('mousemove', onmousemove, false);
-                }
-
+                };
+                
                 const updateEntity = (state) => {
                     const { model } = this.get();
                     const { timeRangeMap } = this.store.get();

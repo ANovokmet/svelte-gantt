@@ -8,6 +8,20 @@ body {
 	margin: 0;
 }
 
+input[type=button] {
+    border: 1px solid rgb(239, 239, 239);
+    font-size: 14px;
+    font-weight: 300;
+    padding: 6px 12px;
+    background: white;
+    color: #656565;
+    font-family: 'Lato', sans-serif;
+}
+
+.control-header {
+	margin-bottom: 6px;
+}
+
 /*body {
 	color: #333;
 	margin: 0;

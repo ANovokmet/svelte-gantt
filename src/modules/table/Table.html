@@ -40,7 +40,6 @@
     }
 
     .row-header-cell {
-        
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -50,6 +49,7 @@
 </style>
 <script>
     import RowHeader from './RowHeader.html';
+    import { H_SCROLLBAR_WIDTH } from 'src/core/constants';
 
     export default {
         setup(component) {
@@ -71,6 +71,7 @@
         components: { RowHeader },
         oncreate(){
             this.fire('init', {module: this});
+            
         },
         methods: {
             initModule (options) {
@@ -82,8 +83,13 @@
             onGanttCreated() {
                 const {_gantt} = this.get();
 
-                const height = _gantt.refs.sideContainer.clientHeight;
-                this.refs.sideHeaderContainer.style.height = height + 'px';
+                const updateHeight = () => {
+                    const height = _gantt.refs.sideContainer.clientHeight;
+                    this.refs.sideHeaderContainer.style.height = height + 'px';
+                }
+
+                this.root.api.gantt.on.viewChanged(updateHeight);
+                updateHeight();
             }
         },
         data() {
@@ -100,7 +106,7 @@
                 return sum;
             },
             // -17 if bottom scroll shows (this.refs.ganttElement.clientWidth > width)
-            height: ({$height, $parentWidth, $width}) => $width > $parentWidth ? $height - 17 : $height
+            height: ({$height, $parentWidth, $width}) => $width > $parentWidth ? $height - H_SCROLLBAR_WIDTH : $height
         }
     }
 </script>

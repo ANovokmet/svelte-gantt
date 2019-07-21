@@ -1,4 +1,4 @@
-import { Store } from 'svelte/store.js';
+import { Store } from 'svelte/store';
 
 export class GanttStore extends Store {
 
@@ -12,10 +12,6 @@ export class GanttStore extends Store {
         }, data),{ 
             immutable: !true 
         });
-
-        // this.compute('selectAll', ['ids', 'entities'], (ids: string[], entities: {[key:string]:V}) => {
-        //     return ids.map(id => entities[id]);
-        // });
 
         this.compute('allTasks', ['taskIds', 'taskMap'], (ids: string[], entities: {[key:string]:any}) => {
             return ids.map(id => entities[id]);
@@ -68,17 +64,6 @@ export class GanttStore extends Store {
         const { timeRangeMap } = this.get();
         const n = update(timeRange, {entities: timeRangeMap})
         this.set({timeRangeMap: n.entities});
-    }
-
-    updateAllTask(tasks: any[]){
-        
-        const { taskIds, taskMap } = this.get();
-
-        // for(const task of tasks) {
-        //     if(taskIds)
-        //     state.ids.push(entity.model.id);
-        //     state.entities[entity.model.id] = entity;
-        // }
     }
 }
 

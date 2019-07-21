@@ -1,12 +1,10 @@
 import { SvelteGantt } from "./gantt";
 
 export default class {
-    gantt: SvelteGantt;
     listeners: any[];
     listenersMap: { [key:string]: any; };
 
-    constructor(gantt){
-        this.gantt = gantt;
+    constructor(){
         this.listeners = [];
         this.listenersMap = {};
     }

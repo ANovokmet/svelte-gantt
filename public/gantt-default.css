@@ -36,10 +36,6 @@
     background: rgb(60, 98, 131);
 }
 
-.overlapping {
-    background: rgb(255, 122, 122);
-}
-
 .row-header-row {
     border-bottom: #efefef 1px solid;  
     font-weight: bold;

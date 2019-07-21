@@ -7,35 +7,13 @@ import typescript from 'rollup-plugin-typescript2';
 
 const production = !process.env.ROLLUP_WATCH;
 
-const tsconfig = {
-	compilerOptions: {
-		sourceMap: true,
-		target: 'es6'
-	}
-}
-
 function baseConfig({input, output, css}) {
 	return {
 		input: input,
 		output: output,
 		plugins: [
-			typescript({ tsconfigDefaults: tsconfig }),
+			typescript(),
 			svelte({
-
-				// if we want preprocess svelte scripts from typescript
-				// preprocess: {
-				// 	script: ({ content, attributes }) => {
-				// 		if (attributes.type !== 'text/typescript') return;
-				// 		console.log("SOURCE: ", content)
-				// 		let result = ts.transpileModule(content, {
-				// 			compilerOptions: { module: ts.ModuleKind.ES2015, sourceMap:true }
-				// 		});
-				// 		console.log("RESULT: ", result);
-				// 		console.log({ code: result.outputText, map: JSON.parse(result.sourceMapText) })
-				// 		return { code: result.outputText, map: JSON.parse(result.sourceMapText) }; 
-				// 	}
-				// },
-
 				// opt in to v3 behaviour today
 				skipIntroByDefault: true,
 				nestedTransitions: true,
@@ -113,7 +91,7 @@ export default [
 			file: 'public/dist/svelteGanttExternal.js'
 		},
 		plugins: [
-			typescript({ tsconfigDefaults: tsconfig }),
+			typescript(),
 			resolve(),
 			commonjs(),
 			production && buble({ include: ['src/**', 'node_modules/svelte/shared.js'] }),

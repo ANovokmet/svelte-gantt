@@ -1,4 +1,4 @@
-import { DOMUtils } from "./utils/domUtils.js";
+import { addEventListenerOnce, getRelativePos } from "./utils/domUtils.js";
     
 let SvelteGanttExternal;
 
@@ -36,7 +36,7 @@ function drag(node, data) {
         rowContainerElement.addEventListener('mouseleave', onmouseleave);
 
         windowElement.addEventListener('mousemove', onmousemove, false);
-        DOMUtils.addEventListenerOnce(windowElement, 'mouseup', onmouseup);
+        addEventListenerOnce(windowElement, 'mouseup', onmouseup);
     }
     
     function onmousemove(event) {
@@ -62,7 +62,7 @@ function drag(node, data) {
             //create task
             const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
             
-            const mousePos = DOMUtils.getRelativePos(rowContainerElement, event);
+            const mousePos = getRelativePos(rowContainerElement, event);
             const dropDate = gantt.utils.getDateByPosition(mousePos.x);
 
             //TODO extract into helper, used in Task

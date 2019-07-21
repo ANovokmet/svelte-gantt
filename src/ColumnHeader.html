@@ -1,6 +1,6 @@
 <div class="column-header-row" style="width:{width}px">
     {#each headers as header}
-        <div class="column-header" style="width:{header.width}px">
+        <div class="column-header" style="width:{header.width}px" on:click="fire('selectDateTime', { from: header.from, to: header.to, unit: header.unit })">
             {header.label || 'N/A'}
         </div>
     {/each}
@@ -30,6 +30,9 @@
         font-size: 14px;
         font-weight: 300;
         transition: background 0.2s;
+
+        cursor: pointer;     
+        user-select: none;
     }
 
     .column-header:hover {
@@ -49,16 +52,23 @@
         },
         computed: {
             columnWidth: ({$from, $to, $width, header}) => {
-                return getPositionByDate($from.clone().add(1, header.unit), $from, $to, $width); //durationTo / durationToEnd * $width;
+                return getPositionByDate($from.clone().add(header.offset || 1, header.unit), $from, $to, $width);
             },
             columnCount: ({$width, columnWidth}) => Math.ceil($width / columnWidth),
             headers: ({$from, columnWidth, columnCount, header, $width}) => {
                 const headers = [];
-                let headerTime = $from.clone();
+                let headerTime = $from.clone().startOf(header.unit);
+                const step = header.offset || 1;
 
                 for(let i = 0; i < columnCount; i++){
-                    headers.push({width: Math.min(columnWidth, $width), label: headerTime.format(header.format)});
-                    headerTime.add(1, header.unit);
+                    headers.push({
+                        width: Math.min(columnWidth, $width), 
+                        label: headerTime.format(header.format),
+                        from: headerTime.clone(),
+                        to: headerTime.clone().add(step, header.unit),
+                        unit: header.unit
+                    });
+                    headerTime.add(step, header.unit);
                 }
                 return headers;
             }
