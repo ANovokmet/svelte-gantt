@@ -27,7 +27,7 @@
         align-items: center;
         flex-direction: column;
 
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, opacity 0.2s;
     }
 
     .sg-milestone .inside {
@@ -95,27 +95,20 @@
 			drag(node) {
                 const { rowContainerElement } = this.store.get();
 
-                const ondrop = ({ posX, posY, widthT, event }) => {
+                const ondrop = ({ posX, posY, widthT, event, dragging }) => {
                     const { model } = this.get();
                     const { taskMap, rowMap, rowPadding } = this.store.get();
 
                     let rowChangeValid = true;
                     //row switching
-                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
-                    const sourceRow = rowMap[model.resourceId];
-                    
-                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
-                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-                        const targetRow = rowMap[rowId];
-
-                        if(targetRow.model.enableDragging){
-                            //targetRow.moveTask(this);
+                    if(dragging){
+                        const sourceRow = rowMap[model.resourceId];
+                        const targetRow = this.root.dndManager.getTarget('row', event);
+                        if(targetRow){
                             model.resourceId = targetRow.model.id;
                             this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
                         }
-                        else {
+                        else{
                             rowChangeValid = false;
                         }
                     }
@@ -146,11 +139,11 @@
                 }
 
                 return draggable(node, {
-                    onDown: (state) => {
-                        this.set({...state, dragging: true});
+                    onDown: ({posX, posY}) => {
+                        //this.set({posX, posY});
                     }, 
                     onDrag: ({posX, posY}) => {
-                        this.set({posX, posY});
+                        this.set({posX, posY, dragging: true});
                     },
                     dragAllowed: () => {
                         const { model } = this.get();

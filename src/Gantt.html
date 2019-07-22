@@ -137,6 +137,7 @@
     import { TaskFactory } from './core/task';
     import { SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
+    import { DragDropManager } from './core/drag/draggable';
 
     import { GanttStore } from './store';
     import { getRelativePos, debounce } from './utils/domUtils';
@@ -424,6 +425,8 @@
                     this.api = new GanttApi();
                     this.taskFactory = new TaskFactory(this);
                     this.timeRangeFactory = new TimeRangeFactory(this);
+                    this.dndManager = new DragDropManager(this);
+
 
                     this.api.registerEvent('tasks', 'move');
                     this.api.registerEvent('tasks', 'select');

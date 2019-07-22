@@ -1,5 +1,8 @@
 import { isLeftClick, addEventListenerOnce, getRelativePos } from "../../utils/domUtils";
 import { PositionProvider, DraggableSettings } from "./interfaces";
+import { SvelteGantt } from "../gantt";
+import { SvelteRow } from "../row";
+import { MIN_DRAG_Y, MIN_DRAG_X } from "../constants";
 
 export function draggable(node, settings: DraggableSettings, provider: PositionProvider) {
 
@@ -10,7 +13,10 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
     let direction;
     let dragging = false, resizing = false;
     
-    const onmousedown = (event) => {
+    let initialX, initialY, initialW;
+    let resizeTriggered = false;
+
+    const onmousedown = (event: MouseEvent) => {
         if(!isLeftClick(event)){
             return;
         }
@@ -18,12 +24,18 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         const { posX, posY } = provider.getPos();
         const widthT = provider.getWidth();
 
+
         event.stopPropagation();
         event.preventDefault();
         
         const canDrag = typeof(dragAllowed) === 'function' ? dragAllowed() : dragAllowed
         const canResize = typeof(resizeAllowed) === 'function' ? resizeAllowed() : resizeAllowed
         if(canDrag || canResize){
+
+            initialX = event.clientX;
+            initialY = event.clientY;
+
+
             mouseStartPosX = getRelativePos(settings.container, event).x - posX;
             mouseStartPosY = getRelativePos(settings.container, event).y - posY;
             mouseStartRight = posX + widthT;
@@ -63,7 +75,16 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         }
     }
     
-    const onmousemove = (event) => {
+    const onmousemove = (event: MouseEvent) => {
+
+        if(!resizeTriggered){
+            if(Math.abs(event.clientX - initialX) > MIN_DRAG_X || Math.abs(event.clientY - initialY) > MIN_DRAG_Y){
+                console.log('trigger resize')
+                resizeTriggered = true;
+            }else{
+                return;
+            }
+        }
 
         event.preventDefault();
         if(resizing) {
@@ -115,7 +136,7 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         }
     }
 
-    const onmouseup = (event) => {
+    const onmouseup = (event: MouseEvent) => {
         const { posX, posY } = provider.getPos();
         const widthT = provider.getWidth();
         
@@ -131,6 +152,7 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         dragging = false;
         resizing = false;
         direction = null;
+        resizeTriggered = false;
 
         window.removeEventListener('mousemove', onmousemove, false);
     }
@@ -142,6 +164,45 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
             node.removeEventListener('mousedown', onmousedown, false);
             node.removeEventListener('mousemove', onmousemove, false);
             node.removeEventListener('mouseup', onmouseup, false);
+        }
+    }
+}
+
+export type DropHandler = (event: MouseEvent) => any;
+
+export class DragDropManager
+{
+    gantt: SvelteGantt;
+    handlerMap: {[key:string]: DropHandler} = {};
+
+    constructor(gantt) {
+        this.gantt = gantt;
+        
+        this.register('row', (event) => {
+            let elements = document.elementsFromPoint(event.clientX, event.clientY);
+            let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+            if(rowElement !== undefined) {
+                const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+                const { rowMap } = this.gantt.store.get();
+                const targetRow = rowMap[rowId];
+
+                if(targetRow.model.enableDragging){
+                    return targetRow;
+                }
+            }
+            return null;
+        });
+    }
+
+    register(target: string, handler: DropHandler) {
+        this.handlerMap[target] = handler;
+    }
+
+    getTarget(target: string, event: MouseEvent): SvelteRow {
+        //const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+        var handler = this.handlerMap[target];
+        if(handler){
+            return handler(event);
         }
     }
 }

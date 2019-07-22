@@ -469,12 +469,19 @@ var SvelteGantt = (function () {
 	}
 	//# sourceMappingURL=domUtils.js.map
 
+	const V_SCROLLBAR_WIDTH = 17;
+	const MIN_DRAG_X = 2;
+	const MIN_DRAG_Y = 2;
+	//# sourceMappingURL=constants.js.map
+
 	function draggable(node, settings, provider) {
 	    const { onDown, onResize, onDrag, onDrop, dragAllowed, resizeAllowed } = settings;
 	    let mouseStartPosX, mouseStartPosY;
 	    let mouseStartRight;
 	    let direction;
 	    let dragging = false, resizing = false;
+	    let initialX, initialY;
+	    let resizeTriggered = false;
 	    const onmousedown = (event) => {
 	        if (!isLeftClick(event)) {
 	            return;
@@ -486,6 +493,8 @@ var SvelteGantt = (function () {
 	        const canDrag = typeof (dragAllowed) === 'function' ? dragAllowed() : dragAllowed;
 	        const canResize = typeof (resizeAllowed) === 'function' ? resizeAllowed() : resizeAllowed;
 	        if (canDrag || canResize) {
+	            initialX = event.clientX;
+	            initialY = event.clientY;
 	            mouseStartPosX = getRelativePos(settings.container, event).x - posX;
 	            mouseStartPosY = getRelativePos(settings.container, event).y - posY;
 	            mouseStartRight = posX + widthT;
@@ -523,6 +532,15 @@ var SvelteGantt = (function () {
 	        }
 	    };
 	    const onmousemove = (event) => {
+	        if (!resizeTriggered) {
+	            if (Math.abs(event.clientX - initialX) > MIN_DRAG_X || Math.abs(event.clientY - initialY) > MIN_DRAG_Y) {
+	                console.log('trigger resize');
+	                resizeTriggered = true;
+	            }
+	            else {
+	                return;
+	            }
+	        }
 	        event.preventDefault();
 	        if (resizing) {
 	            const mousePos = getRelativePos(settings.container, event);
@@ -584,6 +602,7 @@ var SvelteGantt = (function () {
 	        dragging = false;
 	        resizing = false;
 	        direction = null;
+	        resizeTriggered = false;
 	        window.removeEventListener('mousemove', onmousemove, false);
 	    };
 	    node.addEventListener('mousedown', onmousedown, false);
@@ -594,6 +613,35 @@ var SvelteGantt = (function () {
 	            node.removeEventListener('mouseup', onmouseup, false);
 	        }
 	    };
+	}
+	class DragDropManager {
+	    constructor(gantt) {
+	        this.handlerMap = {};
+	        this.gantt = gantt;
+	        this.register('row', (event) => {
+	            let elements = document.elementsFromPoint(event.clientX, event.clientY);
+	            let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+	            if (rowElement !== undefined) {
+	                const rowId = parseInt(rowElement.getAttribute("data-row-id"));
+	                const { rowMap } = this.gantt.store.get();
+	                const targetRow = rowMap[rowId];
+	                if (targetRow.model.enableDragging) {
+	                    return targetRow;
+	                }
+	            }
+	            return null;
+	        });
+	    }
+	    register(target, handler) {
+	        this.handlerMap[target] = handler;
+	    }
+	    getTarget(target, event) {
+	        //const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
+	        var handler = this.handlerMap[target];
+	        if (handler) {
+	            return handler(event);
+	        }
+	    }
 	}
 	//# sourceMappingURL=draggable.js.map
 
@@ -678,23 +726,14 @@ var SvelteGantt = (function () {
 	                    let rowChangeValid = true;
 	                    //row switching
 	                    if(dragging){
-	                        const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
 	                        const sourceRow = rowMap[model.resourceId];
-	                        
-	                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-	                        let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
-	                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-	                            const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-	                            const targetRow = rowMap[rowId];
-
-	                            if(targetRow.model.enableDragging){
-	                                //targetRow.moveTask(this);
-	                                model.resourceId = targetRow.model.id;
-	                                this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
-	                            }
-	                            else {
-	                                rowChangeValid = false;
-	                            }
+	                        const targetRow = this.root.dndManager.getTarget('row', event);
+	                        if(targetRow){
+	                            model.resourceId = targetRow.model.id;
+	                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
+	                        }
+	                        else{
+	                            rowChangeValid = false;
 	                        }
 	                    }
 	                    
@@ -732,7 +771,7 @@ var SvelteGantt = (function () {
 
 	                return draggable(node, {
 	                    onDown: ({dragging, resizing}) => {
-	                        this.set({dragging, resizing});
+	                        //this.set({dragging, resizing});
 	                        if(dragging) {
 	                            setCursor('move');
 	                        }
@@ -741,11 +780,10 @@ var SvelteGantt = (function () {
 	                        }
 	                    }, 
 	                    onResize: (state) => {
-	                        this.set(state);
-	                        const { posX, posY, widthT } = this.get();
+	                        this.set({...state, resizing: true});
 	                    }, 
 	                    onDrag: ({posX, posY}) => {
-	                        this.set({posX, posY});
+	                        this.set({posX, posY, dragging: true});
 	                    }, 
 	                    dragAllowed: () => {
 	                        const { model } = this.get();
@@ -803,15 +841,15 @@ var SvelteGantt = (function () {
 				text9 = createText(text9_value);
 				text10 = createText("\r\n        \r\n\r\n        ");
 				if (if_block1) if_block1.c();
-				div0.className = "sg-task-background svelte-1vo4mn7";
+				div0.className = "sg-task-background svelte-1qtvn5p";
 				setStyle(div0, "width", "" + ctx.model.amountDone + "%");
 				addLoc(div0, file, 10, 4, 288);
-				span.className = "debug svelte-1vo4mn7";
+				span.className = "debug svelte-1qtvn5p";
 				addLoc(span, file, 19, 8, 594);
-				div1.className = "sg-task-content svelte-1vo4mn7";
+				div1.className = "sg-task-content svelte-1qtvn5p";
 				addLoc(div1, file, 11, 4, 366);
 				addListener(div2, "click", click_handler);
-				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-1vo4mn7";
+				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-1qtvn5p";
 				setStyle(div2, "width", "" + ctx.widthT + "px");
 				setStyle(div2, "height", "" + ctx.height + "px");
 				setStyle(div2, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
@@ -886,7 +924,7 @@ var SvelteGantt = (function () {
 					if_block1 = null;
 				}
 
-				if ((changed.model) && div2_class_value !== (div2_class_value = "sg-task " + ctx.model.classes + " svelte-1vo4mn7")) {
+				if ((changed.model) && div2_class_value !== (div2_class_value = "sg-task " + ctx.model.classes + " svelte-1qtvn5p")) {
 					div2.className = div2_class_value;
 				}
 
@@ -1038,7 +1076,7 @@ var SvelteGantt = (function () {
 			c: function create() {
 				span = createElement("span");
 				addListener(span, "click", click_handler);
-				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1vo4mn7";
+				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1qtvn5p";
 				addLoc(span, file, 23, 12, 722);
 			},
 
@@ -1052,7 +1090,7 @@ var SvelteGantt = (function () {
 					span.innerHTML = raw_value;
 				}
 
-				if ((changed.model) && span_class_value !== (span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1vo4mn7")) {
+				if ((changed.model) && span_class_value !== (span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-1qtvn5p")) {
 					span.className = span_class_value;
 				}
 			},
@@ -2243,27 +2281,20 @@ var SvelteGantt = (function () {
 	function drag$2(node) {
 	                const { rowContainerElement } = this.store.get();
 
-	                const ondrop = ({ posX, posY, widthT, event }) => {
+	                const ondrop = ({ posX, posY, widthT, event, dragging }) => {
 	                    const { model } = this.get();
 	                    const { taskMap, rowMap, rowPadding } = this.store.get();
 
 	                    let rowChangeValid = true;
 	                    //row switching
-	                    const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
-	                    const sourceRow = rowMap[model.resourceId];
-	                    
-	                    let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-	                    let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
-	                    if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-	                        const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-	                        const targetRow = rowMap[rowId];
-
-	                        if(targetRow.model.enableDragging){
-	                            //targetRow.moveTask(this);
+	                    if(dragging){
+	                        const sourceRow = rowMap[model.resourceId];
+	                        const targetRow = this.root.dndManager.getTarget('row', event);
+	                        if(targetRow){
 	                            model.resourceId = targetRow.model.id;
 	                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
 	                        }
-	                        else {
+	                        else{
 	                            rowChangeValid = false;
 	                        }
 	                    }
@@ -2294,11 +2325,11 @@ var SvelteGantt = (function () {
 	                };
 
 	                return draggable(node, {
-	                    onDown: (state) => {
-	                        this.set({...state, dragging: true});
+	                    onDown: ({posX, posY}) => {
+	                        //this.set({posX, posY});
 	                    }, 
 	                    onDrag: ({posX, posY}) => {
-	                        this.set({posX, posY});
+	                        this.set({posX, posY, dragging: true});
 	                    },
 	                    dragAllowed: () => {
 	                        const { model } = this.get();
@@ -2334,12 +2365,12 @@ var SvelteGantt = (function () {
 				text6 = createText(text6_value);
 				text7 = createText(" y:");
 				text8 = createText(text8_value);
-				div0.className = "inside svelte-1250hnv";
+				div0.className = "inside svelte-fuyhwd";
 				addLoc(div0, file$6, 7, 4, 269);
 				span.className = "debug";
 				addLoc(span, file$6, 8, 8, 305);
 				addListener(div1, "click", click_handler);
-				div1.className = div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-1250hnv";
+				div1.className = div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-fuyhwd";
 				setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
 				setStyle(div1, "height", "" + ctx.height + "px");
 				setStyle(div1, "width", "" + ctx.height + "px");
@@ -2383,7 +2414,7 @@ var SvelteGantt = (function () {
 					setData(text8, text8_value);
 				}
 
-				if ((changed.model) && div1_class_value !== (div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-1250hnv")) {
+				if ((changed.model) && div1_class_value !== (div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-fuyhwd")) {
 					div1.className = div1_class_value;
 				}
 
@@ -2722,9 +2753,6 @@ var SvelteGantt = (function () {
 	// }
 	//# sourceMappingURL=store.js.map
 
-	const V_SCROLLBAR_WIDTH = 17;
-	//# sourceMappingURL=constants.js.map
-
 	/* src\Gantt.html generated by Svelte v2.16.0 */
 
 
@@ -2947,6 +2975,8 @@ var SvelteGantt = (function () {
 	            this.api = new GanttApi();
 	            this.taskFactory = new TaskFactory(this);
 	            this.timeRangeFactory = new TimeRangeFactory(this);
+	            this.dndManager = new DragDropManager(this);
+
 
 	            this.api.registerEvent('tasks', 'move');
 	            this.api.registerEvent('tasks', 'select');

@@ -25,7 +25,7 @@ export function getRelativePos(node: HTMLElement, event: MouseEvent) {
  * @param addOptions 
  * @param removeOptions 
  */
-export function addEventListenerOnce(target: HTMLElement|Window, type: string, listener, addOptions?, removeOptions?) {
+export function addEventListenerOnce(target: HTMLElement | Window, type: string, listener, addOptions?, removeOptions?) {
     target.addEventListener(type, function fn(event) {
         target.removeEventListener(type, fn, removeOptions);
         listener.apply(this, arguments, addOptions);
@@ -54,9 +54,9 @@ export function sortFn(prop: (element: any) => any) {
 
 export function debounce(func, wait, immediate) {
     var timeout;
-    return function() {
+    return function () {
         var context = this, args = arguments;
-        var later = function() {
+        var later = function () {
             timeout = null;
             if (!immediate) func.apply(context, args);
         };
@@ -66,3 +66,17 @@ export function debounce(func, wait, immediate) {
         if (callNow) func.apply(context, args);
     };
 };
+
+export function throttle(func, limit) {
+    var wait = false;
+    return function () {
+        if (!wait) {
+
+            func.apply(null, arguments);
+            wait = true;
+            setTimeout(function () {
+                wait = false;
+            }, limit);
+        }
+    }
+}

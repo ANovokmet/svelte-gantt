@@ -45,7 +45,7 @@
         white-space: nowrap;
         /* overflow: hidden; */
 
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, opacity 0.2s;
 	}
 
     .sg-task-background {
@@ -140,23 +140,14 @@
                     let rowChangeValid = true;
                     //row switching
                     if(dragging){
-                        const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
                         const sourceRow = rowMap[model.resourceId];
-                        
-                        let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-                        let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
-                        if(rowElement !== undefined && rowElement !== sourceRow.rowElement) {
-                            const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-                            const targetRow = rowMap[rowId];
-
-                            if(targetRow.model.enableDragging){
-                                //targetRow.moveTask(this);
-                                model.resourceId = targetRow.model.id;
-                                this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
-                            }
-                            else {
-                                rowChangeValid = false;
-                            }
+                        const targetRow = this.root.dndManager.getTarget('row', event);
+                        if(targetRow){
+                            model.resourceId = targetRow.model.id;
+                            this.root.api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                        }
+                        else{
+                            rowChangeValid = false;
                         }
                     }
                     
@@ -194,7 +185,7 @@
 
                 return draggable(node, {
                     onDown: ({dragging, resizing}) => {
-                        this.set({dragging, resizing});
+                        //this.set({dragging, resizing});
                         if(dragging) {
                             setCursor('move');
                         }
@@ -203,11 +194,10 @@
                         }
                     }, 
                     onResize: (state) => {
-                        this.set(state);
-                        const { posX, posY, widthT } = this.get();
+                        this.set({...state, resizing: true});
                     }, 
                     onDrag: ({posX, posY}) => {
-                        this.set({posX, posY});
+                        this.set({posX, posY, dragging: true});
                     }, 
                     dragAllowed: () => {
                         const { model } = this.get();
