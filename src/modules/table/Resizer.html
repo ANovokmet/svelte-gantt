@@ -1,0 +1,61 @@
+<div class="sg-resize" style="left:{posX}px" use:resizer></div>
+<style>
+    .sg-resize {
+        z-index: 1;
+        background: #e9eaeb;
+        width: 5px;
+        cursor: col-resize;
+        position: absolute;
+        height: 100%;
+
+        transition: width 0.2s, transform 0.2s;
+    }
+
+    .sg-resize:hover {
+        transform: translateX(-2px);
+        width: 10px;
+    }
+</style>
+<script>
+    import { draggable } from 'src/core/drag/draggable';
+    import { ComponentPosProvider } from 'src/core/drag/componentPosProvider';
+    import { setCursor } from 'src/utils/domUtils';
+
+    export default {
+        oncreate(){
+            this.dragOptions.container =  this.root.refs.ganttElement;
+        },
+        actions: {
+            resizer(node) {
+                
+                const dragOptions = this.dragOptions = {
+                    onDown: ({posX, posY}) => {
+
+                    }, 
+                    onDrag: ({posX}) => {
+                        this.set({posX, dragging: true});
+                        this.fire('resize', { left: posX });
+                        setCursor('col-resize');
+
+                    },
+                    onDrop: ({ posX }) => {
+                        this.set({posX, dragging: false});
+                        this.fire('resize', { left: posX });
+                        setCursor('default');
+                    }, 
+                    dragAllowed: true,
+                    resizeAllowed: false,
+                    
+                    container: this.root.refs.ganttElement, 
+                }
+
+                return draggable(node, dragOptions, new ComponentPosProvider(this));
+            }
+        },
+        data() {
+            return {
+                posX: 240
+            }
+        }
+    }
+</script>

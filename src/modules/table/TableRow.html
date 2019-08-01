@@ -1,26 +1,33 @@
-<div class="row-header-row" style="height:{$rowHeight}px">
+<div class="sg-table-row" style="height:{$rowHeight}px">
     {#each headers as header}
-        <div class="row-header-cell" style="width:{header.width}px">
+        <div class="sg-table-body-cell sg-table-cell" > <!--style="width:{header.width}px"-->
             {#if row.model.headerHtml}
                 {@html row.model.headerHtml}
-            {:else}
-                <div class="sg-resource-info">
-                    <img class="sg-resource-image" src="{row.model.imageSrc}" alt=""/>
-                    <div class="sg-resource-title">
-                        {row.model[header.property]}
-                    </div>
+            {:elseif header.renderer}
+                {@html header.renderer(row)}
+            {:elseif header.type === 'resourceInfo'}
+                <img class="sg-resource-image" src="{row.model.imageSrc}" alt=""/>
+                <div class="sg-resource-title">
+                    {row.model[header.property]}
                 </div>
+            {:else}
+                {row.model[header.property]}
             {/if}
         </div>
     {/each}
 </div>
 <style>
-    .row-header-row {
+    .sg-table-row {
+        display: flex;
+        align-items: stretch;
+
         position: relative;
-        box-sizing: border-box;
 
         font-weight: 400;
         font-size: 14px;
+    }
+
+    .sg-table-cell {
     }
 
     .sg-resource-image {
@@ -39,19 +46,11 @@
         flex-direction: row;
         align-items: center;
     }
-
-    :global(.row-header-cell) {
-        padding: 0 .5em;
-        display: inline-block;  
-        height: 100%;
-        box-sizing: border-box;
-    }
 </style>
 <script>
     export default {
         data() {
             return {
-                label: '',
                 row: null,
                 headers: null
             }

@@ -22,7 +22,7 @@
 	<script src='dist/svelteGanttDependencies.js'></script>
 	<script src='dist/svelteGanttTable.js'></script>
 	<script src='dist/svelteGanttExternal.js'></script>
-	<div class="control-header">
+	<header class="control-header">
 		<input id="setPreviousDay" type="button" value="<"/>
 		<input id="setDayView" type="button" value="Day view"/>
 		<input id="setNextDay" type="button" value=">"/>
@@ -30,16 +30,8 @@
 		<input id="setWeekView" type="button" value="Week view"/>
 		<input id="reInit" type="button" value="Re-init"/>
 		<input id="newTask" type="button" value="Drag to gantt"/>
-	</div>
-	<style>
-		.gc {
-			width: 100%;
-			height: 80%;
-			/* background-color: wheat; */
-		}
-	</style>
-	<div id="gc" class="gc"></div>
+	</header>
+	<div id="example-gantt"></div>
 	<script src='main.js'></script>
-
 </body>
 </html>

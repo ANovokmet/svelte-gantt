@@ -146,7 +146,6 @@ var SvelteGanttExternal = (function () {
         return data;
     };
     var SvelteGanttExternal$1 = SvelteGanttExternal;
-    //# sourceMappingURL=ExternalDiv.js.map
 
     return SvelteGanttExternal$1;
 

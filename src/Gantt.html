@@ -1,69 +1,83 @@
-<svelte:window on:resize="onWindowResizeEventHandler(event)"/>
-<div class="gantt {$classes}" ref:ganttElement>
-    {#each _ganttTableModules as module (module.key)}
-        <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} on:init="initModule(event.module)" {visibleRows}/>
-    {/each}
+<svelte:window on:resize="onWindowResizeEventHandler(event)" />
+<div class="sg-gantt {$classes}" ref:ganttElement>
+	{#each _ganttTableModules as module (module.key)}
+	<svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} {tableWidth} on:init="initModule(event.module)" {visibleRows} />
 
-    <div class="main-header-container" ref:sideContainer>
-        <div class="header-intermezzo" style="width:{$headerWidth}px;" use:horizontalScrollListener >
-            <div class="header-container" style="width:{$width}px">
-                {#each $headers as header}
-                    <ColumnHeader header={header} on:selectDateTime="adjustVisibleDateRange(event)"/>
-                {/each}
-                {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
-                    <TimeRangeHeader {...timeRange}/>
-                {/each}
-            </div>
-        </div>
-    </div>
+    <Resizer on:resize="onresize(event)"></Resizer>
+	{/each}
 
-    <div class="main-container" style="height:{$height}px;" ref:mainContainer use:scrollable 
-        class:zooming="zooming" 
-        on:wheel="onwheel(event)"
-        bind:clientHeight="$visibleHeight" 
-        bind:clientWidth="$visibleWidth">
-        <div class="content" style="width:{$width}px">
-            <div class="column-container">
-                {#each columns as column}
-                    <Column {...column}/>
-                {/each}
-            </div>
-            <div class="row-container" ref:rowContainer style="height:{rowContainerHeight}px;">
-                <div style="transform: translateY({paddingTop}px);">
-                    {#each visibleRows as row (row.model.id)}
-                        <Row row={row}/>
-                    {/each}
-                </div>
-            </div>
-                <div class="sg-foreground">
-                    {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
-                        <TimeRange {...timeRange}/>
-                    {/each}
+	<div class="sg-timeline sg-view">
+		<div class="sg-header" ref:mainHeaderContainer bind:clientHeight="$headerHeight" class:right-scrollbar-visible="rightScrollbarVisible">
+			<div class="sg-header-scroller" use:horizontalScrollListener>
+				<div class="header-container" style="width:{$width}px">
+					{#each $headers as header}
+					<ColumnHeader header={header} on:selectDateTime="adjustVisibleDateRange(event)" />
+					{/each}
+					{#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+					<TimeRangeHeader {...timeRange} />
+					{/each}
+				</div>
+			</div>
+		</div>
 
-                    {#each visibleTasks as task (task.model.id)}
-                        <svelte:component this="{task.model.type === 'milestone' ? Milestone : Task}" model={task.model}
-                            left={task.left} 
-                            width={task.width}
-                            height={task.height}
-                            top={task.top}/>
-                    {/each}
-                </div>
-            {#each _ganttBodyModules as module (module.key)}
-                <svelte:component this={module} on:init="initModule(event.module)" />
-            {/each}
-        </div>
-    </div>
+		<div class="sg-timeline-body" ref:mainContainer use:scrollable class:zooming="zooming" on:wheel="onwheel(event)"
+		 bind:clientHeight="$visibleHeight" bind:clientWidth="$visibleWidth">
+			<div class="content" style="width:{$width}px">
+				<div class="sg-columns">
+					{#each columns as column}
+					<Column {...column} />
+					{/each}
+				</div>
+				<div class="sg-rows" ref:rowContainer style="height:{rowContainerHeight}px;">
+					<div style="transform: translateY({paddingTop}px);">
+						{#each visibleRows as row (row.model.id)}
+						<Row row={row} />
+						{/each}
+					</div>
+				</div>
+				<div class="sg-foreground">
+					{#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+					<TimeRange {...timeRange} />
+					{/each}
+
+					{#each visibleTasks as task (task.model.id)}
+					<svelte:component this="{task.model.type === 'milestone' ? Milestone : Task}" model={task.model} left={task.left}
+					 width={task.width} height={task.height} top={task.top} />
+					{/each}
+				</div>
+				{#each _ganttBodyModules as module (module.key)}
+				<svelte:component this={module} on:init="initModule(event.module)" />
+				{/each}
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
+    :global(.sg-view:not(:first-child)) {
+        margin-left: 5px;
+    }
+    
+    /* This class should take into account varying widths of the scroll bar */
+    .right-scrollbar-visible {
+        padding-right: 17px;
+    }
 
+    .sg-timeline {
+        flex: 1 1 0%;
+        display: flex;
+        flex-direction: column;
+        overflow-x: auto;
+    }
 
-    .zooming :global(.sg-milestone), .zooming :global(.sg-task)  {
+    .zooming :global(.sg-milestone),
+    .zooming :global(.sg-task) {
         transition: transform 0s, background-color 0.2s, width 0s !important;
     }
 
+    .sg-gantt {
+        display: flex;
 
-    .gantt {
         width: 100%;
         height: 100%;
         position: relative;
@@ -79,37 +93,35 @@
         height: 100%;
     }
 
-    .column-container {
+    .sg-columns {
         position: absolute;
         height: 100%;
         width: 100%;
-        float: left;
         overflow: hidden;
     }
 
-    .row-container {
+    .sg-rows {
         width: 100%;
-        /* display: inline-block; */
         box-sizing: border-box;
         overflow: hidden;
     }
 
-    .main-container {
-        /* position: relative; */
+    .sg-timeline-body {
         overflow: auto;
+        flex: 1 1 0;
     }
 
-    .main-header-container {
-        position: relative;
-        overflow: hidden;
+    .sg-header {
+        
     }
 
     .header-container {
         position: relative;
     }
 
-    .header-intermezzo {
-        overflow:hidden;
+    .sg-header-scroller {
+        border-right: 1px solid #efefef;
+        overflow: hidden;
     }
 
     .content {
@@ -122,443 +134,440 @@
 </style>
 
 <script>
-    import Task from './Task.html';
-    import Row from './Row.html';
-    import Column from './Column.html';
-    import ColumnHeader from './ColumnHeader.html';
-    import { Store } from 'svelte/store.js';
-    import SelectionManager from './utils/selectionManager';
-    import { GanttUtils, getPositionByDate } from './utils/utils';
-    import GanttApi from './core/api';
-    import TimeRange from './TimeRange.html';
-    import TimeRangeHeader from './TimeRangeHeader.html';
-    import Milestone from './Milestone.html';
+  import Task from "./Task.html";
+  import Row from "./Row.html";
+  import Column from "./Column.html";
+  import ColumnHeader from "./ColumnHeader.html";
+  import { Store } from "svelte/store.js";
+  import SelectionManager from "./utils/selectionManager";
+  import { GanttUtils, getPositionByDate } from "./utils/utils";
+  import GanttApi from "./core/api";
+  import TimeRange from "./TimeRange.html";
+  import TimeRangeHeader from "./TimeRangeHeader.html";
+  import Milestone from "./Milestone.html";
 
-    import { TaskFactory } from './core/task';
-    import { SvelteRow } from './core/row';
-    import { TimeRangeFactory } from './core/timeRange';
-    import { DragDropManager } from './core/drag/draggable';
+  import { TaskFactory } from "./core/task";
+  import { SvelteRow } from "./core/row";
+  import { TimeRangeFactory } from "./core/timeRange";
+  import { DragDropManager } from "./core/drag/draggable";
 
-    import { GanttStore } from './store';
-    import { getRelativePos, debounce } from './utils/domUtils';
-    import { V_SCROLLBAR_WIDTH } from './core/constants';
+  import { GanttStore } from "./store";
+  import { getRelativePos, debounce } from "./utils/domUtils";
+  import { V_SCROLLBAR_WIDTH } from "./core/constants";
 
-    let SvelteGantt;
+  import Resizer from "./modules/table/Resizer.html"
 
-    export default {
-        setup(component){
-            SvelteGantt = component;
-            SvelteGantt.defaults = {
-                // datetime timeline starts on, currently moment-js object
-                from: null,
-                // datetime timeline ends on, currently moment-js object
-                to: null,
-                // width of main gantt area in px
-                width: 800, //rename to timelinewidth
-                // should timeline stretch width to fit, true overrides timelineWidth
-                stretchTimelineWidthToFit: false,
-                // height of main gantt area in px
-                height: 400,
-                // minimum unit of time task date values will round to 
-                magnetUnit: 'minute',
-                // amount of units task date values will round to
-                magnetOffset: 15,
-                // duration unit of columns
-                columnUnit: 'minute',
-                // duration width of column
-                columnOffset: 15,
-                // list of headers used for main gantt area
-                // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-                // format: datetime format used for header cell label
-                headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
-                zoomLevels: [
-                    {
-                        headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}],
-                        stretchTimelineWidthToFit: true
-                    },
-                    {
-                        headers: [{unit: 'hour', format: 'ddd D/M, H A'}, {unit: 'minute', format: 'mm', offset: 15}],
-                        width: 5000,
-                        stretchTimelineWidthToFit: false
+  let SvelteGantt;
+
+  export default {
+    setup(component) {
+      SvelteGantt = component;
+      SvelteGantt.defaults = {
+        // datetime timeline starts on, currently moment-js object
+        from: null,
+        // datetime timeline ends on, currently moment-js object
+        to: null,
+        // width of main gantt area in px
+        minWidth: 800, //rename to timelinewidth
+        // should timeline stretch width to fit, true overrides timelineWidth
+        stretchTimelineWidthToFit: false,
+        // minimum unit of time task date values will round to
+        magnetUnit: "minute",
+        // amount of units task date values will round to
+        magnetOffset: 15,
+        // duration unit of columns
+        columnUnit: "minute",
+        // duration width of column
+        columnOffset: 15,
+        // list of headers used for main gantt area
+        // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+        // format: datetime format used for header cell label
+        headers: [
+          { unit: "day", format: "DD.MM.YYYY" },
+          { unit: "hour", format: "HH" }
+        ],
+        zoomLevels: [
+          {
+            headers: [
+              { unit: "day", format: "DD.MM.YYYY" },
+              { unit: "hour", format: "HH" }
+            ],
+            stretchTimelineWidthToFit: true
+          },
+          {
+            headers: [
+              { unit: "hour", format: "ddd D/M, H A" },
+              { unit: "minute", format: "mm", offset: 15 }
+            ],
+            minWidth: 5000,
+            stretchTimelineWidthToFit: false
+          }
+        ],
+        zoom: 0,
+        // height of a single row in px
+        rowHeight: 52,
+        rowPadding: 6,
+        // modules used in gantt
+        modules: [],
+        // enables right click context menu
+        enableContextMenu: false,
+        // sets top level gantt class which can be used for styling
+        classes: "",
+        // width of handle for resizing task
+        resizeHandleWidth: 10,
+        // handler of button clicks
+        onTaskButtonClick: null, // e.g. (task) => {debugger},
+        // task content factory function
+        taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
+
+        rows: [],
+        tasks: [],
+        _timeRanges: []
+      };
+
+      SvelteGantt.create = function(target, data, options) {
+        // bind gantt modules
+        const ganttModules = {
+          ganttBodyModules: [],
+          ganttTableModules: [],
+          defaults: {}
+        };
+
+        if (options.modules) {
+          options.modules.forEach(module => {
+            module.bindToGantt(ganttModules);
+          });
+        }
+
+        // initialize gantt state
+        const newData = {
+          initialRows: data.rows,
+          initialTasks: data.tasks,
+          initialDependencies: data.dependencies,
+          _ganttBodyModules: ganttModules.ganttBodyModules,
+          _ganttTableModules: ganttModules.ganttTableModules
+        };
+
+        // initialize all the gantt options
+        const ganttOptions = Object.assign(
+          {
+            scrollTop: 0,
+            scrollLeft: 0
+          },
+          SvelteGantt.defaults,
+          ganttModules.defaults,
+          options
+        );
+
+        const store = new GanttStore(ganttOptions);
+
+        return new SvelteGantt({
+          target,
+          data: newData,
+          store
+        });
+      };
+    },
+    components: { Row, Column, ColumnHeader, TimeRange, TimeRangeHeader, Resizer },
+    oncreate() {
+        const { initialRows, initialTasks } = this.get();
+
+        this.store.compute('width', ['visibleWidth', 'minWidth', 'stretchTimelineWidthToFit'], (visible, min, stretch) => {
+            return stretch && visible > min ? visible : min;
+        });
+
+        this.refreshTasksDebounced = debounce(() => { this.refreshTasks(); }, 250, false);
+        this.stoppedZooming = debounce(() => { this.set({ zooming: false }); }, 250, false);
+
+        this.initGantt();
+        this.initRows(initialRows);
+
+            this.store.set({
+                visibleHeight: this.refs.mainContainer.clientHeight,
+                visibleWidth: this.refs.mainContainer.clientWidth
+            });
+
+        this.initTasks(initialTasks);
+        this.broadcastModules("onGanttCreated");
+    },
+    actions: {
+        scrollable(node) {
+            const { scrollables } = this.get();
+
+            const onscroll = event => {
+                const { scrollTop, scrollLeft } = node;
+
+                scrollables.forEach(scrollable => {
+                    if (scrollable.orientation === "horizontal") {
+                        scrollable.node.scrollLeft = scrollLeft;
+                    } else {
+                        scrollable.node.scrollTop = scrollTop;
                     }
-                ],
-                zoom: 0,
-                // height of a single row in px
-                rowHeight: 52,
-                rowPadding: 6,
-                // modules used in gantt
-                modules: [],
-                // enables right click context menu
-                enableContextMenu: false,
-                // sets top level gantt class which can be used for styling
-                classes: '',
-                // width of handle for resizing task
-                resizeHandleWidth: 10,
-                // handler of button clicks
-                onTaskButtonClick: null, // e.g. (task) => {debugger},
-                // task content factory function
-                taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
+                });
 
-                rows: [],
-                tasks: [],
-                _timeRanges: []
+                //TODO: only for vertical scroll
+                this.store.set({ scrollTop, scrollLeft });
+
+                this.broadcastModules("updateVisible", { scrollTop });
             };
 
-            SvelteGantt.create = function(target, data, options) {
-
-                // bind gantt modules
-                const ganttModules = {
-                    ganttBodyModules: [],
-                    ganttTableModules: [],
-                    defaults: {}
+            node.addEventListener("scroll", onscroll);
+            return {
+                destroy() {
+                    node.removeEventListener("scroll", onscroll, false);
                 }
+            };
+        },
+        horizontalScrollListener(node) {
+            const { scrollables } = this.get();
+            scrollables.push({ node, orientation: "horizontal" });
+        }
+    },
+    methods: {
+        onresize({ left }) {
+            this.set({tableWidth: left});
+            setTimeout(() => {
+                this.refreshTasks();
+            }, 0);
+        },
+        onwheel(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const { width, minWidth, zoom, zoomLevels } = this.store.get();
+                this.set({ zooming: true });
 
-                if(options.modules) {
-                    options.modules.forEach((module) => {
-                        module.bindToGantt(ganttModules);
-                    })
-                }
-
-                // initialize gantt state
-                const newData = {
-                    initialRows: data.rows,
-                    initialTasks: data.tasks,
-                    initialDependencies: data.dependencies,
-                    _ganttBodyModules: ganttModules.ganttBodyModules,
-                    _ganttTableModules: ganttModules.ganttTableModules
+                let columnOptions = {
+                    columnUnit: "minute",
+                    columnOffset: 15,
+                    minWidth
                 };
 
-                // initialize all the gantt options
-                const ganttOptions = Object.assign({
-                    scrollTop: 0,
-                    scrollLeft: 0
-                }, SvelteGantt.defaults, ganttModules.defaults, options);
-                
-                const store = new GanttStore(ganttOptions);
+                let newZoom = zoom;
+                if (event.deltaY > 0) {
+                    newZoom--;
+                } else {
+                    newZoom++;
+                }
 
+                if (zoomLevels[newZoom]) {
+                    Object.assign(columnOptions, zoomLevels[newZoom], { zoom: newZoom });
+                }
 
-                return new SvelteGantt({
-                    target,
-                    data: newData,
-                    store
-                });
-            }
-        },
-        components: { Row, Column, ColumnHeader, TimeRange, TimeRangeHeader },
-        oncreate(){
-            const {initialRows, initialTasks, initialDependencies} = this.get();
+                const scale = columnOptions.minWidth / width;
+                const node = this.refs.mainContainer;
+                const mousepos = getRelativePos(node, e);
+                const before = node.scrollLeft + mousepos.x;
+                const after = before * scale;
+                const scrollLeft = after - mousepos.x;
 
-            this.refreshTasksDebounced = debounce(() => {
+                this.store.set(columnOptions);
+                this.root.api.gantt.raise.viewChanged();
+                node.scrollLeft = scrollLeft;
+                this.stoppedZooming();
                 this.refreshTasks();
-            }, 250, false);
-
-            this.stoppedZooming = debounce(() => {
-                this.set({zooming:false});
-            }, 250, false);
-
-            this.initGantt();
-            this.initRows(initialRows);
-            this.recalculateGanttDimensions();
-            this.initTasks(initialTasks);
-            this.broadcastModules('onGanttCreated');
-        },
-        actions: {
-            scrollable(node){
-                const { scrollables } = this.get();
-
-                const onscroll = (event) => {
-                    const {scrollTop, scrollLeft} = node; 
-                    for(let i=0; i< scrollables.length; i++){
-                        const scrollable = scrollables[i];
-                        if(scrollable.orientation === 'horizontal') {
-                            scrollable.node.scrollLeft = scrollLeft;
-                        }
-                        else {
-                            scrollable.node.scrollTop = scrollTop;
-                        }
-                    }
-                    //TODO: only for vertical scroll
-                    this.store.set({scrollTop, scrollLeft});
-
-                    this.broadcastModules('updateVisible', {scrollTop});
-                }
-
-                node.addEventListener('scroll', onscroll);
-                return {
-					destroy() {
-						node.removeEventListener('scroll', onscroll, false);
-					}
-                }
-            },
-            horizontalScrollListener(node){
-                const { scrollables } = this.get();
-                scrollables.push({node, orientation: 'horizontal'});
             }
-		},
-        methods: {
-            onwheel(e){
-                if(e.ctrlKey){
-                    e.preventDefault();
-                    const { width, zoom, zoomLevels } = this.store.get();
-                    this.set({zooming:true});
+        },
+        onWindowResizeEventHandler(event) {
+            if (this.store.get().stretchTimelineWidthToFit) {
+                this.refreshTasks();
+            }
+        },
+        adjustVisibleDateRange({ from, to, unit }) {
+            console.log(from.format(), to.format());
 
-                    let columnOptions = {
-                        columnUnit: 'minute',
-                        columnOffset: 15,
-                        width
-                    };
+            this.store.set({
+                from: from.clone(),
+                to: to.clone()
+            });
+            this.refreshTasks();
+        },
+        initRows(rowsData) {
+            const rows = [];
+            let y = 0;
+            for (let i = 0; i < rowsData.length; i++) {
+                const currentRow = rowsData[i];
+                const row = new SvelteRow(this, currentRow);
+                rows.push(row);
+                row.posY = y;
+                y += row.height;
+            }
 
-                    let newZoom = zoom;
-                    if(event.deltaY > 0) {
-                        newZoom --;
-                    }else {
-                        newZoom ++;
-                    }
+            this.store.addAllRow(rows);
+        },
+        initTasks(taskData) {
+            const tasks = [];
 
-                    if(zoomLevels[newZoom]){
-                        Object.assign(
-                            columnOptions, 
-                            zoomLevels[newZoom],
-                            { zoom: newZoom }
-                        );
-                    }
+            for (let i = 0; i < taskData.length; i++) {
+                const currentTask = taskData[i];
+                const task = this.taskFactory.createTask(currentTask);
+                tasks.push(task);
+            }
 
-                    const scale = columnOptions.width / width;
-                    const node = this.refs.mainContainer;
-                    const mousepos = getRelativePos(node, e);
-                    const before = node.scrollLeft + mousepos.x;
-                    const after = before * scale;
-                    const scrollLeft = after - mousepos.x;
+            this.store.addAllTask(tasks);
+            //this.selectionManager.clearSelection();
+        },
+        initTimeRanges(timeRangeData) {
+            const timeRangeMap = {};
 
-                    this.store.set(columnOptions);
-                    this.root.api.gantt.raise.viewChanged();
-                    this.recalculateGanttDimensions();
-                    node.scrollLeft = scrollLeft;
-                    this.stoppedZooming();
-                    this.refreshTasks();
-                }
-            },
-            onWindowResizeEventHandler(event){
-                this.recalculateGanttDimensions();
-                if(this.store.get().stretchTimelineWidthToFit){
-                    this.refreshTasks();
-                }
-            },
-            adjustVisibleDateRange({from, to, unit}){
-                console.log(from.format(), to.format());
+            for (let i = 0; i < timeRangeData.length; i++) {
+                const currentTimeRange = timeRangeData[i];
+                const timeRange = this.timeRangeFactory.create(currentTimeRange);
+                timeRangeMap[currentTimeRange.id] = timeRange;
+            }
 
+            this.store.set({ timeRangeMap });
+        },
+        initGantt() {
+            if (!this.store.get().gantt) {
                 this.store.set({
-                    from: from.clone(), 
-                    to: to.clone()
-                });
-                this.refreshTasks();
-
-            },
-            recalculateGanttDimensions() {
-                const parentWidth = this.refs.ganttElement.clientWidth;
-                const parentHeight = this.refs.ganttElement.clientHeight;
-                
-                this.store.set({parentWidth});
-                
-                const tableWidth = this.store.get().tableWidth || 0;
-
-                const height = parentHeight - this.refs.sideContainer.clientHeight;
-
-                // -17 only if side scrollbar shows (rowContainerHeight > height)
-                const { rowContainerHeight } = this.get();
-                const headerWidth = rowContainerHeight > height ? parentWidth - tableWidth - V_SCROLLBAR_WIDTH :  parentWidth - tableWidth;
-
-                this.store.set({
-                    height, headerWidth
+                    bodyElement: this.refs.mainContainer,
+                    rowContainerElement: this.refs.rowContainer,
+                    gantt: this
                 });
 
-                if(this.store.get().stretchTimelineWidthToFit){
-                    this.store.set({width: headerWidth});
-                }
-            },
-            initRows(rowsData){
-                const rows = [];
-                let y = 0;
-                for(let i=0; i < rowsData.length; i++){
-                    const currentRow = rowsData[i];
-                    const row = new SvelteRow(this, currentRow);
-                    rows.push(row);
-                    row.posY = y;
-                    y += row.height;
-                }
+                this.selectionManager = new SelectionManager(this.store);
+                this.utils = new GanttUtils(this);
+                this.api = new GanttApi();
+                this.taskFactory = new TaskFactory(this);
+                this.timeRangeFactory = new TimeRangeFactory(this);
+                this.dndManager = new DragDropManager(this);
 
-                this.store.addAllRow(rows);
-            },
-            initTasks(taskData){
-                const tasks = [];
+                this.api.registerEvent("tasks", "move");
+                this.api.registerEvent("tasks", "select");
+                this.api.registerEvent("tasks", "switchRow");
+                this.api.registerEvent("tasks", "moveEnd");
+                this.api.registerEvent("tasks", "changed");
 
-                for(let i=0; i < taskData.length; i++){
-                    const currentTask = taskData[i];
-                    const task = this.taskFactory.createTask(currentTask);
-                    tasks.push(task);
-                }
+                this.api.registerEvent("gantt", "viewChanged");
 
-                this.store.addAllTask(tasks);
-                //this.selectionManager.clearSelection();
-            },
-            initTimeRanges(timeRangeData){
-                const timeRangeMap = {};
-
-                for(let i = 0; i < timeRangeData.length; i++){
-                    const currentTimeRange = timeRangeData[i];
-                    const timeRange = this.timeRangeFactory.create(currentTimeRange);
-                    timeRangeMap[currentTimeRange.id] = timeRange;
-                }
-
-                this.store.set({timeRangeMap})
-            },
-            initGantt(){
-                if(!this.store.get().gantt){
-                    this.store.set({
-                        bodyElement: this.refs.mainContainer, 
-                        rowContainerElement: this.refs.rowContainer,
-                        gantt: this
-                    });
-                    
-                    this.selectionManager = new SelectionManager(this.store);
-                    this.utils = new GanttUtils(this);
-                    this.api = new GanttApi();
-                    this.taskFactory = new TaskFactory(this);
-                    this.timeRangeFactory = new TimeRangeFactory(this);
-                    this.dndManager = new DragDropManager(this);
-
-
-                    this.api.registerEvent('tasks', 'move');
-                    this.api.registerEvent('tasks', 'select');
-                    this.api.registerEvent('tasks', 'switchRow');
-                    this.api.registerEvent('tasks', 'moveEnd');
-                    this.api.registerEvent('tasks', 'changed');
-                    
-                    this.api.registerEvent('gantt', 'viewChanged');
-
-                    this.row = SvelteRow;
-                }
-            },
-            initModule(module){
-                const moduleOptions = Object.assign({
-                    _gantt: this,
-                    _options: this.get()
-                }, {});//merge with module specific data, modules[module.constructor.key]);
-                module.initModule(moduleOptions);
-                
-                const {_modules} = this.get();
-                _modules.push(module);
-            },
-            broadcastModules(event, data) {
-                const {_modules} = this.get();
-                _modules.forEach((module) => {
-                    if (typeof module[event] === 'function') {
-                        module[event](data);
-                    }
-                });
-            },
-            updateVisibleEntities(){
-                const { _timeRanges } = this.store.get();
-                _timeRanges.forEach(timeRange => {
-                    timeRange.updatePosition();
-                    timeRange.updateView();
-                });
-            },
-            refreshTasks(){
-                const { allTasks } = this.store.get();
-                allTasks.forEach(task => {
-
-                    const newLeft = this.root.utils.getPositionByDate(task.model.from);
-                    const newRight = this.root.utils.getPositionByDate(task.model.to);
-
-                    task.left = newLeft;
-                    task.width = newRight - newLeft;
-                });
-                this.store.set({taskMap: this.store.get().taskMap});
-                this.updateVisibleEntities();
-            },
-            updateView(options){ // {from, to, headers, width}
-                this.store.set(options);
-                if(this.store.get().stretchTimelineWidthToFit){
-                    this.recalculateGanttDimensions();
-                }
-
-                this.refreshTasks();
-
-                this.broadcastModules('updateView', options);//{ from, to, headers });
-            },
-            selectTask(id) {
-                const { taskMap } = this.get();
-                const task = taskMap[id];
-                if(task) {
-                    this.selectionManager.selectSingle(task);
-                }
+                this.row = SvelteRow;
             }
         },
-        data() {
-            return {
-                columns: [],
-                scrollables: [],
-                visibleRows: [],
-                visibleTasks: [],
-                _ganttBodyModules: [],
-                _ganttTableModules: [],
-                _modules: [],
+        initModule(module) {
+            const moduleOptions = Object.assign(
+            {
+                _gantt: this,
+                _options: this.get()
+            }, {}); //merge with module specific data, modules[module.constructor.key]);
+            module.initModule(moduleOptions);
 
-                rows: [],
-
-                paddingTop: 0,
-                paddingBottom: 0,
-                Task, Milestone,
-
-                zooming: false
-            }
+            const { _modules } = this.get();
+            _modules.push(module);
         },
-        computed: {
-            // exctract to columns component
-            columnWidth: ({$from, $to, $width, $columnOffset, $columnUnit}) => getPositionByDate($from.clone().add($columnOffset, $columnUnit), $from, $to, $width),
-            columnCount: ({$width, columnWidth}) => Math.ceil($width / columnWidth),
-            columns: ({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) => {
-                const columns = [];
-                const columnFrom = $from.clone();
-                for(let i = 0; i < columnCount; i++){
-                    columns.push({width: columnWidth, from: columnFrom.clone(), left: getPositionByDate(columnFrom, $from, $to, $width)});
-                    columnFrom.add($columnOffset, $columnUnit);
+        broadcastModules(event, data) {
+            const { _modules } = this.get();
+            _modules.forEach(module => {
+                if (typeof module[event] === "function") {
+                    module[event](data);
                 }
-                return columns;
-            },
+            });
+        },
+        updateVisibleEntities() {
+            const { _timeRanges } = this.store.get();
+            _timeRanges.forEach(timeRange => {
+                timeRange.updatePosition();
+                timeRange.updateView();
+            });
+        },
+        refreshTasks() {
+            const { allTasks } = this.store.get();
+            allTasks.forEach(task => {
+                const newLeft = this.root.utils.getPositionByDate(task.model.from);
+                const newRight = this.root.utils.getPositionByDate(task.model.to);
 
-            rowContainerHeight: ({$allRows, $rowHeight}) => $allRows.length * $rowHeight,
-            startIndex: ({$scrollTop, $rowHeight}) => Math.floor($scrollTop / $rowHeight),
-            endIndex: ({startIndex, $visibleHeight, $rowHeight, $allRows}) => Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight ), $allRows.length - 1),
-            paddingTop: ({startIndex, $rowHeight}) => startIndex * $rowHeight,
-            paddingBottom: ({$allRows, endIndex, $rowHeight}) => ($allRows.length - endIndex - 1) * $rowHeight,
+                task.left = newLeft;
+                task.width = newRight - newLeft;
+            });
+            this.store.set({ taskMap: this.store.get().taskMap });
+            this.updateVisibleEntities();
+        },
+        updateView(options) {
+            // {from, to, headers, width}
+            this.store.set(options);
 
-            visibleRows: ({$allRows, startIndex, endIndex}) => $allRows.slice(startIndex, endIndex + 1),
-            visibleTasks: ({$taskMap, visibleRows, rowTaskMap}) => {
-                const visibleTasks = [];
-                visibleRows.forEach(row => {
-                    if(!rowTaskMap[row.model.id])
-                        return;
+            this.refreshTasks();
 
-                    rowTaskMap[row.model.id].forEach(id => {
-                        visibleTasks.push($taskMap[id]);
-                    });
-                });
-                return visibleTasks;
-            },
-            rowTaskMap: ({$allTasks}) => {
-                const reducer = (cache, task) => {
-                    if(!cache[task.model.resourceId])
-                        cache[task.model.resourceId] = [];
-
-                    cache[task.model.resourceId].push(task.model.id);
-                    return cache;
-                }
-                console.log('recaculated map');
-                return $allTasks.reduce(reducer, {});
-            },
-
+            this.broadcastModules("updateView", options); //{ from, to, headers });
+        },
+        selectTask(id) {
+            const { taskMap } = this.get();
+            const task = taskMap[id];
+            if (task) {
+                this.selectionManager.selectSingle(task);
+            }
         }
-    };
+    },
+    data() {
+        return {
+            tableWidth: 240,
+
+            columns: [],
+            scrollables: [],
+            visibleRows: [],
+            visibleTasks: [],
+            _ganttBodyModules: [],
+            _ganttTableModules: [],
+            _modules: [],
+
+            rows: [],
+
+            paddingTop: 0,
+            paddingBottom: 0,
+            Task,
+            Milestone,
+
+            zooming: false
+        };
+    },
+    computed: {
+        rightScrollbarVisible: ({ $visibleHeight, rowContainerHeight }) => rowContainerHeight > $visibleHeight,
+
+
+        // exctract to columns component
+        columnWidth: ({ $from, $to, $width, $columnOffset, $columnUnit }) => getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width),
+        columnCount: ({ $width, columnWidth }) => Math.ceil($width / columnWidth),
+        columns: ({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) => {
+            const columns = [];
+            const columnFrom = $from.clone();
+            for (let i = 0; i < columnCount; i++) {
+            columns.push({
+                width: columnWidth,
+                from: columnFrom.clone(),
+                left: getPositionByDate(columnFrom, $from, $to, $width)
+            });
+            columnFrom.add($columnOffset, $columnUnit);
+            }
+            return columns;
+        },
+
+        rowContainerHeight: ({ $allRows, $rowHeight }) => $allRows.length * $rowHeight,
+        startIndex: ({ $scrollTop, $rowHeight }) => Math.floor($scrollTop / $rowHeight),
+        endIndex: ({ startIndex, $visibleHeight, $rowHeight, $allRows }) => Math.min(startIndex + Math.ceil($visibleHeight / $rowHeight), $allRows.length - 1),
+        paddingTop: ({ startIndex, $rowHeight }) => startIndex * $rowHeight,
+        paddingBottom: ({ $allRows, endIndex, $rowHeight }) => ($allRows.length - endIndex - 1) * $rowHeight,
+
+        visibleRows: ({ $allRows, startIndex, endIndex }) => $allRows.slice(startIndex, endIndex + 1),
+        visibleTasks: ({ $taskMap, visibleRows, rowTaskMap }) => {
+            const visibleTasks = [];
+            visibleRows.forEach(row => {
+                if (!rowTaskMap[row.model.id]) return;
+
+                rowTaskMap[row.model.id].forEach(id => {
+                    visibleTasks.push($taskMap[id]);
+                });
+            });
+            return visibleTasks;
+        },
+        rowTaskMap: ({ $allTasks }) => {
+            const reducer = (cache, task) => {
+                if (!cache[task.model.resourceId]) cache[task.model.resourceId] = [];
+
+                cache[task.model.resourceId].push(task.model.id);
+                return cache;
+            };
+            console.log("recaculated map");
+            return $allTasks.reduce(reducer, {});
+        }
+    }
+  };
 </script>

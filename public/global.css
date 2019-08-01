@@ -6,6 +6,8 @@ html, body {
 
 body {
 	margin: 0;
+	display: flex;
+	flex-direction: column;
 }
 
 input[type=button] {
@@ -15,11 +17,20 @@ input[type=button] {
     padding: 6px 12px;
     background: white;
     color: #656565;
-    font-family: 'Lato', sans-serif;
+	font-family: 'Lato', sans-serif;
+	cursor: pointer;
+}
+
+input[type=button]:hover {
+	background-color: #f9f9f9;
+}
+
+#example-gantt {
+	flex-grow: 1;
 }
 
 .control-header {
-	margin-bottom: 6px;
+	padding: 6px;
 }
 
 /*body {

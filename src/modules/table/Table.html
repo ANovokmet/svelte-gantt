@@ -1,54 +1,84 @@
-<div class="table-container" style="width:{$tableWidth}px;">
-    <div class="table-header-container" style="width:{scrollWidth}px" ref:sideHeaderContainer>
+<div class="sg-table sg-view" style="width:{tableWidth}px;">
+    <div class="sg-table-header" ref:sideHeaderContainer style="height:{$headerHeight}px"> 
         {#each $tableHeaders as header}
-            <div class="row-header-cell" style="width:{header.width}px">
+            <div class="sg-table-header-cell sg-table-cell"> <!--style="width:{header.width}px"-->
                 {header.title}
             </div>
         {/each}
     </div>
 
-    <div class="table-scroll-container" style="height:{height}px;" ref:scrollable>
-        <div class="table-row-container" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;width:{scrollWidth}px"> 
-            {#each visibleRows as row (row.model.id)}
-                <RowHeader
-                    row={row}
-                    headers={$tableHeaders}/>
-            {/each}
+    <div class="sg-table-body" class:bottom-scrollbar-visible="bottomScrollbarVisible">
+        <div class="sg-table-scroller" ref:scrollable>
+            <div class="sg-table-rows" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"> 
+                {#each visibleRows as row (row.model.id)}
+                    <TableRow
+                        row={row}
+                        headers={$tableHeaders}/>
+                {/each}
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .table-container {
-        height:100%;
-        float: left;
-        position: relative;
+
+    /* This class should take into account varying widths of the scroll bar */
+    .bottom-scrollbar-visible {
+        padding-bottom: 17px;
     }
 
-    .table-header-container {
+    .sg-table {
+        overflow-x: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sg-table-scroller {
         width: 100%;
-        box-sizing: border-box;
+        border-bottom: 1px solid #efefef; 
+        overflow: hidden;
     }
 
-    .table-row-container {
-        box-sizing: border-box;
+    .sg-table-header {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
     }
 
-    .table-scroll-container {
+    .sg-table-rows {
+        
+    }
+
+    .sg-table-body {
+        display: flex;
+        flex: 1 1 0;
         width: 100%;
         overflow-y: hidden;
     }
 
-    .row-header-cell {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
+    .sg-table-header-cell {
         font-size: 14px;
         font-weight: 400;
     }
+
+    :global(.sg-table-cell){
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        
+        display: flex;
+        align-items: center;
+
+        padding: 0 .5em;
+        height: 100%;
+    }
+
+    :global(.sg-table-cell:last-child) {
+        flex-grow: 1;
+    }
 </style>
 <script>
-    import RowHeader from './RowHeader.html';
+    import TableRow from './TableRow.html';
     import { H_SCROLLBAR_WIDTH } from 'src/core/constants';
 
     export default {
@@ -68,7 +98,7 @@
                 Object.assign(params.defaults, component.defaults);
             }
         },
-        components: { RowHeader },
+        components: { TableRow },
         oncreate(){
             this.fire('init', {module: this});
             
@@ -82,14 +112,6 @@
             },
             onGanttCreated() {
                 const {_gantt} = this.get();
-
-                const updateHeight = () => {
-                    const height = _gantt.refs.sideContainer.clientHeight;
-                    this.refs.sideHeaderContainer.style.height = height + 'px';
-                }
-
-                this.root.api.gantt.on.viewChanged(updateHeight);
-                updateHeight();
             }
         },
         data() {
@@ -105,8 +127,7 @@
                 });
                 return sum;
             },
-            // -17 if bottom scroll shows (this.refs.ganttElement.clientWidth > width)
-            height: ({$height, $parentWidth, $width}) => $width > $parentWidth ? $height - H_SCROLLBAR_WIDTH : $height
+            bottomScrollbarVisible: ({$visibleWidth, $width}) => $width > $visibleWidth
         }
     }
 </script>

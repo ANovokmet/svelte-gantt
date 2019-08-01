@@ -17,7 +17,7 @@
         {:else}
             {model.label}
         {/if}
-        <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span>
+        <!-- <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span> -->
         
 
         {#if model.showButton}
@@ -26,9 +26,23 @@
             </span>
         {/if}
     </div>
+
+    {#if model.labelBottom}
+        <label class="sg-label-bottom">
+            {model.labelBottom}
+        </label>
+    {/if}
 </div>
 
 <style>
+
+    .sg-label-bottom {
+        position: absolute;
+        top: calc(100% + 10px);
+        color: #888;
+    }
+
+
     .debug {
         position: absolute;
         top: -10px;

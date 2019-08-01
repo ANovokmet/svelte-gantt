@@ -2,6 +2,8 @@
 //import moment from "../node_modules/moment/src/moment.js";
 let startOfToday = moment().startOf('day');
 
+const colors = ['blue','green','orange']
+
 let generation = 0;
 function generateData() {
 	const data = {
@@ -10,10 +12,10 @@ function generateData() {
 		dependencies: []
 	}
 
-	const ids = [ ...Array(10).keys() ];
+	const ids = [ ...Array(20).keys() ];
 	shuffleArray(ids);
 
-	for(let i = 0; i < 10; i++) {
+	for(let i = 0; i < 20; i++) {
 
 		let rand_bool = Math.random() < 0.2;
 
@@ -21,7 +23,8 @@ function generateData() {
 		data.rows.push({
 			generation,
 			id: i,
-			label: 'Row #'+i,
+            label: 'Row #'+i,
+            age: (Math.random() * 80) | 0,
 			tasks: [],
 			enableDragging: true,
 			imageSrc: 'Content/joe.jpg',
@@ -32,12 +35,12 @@ function generateData() {
 		});
 
 		let a = i % 2;
-		rand_bool = Math.random() > 0.9;
+		rand_bool = Math.random() > 0.5;
 	
 		const rand_h = (Math.random() * 10) | 0
 		const rand_d = (Math.random() * 5) | 0 + 1
 
-		if(i === 5)
+		//if(i === 5)
 		data.tasks.push({
 			type: 'task',
 			generation,
@@ -47,7 +50,7 @@ function generateData() {
 			from: startOfToday.clone().set({'hour': 7 + rand_h, 'minute': 0}),
 			to: startOfToday.clone().set({'hour': 7 + rand_h + rand_d, 'minute': 0}),
 			//amountDone: Math.floor(Math.random() * 100),
-			classes: rand_bool ? 'task-status-1' : '',
+			classes: colors[(Math.random() * colors.length) | 0],
 			//enableDragging: !rand_bool
 			//h: Math.random() < 0.5
 		});
@@ -119,13 +122,13 @@ let options = {
 	width: 1000,
 	from: currentStart,
 	to: currentEnd,
-	tableHeaders: [{title: 'Label', property: 'label', width: 140}],
+	tableHeaders: [{title: 'Label', property: 'label', width: 140, type: 'resourceInfo'}, {title: 'Age', property: 'age', width: 140}],
 	tableWidth: 140,
 	modules: [SvelteGanttTable, SvelteGanttDependencies],
 	//taskContent: (task) => '<i class="sg-icon fas fa-calendar"></i>' + task.model.label
 }
 
-var gantt = SvelteGantt.create(document.getElementById('gc'), generateData(), options);
+var gantt = SvelteGantt.create(document.getElementById('example-gantt'), generateData(), options);
 
 gantt.initTimeRanges([{
 	id: 0, 
