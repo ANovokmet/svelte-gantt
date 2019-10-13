@@ -52,10 +52,10 @@
                 const ondrop = ({ posX, widthT, event }) => {
                     const { model } = this.get();
                     
-                    const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-                    const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-                    const newLeft = this.root.utils.getPositionByDate(newFrom);
-                    const newRight = this.root.utils.getPositionByDate(newTo);
+                    const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); 
+                    const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));
+                    const newLeft = this.root.columnFactory.getPositionByDate(newFrom);
+                    const newRight = this.root.columnFactory.getPositionByDate(newTo);
                     
                     Object.assign(model, {
                         from: newFrom,

@@ -2781,10 +2781,10 @@ var SvelteGantt = (function (moment_) {
 	    const ondrop = ({ posX, widthT, event }) => {
 	        const { model } = this.get();
 	        
-	        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-	        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-	        const newLeft = this.root.utils.getPositionByDate(newFrom);
-	        const newRight = this.root.utils.getPositionByDate(newTo);
+	        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); 
+	        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));
+	        const newLeft = this.root.columnFactory.getPositionByDate(newFrom);
+	        const newRight = this.root.columnFactory.getPositionByDate(newTo);
 	        
 	        Object.assign(model, {
 	            from: newFrom,
@@ -3287,8 +3287,8 @@ var SvelteGantt = (function (moment_) {
 	    create(model) {
 	        // enable dragging
 	        model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
-	        const left = this.gantt.utils.getPositionByDate(model.from);
-	        const right = this.gantt.utils.getPositionByDate(model.to);
+	        const left = this.gantt.columnFactory.getPositionByDate(model.from);
+	        const right = this.gantt.columnFactory.getPositionByDate(model.to);
 	        return {
 	            model,
 	            left: left,
@@ -3760,11 +3760,18 @@ var SvelteGantt = (function (moment_) {
 	        });
 	    },
 	    updateVisibleEntities() {
-	        const { _timeRanges } = this.store.get();
-	        _timeRanges.forEach(timeRange => {
-	            timeRange.updatePosition();
-	            timeRange.updateView();
-	        });
+	        const { timeRangeMap } = this.store.get();
+	        for (const id in timeRangeMap) {
+	            const timeRange = timeRangeMap[id];
+
+	            const newLeft = this.root.columnFactory.getPositionByDate(timeRange.model.from) | 0;
+	            const newRight = this.root.columnFactory.getPositionByDate(timeRange.model.to) | 0;
+
+	            timeRange.left = newLeft;
+	            timeRange.width = newRight - newLeft;
+	        }
+
+	        this.store.set({ timeRangeMap });
 	    },
 	    refreshTasks() {
 	        const { allTasks } = this.store.get();

@@ -459,11 +459,18 @@
             });
         },
         updateVisibleEntities() {
-            const { _timeRanges } = this.store.get();
-            _timeRanges.forEach(timeRange => {
-                timeRange.updatePosition();
-                timeRange.updateView();
-            });
+            const { timeRangeMap } = this.store.get();
+            for (const id in timeRangeMap) {
+                const timeRange = timeRangeMap[id];
+
+                const newLeft = this.root.columnFactory.getPositionByDate(timeRange.model.from) | 0;
+                const newRight = this.root.columnFactory.getPositionByDate(timeRange.model.to) | 0;
+
+                timeRange.left = newLeft;
+                timeRange.width = newRight - newLeft;
+            }
+
+            this.store.set({ timeRangeMap });
         },
         refreshTasks() {
             const { allTasks } = this.store.get();
