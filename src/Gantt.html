@@ -10,9 +10,7 @@
 		<div class="sg-header" ref:mainHeaderContainer bind:clientHeight="$headerHeight" class:right-scrollbar-visible="rightScrollbarVisible">
 			<div class="sg-header-scroller" use:horizontalScrollListener>
 				<div class="header-container" style="width:{$width}px">
-					{#each $headers as header}
-					<ColumnHeader header={header} on:selectDateTime="adjustVisibleDateRange(event)" />
-					{/each}
+                    <ColumnHeaders on:selectDateTime="adjustVisibleDateRange(event)" />
 					{#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
 					<TimeRangeHeader {...timeRange} />
 					{/each}
@@ -23,11 +21,7 @@
 		<div class="sg-timeline-body" ref:mainContainer use:scrollable class:zooming="zooming" on:wheel="onwheel(event)"
 		 bind:clientHeight="$visibleHeight" bind:clientWidth="$visibleWidth">
 			<div class="content" style="width:{$width}px">
-				<div class="sg-columns">
-					{#each columns as column}
-					<Column {...column} />
-					{/each}
-				</div>
+                <Columns bind:columns on:columnsGenerated="refreshTasksDebounced()"/>
 				<div class="sg-rows" ref:rowContainer style="height:{rowContainerHeight}px;">
 					<div style="transform: translateY({paddingTop}px);">
 						{#each visibleRows as row (row.model.id)}
@@ -93,13 +87,6 @@
         height: 100%;
     }
 
-    .sg-columns {
-        position: absolute;
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-    }
-
     .sg-rows {
         width: 100%;
         box-sizing: border-box;
@@ -136,8 +123,8 @@
 <script>
   import Task from "./Task.html";
   import Row from "./Row.html";
-  import Column from "./Column.html";
-  import ColumnHeader from "./ColumnHeader.html";
+  import Columns from "./Columns.html";
+  import ColumnHeaders from "./ColumnHeaders.html";
   import { Store } from "svelte/store.js";
   import SelectionManager from "./utils/selectionManager";
   import { GanttUtils, getPositionByDate } from "./utils/utils";
@@ -153,6 +140,7 @@
 
   import { GanttStore } from "./store";
   import { getRelativePos, debounce } from "./utils/domUtils";
+  import { findByPosition, ColumnFactory } from "./core/column";
   import { V_SCROLLBAR_WIDTH } from "./core/constants";
 
   import Resizer from "./modules/table/Resizer.html"
@@ -192,6 +180,7 @@
               { unit: "day", format: "DD.MM.YYYY" },
               { unit: "hour", format: "HH" }
             ],
+            minWidth: 800,
             stretchTimelineWidthToFit: true
           },
           {
@@ -268,7 +257,7 @@
         });
       };
     },
-    components: { Row, Column, ColumnHeader, TimeRange, TimeRangeHeader, Resizer },
+    components: { Row, Columns, ColumnHeaders, TimeRange, TimeRangeHeader, Resizer },
     oncreate() {
         const { initialRows, initialTasks } = this.get();
 
@@ -276,7 +265,6 @@
             return stretch && visible > min ? visible : min;
         });
 
-        this.refreshTasksDebounced = debounce(() => { this.refreshTasks(); }, 250, false);
         this.stoppedZooming = debounce(() => { this.set({ zooming: false }); }, 250, false);
 
         this.initGantt();
@@ -329,6 +317,13 @@
             setTimeout(() => {
                 this.refreshTasks();
             }, 0);
+        },
+        refreshTasksDebounced() {
+            if(!this._refreshTasksDebounced) {
+                this._refreshTasksDebounced = debounce(() => { this.refreshTasks(); }, 250, false);
+            }
+
+            this._refreshTasksDebounced();
         },
         onwheel(e) {
             if (e.ctrlKey) {
@@ -431,6 +426,7 @@
                 this.taskFactory = new TaskFactory(this);
                 this.timeRangeFactory = new TimeRangeFactory(this);
                 this.dndManager = new DragDropManager(this);
+                this.columnFactory = new ColumnFactory(this);
 
                 this.api.registerEvent("tasks", "move");
                 this.api.registerEvent("tasks", "select");
@@ -472,8 +468,8 @@
         refreshTasks() {
             const { allTasks } = this.store.get();
             allTasks.forEach(task => {
-                const newLeft = this.root.utils.getPositionByDate(task.model.from);
-                const newRight = this.root.utils.getPositionByDate(task.model.to);
+                const newLeft = this.root.columnFactory.getPositionByDate(task.model.from) | 0;
+                const newRight = this.root.columnFactory.getPositionByDate(task.model.to) | 0;
 
                 task.left = newLeft;
                 task.width = newRight - newLeft;
@@ -501,13 +497,14 @@
         return {
             tableWidth: 240,
 
-            columns: [],
             scrollables: [],
             visibleRows: [],
             visibleTasks: [],
             _ganttBodyModules: [],
             _ganttTableModules: [],
             _modules: [],
+
+            columns: [],
 
             rows: [],
 
@@ -521,24 +518,6 @@
     },
     computed: {
         rightScrollbarVisible: ({ $visibleHeight, rowContainerHeight }) => rowContainerHeight > $visibleHeight,
-
-
-        // exctract to columns component
-        columnWidth: ({ $from, $to, $width, $columnOffset, $columnUnit }) => getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width),
-        columnCount: ({ $width, columnWidth }) => Math.ceil($width / columnWidth),
-        columns: ({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) => {
-            const columns = [];
-            const columnFrom = $from.clone();
-            for (let i = 0; i < columnCount; i++) {
-            columns.push({
-                width: columnWidth,
-                from: columnFrom.clone(),
-                left: getPositionByDate(columnFrom, $from, $to, $width)
-            });
-            columnFrom.add($columnOffset, $columnUnit);
-            }
-            return columns;
-        },
 
         rowContainerHeight: ({ $allRows, $rowHeight }) => $allRows.length * $rowHeight,
         startIndex: ({ $scrollTop, $rowHeight }) => Math.floor($scrollTop / $rowHeight),

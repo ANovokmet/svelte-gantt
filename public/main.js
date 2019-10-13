@@ -12,10 +12,10 @@ function generateData() {
 		dependencies: []
 	}
 
-	const ids = [ ...Array(20).keys() ];
+	const ids = [ ...Array(10).keys() ];
 	shuffleArray(ids);
 
-	for(let i = 0; i < 20; i++) {
+	for(let i = 0; i < 10; i++) {
 
 		let rand_bool = Math.random() < 0.2;
 
@@ -91,10 +91,11 @@ function generateData() {
 	return data;
 }
 
-// setInterval(() => {
+// var interval = setInterval(() => {
 // 	var data = generateData();
 // 	gantt.initTasks(data.tasks);
 // }, 1000);
+
 
 /*setInterval(() => {
 	for(let i = 0; i < 500; i++){
@@ -119,12 +120,11 @@ const currentEnd = startOfToday.clone().set({hour: 18, minute: 0});
 let options = {
 	//headers: [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}],
 	stretchTimelineWidthToFit: true,
-	width: 1000,
 	from: currentStart,
 	to: currentEnd,
 	tableHeaders: [{title: 'Label', property: 'label', width: 140, type: 'resourceInfo'}, {title: 'Age', property: 'age', width: 140}],
 	tableWidth: 140,
-	modules: [SvelteGanttTable, SvelteGanttDependencies],
+    modules: [SvelteGanttTable],
 	//taskContent: (task) => '<i class="sg-icon fas fa-calendar"></i>' + task.model.label
 }
 

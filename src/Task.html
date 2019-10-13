@@ -7,7 +7,8 @@
     use:drag 
     on:click="select(event)"
     class:selected="selected"
-    class:moving="dragging||resizing">
+    class:moving="dragging||resizing"
+    class:animating="animating">
     <div class="sg-task-background" style="width:{model.amountDone}%"></div>
     <div class="sg-task-content">
         {#if model.html}
@@ -17,7 +18,7 @@
         {:else}
             {model.label}
         {/if}
-        <!-- <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span> -->
+        <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span>
         
 
         {#if model.showButton}
@@ -81,7 +82,11 @@
         justify-content: flex-start;
     }
 
-    .sg-task:not(.moving) {
+    /* .sg-task:not(.moving) {
+        transition: transform 0.2s, background-color 0.2s, width 0.2s;
+    } */
+
+    .sg-task.animating:not(.moving) {
         transition: transform 0.2s, background-color 0.2s, width 0.2s;
     }
 
@@ -135,12 +140,26 @@
 
     export default {
         onstate({ changed, current, previous }) {
-            if(!current.dragging && !current.resizing){
+            if((changed.left || changed.width || changed.top) && !current.dragging && !current.resizing){
                 this.set({
                     posX: current.left,
                     widthT: current.width,
                     posY: current.top,
+                    animating: true
                 });
+                setTimeout(() => {
+                    this.set({animating: false});
+                }, 200);
+                // should NOT animate on resize/update of columns
+                //console.log('anim', current);
+            }
+
+            if(changed.animating && current.animating) {
+                
+                console.log('anim OFF', current);
+                setTimeout(() => {
+                    this.set({animating: false});
+                }, 200);
             }
 		},
         actions: {
@@ -165,33 +184,52 @@
                         }
                     }
                     
-                    this.set({dragging: false, resizing: false});
+                    this.set({dragging: false, resizing: false, animating: true});
+                    
+                    console.log('anim dr', this.get());
                     const task = taskMap[model.id];
 
                     if(rowChangeValid) {
-                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-                        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-                        const newLeft = this.root.utils.getPositionByDate(newFrom);
-                        const newRight = this.root.utils.getPositionByDate(newTo);
+                        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); //this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+                        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));//this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+                        const newLeft = this.root.columnFactory.getPositionByDate(newFrom) | 0;//this.root.utils.getPositionByDate(newFrom) | 0;
+                        const newRight = this.root.columnFactory.getPositionByDate(newTo) | 0;//this.root.utils.getPositionByDate(newTo) | 0;
 
                         Object.assign(model, {
                             from: newFrom,
                             to: newTo
                         });
+
+                        const left = newLeft;
+                        const width = newRight - newLeft;
+                        const top = rowPadding + rowMap[model.resourceId].posY;
                         
                         this.store.updateTask({
                             ...task,
-                            left: newLeft,
-                            width: newRight - newLeft,
-                            top: rowPadding + rowMap[model.resourceId].posY,
+                            left,
+                            width,
+                            top,
                             model
+                        });
+
+                        this.set({
+                            posX: left,
+                            widthT: width,
+                            posY: top,
                         });
                     }
                     else {
                         // reset position
-                        this.store.updateTask({
-                            ...task
+
+                        this.set({
+                            posX: task.left,
+                            widthT: task.width,
+                            posY: task.top,
                         });
+
+                        // this.store.updateTask({
+                        //     ...task
+                        // });
                     }
 
                     setCursor('default');
@@ -262,7 +300,9 @@
 
                 widthT: null,
                 posX: null,
-                posY: null
+                posY: null,
+
+                animating: false
             }
         },
         computed: {

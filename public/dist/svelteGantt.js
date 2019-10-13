@@ -1,4 +1,4 @@
-var SvelteGantt = (function () {
+var SvelteGantt = (function (moment_) {
 	'use strict';
 
 	function noop() {}
@@ -679,7 +679,9 @@ var SvelteGantt = (function () {
 
 	        widthT: null,
 	        posX: null,
-	        posY: null
+	        posY: null,
+
+	        animating: false
 	    }
 	}
 	var methods = {
@@ -707,12 +709,26 @@ var SvelteGantt = (function () {
 	};
 
 	function onstate({ changed, current, previous }) {
-	    if(!current.dragging && !current.resizing){
+	    if((changed.left || changed.width || changed.top) && !current.dragging && !current.resizing){
 	        this.set({
 	            posX: current.left,
 	            widthT: current.width,
 	            posY: current.top,
+	            animating: true
 	        });
+	        setTimeout(() => {
+	            this.set({animating: false});
+	        }, 200);
+	        // should NOT animate on resize/update of columns
+	        //console.log('anim', current);
+	    }
+
+	    if(changed.animating && current.animating) {
+	        
+	        console.log('anim OFF', current);
+	        setTimeout(() => {
+	            this.set({animating: false});
+	        }, 200);
 	    }
 			}
 	function drag(node) {
@@ -736,33 +752,52 @@ var SvelteGantt = (function () {
 	                        }
 	                    }
 	                    
-	                    this.set({dragging: false, resizing: false});
+	                    this.set({dragging: false, resizing: false, animating: true});
+	                    
+	                    console.log('anim dr', this.get());
 	                    const task = taskMap[model.id];
 
 	                    if(rowChangeValid) {
-	                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-	                        const newTo = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-	                        const newLeft = this.root.utils.getPositionByDate(newFrom);
-	                        const newRight = this.root.utils.getPositionByDate(newTo);
+	                        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); //this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
+	                        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));//this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
+	                        const newLeft = this.root.columnFactory.getPositionByDate(newFrom) | 0;//this.root.utils.getPositionByDate(newFrom) | 0;
+	                        const newRight = this.root.columnFactory.getPositionByDate(newTo) | 0;//this.root.utils.getPositionByDate(newTo) | 0;
 
 	                        Object.assign(model, {
 	                            from: newFrom,
 	                            to: newTo
 	                        });
+
+	                        const left = newLeft;
+	                        const width = newRight - newLeft;
+	                        const top = rowPadding + rowMap[model.resourceId].posY;
 	                        
 	                        this.store.updateTask({
 	                            ...task,
-	                            left: newLeft,
-	                            width: newRight - newLeft,
-	                            top: rowPadding + rowMap[model.resourceId].posY,
+	                            left,
+	                            width,
+	                            top,
 	                            model
+	                        });
+
+	                        this.set({
+	                            posX: left,
+	                            widthT: width,
+	                            posY: top,
 	                        });
 	                    }
 	                    else {
 	                        // reset position
-	                        this.store.updateTask({
-	                            ...task
+
+	                        this.set({
+	                            posX: task.left,
+	                            widthT: task.width,
+	                            posY: task.top,
 	                        });
+
+	                        // this.store.updateTask({
+	                        //     ...task
+	                        // });
 	                    }
 
 	                    setCursor('default');
@@ -804,7 +839,7 @@ var SvelteGantt = (function () {
 	const file = "src\\Task.html";
 
 	function create_main_fragment(component, ctx) {
-		var div2, div0, text0, div1, text1, text2, div2_class_value, drag_action, current;
+		var div2, div0, text0, div1, text1, span, text2, text3_value = ctx.posX|0, text3, text4, text5_value = ctx.posY|0, text5, text6, text7_value = ctx.left|0, text7, text8, text9_value = ctx.top|0, text9, text10, text11, div2_class_value, drag_action, current;
 
 		function select_block_type(ctx) {
 			if (ctx.model.html) return create_if_block_2;
@@ -830,22 +865,35 @@ var SvelteGantt = (function () {
 				text0 = createText("\r\n    ");
 				div1 = createElement("div");
 				if_block0.c();
-				text1 = createText("\r\n        \r\n        \r\n\r\n        ");
+				text1 = createText("\r\n        ");
+				span = createElement("span");
+				text2 = createText("x:");
+				text3 = createText(text3_value);
+				text4 = createText(" y:");
+				text5 = createText(text5_value);
+				text6 = createText(", x:");
+				text7 = createText(text7_value);
+				text8 = createText(" y:");
+				text9 = createText(text9_value);
+				text10 = createText("\r\n        \r\n\r\n        ");
 				if (if_block1) if_block1.c();
-				text2 = createText("\r\n\r\n    ");
+				text11 = createText("\r\n\r\n    ");
 				if (if_block2) if_block2.c();
-				div0.className = "sg-task-background svelte-tejt9s";
+				div0.className = "sg-task-background svelte-10z3olz";
 				setStyle(div0, "width", "" + ctx.model.amountDone + "%");
-				addLoc(div0, file, 10, 4, 288);
-				div1.className = "sg-task-content svelte-tejt9s";
-				addLoc(div1, file, 11, 4, 366);
+				addLoc(div0, file, 11, 4, 321);
+				span.className = "debug svelte-10z3olz";
+				addLoc(span, file, 20, 8, 627);
+				div1.className = "sg-task-content svelte-10z3olz";
+				addLoc(div1, file, 12, 4, 399);
 				addListener(div2, "click", click_handler);
-				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-tejt9s";
+				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-10z3olz";
 				setStyle(div2, "width", "" + ctx.widthT + "px");
 				setStyle(div2, "height", "" + ctx.height + "px");
 				setStyle(div2, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
 				toggleClass(div2, "selected", ctx.selected);
 				toggleClass(div2, "moving", ctx.dragging||ctx.resizing);
+				toggleClass(div2, "animating", ctx.animating);
 				addLoc(div2, file, 0, 0, 0);
 			},
 
@@ -856,8 +904,18 @@ var SvelteGantt = (function () {
 				append(div2, div1);
 				if_block0.m(div1, null);
 				append(div1, text1);
+				append(div1, span);
+				append(span, text2);
+				append(span, text3);
+				append(span, text4);
+				append(span, text5);
+				append(span, text6);
+				append(span, text7);
+				append(span, text8);
+				append(span, text9);
+				append(div1, text10);
 				if (if_block1) if_block1.m(div1, null);
-				append(div2, text2);
+				append(div2, text11);
 				if (if_block2) if_block2.m(div2, null);
 				component.refs.taskElement = div2;
 				drag_action = drag.call(component, div2) || {};
@@ -876,6 +934,22 @@ var SvelteGantt = (function () {
 					if_block0 = current_block_type(component, ctx);
 					if_block0.c();
 					if_block0.m(div1, text1);
+				}
+
+				if ((changed.posX) && text3_value !== (text3_value = ctx.posX|0)) {
+					setData(text3, text3_value);
+				}
+
+				if ((changed.posY) && text5_value !== (text5_value = ctx.posY|0)) {
+					setData(text5, text5_value);
+				}
+
+				if ((changed.left) && text7_value !== (text7_value = ctx.left|0)) {
+					setData(text7, text7_value);
+				}
+
+				if ((changed.top) && text9_value !== (text9_value = ctx.top|0)) {
+					setData(text9, text9_value);
 				}
 
 				if (ctx.model.showButton) {
@@ -904,7 +978,7 @@ var SvelteGantt = (function () {
 					if_block2 = null;
 				}
 
-				if ((changed.model) && div2_class_value !== (div2_class_value = "sg-task " + ctx.model.classes + " svelte-tejt9s")) {
+				if ((changed.model) && div2_class_value !== (div2_class_value = "sg-task " + ctx.model.classes + " svelte-10z3olz")) {
 					div2.className = div2_class_value;
 				}
 
@@ -926,6 +1000,10 @@ var SvelteGantt = (function () {
 
 				if ((changed.model || changed.dragging || changed.resizing)) {
 					toggleClass(div2, "moving", ctx.dragging||ctx.resizing);
+				}
+
+				if ((changed.model || changed.animating)) {
+					toggleClass(div2, "animating", ctx.animating);
 				}
 			},
 
@@ -952,7 +1030,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (17:8) {:else}
+	// (18:8) {:else}
 	function create_else_block(component, ctx) {
 		var text_value = ctx.model.label, text;
 
@@ -979,7 +1057,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (15:30) 
+	// (16:30) 
 	function create_if_block_3(component, ctx) {
 		var raw_value = ctx.$taskContent(this), raw_before, raw_after;
 
@@ -1012,7 +1090,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (13:8) {#if model.html}
+	// (14:8) {#if model.html}
 	function create_if_block_2(component, ctx) {
 		var raw_value = ctx.model.html, raw_before, raw_after;
 
@@ -1045,7 +1123,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (23:8) {#if model.showButton}
+	// (24:8) {#if model.showButton}
 	function create_if_block_1(component, ctx) {
 		var span, raw_value = ctx.model.buttonHtml, span_class_value;
 
@@ -1057,8 +1135,8 @@ var SvelteGantt = (function () {
 			c: function create() {
 				span = createElement("span");
 				addListener(span, "click", click_handler);
-				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-tejt9s";
-				addLoc(span, file, 23, 12, 731);
+				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-10z3olz";
+				addLoc(span, file, 24, 12, 755);
 			},
 
 			m: function mount(target, anchor) {
@@ -1071,7 +1149,7 @@ var SvelteGantt = (function () {
 					span.innerHTML = raw_value;
 				}
 
-				if ((changed.model) && span_class_value !== (span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-tejt9s")) {
+				if ((changed.model) && span_class_value !== (span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-10z3olz")) {
 					span.className = span_class_value;
 				}
 			},
@@ -1086,7 +1164,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (30:4) {#if model.labelBottom}
+	// (31:4) {#if model.labelBottom}
 	function create_if_block(component, ctx) {
 		var label, text_value = ctx.model.labelBottom, text;
 
@@ -1094,8 +1172,8 @@ var SvelteGantt = (function () {
 			c: function create() {
 				label = createElement("label");
 				text = createText(text_value);
-				label.className = "sg-label-bottom svelte-tejt9s";
-				addLoc(label, file, 30, 8, 939);
+				label.className = "sg-label-bottom svelte-10z3olz";
+				addLoc(label, file, 31, 8, 963);
 			},
 
 			m: function mount(target, anchor) {
@@ -1142,7 +1220,10 @@ var SvelteGantt = (function () {
 
 		if (!('dragging' in this._state)) console.warn("<Task> was created without expected data property 'dragging'");
 		if (!('resizing' in this._state)) console.warn("<Task> was created without expected data property 'resizing'");
+		if (!('animating' in this._state)) console.warn("<Task> was created without expected data property 'animating'");
 		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
+		if (!('left' in this._state)) console.warn("<Task> was created without expected data property 'left'");
+		if (!('top' in this._state)) console.warn("<Task> was created without expected data property 'top'");
 		this._intro = !!options.intro;
 
 		this._handlers.state = [onstate];
@@ -1356,6 +1437,11 @@ var SvelteGantt = (function () {
 
 	/* src\Column.html generated by Svelte v2.16.0 */
 
+	/**
+	 * Column rendered inside gantt body background 
+	 */
+
+
 	const file$2 = "src\\Column.html";
 
 	function create_main_fragment$2(component, ctx) {
@@ -1484,43 +1570,412 @@ var SvelteGantt = (function () {
 	    let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
 	    return dateAtPosition;
 	}
+	// Returns the object on the left and right in an array using the given cmp function.
+	// The compare function defined which property of the value to compare (e.g.: c => c.left)
+	function getIndicesOnly(input, value, comparer, strict) {
+	    let lo = -1;
+	    let hi = input.length;
+	    while (hi - lo > 1) {
+	        let mid = Math.floor((lo + hi) / 2);
+	        if (strict ? comparer(input[mid]) < value : comparer(input[mid]) <= value) {
+	            lo = mid;
+	        }
+	        else {
+	            hi = mid;
+	        }
+	    }
+	    if (!strict && input[lo] !== undefined && comparer(input[lo]) === value) {
+	        hi = lo;
+	    }
+	    return [lo, hi];
+	}
+	function get$1(input, value, comparer, strict) {
+	    let res = getIndicesOnly(input, value, comparer, strict);
+	    return [input[res[0]], input[res[1]]];
+	}
 	//# sourceMappingURL=utils.js.map
+
+	const moment$1 = moment_;
+	function findByPosition(columns, x) {
+	    const result = get$1(columns, x, c => c.left);
+	    return result;
+	}
+	function findByDate(columns, x) {
+	    const result = get$1(columns, x, c => c.from);
+	    return result;
+	}
+	class ColumnFactory {
+	    constructor(gantt) {
+	        this.gantt = gantt;
+	        // this.gantt.store.compute('columnWidth', ['from', 'to', 'width', 'columnOffset', 'columnUnit'], (from, to, width, columnOffset, columnUnit) => {
+	        //     return getPositionByDate(from.clone().add(columnOffset, columnUnit), from, to, width) | 0
+	        // });
+	        // this.gantt.store.compute('columnCount', ['width', 'columnWidth'], ( width, columnWidth ) => Math.ceil(width / columnWidth));
+	        // this.gantt.store.compute('columns', 
+	        //     ['from', 'columnWidth', 'columnCount', 'columnOffset', 'columnUnit'], 
+	        //     (ganttFrom, columnWidth, columnCount, columnOffset, columnUnit) => {
+	        //         const columns = [];
+	        //         let columnFrom = ganttFrom.clone();
+	        //         let left = 0;
+	        //         for (let i = 0; i < columnCount; i++) {
+	        //             const from = columnFrom.clone();
+	        //             const to = columnFrom.add(columnOffset, columnUnit);
+	        //             columns.push({
+	        //                 width: columnWidth | 0,
+	        //                 from,
+	        //                 left, //getPositionByDate(columnFrom, $from, $to, $width) | 0
+	        //                 duration: to.diff(from, 'milliseconds')
+	        //             });
+	        //             left += columnWidth | 0;
+	        //             columnFrom = to;
+	        //         }
+	        //         //const a = findByPosition(columns, -10);
+	        //         //console.log(a);
+	        //         return columns;
+	        //     }
+	        // );
+	    }
+	    get columns() {
+	        return this.gantt.get().columns;
+	    }
+	    getColumnByDate(date) {
+	        const columns = findByDate(this.columns, date);
+	        return !columns[0] ? columns[1] : columns[0];
+	    }
+	    getColumnByPosition(x) {
+	        const columns = findByPosition(this.columns, x);
+	        return !columns[0] ? columns[1] : columns[0];
+	    }
+	    getPositionByDate(date) {
+	        if (!date)
+	            return null;
+	        const column = this.getColumnByDate(date);
+	        // partials
+	        let durationTo = date.diff(column.from, 'milliseconds');
+	        const position = durationTo / column.duration * column.width;
+	        //multiples - skip every nth col, use other duration
+	        return column.left + position;
+	    }
+	    getDateByPosition(x) {
+	        const column = this.getColumnByPosition(x);
+	        // partials
+	        x = x - column.left;
+	        let positionDuration = column.duration / column.width * x;
+	        const date = moment$1(column.from).add(positionDuration, 'milliseconds');
+	        return date;
+	    }
+	}
+	//# sourceMappingURL=column.js.map
+
+	/* src\Columns.html generated by Svelte v2.16.0 */
+
+
+
+	/**
+	 * Container component for columns rendered as gantt body background
+	 */
+	function columnWidth$1({ $from, $to, $width, $columnOffset, $columnUnit }) {
+		return getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width);
+	}
+
+	function columnCount({ $width, columnWidth: columnWidth$$1 }) {
+		return Math.ceil($width / columnWidth$$1);
+	}
+
+	function columns({$from, columnWidth: columnWidth$$1, columnCount, $columnOffset, $columnUnit, $to, $width}) {
+	    const columns = [];
+	    let columnFrom = $from.clone();
+	    let left = 0;
+	    for (let i = 0; i < columnCount; i++) {
+	        const from = columnFrom.clone();
+	        const to = columnFrom.add($columnOffset, $columnUnit);
+	        const duration = to.diff(from, 'milliseconds');
+
+	        columns.push({
+	            width: columnWidth$$1 | 0,
+	            from,
+	            left,
+	            duration
+	        });
+	        left += columnWidth$$1 | 0;
+	        columnFrom = to;
+	    }
+	    return columns;
+	}
+
+	function data$1() {
+	    return {
+	        columns: []
+	    };
+	}
+	function onstate$1({current, changed, previous}) {
+	    if(changed.columns) {
+	        console.log('columnsGEnerated');
+	        this.fire('columnsGenerated');
+	    }
+	}
+	const file$3 = "src\\Columns.html";
+
+	function get_each_context(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.column = list[i];
+		return child_ctx;
+	}
+
+	function create_main_fragment$3(component, ctx) {
+		var div, current;
+
+		var each_value = ctx.columns;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block(component, get_each_context(ctx, each_value, i));
+		}
+
+		function outroBlock(i, detach, fn) {
+			if (each_blocks[i]) {
+				each_blocks[i].o(() => {
+					if (detach) {
+						each_blocks[i].d(detach);
+						each_blocks[i] = null;
+					}
+					if (fn) fn();
+				});
+			}
+		}
+
+		return {
+			c: function create() {
+				div = createElement("div");
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
+				div.className = "sg-columns svelte-g45u1z";
+				addLoc(div, file$3, 0, 0, 0);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div, anchor);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].i(div, null);
+				}
+
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				if (changed.columns) {
+					each_value = ctx.columns;
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block(component, child_ctx);
+							each_blocks[i].c();
+						}
+						each_blocks[i].i(div, null);
+					}
+					for (; i < each_blocks.length; i += 1) outroBlock(i, 1);
+				}
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				each_blocks = each_blocks.filter(Boolean);
+				const countdown = callAfter(outrocallback, each_blocks.length);
+				for (let i = 0; i < each_blocks.length; i += 1) outroBlock(i, 0, countdown);
+
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div);
+				}
+
+				destroyEach(each_blocks, detach);
+			}
+		};
+	}
+
+	// (2:1) {#each columns as column}
+	function create_each_block(component, ctx) {
+		var current;
+
+		var column_spread_levels = [
+			ctx.column
+		];
+
+		var column_initial_data = {};
+		for (var i = 0; i < column_spread_levels.length; i += 1) {
+			column_initial_data = assign(column_initial_data, column_spread_levels[i]);
+		}
+		var column = new Column({
+			root: component.root,
+			store: component.store,
+			data: column_initial_data
+		});
+
+		return {
+			c: function create() {
+				column._fragment.c();
+			},
+
+			m: function mount(target, anchor) {
+				column._mount(target, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				var column_changes = changed.columns ? getSpreadUpdate(column_spread_levels, [
+					ctx.column
+				]) : {};
+				column._set(column_changes);
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				if (column) column._fragment.o(outrocallback);
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				column.destroy(detach);
+			}
+		};
+	}
+
+	function Columns(options) {
+		this._debugName = '<Columns>';
+		if (!options || (!options.target && !options.root)) {
+			throw new Error("'target' is a required option");
+		}
+		if (!options.store) {
+			throw new Error("<Columns> references store properties, but no store was provided");
+		}
+
+		init(this, options);
+		this._state = assign(assign(this.store._init(["from","to","width","columnOffset","columnUnit"]), data$1()), options.data);
+		this.store._add(this, ["from","to","width","columnOffset","columnUnit"]);
+
+		this._recompute({ $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1 }, this._state);
+		if (!('$from' in this._state)) console.warn("<Columns> was created without expected data property '$from'");
+		if (!('$to' in this._state)) console.warn("<Columns> was created without expected data property '$to'");
+		if (!('$width' in this._state)) console.warn("<Columns> was created without expected data property '$width'");
+		if (!('$columnOffset' in this._state)) console.warn("<Columns> was created without expected data property '$columnOffset'");
+		if (!('$columnUnit' in this._state)) console.warn("<Columns> was created without expected data property '$columnUnit'");
+		this._intro = !!options.intro;
+
+		this._handlers.state = [onstate$1];
+
+		this._handlers.destroy = [removeFromStore];
+
+		onstate$1.call(this, { changed: assignTrue({}, this._state), current: this._state });
+
+		this._fragment = create_main_fragment$3(this, this._state);
+
+		this.root._oncreate.push(() => {
+			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
+		});
+
+		if (options.target) {
+			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			this._fragment.c();
+			this._mount(options.target, options.anchor);
+
+			flush(this);
+		}
+
+		this._intro = true;
+	}
+
+	assign(Columns.prototype, protoDev);
+
+	Columns.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('columnWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<Columns>: Cannot set read-only property 'columnWidth'");
+		if ('columnCount' in newState && !this._updatingReadonlyProperty) throw new Error("<Columns>: Cannot set read-only property 'columnCount'");
+		if ('columns' in newState && !this._updatingReadonlyProperty) throw new Error("<Columns>: Cannot set read-only property 'columns'");
+	};
+
+	Columns.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$from || changed.$to || changed.$width || changed.$columnOffset || changed.$columnUnit) {
+			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth$1(state)))) changed.columnWidth = true;
+		}
+
+		if (changed.$width || changed.columnWidth) {
+			if (this._differs(state.columnCount, (state.columnCount = columnCount(state)))) changed.columnCount = true;
+		}
+
+		if (changed.$from || changed.columnWidth || changed.columnCount || changed.$columnOffset || changed.$columnUnit || changed.$to || changed.$width) {
+			if (this._differs(state.columns, (state.columns = columns(state)))) changed.columns = true;
+		}
+	};
 
 	/* src\ColumnHeader.html generated by Svelte v2.16.0 */
 
-	function columnWidth({$from, $to, $width, header}) {
-	    return getPositionByDate($from.clone().add(header.offset || 1, header.unit), $from, $to, $width);
+	/**
+	 * A row of header cells rendered in header
+	 */
+	function columnWidth$2({header, baseWidth, baseDuration}) {
+	    const offset = header.offset || 1;
+	    const duration = moment.duration(offset, header.unit).asMilliseconds();
+	    const ratio = duration / baseDuration;
+	    return baseWidth * ratio;
 	}
 
-	function columnCount({$width, columnWidth}) {
+	function columnCount$1({$width, columnWidth}) {
 		return Math.ceil($width / columnWidth);
 	}
 
 	function headers({$from, columnWidth, columnCount, header, $width}) {
+
 	    const headers = [];
 	    let headerTime = $from.clone().startOf(header.unit);
-	    const step = header.offset || 1;
+	    const offset = header.offset || 1;
 
 	    for(let i = 0; i < columnCount; i++){
 	        headers.push({
 	            width: Math.min(columnWidth, $width), 
 	            label: headerTime.format(header.format),
 	            from: headerTime.clone(),
-	            to: headerTime.clone().add(step, header.unit),
+	            to: headerTime.clone().add(offset, header.unit),
 	            unit: header.unit
 	        });
-	        headerTime.add(step, header.unit);
+	        headerTime.add(offset, header.unit);
 	    }
 	    return headers;
 	}
 
-	function data$1(){
+	function data$2(){
 	    return {
 	        headers: [],
-	        width: null
+	        width: null,
+
+	        baseWidth: null,
+	        baseDuration: null,
 	    }
 	}
-	const file$3 = "src\\ColumnHeader.html";
+	const file$4 = "src\\ColumnHeader.html";
 
 	function click_handler(event) {
 		const { component, ctx } = this._svelte;
@@ -1528,13 +1983,13 @@ var SvelteGantt = (function () {
 		component.fire('selectDateTime', { from: ctx.header.from, to: ctx.header.to, unit: ctx.header.unit });
 	}
 
-	function get_each_context(ctx, list, i) {
+	function get_each_context$1(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.header = list[i];
 		return child_ctx;
 	}
 
-	function create_main_fragment$3(component, ctx) {
+	function create_main_fragment$4(component, ctx) {
 		var div, current;
 
 		var each_value = ctx.headers;
@@ -1542,7 +1997,7 @@ var SvelteGantt = (function () {
 		var each_blocks = [];
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			each_blocks[i] = create_each_block(component, get_each_context(ctx, each_value, i));
+			each_blocks[i] = create_each_block$1(component, get_each_context$1(ctx, each_value, i));
 		}
 
 		return {
@@ -1553,8 +2008,7 @@ var SvelteGantt = (function () {
 					each_blocks[i].c();
 				}
 				div.className = "column-header-row svelte-1jynpw1";
-				setStyle(div, "width", "" + ctx.width + "px");
-				addLoc(div, file$3, 0, 0, 0);
+				addLoc(div, file$4, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
@@ -1572,12 +2026,12 @@ var SvelteGantt = (function () {
 					each_value = ctx.headers;
 
 					for (var i = 0; i < each_value.length; i += 1) {
-						const child_ctx = get_each_context(ctx, each_value, i);
+						const child_ctx = get_each_context$1(ctx, each_value, i);
 
 						if (each_blocks[i]) {
 							each_blocks[i].p(changed, child_ctx);
 						} else {
-							each_blocks[i] = create_each_block(component, child_ctx);
+							each_blocks[i] = create_each_block$1(component, child_ctx);
 							each_blocks[i].c();
 							each_blocks[i].m(div, null);
 						}
@@ -1587,10 +2041,6 @@ var SvelteGantt = (function () {
 						each_blocks[i].d(1);
 					}
 					each_blocks.length = each_value.length;
-				}
-
-				if (changed.width) {
-					setStyle(div, "width", "" + ctx.width + "px");
 				}
 			},
 
@@ -1613,7 +2063,7 @@ var SvelteGantt = (function () {
 	}
 
 	// (2:4) {#each headers as header}
-	function create_each_block(component, ctx) {
+	function create_each_block$1(component, ctx) {
 		var div, text0_value = ctx.header.label || 'N/A', text0, text1;
 
 		return {
@@ -1626,7 +2076,7 @@ var SvelteGantt = (function () {
 				addListener(div, "click", click_handler);
 				div.className = "column-header svelte-1jynpw1";
 				setStyle(div, "width", "" + ctx.header.width + "px");
-				addLoc(div, file$3, 2, 8, 96);
+				addLoc(div, file$4, 2, 8, 72);
 			},
 
 			m: function mount(target, anchor) {
@@ -1667,22 +2117,21 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(assign(this.store._init(["from","to","width"]), data$1()), options.data);
-		this.store._add(this, ["from","to","width"]);
+		this._state = assign(assign(this.store._init(["width","from"]), data$2()), options.data);
+		this.store._add(this, ["width","from"]);
 
-		this._recompute({ $from: 1, $to: 1, $width: 1, header: 1, columnWidth: 1, columnCount: 1 }, this._state);
-		if (!('$from' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$from'");
-		if (!('$to' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$to'");
-		if (!('$width' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$width'");
+		this._recompute({ header: 1, baseWidth: 1, baseDuration: 1, $width: 1, columnWidth: 1, $from: 1, columnCount: 1 }, this._state);
 		if (!('header' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'header'");
+		if (!('baseWidth' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'baseWidth'");
+		if (!('baseDuration' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'baseDuration'");
+		if (!('$width' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$width'");
 
-
-		if (!('width' in this._state)) console.warn("<ColumnHeader> was created without expected data property 'width'");
+		if (!('$from' in this._state)) console.warn("<ColumnHeader> was created without expected data property '$from'");
 		this._intro = !!options.intro;
 
 		this._handlers.destroy = [removeFromStore];
 
-		this._fragment = create_main_fragment$3(this, this._state);
+		this._fragment = create_main_fragment$4(this, this._state);
 
 		if (options.target) {
 			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1702,16 +2151,261 @@ var SvelteGantt = (function () {
 	};
 
 	ColumnHeader.prototype._recompute = function _recompute(changed, state) {
-		if (changed.$from || changed.$to || changed.$width || changed.header) {
-			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth(state)))) changed.columnWidth = true;
+		if (changed.header || changed.baseWidth || changed.baseDuration) {
+			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth$2(state)))) changed.columnWidth = true;
 		}
 
 		if (changed.$width || changed.columnWidth) {
-			if (this._differs(state.columnCount, (state.columnCount = columnCount(state)))) changed.columnCount = true;
+			if (this._differs(state.columnCount, (state.columnCount = columnCount$1(state)))) changed.columnCount = true;
 		}
 
 		if (changed.$from || changed.columnWidth || changed.columnCount || changed.header || changed.$width) {
 			if (this._differs(state.headers, (state.headers = headers(state)))) changed.headers = true;
+		}
+	};
+
+	/* src\ColumnHeaders.html generated by Svelte v2.16.0 */
+
+
+
+	/**
+	 * Container component for header rows 
+	 */
+	function minHeader({$headers, $columnWidth, $columnUnit, $columnOffset}) {
+	    let result = null; 
+	    let minDuration = null;
+
+	    [...$headers, {unit: $columnUnit, offset: $columnOffset}].forEach(header => {
+	        
+	        const offset = header.offset || 1;
+	        const duration = moment.duration(offset, header.unit).asMilliseconds();
+	        if(duration < minDuration || minDuration === null) {
+	            minDuration = duration;
+	            result = header;
+	        }
+	    });
+
+	    return result;
+	}
+
+	function baseHeaderWidth({$from, $to, $width, minHeader}) {
+	    return getPositionByDate($from.clone().add(minHeader.offset || 1, minHeader.unit), $from, $to, $width) | 0;
+	}
+
+	function baseHeaderDuration({minHeader}) {
+	    return moment.duration(minHeader.offset || 1, minHeader.unit).asMilliseconds();
+	}
+
+	function data$3(){
+	    return {
+	        headers: []
+	    }
+	}
+	function get_each_context$2(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.header = list[i];
+		return child_ctx;
+	}
+
+	function create_main_fragment$5(component, ctx) {
+		var each_anchor, current;
+
+		var each_value = ctx.$headers;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block$2(component, get_each_context$2(ctx, each_value, i));
+		}
+
+		function outroBlock(i, detach, fn) {
+			if (each_blocks[i]) {
+				each_blocks[i].o(() => {
+					if (detach) {
+						each_blocks[i].d(detach);
+						each_blocks[i] = null;
+					}
+					if (fn) fn();
+				});
+			}
+		}
+
+		return {
+			c: function create() {
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
+
+				each_anchor = createComment();
+			},
+
+			m: function mount(target, anchor) {
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].i(target, anchor);
+				}
+
+				insert(target, each_anchor, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				if (changed.$headers || changed.baseHeaderWidth || changed.baseHeaderDuration) {
+					each_value = ctx.$headers;
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context$2(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block$2(component, child_ctx);
+							each_blocks[i].c();
+						}
+						each_blocks[i].i(each_anchor.parentNode, each_anchor);
+					}
+					for (; i < each_blocks.length; i += 1) outroBlock(i, 1);
+				}
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				each_blocks = each_blocks.filter(Boolean);
+				const countdown = callAfter(outrocallback, each_blocks.length);
+				for (let i = 0; i < each_blocks.length; i += 1) outroBlock(i, 0, countdown);
+
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				destroyEach(each_blocks, detach);
+
+				if (detach) {
+					detachNode(each_anchor);
+				}
+			}
+		};
+	}
+
+	// (1:0) {#each $headers as header}
+	function create_each_block$2(component, ctx) {
+		var current;
+
+		var columnheader_initial_data = {
+		 	header: ctx.header,
+		 	baseWidth: ctx.baseHeaderWidth,
+		 	baseDuration: ctx.baseHeaderDuration
+		 };
+		var columnheader = new ColumnHeader({
+			root: component.root,
+			store: component.store,
+			data: columnheader_initial_data
+		});
+
+		columnheader.on("selectDateTime", function(event) {
+			component.fire("selectDateTime", event);
+		});
+
+		return {
+			c: function create() {
+				columnheader._fragment.c();
+			},
+
+			m: function mount(target, anchor) {
+				columnheader._mount(target, anchor);
+				current = true;
+			},
+
+			p: function update(changed, ctx) {
+				var columnheader_changes = {};
+				if (changed.$headers) columnheader_changes.header = ctx.header;
+				if (changed.baseHeaderWidth) columnheader_changes.baseWidth = ctx.baseHeaderWidth;
+				if (changed.baseHeaderDuration) columnheader_changes.baseDuration = ctx.baseHeaderDuration;
+				columnheader._set(columnheader_changes);
+			},
+
+			i: function intro(target, anchor) {
+				if (current) return;
+
+				this.m(target, anchor);
+			},
+
+			o: function outro(outrocallback) {
+				if (!current) return;
+
+				if (columnheader) columnheader._fragment.o(outrocallback);
+				current = false;
+			},
+
+			d: function destroy$$1(detach) {
+				columnheader.destroy(detach);
+			}
+		};
+	}
+
+	function ColumnHeaders(options) {
+		this._debugName = '<ColumnHeaders>';
+		if (!options || (!options.target && !options.root)) {
+			throw new Error("'target' is a required option");
+		}
+		if (!options.store) {
+			throw new Error("<ColumnHeaders> references store properties, but no store was provided");
+		}
+
+		init(this, options);
+		this._state = assign(assign(this.store._init(["headers","columnWidth","columnUnit","columnOffset","from","to","width"]), data$3()), options.data);
+		this.store._add(this, ["headers","columnWidth","columnUnit","columnOffset","from","to","width"]);
+
+		this._recompute({ $headers: 1, $columnWidth: 1, $columnUnit: 1, $columnOffset: 1, $from: 1, $to: 1, $width: 1, minHeader: 1 }, this._state);
+		if (!('$headers' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$headers'");
+		if (!('$columnWidth' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$columnWidth'");
+		if (!('$columnUnit' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$columnUnit'");
+		if (!('$columnOffset' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$columnOffset'");
+		if (!('$from' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$from'");
+		if (!('$to' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$to'");
+		if (!('$width' in this._state)) console.warn("<ColumnHeaders> was created without expected data property '$width'");
+		this._intro = !!options.intro;
+
+		this._handlers.destroy = [removeFromStore];
+
+		this._fragment = create_main_fragment$5(this, this._state);
+
+		if (options.target) {
+			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			this._fragment.c();
+			this._mount(options.target, options.anchor);
+
+			flush(this);
+		}
+
+		this._intro = true;
+	}
+
+	assign(ColumnHeaders.prototype, protoDev);
+
+	ColumnHeaders.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('minHeader' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeaders>: Cannot set read-only property 'minHeader'");
+		if ('baseHeaderWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeaders>: Cannot set read-only property 'baseHeaderWidth'");
+		if ('baseHeaderDuration' in newState && !this._updatingReadonlyProperty) throw new Error("<ColumnHeaders>: Cannot set read-only property 'baseHeaderDuration'");
+	};
+
+	ColumnHeaders.prototype._recompute = function _recompute(changed, state) {
+		if (changed.$headers || changed.$columnWidth || changed.$columnUnit || changed.$columnOffset) {
+			if (this._differs(state.minHeader, (state.minHeader = minHeader(state)))) changed.minHeader = true;
+		}
+
+		if (changed.$from || changed.$to || changed.$width || changed.minHeader) {
+			if (this._differs(state.baseHeaderWidth, (state.baseHeaderWidth = baseHeaderWidth(state)))) changed.baseHeaderWidth = true;
+		}
+
+		if (changed.minHeader) {
+			if (this._differs(state.baseHeaderDuration, (state.baseHeaderDuration = baseHeaderDuration(state)))) changed.baseHeaderDuration = true;
 		}
 	};
 
@@ -1947,14 +2641,14 @@ var SvelteGantt = (function () {
 
 	/* src\TimeRange.html generated by Svelte v2.16.0 */
 
-	function data$2(){
+	function data$4(){
 	    return {
 	        resizing: false,
 	        widthT: null,
 	        posX: null
 	    }
 	}
-	function onstate$1({ changed, current, previous }) {
+	function onstate$2({ changed, current, previous }) {
 	    if(!current.resizing){
 	        this.set({
 	            posX: current.left,
@@ -1962,9 +2656,9 @@ var SvelteGantt = (function () {
 	        });
 	    }
 	}
-	const file$4 = "src\\TimeRange.html";
+	const file$6 = "src\\TimeRange.html";
 
-	function create_main_fragment$4(component, ctx) {
+	function create_main_fragment$6(component, ctx) {
 		var div1, div0, text_value = ctx.model.label, text, current;
 
 		return {
@@ -1973,12 +2667,12 @@ var SvelteGantt = (function () {
 				div0 = createElement("div");
 				text = createText(text_value);
 				div0.className = "sg-time-range-label svelte-18yq9be";
-				addLoc(div0, file$4, 1, 4, 96);
+				addLoc(div0, file$6, 1, 4, 96);
 				div1.className = "sg-time-range svelte-18yq9be";
 				setStyle(div1, "width", "" + ctx.widthT + "px");
 				setStyle(div1, "left", "" + ctx.posX + "px");
 				toggleClass(div1, "moving", ctx.resizing);
-				addLoc(div1, file$4, 0, 0, 0);
+				addLoc(div1, file$6, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
@@ -2029,18 +2723,18 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(data$2(), options.data);
+		this._state = assign(data$4(), options.data);
 		if (!('resizing' in this._state)) console.warn("<TimeRange> was created without expected data property 'resizing'");
 		if (!('widthT' in this._state)) console.warn("<TimeRange> was created without expected data property 'widthT'");
 		if (!('posX' in this._state)) console.warn("<TimeRange> was created without expected data property 'posX'");
 		if (!('model' in this._state)) console.warn("<TimeRange> was created without expected data property 'model'");
 		this._intro = !!options.intro;
 
-		this._handlers.state = [onstate$1];
+		this._handlers.state = [onstate$2];
 
-		onstate$1.call(this, { changed: assignTrue({}, this._state), current: this._state });
+		onstate$2.call(this, { changed: assignTrue({}, this._state), current: this._state });
 
-		this._fragment = create_main_fragment$4(this, this._state);
+		this._fragment = create_main_fragment$6(this, this._state);
 
 		this.root._oncreate.push(() => {
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
@@ -2066,14 +2760,14 @@ var SvelteGantt = (function () {
 
 
 
-	function data$3(){
+	function data$5(){
 	    return {
 	        resizing: false,
 	        widthT: null,
 	        posX: null
 	    }
 	}
-	function onstate$2({ changed, current, previous }) {
+	function onstate$3({ changed, current, previous }) {
 	    if(!current.resizing){
 	        this.set({
 	            posX: current.left,
@@ -2129,9 +2823,9 @@ var SvelteGantt = (function () {
 	        resizeHandleWidth
 	    }, new ComponentPosProvider(this));
 	}
-	const file$5 = "src\\TimeRangeHeader.html";
+	const file$7 = "src\\TimeRangeHeader.html";
 
-	function create_main_fragment$5(component, ctx) {
+	function create_main_fragment$7(component, ctx) {
 		var div2, div0, drag_action, text, div1, drag_action_1, current;
 
 		return {
@@ -2141,13 +2835,13 @@ var SvelteGantt = (function () {
 				text = createText("\r\n    ");
 				div1 = createElement("div");
 				div0.className = "sg-time-range-handle-left svelte-16dwney";
-				addLoc(div0, file$5, 1, 4, 80);
+				addLoc(div0, file$7, 1, 4, 80);
 				div1.className = "sg-time-range-handle-right svelte-16dwney";
-				addLoc(div1, file$5, 2, 4, 140);
+				addLoc(div1, file$7, 2, 4, 140);
 				div2.className = "sg-time-range-control svelte-16dwney";
 				setStyle(div2, "width", "" + ctx.widthT + "px");
 				setStyle(div2, "left", "" + ctx.posX + "px");
-				addLoc(div2, file$5, 0, 0, 0);
+				addLoc(div2, file$7, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
@@ -2196,16 +2890,16 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(data$3(), options.data);
+		this._state = assign(data$5(), options.data);
 		if (!('widthT' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'widthT'");
 		if (!('posX' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'posX'");
 		this._intro = !!options.intro;
 
-		this._handlers.state = [onstate$2];
+		this._handlers.state = [onstate$3];
 
-		onstate$2.call(this, { changed: assignTrue({}, this._state), current: this._state });
+		onstate$3.call(this, { changed: assignTrue({}, this._state), current: this._state });
 
-		this._fragment = create_main_fragment$5(this, this._state);
+		this._fragment = create_main_fragment$7(this, this._state);
 
 		this.root._oncreate.push(() => {
 			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
@@ -2239,7 +2933,7 @@ var SvelteGantt = (function () {
 		return $rowMap[model.resourceId];
 	}
 
-	function data$4() {
+	function data$6() {
 	    return {
 	        dragging: false,
 	        selected: false,
@@ -2280,7 +2974,7 @@ var SvelteGantt = (function () {
 	    });
 
 	}
-	function onstate$3({ changed, current, previous }) {
+	function onstate$4({ changed, current, previous }) {
 	    if(!current.dragging){
 	        this.set({
 	            posX: current.left,
@@ -2352,9 +3046,9 @@ var SvelteGantt = (function () {
 	                    container: rowContainerElement, 
 	                }, new ComponentPosProvider(this));
 	            }
-	const file$6 = "src\\Milestone.html";
+	const file$8 = "src\\Milestone.html";
 
-	function create_main_fragment$6(component, ctx) {
+	function create_main_fragment$8(component, ctx) {
 		var div1, div0, div1_class_value, drag_action, current;
 
 		function click_handler(event) {
@@ -2366,7 +3060,7 @@ var SvelteGantt = (function () {
 				div1 = createElement("div");
 				div0 = createElement("div");
 				div0.className = "inside svelte-fuyhwd";
-				addLoc(div0, file$6, 7, 4, 269);
+				addLoc(div0, file$8, 7, 4, 269);
 				addListener(div1, "click", click_handler);
 				div1.className = div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-fuyhwd";
 				setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
@@ -2374,7 +3068,7 @@ var SvelteGantt = (function () {
 				setStyle(div1, "width", "" + ctx.height + "px");
 				toggleClass(div1, "selected", ctx.selected);
 				toggleClass(div1, "moving", ctx.dragging);
-				addLoc(div1, file$6, 0, 0, 0);
+				addLoc(div1, file$8, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
@@ -2439,7 +3133,7 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(this.store._init(["selection","rowMap"]), data$4()), options.data);
+		this._state = assign(assign(this.store._init(["selection","rowMap"]), data$6()), options.data);
 		this.store._add(this, ["selection","rowMap"]);
 
 		this._recompute({ $selection: 1, model: 1, $rowMap: 1 }, this._state);
@@ -2453,13 +3147,13 @@ var SvelteGantt = (function () {
 		if (!('dragging' in this._state)) console.warn("<Milestone> was created without expected data property 'dragging'");
 		this._intro = !!options.intro;
 
-		this._handlers.state = [onstate$3];
+		this._handlers.state = [onstate$4];
 
 		this._handlers.destroy = [removeFromStore];
 
-		onstate$3.call(this, { changed: assignTrue({}, this._state), current: this._state });
+		onstate$4.call(this, { changed: assignTrue({}, this._state), current: this._state });
 
-		this._fragment = create_main_fragment$6(this, this._state);
+		this._fragment = create_main_fragment$8(this, this._state);
 
 		this.root._oncreate.push(() => {
 			oncreate$1.call(this);
@@ -2522,8 +3216,8 @@ var SvelteGantt = (function () {
 	        model.buttonHtml = model.buttonHtml || '';
 	        // enable dragging of task
 	        model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
-	        const left = this.gantt.utils.getPositionByDate(model.from);
-	        const right = this.gantt.utils.getPositionByDate(model.to);
+	        const left = this.gantt.columnFactory.getPositionByDate(model.from) | 0;
+	        const right = this.gantt.columnFactory.getPositionByDate(model.to) | 0;
 	        return {
 	            model,
 	            left: left,
@@ -2612,7 +3306,8 @@ var SvelteGantt = (function () {
 	            taskMap: {},
 	            rowIds: [],
 	            rowMap: {},
-	            timeRangeMap: {}
+	            timeRangeMap: {},
+	            columns: []
 	        }, data), {
 	            immutable: !true
 	        });
@@ -2727,7 +3422,7 @@ var SvelteGantt = (function () {
 
 
 
-	function data$5() {
+	function data$7() {
 	    return {
 	        posX: 240
 	    }
@@ -2760,9 +3455,9 @@ var SvelteGantt = (function () {
 
 	    return draggable(node, dragOptions, new ComponentPosProvider(this));
 	}
-	const file$7 = "src\\modules\\table\\Resizer.html";
+	const file$9 = "src\\modules\\table\\Resizer.html";
 
-	function create_main_fragment$7(component, ctx) {
+	function create_main_fragment$9(component, ctx) {
 		var div, resizer_action, current;
 
 		return {
@@ -2770,7 +3465,7 @@ var SvelteGantt = (function () {
 				div = createElement("div");
 				div.className = "sg-resize svelte-3im8rp";
 				setStyle(div, "left", "" + ctx.posX + "px");
-				addLoc(div, file$7, 0, 0, 0);
+				addLoc(div, file$9, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
@@ -2810,11 +3505,11 @@ var SvelteGantt = (function () {
 		}
 
 		init(this, options);
-		this._state = assign(data$5(), options.data);
+		this._state = assign(data$7(), options.data);
 		if (!('posX' in this._state)) console.warn("<Resizer> was created without expected data property 'posX'");
 		this._intro = !!options.intro;
 
-		this._fragment = create_main_fragment$7(this, this._state);
+		this._fragment = create_main_fragment$9(this, this._state);
 
 		this.root._oncreate.push(() => {
 			oncreate$2.call(this);
@@ -2845,28 +3540,6 @@ var SvelteGantt = (function () {
 
 	function rightScrollbarVisible({ $visibleHeight, rowContainerHeight }) {
 		return rowContainerHeight > $visibleHeight;
-	}
-
-	function columnWidth$1({ $from, $to, $width, $columnOffset, $columnUnit }) {
-		return getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width);
-	}
-
-	function columnCount$1({ $width, columnWidth }) {
-		return Math.ceil($width / columnWidth);
-	}
-
-	function columns({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) {
-	    const columns = [];
-	    const columnFrom = $from.clone();
-	    for (let i = 0; i < columnCount; i++) {
-	    columns.push({
-	        width: columnWidth,
-	        from: columnFrom.clone(),
-	        left: getPositionByDate(columnFrom, $from, $to, $width)
-	    });
-	    columnFrom.add($columnOffset, $columnUnit);
-	    }
-	    return columns;
 	}
 
 	function rowContainerHeight({ $allRows, $rowHeight }) {
@@ -2916,17 +3589,18 @@ var SvelteGantt = (function () {
 	    return $allTasks.reduce(reducer, {});
 	}
 
-	function data$6() {
+	function data$8() {
 	    return {
 	        tableWidth: 240,
 
-	        columns: [],
 	        scrollables: [],
 	        visibleRows: [],
 	        visibleTasks: [],
 	        _ganttBodyModules: [],
 	        _ganttTableModules: [],
 	        _modules: [],
+
+	        columns: [],
 
 	        rows: [],
 
@@ -2944,6 +3618,13 @@ var SvelteGantt = (function () {
 	        setTimeout(() => {
 	            this.refreshTasks();
 	        }, 0);
+	    },
+	    refreshTasksDebounced() {
+	        if(!this._refreshTasksDebounced) {
+	            this._refreshTasksDebounced = debounce(() => { this.refreshTasks(); }, 250, false);
+	        }
+
+	        this._refreshTasksDebounced();
 	    },
 	    onwheel(e) {
 	        if (e.ctrlKey) {
@@ -3046,6 +3727,7 @@ var SvelteGantt = (function () {
 	            this.taskFactory = new TaskFactory(this);
 	            this.timeRangeFactory = new TimeRangeFactory(this);
 	            this.dndManager = new DragDropManager(this);
+	            this.columnFactory = new ColumnFactory(this);
 
 	            this.api.registerEvent("tasks", "move");
 	            this.api.registerEvent("tasks", "select");
@@ -3087,8 +3769,8 @@ var SvelteGantt = (function () {
 	    refreshTasks() {
 	        const { allTasks } = this.store.get();
 	        allTasks.forEach(task => {
-	            const newLeft = this.root.utils.getPositionByDate(task.model.from);
-	            const newRight = this.root.utils.getPositionByDate(task.model.to);
+	            const newLeft = this.root.columnFactory.getPositionByDate(task.model.from) | 0;
+	            const newRight = this.root.columnFactory.getPositionByDate(task.model.to) | 0;
 
 	            task.left = newLeft;
 	            task.width = newRight - newLeft;
@@ -3120,7 +3802,6 @@ var SvelteGantt = (function () {
 	        return stretch && visible > min ? visible : min;
 	    });
 
-	    this.refreshTasksDebounced = debounce(() => { this.refreshTasks(); }, 250, false);
 	    this.stoppedZooming = debounce(() => { this.set({ zooming: false }); }, 250, false);
 
 	    this.initGantt();
@@ -3166,6 +3847,7 @@ var SvelteGantt = (function () {
 	          { unit: "day", format: "DD.MM.YYYY" },
 	          { unit: "hour", format: "HH" }
 	        ],
+	        minWidth: 800,
 	        stretchTimelineWidthToFit: true
 	      },
 	      {
@@ -3273,49 +3955,37 @@ var SvelteGantt = (function () {
 	    const { scrollables } = this.get();
 	    scrollables.push({ node, orientation: "horizontal" });
 	}
-	const file$8 = "src\\Gantt.html";
+	const file$10 = "src\\Gantt.html";
 
-	function get_each7_context(ctx, list, i) {
+	function get_each5_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.module = list[i];
 		return child_ctx;
 	}
 
-	function get_each6_context(ctx, list, i) {
+	function get_each4_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.task = list[i];
 		return child_ctx;
 	}
 
-	function get_each5_context(ctx, list, i) {
+	function get_each3_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.id = list[i][0];
 		child_ctx.timeRange = list[i][1];
-		return child_ctx;
-	}
-
-	function get_each4_context(ctx, list, i) {
-		const child_ctx = Object.create(ctx);
-		child_ctx.row = list[i];
-		return child_ctx;
-	}
-
-	function get_each3_context(ctx, list, i) {
-		const child_ctx = Object.create(ctx);
-		child_ctx.column = list[i];
 		return child_ctx;
 	}
 
 	function get_each2_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.id = list[i][0];
-		child_ctx.timeRange = list[i][1];
+		child_ctx.row = list[i];
 		return child_ctx;
 	}
 
 	function get_each1_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
-		child_ctx.header = list[i];
+		child_ctx.id = list[i][0];
+		child_ctx.timeRange = list[i][1];
 		return child_ctx;
 	}
 
@@ -3325,8 +3995,8 @@ var SvelteGantt = (function () {
 		return child_ctx;
 	}
 
-	function create_main_fragment$8(component, ctx) {
-		var div10, each0_blocks_1 = [], each0_lookup = blankObject(), text0, div9, div2, div1, div0, text1, each2_blocks_1 = [], each2_lookup = blankObject(), horizontalScrollListener_action, div2_resize_listener, text2, div8, div7, div3, text3, div5, div4, each4_blocks_1 = [], each4_lookup = blankObject(), text4, div6, each5_blocks_1 = [], each5_lookup = blankObject(), text5, each6_blocks_1 = [], each6_lookup = blankObject(), text6, each7_blocks_1 = [], each7_lookup = blankObject(), div8_resize_listener, scrollable_action, div10_class_value, current;
+	function create_main_fragment$10(component, ctx) {
+		var div9, each0_blocks_1 = [], each0_lookup = blankObject(), text0, div8, div2, div1, div0, text1, each1_blocks_1 = [], each1_lookup = blankObject(), horizontalScrollListener_action, div2_resize_listener, text2, div7, div6, columns_updating = {}, text3, div4, div3, each2_blocks_1 = [], each2_lookup = blankObject(), text4, div5, each3_blocks_1 = [], each3_lookup = blankObject(), text5, each4_blocks_1 = [], each4_lookup = blankObject(), text6, each5_blocks_1 = [], each5_lookup = blankObject(), div7_resize_listener, scrollable_action, div9_class_value, current;
 
 		function onwindowresize(event) {
 			component.onWindowResizeEventHandler(event);	}
@@ -3339,105 +4009,101 @@ var SvelteGantt = (function () {
 		for (var i = 0; i < each0_value.length; i += 1) {
 			let child_ctx = get_each0_context(ctx, each0_value, i);
 			let key = get_key(child_ctx);
-			each0_blocks_1[i] = each0_lookup[key] = create_each_block_7(component, key, child_ctx);
+			each0_blocks_1[i] = each0_lookup[key] = create_each_block_5(component, key, child_ctx);
 		}
 
-		var each1_value = ctx.$headers;
+		var columnheaders = new ColumnHeaders({
+			root: component.root,
+			store: component.store
+		});
 
-		var each1_blocks = [];
+		columnheaders.on("selectDateTime", function(event) {
+			component.adjustVisibleDateRange(event);
+		});
 
-		for (var i = 0; i < each1_value.length; i += 1) {
-			each1_blocks[i] = create_each_block_6(component, get_each1_context(ctx, each1_value, i));
-		}
-
-		function outroBlock(i, detach, fn) {
-			if (each1_blocks[i]) {
-				each1_blocks[i].o(() => {
-					if (detach) {
-						each1_blocks[i].d(detach);
-						each1_blocks[i] = null;
-					}
-					if (fn) fn();
-				});
-			}
-		}
-
-		var each2_value = ctx.Object.entries(ctx.$timeRangeMap);
+		var each1_value = ctx.Object.entries(ctx.$timeRangeMap);
 
 		const get_key_1 = ctx => ctx.timeRange.id;
 
-		for (var i = 0; i < each2_value.length; i += 1) {
-			let child_ctx = get_each2_context(ctx, each2_value, i);
+		for (var i = 0; i < each1_value.length; i += 1) {
+			let child_ctx = get_each1_context(ctx, each1_value, i);
 			let key = get_key_1(child_ctx);
-			each2_blocks_1[i] = each2_lookup[key] = create_each_block_5(component, key, child_ctx);
+			each1_blocks_1[i] = each1_lookup[key] = create_each_block_4(component, key, child_ctx);
 		}
 
 		function div2_resize_handler() {
 			component.store.set({ headerHeight: div2.clientHeight });
 		}
 
-		var each3_value = ctx.columns;
-
-		var each3_blocks = [];
-
-		for (var i = 0; i < each3_value.length; i += 1) {
-			each3_blocks[i] = create_each_block_4(component, get_each3_context(ctx, each3_value, i));
+		var columns_initial_data = {};
+		if (ctx.columns  !== void 0) {
+			columns_initial_data.columns = ctx.columns ;
+			columns_updating.columns = true;
 		}
-
-		function outroBlock_1(i, detach, fn) {
-			if (each3_blocks[i]) {
-				each3_blocks[i].o(() => {
-					if (detach) {
-						each3_blocks[i].d(detach);
-						each3_blocks[i] = null;
-					}
-					if (fn) fn();
-				});
+		var columns = new Columns({
+			root: component.root,
+			store: component.store,
+			data: columns_initial_data,
+			_bind(changed, childState) {
+				var newState = {};
+				if (!columns_updating.columns && changed.columns) {
+					newState.columns = childState.columns;
+				}
+				component._set(newState);
+				columns_updating = {};
 			}
-		}
+		});
 
-		var each4_value = ctx.visibleRows;
+		component.root._beforecreate.push(() => {
+			columns._bind({ columns: 1 }, columns.get());
+		});
+
+		columns.on("columnsGenerated", function(event) {
+			component.refreshTasksDebounced();
+		});
+
+		var each2_value = ctx.visibleRows;
 
 		const get_key_2 = ctx => ctx.row.model.id;
 
-		for (var i = 0; i < each4_value.length; i += 1) {
-			let child_ctx = get_each4_context(ctx, each4_value, i);
+		for (var i = 0; i < each2_value.length; i += 1) {
+			let child_ctx = get_each2_context(ctx, each2_value, i);
 			let key = get_key_2(child_ctx);
-			each4_blocks_1[i] = each4_lookup[key] = create_each_block_3(component, key, child_ctx);
+			each2_blocks_1[i] = each2_lookup[key] = create_each_block_3(component, key, child_ctx);
 		}
 
-		var each5_value = ctx.Object.entries(ctx.$timeRangeMap);
+		var each3_value = ctx.Object.entries(ctx.$timeRangeMap);
 
 		const get_key_3 = ctx => ctx.timeRange.id;
 
-		for (var i = 0; i < each5_value.length; i += 1) {
-			let child_ctx = get_each5_context(ctx, each5_value, i);
+		for (var i = 0; i < each3_value.length; i += 1) {
+			let child_ctx = get_each3_context(ctx, each3_value, i);
 			let key = get_key_3(child_ctx);
-			each5_blocks_1[i] = each5_lookup[key] = create_each_block_2(component, key, child_ctx);
+			each3_blocks_1[i] = each3_lookup[key] = create_each_block_2(component, key, child_ctx);
 		}
 
-		var each6_value = ctx.visibleTasks;
+		var each4_value = ctx.visibleTasks;
 
 		const get_key_4 = ctx => ctx.task.model.id;
 
-		for (var i = 0; i < each6_value.length; i += 1) {
-			let child_ctx = get_each6_context(ctx, each6_value, i);
+		for (var i = 0; i < each4_value.length; i += 1) {
+			let child_ctx = get_each4_context(ctx, each4_value, i);
 			let key = get_key_4(child_ctx);
-			each6_blocks_1[i] = each6_lookup[key] = create_each_block_1(component, key, child_ctx);
+			each4_blocks_1[i] = each4_lookup[key] = create_each_block_1(component, key, child_ctx);
 		}
 
-		var each7_value = ctx._ganttBodyModules;
+		var each5_value = ctx._ganttBodyModules;
 
 		const get_key_5 = ctx => ctx.module.key;
 
-		for (var i = 0; i < each7_value.length; i += 1) {
-			let child_ctx = get_each7_context(ctx, each7_value, i);
+		for (var i = 0; i < each5_value.length; i += 1) {
+			let child_ctx = get_each5_context(ctx, each5_value, i);
 			let key = get_key_5(child_ctx);
-			each7_blocks_1[i] = each7_lookup[key] = create_each_block$1(component, key, child_ctx);
+			each5_blocks_1[i] = each5_lookup[key] = create_each_block$3(component, key, child_ctx);
 		}
 
-		function div8_resize_handler() {
-			component.store.set({ visibleHeight: div8.clientHeight, visibleWidth: div8.clientWidth });
+		function div7_resize_handler() {
+			component.store.set({ visibleHeight: div7.clientHeight, visibleWidth: div7.clientWidth });
 		}
 
 		function wheel_handler(event) {
@@ -3446,164 +4112,128 @@ var SvelteGantt = (function () {
 
 		return {
 			c: function create() {
-				div10 = createElement("div");
+				div9 = createElement("div");
 
 				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].c();
 
 				text0 = createText("\r\n\r\n\t");
-				div9 = createElement("div");
+				div8 = createElement("div");
 				div2 = createElement("div");
 				div1 = createElement("div");
 				div0 = createElement("div");
-
-				for (var i = 0; i < each1_blocks.length; i += 1) {
-					each1_blocks[i].c();
-				}
-
+				columnheaders._fragment.c();
 				text1 = createText("\r\n\t\t\t\t\t");
+
+				for (i = 0; i < each1_blocks_1.length; i += 1) each1_blocks_1[i].c();
+
+				text2 = createText("\r\n\r\n\t\t");
+				div7 = createElement("div");
+				div6 = createElement("div");
+				columns._fragment.c();
+				text3 = createText("\r\n\t\t\t\t");
+				div4 = createElement("div");
+				div3 = createElement("div");
 
 				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].c();
 
-				text2 = createText("\r\n\r\n\t\t");
-				div8 = createElement("div");
-				div7 = createElement("div");
-				div3 = createElement("div");
-
-				for (var i = 0; i < each3_blocks.length; i += 1) {
-					each3_blocks[i].c();
-				}
-
-				text3 = createText("\r\n\t\t\t\t");
-				div5 = createElement("div");
-				div4 = createElement("div");
-
-				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].c();
-
 				text4 = createText("\r\n\t\t\t\t");
-				div6 = createElement("div");
+				div5 = createElement("div");
 
-				for (i = 0; i < each5_blocks_1.length; i += 1) each5_blocks_1[i].c();
+				for (i = 0; i < each3_blocks_1.length; i += 1) each3_blocks_1[i].c();
 
 				text5 = createText("\r\n\r\n\t\t\t\t\t");
 
-				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].c();
+				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].c();
 
 				text6 = createText("\r\n\t\t\t\t");
 
-				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].c();
-				div0.className = "header-container svelte-k25uno";
+				for (i = 0; i < each5_blocks_1.length; i += 1) each5_blocks_1[i].c();
+				div0.className = "header-container svelte-1fs3xpk";
 				setStyle(div0, "width", "" + ctx.$width + "px");
-				addLoc(div0, file$8, 11, 4, 630);
-				div1.className = "sg-header-scroller svelte-k25uno";
-				addLoc(div1, file$8, 10, 3, 563);
+				addLoc(div0, file$10, 11, 4, 630);
+				div1.className = "sg-header-scroller svelte-1fs3xpk";
+				addLoc(div1, file$10, 10, 3, 563);
 				component.root._aftercreate.push(div2_resize_handler);
-				div2.className = "sg-header svelte-k25uno";
+				div2.className = "sg-header svelte-1fs3xpk";
 				toggleClass(div2, "right-scrollbar-visible", ctx.rightScrollbarVisible);
-				addLoc(div2, file$8, 9, 2, 423);
-				div3.className = "sg-columns svelte-k25uno";
-				addLoc(div3, file$8, 25, 4, 1235);
-				setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
-				addLoc(div4, file$8, 31, 5, 1436);
-				div5.className = "sg-rows svelte-k25uno";
-				setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
-				addLoc(div5, file$8, 30, 4, 1352);
-				div6.className = "sg-foreground svelte-k25uno";
-				addLoc(div6, file$8, 37, 4, 1608);
-				div7.className = "content svelte-k25uno";
-				setStyle(div7, "width", "" + ctx.$width + "px");
-				addLoc(div7, file$8, 24, 3, 1183);
-				component.root._aftercreate.push(div8_resize_handler);
-				addListener(div8, "wheel", wheel_handler);
-				div8.className = "sg-timeline-body svelte-k25uno";
-				toggleClass(div8, "zooming", ctx.zooming);
-				addLoc(div8, file$8, 22, 2, 993);
-				div9.className = "sg-timeline sg-view svelte-k25uno";
-				addLoc(div9, file$8, 8, 1, 386);
-				div10.className = div10_class_value = "sg-gantt " + ctx.$classes + " svelte-k25uno";
-				addLoc(div10, file$8, 1, 0, 65);
+				addLoc(div2, file$10, 9, 2, 423);
+				setStyle(div3, "transform", "translateY(" + ctx.paddingTop + "px)");
+				addLoc(div3, file$10, 25, 5, 1359);
+				div4.className = "sg-rows svelte-1fs3xpk";
+				setStyle(div4, "height", "" + ctx.rowContainerHeight + "px");
+				addLoc(div4, file$10, 24, 4, 1275);
+				div5.className = "sg-foreground svelte-1fs3xpk";
+				addLoc(div5, file$10, 31, 4, 1531);
+				div6.className = "content svelte-1fs3xpk";
+				setStyle(div6, "width", "" + ctx.$width + "px");
+				addLoc(div6, file$10, 22, 3, 1136);
+				component.root._aftercreate.push(div7_resize_handler);
+				addListener(div7, "wheel", wheel_handler);
+				div7.className = "sg-timeline-body svelte-1fs3xpk";
+				toggleClass(div7, "zooming", ctx.zooming);
+				addLoc(div7, file$10, 20, 2, 946);
+				div8.className = "sg-timeline sg-view svelte-1fs3xpk";
+				addLoc(div8, file$10, 8, 1, 386);
+				div9.className = div9_class_value = "sg-gantt " + ctx.$classes + " svelte-1fs3xpk";
+				addLoc(div9, file$10, 1, 0, 65);
 			},
 
 			m: function mount(target, anchor) {
-				insert(target, div10, anchor);
+				insert(target, div9, anchor);
 
-				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].i(div10, null);
+				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].i(div9, null);
 
-				append(div10, text0);
-				append(div10, div9);
-				append(div9, div2);
+				append(div9, text0);
+				append(div9, div8);
+				append(div8, div2);
 				append(div2, div1);
 				append(div1, div0);
-
-				for (var i = 0; i < each1_blocks.length; i += 1) {
-					each1_blocks[i].i(div0, null);
-				}
-
+				columnheaders._mount(div0, null);
 				append(div0, text1);
 
-				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].i(div0, null);
+				for (i = 0; i < each1_blocks_1.length; i += 1) each1_blocks_1[i].i(div0, null);
 
 				horizontalScrollListener_action = horizontalScrollListener.call(component, div1) || {};
 				div2_resize_listener = addResizeListener(div2, div2_resize_handler);
 				component.refs.mainHeaderContainer = div2;
-				append(div9, text2);
-				append(div9, div8);
+				append(div8, text2);
 				append(div8, div7);
-				append(div7, div3);
-
-				for (var i = 0; i < each3_blocks.length; i += 1) {
-					each3_blocks[i].i(div3, null);
-				}
-
-				append(div7, text3);
-				append(div7, div5);
-				append(div5, div4);
-
-				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].i(div4, null);
-
-				component.refs.rowContainer = div5;
-				append(div7, text4);
 				append(div7, div6);
+				columns._mount(div6, null);
+				append(div6, text3);
+				append(div6, div4);
+				append(div4, div3);
+
+				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].i(div3, null);
+
+				component.refs.rowContainer = div4;
+				append(div6, text4);
+				append(div6, div5);
+
+				for (i = 0; i < each3_blocks_1.length; i += 1) each3_blocks_1[i].i(div5, null);
+
+				append(div5, text5);
+
+				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].i(div5, null);
+
+				append(div6, text6);
 
 				for (i = 0; i < each5_blocks_1.length; i += 1) each5_blocks_1[i].i(div6, null);
 
-				append(div6, text5);
-
-				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].i(div6, null);
-
-				append(div7, text6);
-
-				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].i(div7, null);
-
-				div8_resize_listener = addResizeListener(div8, div8_resize_handler);
-				component.refs.mainContainer = div8;
-				scrollable_action = scrollable.call(component, div8) || {};
-				component.refs.ganttElement = div10;
+				div7_resize_listener = addResizeListener(div7, div7_resize_handler);
+				component.refs.mainContainer = div7;
+				scrollable_action = scrollable.call(component, div7) || {};
+				component.refs.ganttElement = div9;
 				current = true;
 			},
 
-			p: function update(changed, ctx) {
+			p: function update(changed, _ctx) {
+				ctx = _ctx;
 				const each0_value = ctx._ganttTableModules;
-				each0_blocks_1 = updateKeyedEach(each0_blocks_1, component, changed, get_key, 1, ctx, each0_value, each0_lookup, div10, outroAndDestroyBlock, create_each_block_7, "i", text0, get_each0_context);
+				each0_blocks_1 = updateKeyedEach(each0_blocks_1, component, changed, get_key, 1, ctx, each0_value, each0_lookup, div9, outroAndDestroyBlock, create_each_block_5, "i", text0, get_each0_context);
 
-				if (changed.$headers) {
-					each1_value = ctx.$headers;
-
-					for (var i = 0; i < each1_value.length; i += 1) {
-						const child_ctx = get_each1_context(ctx, each1_value, i);
-
-						if (each1_blocks[i]) {
-							each1_blocks[i].p(changed, child_ctx);
-						} else {
-							each1_blocks[i] = create_each_block_6(component, child_ctx);
-							each1_blocks[i].c();
-						}
-						each1_blocks[i].i(div0, text1);
-					}
-					for (; i < each1_blocks.length; i += 1) outroBlock(i, 1);
-				}
-
-				const each2_value = ctx.Object.entries(ctx.$timeRangeMap);
-				each2_blocks_1 = updateKeyedEach(each2_blocks_1, component, changed, get_key_1, 1, ctx, each2_value, each2_lookup, div0, outroAndDestroyBlock, create_each_block_5, "i", null, get_each2_context);
+				const each1_value = ctx.Object.entries(ctx.$timeRangeMap);
+				each1_blocks_1 = updateKeyedEach(each1_blocks_1, component, changed, get_key_1, 1, ctx, each1_value, each1_lookup, div0, outroAndDestroyBlock, create_each_block_4, "i", null, get_each1_context);
 
 				if (!current || changed.$width) {
 					setStyle(div0, "width", "" + ctx.$width + "px");
@@ -3613,53 +4243,44 @@ var SvelteGantt = (function () {
 					toggleClass(div2, "right-scrollbar-visible", ctx.rightScrollbarVisible);
 				}
 
-				if (changed.columns) {
-					each3_value = ctx.columns;
-
-					for (var i = 0; i < each3_value.length; i += 1) {
-						const child_ctx = get_each3_context(ctx, each3_value, i);
-
-						if (each3_blocks[i]) {
-							each3_blocks[i].p(changed, child_ctx);
-						} else {
-							each3_blocks[i] = create_each_block_4(component, child_ctx);
-							each3_blocks[i].c();
-						}
-						each3_blocks[i].i(div3, null);
-					}
-					for (; i < each3_blocks.length; i += 1) outroBlock_1(i, 1);
+				var columns_changes = {};
+				if (!columns_updating.columns && changed.columns) {
+					columns_changes.columns = ctx.columns ;
+					columns_updating.columns = ctx.columns  !== void 0;
 				}
+				columns._set(columns_changes);
+				columns_updating = {};
 
-				const each4_value = ctx.visibleRows;
-				each4_blocks_1 = updateKeyedEach(each4_blocks_1, component, changed, get_key_2, 1, ctx, each4_value, each4_lookup, div4, outroAndDestroyBlock, create_each_block_3, "i", null, get_each4_context);
+				const each2_value = ctx.visibleRows;
+				each2_blocks_1 = updateKeyedEach(each2_blocks_1, component, changed, get_key_2, 1, ctx, each2_value, each2_lookup, div3, outroAndDestroyBlock, create_each_block_3, "i", null, get_each2_context);
 
 				if (!current || changed.paddingTop) {
-					setStyle(div4, "transform", "translateY(" + ctx.paddingTop + "px)");
+					setStyle(div3, "transform", "translateY(" + ctx.paddingTop + "px)");
 				}
 
 				if (!current || changed.rowContainerHeight) {
-					setStyle(div5, "height", "" + ctx.rowContainerHeight + "px");
+					setStyle(div4, "height", "" + ctx.rowContainerHeight + "px");
 				}
 
-				const each5_value = ctx.Object.entries(ctx.$timeRangeMap);
-				each5_blocks_1 = updateKeyedEach(each5_blocks_1, component, changed, get_key_3, 1, ctx, each5_value, each5_lookup, div6, outroAndDestroyBlock, create_each_block_2, "i", text5, get_each5_context);
+				const each3_value = ctx.Object.entries(ctx.$timeRangeMap);
+				each3_blocks_1 = updateKeyedEach(each3_blocks_1, component, changed, get_key_3, 1, ctx, each3_value, each3_lookup, div5, outroAndDestroyBlock, create_each_block_2, "i", text5, get_each3_context);
 
-				const each6_value = ctx.visibleTasks;
-				each6_blocks_1 = updateKeyedEach(each6_blocks_1, component, changed, get_key_4, 1, ctx, each6_value, each6_lookup, div6, outroAndDestroyBlock, create_each_block_1, "i", null, get_each6_context);
+				const each4_value = ctx.visibleTasks;
+				each4_blocks_1 = updateKeyedEach(each4_blocks_1, component, changed, get_key_4, 1, ctx, each4_value, each4_lookup, div5, outroAndDestroyBlock, create_each_block_1, "i", null, get_each4_context);
 
-				const each7_value = ctx._ganttBodyModules;
-				each7_blocks_1 = updateKeyedEach(each7_blocks_1, component, changed, get_key_5, 1, ctx, each7_value, each7_lookup, div7, outroAndDestroyBlock, create_each_block$1, "i", null, get_each7_context);
+				const each5_value = ctx._ganttBodyModules;
+				each5_blocks_1 = updateKeyedEach(each5_blocks_1, component, changed, get_key_5, 1, ctx, each5_value, each5_lookup, div6, outroAndDestroyBlock, create_each_block$3, "i", null, get_each5_context);
 
 				if (!current || changed.$width) {
-					setStyle(div7, "width", "" + ctx.$width + "px");
+					setStyle(div6, "width", "" + ctx.$width + "px");
 				}
 
 				if (changed.zooming) {
-					toggleClass(div8, "zooming", ctx.zooming);
+					toggleClass(div7, "zooming", ctx.zooming);
 				}
 
-				if ((!current || changed.$classes) && div10_class_value !== (div10_class_value = "sg-gantt " + ctx.$classes + " svelte-k25uno")) {
-					div10.className = div10_class_value;
+				if ((!current || changed.$classes) && div9_class_value !== (div9_class_value = "sg-gantt " + ctx.$classes + " svelte-1fs3xpk")) {
+					div9.className = div9_class_value;
 				}
 			},
 
@@ -3677,28 +4298,24 @@ var SvelteGantt = (function () {
 				const countdown = callAfter(outrocallback, each0_blocks_1.length);
 				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].o(countdown);
 
-				each1_blocks = each1_blocks.filter(Boolean);
-				const countdown_1 = callAfter(outrocallback, each1_blocks.length);
-				for (let i = 0; i < each1_blocks.length; i += 1) outroBlock(i, 0, countdown_1);
+				if (columnheaders) columnheaders._fragment.o(outrocallback);
+
+				const countdown_1 = callAfter(outrocallback, each1_blocks_1.length);
+				for (i = 0; i < each1_blocks_1.length; i += 1) each1_blocks_1[i].o(countdown_1);
+
+				if (columns) columns._fragment.o(outrocallback);
 
 				const countdown_2 = callAfter(outrocallback, each2_blocks_1.length);
 				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].o(countdown_2);
 
-				each3_blocks = each3_blocks.filter(Boolean);
-				const countdown_3 = callAfter(outrocallback, each3_blocks.length);
-				for (let i = 0; i < each3_blocks.length; i += 1) outroBlock_1(i, 0, countdown_3);
+				const countdown_3 = callAfter(outrocallback, each3_blocks_1.length);
+				for (i = 0; i < each3_blocks_1.length; i += 1) each3_blocks_1[i].o(countdown_3);
 
 				const countdown_4 = callAfter(outrocallback, each4_blocks_1.length);
 				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].o(countdown_4);
 
 				const countdown_5 = callAfter(outrocallback, each5_blocks_1.length);
 				for (i = 0; i < each5_blocks_1.length; i += 1) each5_blocks_1[i].o(countdown_5);
-
-				const countdown_6 = callAfter(outrocallback, each6_blocks_1.length);
-				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].o(countdown_6);
-
-				const countdown_7 = callAfter(outrocallback, each7_blocks_1.length);
-				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].o(countdown_7);
 
 				current = false;
 			},
@@ -3707,42 +4324,41 @@ var SvelteGantt = (function () {
 				window.removeEventListener("resize", onwindowresize);
 
 				if (detach) {
-					detachNode(div10);
+					detachNode(div9);
 				}
 
 				for (i = 0; i < each0_blocks_1.length; i += 1) each0_blocks_1[i].d();
 
-				destroyEach(each1_blocks, detach);
+				columnheaders.destroy();
 
-				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].d();
+				for (i = 0; i < each1_blocks_1.length; i += 1) each1_blocks_1[i].d();
 
 				if (horizontalScrollListener_action && typeof horizontalScrollListener_action.destroy === 'function') horizontalScrollListener_action.destroy.call(component);
 				div2_resize_listener.cancel();
 				if (component.refs.mainHeaderContainer === div2) component.refs.mainHeaderContainer = null;
+				columns.destroy();
 
-				destroyEach(each3_blocks, detach);
+				for (i = 0; i < each2_blocks_1.length; i += 1) each2_blocks_1[i].d();
+
+				if (component.refs.rowContainer === div4) component.refs.rowContainer = null;
+
+				for (i = 0; i < each3_blocks_1.length; i += 1) each3_blocks_1[i].d();
 
 				for (i = 0; i < each4_blocks_1.length; i += 1) each4_blocks_1[i].d();
 
-				if (component.refs.rowContainer === div5) component.refs.rowContainer = null;
-
 				for (i = 0; i < each5_blocks_1.length; i += 1) each5_blocks_1[i].d();
 
-				for (i = 0; i < each6_blocks_1.length; i += 1) each6_blocks_1[i].d();
-
-				for (i = 0; i < each7_blocks_1.length; i += 1) each7_blocks_1[i].d();
-
-				div8_resize_listener.cancel();
-				removeListener(div8, "wheel", wheel_handler);
-				if (component.refs.mainContainer === div8) component.refs.mainContainer = null;
+				div7_resize_listener.cancel();
+				removeListener(div7, "wheel", wheel_handler);
+				if (component.refs.mainContainer === div7) component.refs.mainContainer = null;
 				if (scrollable_action && typeof scrollable_action.destroy === 'function') scrollable_action.destroy.call(component);
-				if (component.refs.ganttElement === div10) component.refs.ganttElement = null;
+				if (component.refs.ganttElement === div9) component.refs.ganttElement = null;
 			}
 		};
 	}
 
 	// (3:1) {#each _ganttTableModules as module (module.key)}
-	function create_each_block_7(component, key_1, ctx) {
+	function create_each_block_5(component, key_1, ctx) {
 		var first, text, current;
 
 		var switch_value = ctx.module;
@@ -3869,58 +4485,8 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (13:5) {#each $headers as header}
-	function create_each_block_6(component, ctx) {
-		var current;
-
-		var columnheader_initial_data = { header: ctx.header };
-		var columnheader = new ColumnHeader({
-			root: component.root,
-			store: component.store,
-			data: columnheader_initial_data
-		});
-
-		columnheader.on("selectDateTime", function(event) {
-			component.adjustVisibleDateRange(event);
-		});
-
-		return {
-			c: function create() {
-				columnheader._fragment.c();
-			},
-
-			m: function mount(target, anchor) {
-				columnheader._mount(target, anchor);
-				current = true;
-			},
-
-			p: function update(changed, ctx) {
-				var columnheader_changes = {};
-				if (changed.$headers) columnheader_changes.header = ctx.header;
-				columnheader._set(columnheader_changes);
-			},
-
-			i: function intro(target, anchor) {
-				if (current) return;
-
-				this.m(target, anchor);
-			},
-
-			o: function outro(outrocallback) {
-				if (!current) return;
-
-				if (columnheader) columnheader._fragment.o(outrocallback);
-				current = false;
-			},
-
-			d: function destroy$$1(detach) {
-				columnheader.destroy(detach);
-			}
-		};
-	}
-
-	// (16:5) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
-	function create_each_block_5(component, key_1, ctx) {
+	// (14:5) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+	function create_each_block_4(component, key_1, ctx) {
 		var first, current;
 
 		var timerangeheader_spread_levels = [
@@ -3984,61 +4550,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (27:5) {#each columns as column}
-	function create_each_block_4(component, ctx) {
-		var current;
-
-		var column_spread_levels = [
-			ctx.column
-		];
-
-		var column_initial_data = {};
-		for (var i = 0; i < column_spread_levels.length; i += 1) {
-			column_initial_data = assign(column_initial_data, column_spread_levels[i]);
-		}
-		var column = new Column({
-			root: component.root,
-			store: component.store,
-			data: column_initial_data
-		});
-
-		return {
-			c: function create() {
-				column._fragment.c();
-			},
-
-			m: function mount(target, anchor) {
-				column._mount(target, anchor);
-				current = true;
-			},
-
-			p: function update(changed, ctx) {
-				var column_changes = changed.columns ? getSpreadUpdate(column_spread_levels, [
-					ctx.column
-				]) : {};
-				column._set(column_changes);
-			},
-
-			i: function intro(target, anchor) {
-				if (current) return;
-
-				this.m(target, anchor);
-			},
-
-			o: function outro(outrocallback) {
-				if (!current) return;
-
-				if (column) column._fragment.o(outrocallback);
-				current = false;
-			},
-
-			d: function destroy$$1(detach) {
-				column.destroy(detach);
-			}
-		};
-	}
-
-	// (33:6) {#each visibleRows as row (row.model.id)}
+	// (27:6) {#each visibleRows as row (row.model.id)}
 	function create_each_block_3(component, key_1, ctx) {
 		var first, current;
 
@@ -4095,7 +4607,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (39:5) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
+	// (33:5) {#each Object.entries($timeRangeMap) as [id, timeRange] (timeRange.id)}
 	function create_each_block_2(component, key_1, ctx) {
 		var first, current;
 
@@ -4160,7 +4672,7 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (43:5) {#each visibleTasks as task (task.model.id)}
+	// (37:5) {#each visibleTasks as task (task.model.id)}
 	function create_each_block_1(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
@@ -4262,8 +4774,8 @@ var SvelteGantt = (function () {
 		};
 	}
 
-	// (48:4) {#each _ganttBodyModules as module (module.key)}
-	function create_each_block$1(component, key_1, ctx) {
+	// (42:4) {#each _ganttBodyModules as module (module.key)}
+	function create_each_block$3(component, key_1, ctx) {
 		var first, switch_instance_anchor, current;
 
 		var switch_value = ctx.module;
@@ -4364,18 +4876,11 @@ var SvelteGantt = (function () {
 
 		init(this, options);
 		this.refs = {};
-		this._state = assign(assign(assign({ Object : Object }, this.store._init(["visibleHeight","from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","taskMap","allTasks","classes","headerHeight","headers","timeRangeMap","visibleWidth"])), data$6()), options.data);
-		this.store._add(this, ["visibleHeight","from","to","width","columnOffset","columnUnit","allRows","rowHeight","scrollTop","taskMap","allTasks","classes","headerHeight","headers","timeRangeMap","visibleWidth"]);
+		this._state = assign(assign(assign({ Object : Object }, this.store._init(["visibleHeight","allRows","rowHeight","scrollTop","taskMap","allTasks","classes","headerHeight","width","timeRangeMap","visibleWidth"])), data$8()), options.data);
+		this.store._add(this, ["visibleHeight","allRows","rowHeight","scrollTop","taskMap","allTasks","classes","headerHeight","width","timeRangeMap","visibleWidth"]);
 
-		this._recompute({ $allRows: 1, $rowHeight: 1, $visibleHeight: 1, rowContainerHeight: 1, $from: 1, $to: 1, $width: 1, $columnOffset: 1, $columnUnit: 1, columnWidth: 1, columnCount: 1, $scrollTop: 1, startIndex: 1, endIndex: 1, $allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
+		this._recompute({ $allRows: 1, $rowHeight: 1, $visibleHeight: 1, rowContainerHeight: 1, $scrollTop: 1, startIndex: 1, endIndex: 1, $allTasks: 1, $taskMap: 1, visibleRows: 1, rowTaskMap: 1 }, this._state);
 		if (!('$visibleHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$visibleHeight'");
-
-		if (!('$from' in this._state)) console.warn("<Gantt> was created without expected data property '$from'");
-		if (!('$to' in this._state)) console.warn("<Gantt> was created without expected data property '$to'");
-		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
-		if (!('$columnOffset' in this._state)) console.warn("<Gantt> was created without expected data property '$columnOffset'");
-		if (!('$columnUnit' in this._state)) console.warn("<Gantt> was created without expected data property '$columnUnit'");
-
 
 		if (!('$allRows' in this._state)) console.warn("<Gantt> was created without expected data property '$allRows'");
 		if (!('$rowHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$rowHeight'");
@@ -4393,12 +4898,12 @@ var SvelteGantt = (function () {
 		if (!('tableWidth' in this._state)) console.warn("<Gantt> was created without expected data property 'tableWidth'");
 		if (!('$headerHeight' in this._state)) console.warn("<Gantt> was created without expected data property '$headerHeight'");
 
-		if (!('$headers' in this._state)) console.warn("<Gantt> was created without expected data property '$headers'");
+		if (!('$width' in this._state)) console.warn("<Gantt> was created without expected data property '$width'");
 
 		if (!('$timeRangeMap' in this._state)) console.warn("<Gantt> was created without expected data property '$timeRangeMap'");
 		if (!('zooming' in this._state)) console.warn("<Gantt> was created without expected data property 'zooming'");
 		if (!('$visibleWidth' in this._state)) console.warn("<Gantt> was created without expected data property '$visibleWidth'");
-
+		if (!('columns' in this._state)) console.warn("<Gantt> was created without expected data property 'columns'");
 
 		if (!('Milestone' in this._state)) console.warn("<Gantt> was created without expected data property 'Milestone'");
 		if (!('Task' in this._state)) console.warn("<Gantt> was created without expected data property 'Task'");
@@ -4407,7 +4912,7 @@ var SvelteGantt = (function () {
 
 		this._handlers.destroy = [removeFromStore];
 
-		this._fragment = create_main_fragment$8(this, this._state);
+		this._fragment = create_main_fragment$10(this, this._state);
 
 		this.root._oncreate.push(() => {
 			oncreate$3.call(this);
@@ -4431,9 +4936,6 @@ var SvelteGantt = (function () {
 	Gantt.prototype._checkReadOnly = function _checkReadOnly(newState) {
 		if ('rowContainerHeight' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rowContainerHeight'");
 		if ('rightScrollbarVisible' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'rightScrollbarVisible'");
-		if ('columnWidth' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columnWidth'");
-		if ('columnCount' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columnCount'");
-		if ('columns' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'columns'");
 		if ('startIndex' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'startIndex'");
 		if ('endIndex' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'endIndex'");
 		if ('paddingTop' in newState && !this._updatingReadonlyProperty) throw new Error("<Gantt>: Cannot set read-only property 'paddingTop'");
@@ -4450,18 +4952,6 @@ var SvelteGantt = (function () {
 
 		if (changed.$visibleHeight || changed.rowContainerHeight) {
 			if (this._differs(state.rightScrollbarVisible, (state.rightScrollbarVisible = rightScrollbarVisible(state)))) changed.rightScrollbarVisible = true;
-		}
-
-		if (changed.$from || changed.$to || changed.$width || changed.$columnOffset || changed.$columnUnit) {
-			if (this._differs(state.columnWidth, (state.columnWidth = columnWidth$1(state)))) changed.columnWidth = true;
-		}
-
-		if (changed.$width || changed.columnWidth) {
-			if (this._differs(state.columnCount, (state.columnCount = columnCount$1(state)))) changed.columnCount = true;
-		}
-
-		if (changed.$from || changed.columnWidth || changed.columnCount || changed.$columnOffset || changed.$columnUnit || changed.$to || changed.$width) {
-			if (this._differs(state.columns, (state.columns = columns(state)))) changed.columns = true;
 		}
 
 		if (changed.$scrollTop || changed.$rowHeight) {
@@ -4497,5 +4987,5 @@ var SvelteGantt = (function () {
 
 	return Gantt;
 
-}());
+}(moment));
 //# sourceMappingURL=svelteGantt.js.map

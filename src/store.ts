@@ -8,7 +8,8 @@ export class GanttStore extends Store {
             taskMap: {},
             rowIds: [],
             rowMap: {},
-            timeRangeMap: {}
+            timeRangeMap: {},
+            columns: []
         }, data),{ 
             immutable: !true 
         });

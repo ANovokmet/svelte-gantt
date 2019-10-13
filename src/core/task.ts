@@ -33,7 +33,7 @@ export class TaskFactory {
     constructor(gantt: SvelteGantt) {
         this.gantt = gantt;
     }
-
+    
     createTask(model: TaskModel): SvelteTask {
         
         // id of task, every task needs to have a unique one
@@ -59,8 +59,8 @@ export class TaskFactory {
         // enable dragging of task
         model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
         
-        const left = this.gantt.utils.getPositionByDate(model.from);
-        const right = this.gantt.utils.getPositionByDate(model.to); 
+        const left = this.gantt.columnFactory.getPositionByDate(model.from) | 0;
+        const right = this.gantt.columnFactory.getPositionByDate(model.to) | 0; 
 
         return {
             model,

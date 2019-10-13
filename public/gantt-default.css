@@ -92,7 +92,7 @@
 } */
 
 .column-header {    
-    border-left: #efefef 1px solid;
+    border-right: #efefef 1px solid;
     border-bottom: #efefef 1px solid;
 }
 
@@ -108,7 +108,7 @@
 }
 
 .column {
-    border-left: #efefef 1px solid;
+    border-right: #efefef 1px solid;
 }
 
 .context-menu {

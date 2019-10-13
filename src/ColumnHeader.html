@@ -1,4 +1,4 @@
-<div class="column-header-row" style="width:{width}px">
+<div class="column-header-row">
     {#each headers as header}
         <div class="column-header" style="width:{header.width}px" on:click="fire('selectDateTime', { from: header.from, to: header.to, unit: header.unit })">
             {header.label || 'N/A'}
@@ -41,34 +41,54 @@
     
 </style>
 <script>
-    import { getPositionByDate } from "./utils/utils";
-    
+
+    /**
+     * A row of header cells rendered in header
+     */
     export default {
         data(){
             return {
                 headers: [],
-                width: null
+                width: null,
+
+                baseWidth: null,
+                baseDuration: null,
             }
         },
         computed: {
-            columnWidth: ({$from, $to, $width, header}) => {
-                return getPositionByDate($from.clone().add(header.offset || 1, header.unit), $from, $to, $width);
+            /**
+             * Width of each header cell
+             */
+            columnWidth: ({header, baseWidth, baseDuration}) => {
+                const offset = header.offset || 1;
+                const duration = moment.duration(offset, header.unit).asMilliseconds();
+                const ratio = duration / baseDuration;
+                return baseWidth * ratio;
             },
+
+            /**
+             * Number of header cells
+             */
             columnCount: ({$width, columnWidth}) => Math.ceil($width / columnWidth),
+
+            /**
+             * Computes array of header cells
+             */
             headers: ({$from, columnWidth, columnCount, header, $width}) => {
+
                 const headers = [];
                 let headerTime = $from.clone().startOf(header.unit);
-                const step = header.offset || 1;
+                const offset = header.offset || 1;
 
                 for(let i = 0; i < columnCount; i++){
                     headers.push({
                         width: Math.min(columnWidth, $width), 
                         label: headerTime.format(header.format),
                         from: headerTime.clone(),
-                        to: headerTime.clone().add(step, header.unit),
+                        to: headerTime.clone().add(offset, header.unit),
                         unit: header.unit
                     });
-                    headerTime.add(step, header.unit);
+                    headerTime.add(offset, header.unit);
                 }
                 return headers;
             }

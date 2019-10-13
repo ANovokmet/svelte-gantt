@@ -10,6 +10,7 @@ const production = !process.env.ROLLUP_WATCH;
 function baseConfig({input, output, css}) {
 	return {
 		input: input,
+        external: ['moment'],
 		output: output,
 		plugins: [
 			typescript(),
@@ -49,8 +50,10 @@ export default [
 			sourcemap: true,
 			format: 'iife',
 			name: 'SvelteGantt',
-			file: 'public/dist/svelteGantt.js',
-			external: ['moment']
+            file: 'public/dist/svelteGantt.js',
+            globals: {
+                'moment': 'moment'
+            }
 		},
 		css: css => {
 			css.write('public/dist/svelteGantt.css');
