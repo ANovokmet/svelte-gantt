@@ -17,7 +17,7 @@
     }
 </style>
 <script>
-    import { draggable } from 'src/core/drag/draggable';
+    import { Draggable } from 'src/core/drag/draggable';
     import { ComponentPosProvider } from 'src/core/drag/componentPosProvider';
     import { setCursor } from 'src/utils/domUtils';
 
@@ -49,7 +49,7 @@
                     container: this.root.refs.ganttElement, 
                 }
 
-                return draggable(node, dragOptions, new ComponentPosProvider(this));
+                return new Draggable(node, dragOptions, new ComponentPosProvider(this));
             }
         },
         data() {

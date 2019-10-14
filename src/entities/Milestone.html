@@ -64,7 +64,7 @@
 </style>
 
 <script>
-    import { draggable, ComponentPosProvider } from "src/core/drag";
+    import { Draggable, ComponentPosProvider } from "src/core/drag";
 
     export default {
         oncreate(){
@@ -128,7 +128,7 @@
                     }
                 }
 
-                return draggable(node, {
+                return new Draggable(node, {
                     onDown: ({posX, posY}) => {
                         //this.set({posX, posY});
                     }, 

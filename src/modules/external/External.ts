@@ -1,5 +1,5 @@
 import { addEventListenerOnce, getRelativePos } from "src/utils/domUtils";
-import { draggable } from "src/core/drag";
+import { Draggable } from "src/core/drag";
 import { SvelteGantt } from "src/core/gantt";
 import { SvelteRow } from "src/core/row";
 
@@ -23,7 +23,7 @@ function drag(node, data: DragOptions) {
 
     let element = null;
 
-    return draggable(node, {
+    return new Draggable(node, {
         onDown: ({ posX, posY }) => {
         },
         onDrag: ({ posX, posY }) => {

@@ -33,7 +33,7 @@
     }
 </style>
 <script>
-    import { draggable, ComponentPosProvider } from "src/core/drag";
+    import { Draggable, ComponentPosProvider } from "src/core/drag";
 
     export default {
         onstate({ changed, current, previous }) {
@@ -79,7 +79,7 @@
                     this.store.updateTimeRange({...entity, ...state});
                 }
 
-                return draggable(node, {
+                return new Draggable(node, {
                     onDown: (state) => {
                         updateEntity({...state, resizing: true});
                     }, 

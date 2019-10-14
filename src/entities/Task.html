@@ -135,7 +135,7 @@
 
 <script>
     import { setCursor } from "src/utils/domUtils";
-    import { draggable, ComponentPosProvider } from "src/core/drag";
+    import { Draggable, ComponentPosProvider } from "src/core/drag";
 
     export default {
         onstate({ changed, current, previous }) {
@@ -154,7 +154,6 @@
             }
 
             if(changed.animating && current.animating) {
-                
                 console.log('anim OFF', current);
                 setTimeout(() => {
                     this.set({animating: false});
@@ -234,7 +233,7 @@
                     setCursor('default');
                 }
 
-                return draggable(node, {
+                return new Draggable(node, {
                     onDown: ({dragging, resizing}) => {
                         //this.set({dragging, resizing});
                         if(dragging) {

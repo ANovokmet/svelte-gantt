@@ -1,59 +1,90 @@
 import { isLeftClick, addEventListenerOnce, getRelativePos } from "src/utils/domUtils";
 import { PositionProvider, DraggableSettings } from "./interfaces";
-import { SvelteGantt } from "../gantt";
-import { SvelteRow } from "../row";
-import { MIN_DRAG_Y, MIN_DRAG_X } from "../constants";
+import { SvelteGantt } from "src/core/gantt";
+import { SvelteRow } from "src/core/row";
+import { MIN_DRAG_Y, MIN_DRAG_X } from "src/core/constants";
 
-export function draggable(node, settings: DraggableSettings, provider: PositionProvider) {
-
-    const { onDown, onResize, onDrag, onDrop, dragAllowed, resizeAllowed } = settings;
-
-    let mouseStartPosX, mouseStartPosY;
-    let mouseStartRight;
-    let direction;
-    let dragging = false, resizing = false;
+/**
+ * Applies dragging interaction to gantt elements
+ */
+export class Draggable {
+    mouseStartPosX: number;
+    mouseStartPosY: number;
+    mouseStartRight: number;
+    direction: 'left' | 'right';
+    dragging = false;
+    resizing = false;
     
-    let initialX, initialY, initialW;
-    let resizeTriggered = false;
+    initialX: number;
+    initialY: number;
+    initialW: number;
+    resizeTriggered = false;
 
-    const onmousedown = (event: MouseEvent) => {
+    settings: DraggableSettings;
+    provider: PositionProvider;
+    node: HTMLElement;
+    
+    constructor(node: HTMLElement, settings: DraggableSettings, provider: PositionProvider) {
+        this.settings = settings;
+        this.provider = provider;
+        this.node = node;
+
+        node.addEventListener('mousedown', this.onmousedown, false);
+    }
+
+    get dragAllowed() {
+        if(typeof(this.settings.dragAllowed) === 'function') {
+            return this.settings.dragAllowed();
+        } else {
+            return this.settings.dragAllowed;
+        }
+    }
+
+    get resizeAllowed() {
+        if(typeof(this.settings.resizeAllowed) === 'function') {
+            return this.settings.resizeAllowed();
+        } else {
+            return this.settings.resizeAllowed;
+        }
+    }
+
+    onmousedown = (event: MouseEvent) => {
         if(!isLeftClick(event)){
             return;
         }
 
-        const { posX, posY } = provider.getPos(event);
-        const widthT = provider.getWidth(event);
-
+        const { posX, posY } = this.provider.getPos(event);
+        const widthT = this.provider.getWidth(event);
 
         event.stopPropagation();
         event.preventDefault();
         
-        const canDrag = typeof(dragAllowed) === 'function' ? dragAllowed() : dragAllowed
-        const canResize = typeof(resizeAllowed) === 'function' ? resizeAllowed() : resizeAllowed
+        const canDrag = this.dragAllowed;
+        const canResize = this.resizeAllowed;
         if(canDrag || canResize){
 
-            initialX = event.clientX;
-            initialY = event.clientY;
+            this.initialX = event.clientX;
+            this.initialY = event.clientY;
 
 
-            mouseStartPosX = getRelativePos(settings.container, event).x - posX;
-            mouseStartPosY = getRelativePos(settings.container, event).y - posY;
-            mouseStartRight = posX + widthT;
+            this.mouseStartPosX = getRelativePos(this.settings.container, event).x - posX;
+            this.mouseStartPosY = getRelativePos(this.settings.container, event).y - posY;
+            this.mouseStartRight = posX + widthT;
 
-            if(canResize && mouseStartPosX < settings.resizeHandleWidth) {
-                direction = 'left';
-                resizing = true;
-                onDown({
+            if(canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
+                this.direction = 'left';
+                this.resizing = true;
+                this.settings.onDown({
                     posX,
                     widthT,
                     posY,
                     resizing: true
                 });
             }
-            else if(canResize && mouseStartPosX > widthT - settings.resizeHandleWidth) {
-                direction = 'right';
-                resizing = true;
-                onDown({
+            else if(canResize && this.mouseStartPosX > widthT - this.settings.resizeHandleWidth) {
+                this.direction = 'right';
+                this.resizing = true;
+                this.settings.onDown({
                     posX,
                     widthT,
                     posY,
@@ -61,8 +92,8 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
                 });
             }
             else if(canDrag) {
-                dragging = true;
-                onDown({
+                this.dragging = true;
+                this.settings.onDown({
                     posX,
                     widthT,
                     posY,
@@ -70,55 +101,53 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
                 });
             }
 
-            window.addEventListener('mousemove', onmousemove, false);
-            addEventListenerOnce(window, 'mouseup', onmouseup);
+            window.addEventListener('mousemove', this.onmousemove, false);
+            addEventListenerOnce(window, 'mouseup', this.onmouseup);
         }
     }
     
-    const onmousemove = (event: MouseEvent) => {
-
-        if(!resizeTriggered){
-            if(Math.abs(event.clientX - initialX) > MIN_DRAG_X || Math.abs(event.clientY - initialY) > MIN_DRAG_Y){
-                console.log('trigger resize')
-                resizeTriggered = true;
+    onmousemove = (event: MouseEvent) => {
+        if(!this.resizeTriggered){
+            if(Math.abs(event.clientX - this.initialX) > MIN_DRAG_X || Math.abs(event.clientY - this.initialY) > MIN_DRAG_Y){
+                this.resizeTriggered = true;
             }else{
                 return;
             }
         }
 
         event.preventDefault();
-        if(resizing) {
-            const mousePos = getRelativePos(settings.container, event);
-            const { posX } = provider.getPos(event);
-            const widthT = provider.getWidth(event);
+        if(this.resizing) {
+            const mousePos = getRelativePos(this.settings.container, event);
+            const { posX } = this.provider.getPos(event);
+            const widthT = this.provider.getWidth(event);
 
-            if(direction === 'left') { //resize ulijevo
+            if(this.direction === 'left') { //resize ulijevo
                 if(mousePos.x > posX + widthT) {
-                    direction = 'right';
-                    onResize({
-                        posX: mouseStartRight,
-                        widthT: mouseStartRight - mousePos.x
+                    this.direction = 'right';
+                    this.settings.onResize({
+                        posX: this.mouseStartRight,
+                        widthT: this.mouseStartRight - mousePos.x
                     });
-                    mouseStartRight = mouseStartRight + widthT;
+                    this.mouseStartRight = this.mouseStartRight + widthT;
                 }
                 else{
-                    onResize({
+                    this.settings.onResize({
                         posX: mousePos.x,
-                        widthT: mouseStartRight - mousePos.x
+                        widthT: this.mouseStartRight - mousePos.x
                     });
                 }
             }
-            else if(direction === 'right') {//resize desno
+            else if(this.direction === 'right') {//resize desno
                 if(mousePos.x <= posX) {
-                    direction = 'left';
-                    onResize({
+                    this.direction = 'left';
+                    this.settings.onResize({
                         posX: mousePos.x,
                         widthT: posX - mousePos.x
                     });
-                    mouseStartRight = posX;
+                    this.mouseStartRight = posX;
                 }
                 else {
-                    onResize({
+                    this.settings.onResize({
                         posX,
                         widthT: mousePos.x - posX
                     });
@@ -127,46 +156,42 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         }
 
         // mouseup
-        if(dragging) {
-            const mousePos = getRelativePos(settings.container, event);
-            onDrag({
-                posX: mousePos.x - mouseStartPosX,
-                posY: mousePos.y - mouseStartPosY
+        if(this.dragging) {
+            const mousePos = getRelativePos(this.settings.container, event);
+            this.settings.onDrag({
+                posX: mousePos.x - this.mouseStartPosX,
+                posY: mousePos.y - this.mouseStartPosY
             });
         }
     }
 
-    const onmouseup = (event: MouseEvent) => {
-        const { posX, posY } = provider.getPos(event);
-        const widthT = provider.getWidth(event);
+    onmouseup = (event: MouseEvent) => {
+        const { posX, posY } = this.provider.getPos(event);
+        const widthT = this.provider.getWidth(event);
         
-        if(resizeTriggered){
-            onDrop({
+        if(this.resizeTriggered){
+            this.settings.onDrop({
                 posX, 
                 posY,
                 widthT,
                 event,
-                dragging,
-                resizing
+                dragging: this.dragging,
+                resizing: this.resizing
             });
         }
 
-        dragging = false;
-        resizing = false;
-        direction = null;
-        resizeTriggered = false;
+        this.dragging = false;
+        this.resizing = false;
+        this.direction = null;
+        this.resizeTriggered = false;
 
-        window.removeEventListener('mousemove', onmousemove, false);
+        window.removeEventListener('mousemove', this.onmousemove, false);
     }
-
-    node.addEventListener('mousedown', onmousedown, false);
-
-    return {
-        destroy() {
-            node.removeEventListener('mousedown', onmousedown, false);
-            node.removeEventListener('mousemove', onmousemove, false);
-            node.removeEventListener('mouseup', onmouseup, false);
-        }
+    
+    destroy() {
+        this.node.removeEventListener('mousedown', this.onmousedown, false);
+        this.node.removeEventListener('mousemove', this.onmousemove, false);
+        this.node.removeEventListener('mouseup', this.onmouseup, false);
     }
 }
 
