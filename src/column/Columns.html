@@ -13,8 +13,8 @@
 </style>
 <script>
     import Column from "./Column.html";
-    import { findByPosition } from "./core/column";
-    import { getPositionByDate } from "./utils/utils";
+    import { findByPosition } from "src/core/column";
+    import { getPositionByDate } from "src/utils/utils";
 
     /**
      * Container component for columns rendered as gantt body background
@@ -33,7 +33,7 @@
             };
         },
         computed: {
-            columnWidth: ({ $from, $to, $width, $columnOffset, $columnUnit }) => getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width),
+            columnWidth: ({ $from, $to, $width, $columnOffset, $columnUnit }) => getPositionByDate( $from.clone().add($columnOffset, $columnUnit), $from, $to, $width) | 0,
             columnCount: ({ $width, columnWidth }) => Math.ceil($width / columnWidth),
             columns: ({$from, columnWidth, columnCount, $columnOffset, $columnUnit, $to, $width}) => {
                 const columns = [];
@@ -45,12 +45,12 @@
                     const duration = to.diff(from, 'milliseconds');
 
                     columns.push({
-                        width: columnWidth | 0,
+                        width: columnWidth,
                         from,
                         left,
                         duration
                     });
-                    left += columnWidth | 0;
+                    left += columnWidth;
                     columnFrom = to;
                 }
                 return columns;

@@ -86,7 +86,7 @@ export default [
 		}
 	}),
 	{
-		input: 'src/ExternalDiv.ts',
+		input: 'src/modules/external/External.ts',
 		output: {
 			sourcemap: true,
 			format: 'iife',

@@ -1,4 +1,7 @@
 import { Store } from 'svelte/store';
+import { SvelteTask } from './task';
+import { SvelteRow } from './row';
+import { SvelteTimeRange } from './timeRange';
 
 export class GanttStore extends Store {
 
@@ -22,46 +25,46 @@ export class GanttStore extends Store {
         });
     }
 
-    addTask(task: any) {
+    addTask(task: SvelteTask) {
         const { taskIds, taskMap } = this.get();
         const newState = add(task, {ids: taskIds, entities: taskMap});
         this.set({taskIds: newState.ids, taskMap: newState.entities});
     }
 
-    addAllTask(tasks: any) {
+    addAllTask(tasks: SvelteTask[]) {
         const newState = addAll(tasks);
         this.set({taskIds: newState.ids, taskMap: newState.entities});
     }
 
-    addAllRow(rows: any) {
+    addAllRow(rows: SvelteRow[]) {
         const newState = addAll(rows);
         this.set({rowIds: newState.ids, rowMap: newState.entities});
     }
 
-    addRow(row: any) {
+    addRow(row: SvelteRow) {
         const { rowIds, rowMap } = this.get();
         const newState = add(row, {ids: rowIds, entities: rowMap});
         this.set({rowIds: newState.ids, rowMap: newState.entities});
     }
 
-    updateTask(task: any) {
+    updateTask(task: SvelteTask) {
         const { taskMap } = this.get();
         this.set({taskMap: update(task, {entities: taskMap}).entities});
     }
 
-    updateRow(row: any) {
+    updateRow(row: SvelteRow) {
         const { rowMap } = this.get();
         this.set({rowMap: update(row, {entities: rowMap})});
     }
 
 
-    addTimeRange(timeRange: any) {
+    addTimeRange(timeRange: SvelteTimeRange) {
         const { timeRangeMap } = this.get();
         const newState = add(timeRange, {ids: [], entities: timeRangeMap});
         this.set({timeRangeMap: newState.entities});
     }
 
-    updateTimeRange(timeRange: any) {
+    updateTimeRange(timeRange: SvelteTimeRange) {
         const { timeRangeMap } = this.get();
         const n = update(timeRange, {entities: timeRangeMap})
         this.set({timeRangeMap: n.entities});

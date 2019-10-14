@@ -134,9 +134,8 @@
 </style>
 
 <script>
-    import { setCursor } from "./utils/domUtils";
-    import { draggable } from "./core/drag/draggable";
-    import { ComponentPosProvider } from "./core/drag/componentPosProvider";
+    import { setCursor } from "src/utils/domUtils";
+    import { draggable, ComponentPosProvider } from "src/core/drag";
 
     export default {
         onstate({ changed, current, previous }) {

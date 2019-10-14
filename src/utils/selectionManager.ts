@@ -1,6 +1,6 @@
 import { Store } from 'svelte/store.js';
 
-export default class {
+export class SelectionManager {
     store: Store;
 
     constructor(store: Store) {

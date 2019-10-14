@@ -121,29 +121,25 @@
 </style>
 
 <script>
-  import Task from "./Task.html";
-  import Row from "./Row.html";
-  import Columns from "./Columns.html";
-  import ColumnHeaders from "./ColumnHeaders.html";
+  import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
+  import { Columns, ColumnHeaders } from './column';
+  import { Resizer } from "./ui";
+
   import { Store } from "svelte/store.js";
-  import SelectionManager from "./utils/selectionManager";
+  
   import { GanttUtils, getPositionByDate } from "./utils/utils";
-  import GanttApi from "./core/api";
-  import TimeRange from "./TimeRange.html";
-  import TimeRangeHeader from "./TimeRangeHeader.html";
-  import Milestone from "./Milestone.html";
+  import { GanttApi } from "./core/api";
 
+  import { SelectionManager } from "./utils/selectionManager";
   import { TaskFactory } from "./core/task";
-  import { SvelteRow } from "./core/row";
+  import { RowFactory } from "./core/row";
   import { TimeRangeFactory } from "./core/timeRange";
-  import { DragDropManager } from "./core/drag/draggable";
+  import { DragDropManager } from "./core/drag";
 
-  import { GanttStore } from "./store";
+  import { GanttStore } from "./core/store";
   import { getRelativePos, debounce } from "./utils/domUtils";
   import { findByPosition, ColumnFactory } from "./core/column";
-  import { V_SCROLLBAR_WIDTH } from "./core/constants";
 
-  import Resizer from "./modules/table/Resizer.html"
 
   let SvelteGantt;
 
@@ -377,26 +373,13 @@
             this.refreshTasks();
         },
         initRows(rowsData) {
-            const rows = [];
-            let y = 0;
-            for (let i = 0; i < rowsData.length; i++) {
-                const currentRow = rowsData[i];
-                const row = new SvelteRow(this, currentRow);
-                rows.push(row);
-                row.posY = y;
-                y += row.height;
-            }
-
+            const rows = this.rowFactory.createRows(rowsData);
             this.store.addAllRow(rows);
         },
         initTasks(taskData) {
-            const tasks = [];
-
-            for (let i = 0; i < taskData.length; i++) {
-                const currentTask = taskData[i];
-                const task = this.taskFactory.createTask(currentTask);
-                tasks.push(task);
-            }
+            const tasks = taskData.map(currentTask => {
+                return this.taskFactory.createTask(currentTask);
+            });
 
             this.store.addAllTask(tasks);
             //this.selectionManager.clearSelection();
@@ -424,6 +407,7 @@
                 this.utils = new GanttUtils(this);
                 this.api = new GanttApi();
                 this.taskFactory = new TaskFactory(this);
+                this.rowFactory = new RowFactory(this);
                 this.timeRangeFactory = new TimeRangeFactory(this);
                 this.dndManager = new DragDropManager(this);
                 this.columnFactory = new ColumnFactory(this);
@@ -435,8 +419,6 @@
                 this.api.registerEvent("tasks", "changed");
 
                 this.api.registerEvent("gantt", "viewChanged");
-
-                this.row = SvelteRow;
             }
         },
         initModule(module) {
@@ -544,6 +526,10 @@
             });
             return visibleTasks;
         },
+
+        /**
+         * Calculates map containing [key: row id]: list of task ids
+         */
         rowTaskMap: ({ $allTasks }) => {
             const reducer = (cache, task) => {
                 if (!cache[task.model.resourceId]) cache[task.model.resourceId] = [];

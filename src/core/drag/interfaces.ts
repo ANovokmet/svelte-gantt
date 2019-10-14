@@ -1,6 +1,6 @@
 export interface PositionProvider {
-    getPos(): {posX: number, posY: number};
-    getWidth(): number;
+    getPos(event?: MouseEvent): {posX: number, posY: number};
+    getWidth(event?: MouseEvent): number;
 }
 
 export interface DraggableSettings {

@@ -151,32 +151,28 @@ gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task)
 
 
 document.getElementById('setDayView').addEventListener('click', (event) => {
-	console.log('set day view');
-	gantt.store.set({
+	console.log('day view set');
+	gantt.updateView({
 		stretchTimelineWidthToFit: true,
 		columnUnit: 'minute',
-		columnOffset: 15
-	});
-	gantt.updateView({
+		columnOffset: 15,
 		from: currentStart,
 		to: currentEnd,
-		//width: 1000,
+		minWidth: 1000,
 		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
 	});
 });
 
 document.getElementById('setWeekView').addEventListener('click', (event) => {
-	console.log('set week view');
-	gantt.store.set({
+	console.log('week view set');
+	gantt.updateView({
 		stretchTimelineWidthToFit: false,
 		columnUnit: 'hour',
-		columnOffset: 1
-	});
-	gantt.updateView({
+		columnOffset: 1,
 		from: currentStart.clone().startOf('week'),
 		to: currentStart.clone().endOf('week'),
-		width: 5000,
-		headers: [{unit: 'month', format: 'Mo YYYY'},{unit: 'day', format: 'DD'}]
+		minWidth: 5000,
+		headers: [{unit: 'month', format: 'MMMM YYYY'},{unit: 'day', format: 'ddd DD'}]
 	});
 });
 
@@ -187,9 +183,7 @@ document.getElementById('setNextDay').addEventListener('click', (event) => {
 
 	gantt.updateView({
 		from: currentStart,
-		to: currentEnd,
-		width: 1000,
-		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+		to: currentEnd
 	});
 });
 
@@ -201,9 +195,7 @@ document.getElementById('setPreviousDay').addEventListener('click', (event) => {
 
 	gantt.updateView({
 		from: currentStart,
-		to: currentEnd,
-		width: 1000,
-		headers: [{unit: 'day', format: 'DD.MM.YYYY'}, {unit: 'hour', format: 'HH'}]
+		to: currentEnd
 	});
 });
 
@@ -218,18 +210,19 @@ document.getElementById('reInit').addEventListener('click', (event) => {
 SvelteGanttExternal.create(document.getElementById('newTask'), {
 	gantt,
 	onsuccess: (row, date, g) => {
+
+        console.log(row.model.id, date.format())
+
 		const task = g.taskFactory.createTask({
 			id: 5000+Math.floor(Math.random() * 1000),
 			label: 'Task #'+4343,
 			from: date,
 			to: date.clone().add(3, 'hour'),
-			amountDone: Math.floor(Math.random() * 100)
-		});
-
-		row.addTask(task);
-		const { _allTasks, _taskCache } = g.get();
-		_allTasks.push(task);
-		_taskCache[task.model.id] = task;
+			classes: colors[(Math.random() * colors.length) | 0],
+            resourceId: row.model.id
+        });
+        
+        gantt.store.addTask(task);
 	}
 });
 

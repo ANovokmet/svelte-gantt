@@ -1,6 +1,9 @@
 var SvelteGanttExternal = (function () {
     'use strict';
 
+    function isLeftClick(event) {
+        return event.which === 1;
+    }
     /**
      * Gets mouse position within an element
      * @param node
@@ -29,89 +32,207 @@ var SvelteGanttExternal = (function () {
             listener.apply(this, arguments, addOptions);
         });
     }
+    //# sourceMappingURL=domUtils.js.map
 
-    let SvelteGanttExternal;
-    function drag(node, data) {
-        const { gantt } = data;
-        const windowElement = window;
-        let successful = false;
-        //TODO make these functions gantt instance specific
-        const onmouseenter = (e) => {
-            successful = true;
-        };
-        const onmouseleave = (e) => {
-            successful = false;
-        };
-        function onmousedown(event) {
-            if (!data.enabled) {
+    //# sourceMappingURL=componentPosProvider.js.map
+
+    const MIN_DRAG_X = 2;
+    const MIN_DRAG_Y = 2;
+    //# sourceMappingURL=constants.js.map
+
+    function draggable(node, settings, provider) {
+        const { onDown, onResize, onDrag, onDrop, dragAllowed, resizeAllowed } = settings;
+        let mouseStartPosX, mouseStartPosY;
+        let mouseStartRight;
+        let direction;
+        let dragging = false, resizing = false;
+        let initialX, initialY;
+        let resizeTriggered = false;
+        const onmousedown = (event) => {
+            if (!isLeftClick(event)) {
                 return;
             }
+            const { posX, posY } = provider.getPos(event);
+            const widthT = provider.getWidth(event);
+            event.stopPropagation();
             event.preventDefault();
-            const element = data.elementContent();
-            Object.assign(element.style, {
-                top: event.pageY + 'px',
-                left: event.pageX + 'px'
-            });
-            document.body.appendChild(element);
-            data.element = element;
-            data.dragging = true;
-            const { rowContainerElement } = gantt.store.get();
-            rowContainerElement.addEventListener('mouseenter', onmouseenter);
-            rowContainerElement.addEventListener('mouseleave', onmouseleave);
-            windowElement.addEventListener('mousemove', onmousemove, false);
-            addEventListenerOnce(windowElement, 'mouseup', onmouseup);
-        }
-        function onmousemove(event) {
-            event.preventDefault();
-            const { dragging, element } = data;
-            if (dragging) {
-                Object.assign(element.style, {
-                    top: event.pageY + 'px',
-                    left: event.pageX + 'px'
-                });
+            const canDrag = typeof (dragAllowed) === 'function' ? dragAllowed() : dragAllowed;
+            const canResize = typeof (resizeAllowed) === 'function' ? resizeAllowed() : resizeAllowed;
+            if (canDrag || canResize) {
+                initialX = event.clientX;
+                initialY = event.clientY;
+                mouseStartPosX = getRelativePos(settings.container, event).x - posX;
+                mouseStartPosY = getRelativePos(settings.container, event).y - posY;
+                mouseStartRight = posX + widthT;
+                if (canResize && mouseStartPosX < settings.resizeHandleWidth) {
+                    direction = 'left';
+                    resizing = true;
+                    onDown({
+                        posX,
+                        widthT,
+                        posY,
+                        resizing: true
+                    });
+                }
+                else if (canResize && mouseStartPosX > widthT - settings.resizeHandleWidth) {
+                    direction = 'right';
+                    resizing = true;
+                    onDown({
+                        posX,
+                        widthT,
+                        posY,
+                        resizing: true
+                    });
+                }
+                else if (canDrag) {
+                    dragging = true;
+                    onDown({
+                        posX,
+                        widthT,
+                        posY,
+                        dragging: true
+                    });
+                }
+                window.addEventListener('mousemove', onmousemove, false);
+                addEventListenerOnce(window, 'mouseup', onmouseup);
             }
-        }
-        function onmouseup(event) {
-            const { element, onsuccess, onfail, gantt } = data;
-            const { rowContainerElement } = gantt.store.get();
-            document.body.removeChild(element);
-            data.dragging = false;
-            data.element = null;
-            //if over gantt
-            if (successful) {
-                //create task
-                const rowCenterX = gantt.refs.mainContainer.getBoundingClientRect().left + gantt.refs.mainContainer.getBoundingClientRect().width / 2;
-                const mousePos = getRelativePos(rowContainerElement, event);
-                const dropDate = gantt.utils.getDateByPosition(mousePos.x);
-                //TODO extract into helper, used in Task
-                let elements = document.elementsFromPoint(rowCenterX, event.clientY);
-                let rowElement = elements.find((element) => element.classList.contains('row'));
-                if (rowElement !== undefined) {
-                    const { visibleRows } = gantt.store.get();
-                    const targetRow = visibleRows.find((r) => r.rowElement === rowElement);
-                    onsuccess(targetRow, dropDate, gantt);
+        };
+        const onmousemove = (event) => {
+            if (!resizeTriggered) {
+                if (Math.abs(event.clientX - initialX) > MIN_DRAG_X || Math.abs(event.clientY - initialY) > MIN_DRAG_Y) {
+                    console.log('trigger resize');
+                    resizeTriggered = true;
+                }
+                else {
+                    return;
                 }
             }
-            else {
-                onfail();
-                //fail, return indicator to ex-div
-                //remove task if created
+            event.preventDefault();
+            if (resizing) {
+                const mousePos = getRelativePos(settings.container, event);
+                const { posX } = provider.getPos(event);
+                const widthT = provider.getWidth(event);
+                if (direction === 'left') { //resize ulijevo
+                    if (mousePos.x > posX + widthT) {
+                        direction = 'right';
+                        onResize({
+                            posX: mouseStartRight,
+                            widthT: mouseStartRight - mousePos.x
+                        });
+                        mouseStartRight = mouseStartRight + widthT;
+                    }
+                    else {
+                        onResize({
+                            posX: mousePos.x,
+                            widthT: mouseStartRight - mousePos.x
+                        });
+                    }
+                }
+                else if (direction === 'right') { //resize desno
+                    if (mousePos.x <= posX) {
+                        direction = 'left';
+                        onResize({
+                            posX: mousePos.x,
+                            widthT: posX - mousePos.x
+                        });
+                        mouseStartRight = posX;
+                    }
+                    else {
+                        onResize({
+                            posX,
+                            widthT: mousePos.x - posX
+                        });
+                    }
+                }
             }
-            rowContainerElement.removeEventListener('mouseenter', onmouseenter);
-            rowContainerElement.removeEventListener('mouseleave', onmouseleave);
-            windowElement.removeEventListener('mousemove', onmousemove, false);
-        }
+            // mouseup
+            if (dragging) {
+                const mousePos = getRelativePos(settings.container, event);
+                onDrag({
+                    posX: mousePos.x - mouseStartPosX,
+                    posY: mousePos.y - mouseStartPosY
+                });
+            }
+        };
+        const onmouseup = (event) => {
+            const { posX, posY } = provider.getPos(event);
+            const widthT = provider.getWidth(event);
+            if (resizeTriggered) {
+                onDrop({
+                    posX,
+                    posY,
+                    widthT,
+                    event,
+                    dragging,
+                    resizing
+                });
+            }
+            dragging = false;
+            resizing = false;
+            direction = null;
+            resizeTriggered = false;
+            window.removeEventListener('mousemove', onmousemove, false);
+        };
         node.addEventListener('mousedown', onmousedown, false);
         return {
-            update() {
-            },
             destroy() {
                 node.removeEventListener('mousedown', onmousedown, false);
-                //windowElement.removeEventListener('mousemove', onmousemove, false);
                 node.removeEventListener('mousemove', onmousemove, false);
                 node.removeEventListener('mouseup', onmouseup, false);
             }
         };
+    }
+
+    //# sourceMappingURL=index.js.map
+
+    let SvelteGanttExternal;
+    function drag(node, data) {
+        const { gantt } = data;
+        const { rowContainerElement } = gantt.store.get();
+        let element = null;
+        return draggable(node, {
+            onDown: ({ posX, posY }) => {
+            },
+            onDrag: ({ posX, posY }) => {
+                if (!element) {
+                    element = data.elementContent();
+                    document.body.appendChild(element);
+                    data.dragging = true;
+                }
+                Object.assign(element.style, {
+                    top: posY + 'px',
+                    left: posX + 'px'
+                });
+            },
+            dragAllowed: () => data.enabled,
+            resizeAllowed: false,
+            onDrop: ({ posX, posY, event }) => {
+                console.log('SUCC');
+                console.log(posX, posY);
+                const targetRow = gantt.dndManager.getTarget('row', event);
+                if (targetRow) {
+                    const mousePos = getRelativePos(rowContainerElement, event);
+                    const date = gantt.utils.getDateByPosition(mousePos.x);
+                    data.onsuccess(targetRow, date, gantt);
+                }
+                else {
+                    data.onfail();
+                }
+                document.body.removeChild(element);
+                data.dragging = false;
+                element = null;
+            },
+            container: document.body,
+        }, {
+            getPos: (event) => {
+                console.log(event.clientX, event.clientY);
+                return {
+                    posX: event.pageX,
+                    posY: event.pageY
+                };
+            },
+            getWidth: () => 0
+        });
     }
     SvelteGanttExternal = {};
     SvelteGanttExternal.defaults = {
@@ -146,6 +267,7 @@ var SvelteGanttExternal = (function () {
         return data;
     };
     var SvelteGanttExternal$1 = SvelteGanttExternal;
+    //# sourceMappingURL=External.js.map
 
     return SvelteGanttExternal$1;
 

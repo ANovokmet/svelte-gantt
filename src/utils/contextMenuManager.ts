@@ -1,7 +1,8 @@
-import { ContextMenu } from '../components';
-import { SvelteGantt } from '../core/gantt';
+import { ContextMenu } from 'src/ui';
+import { SvelteGantt } from 'src/core/gantt';
+import { Component } from 'src/core/svelte';
 
-interface ContextMenu {
+interface ContextMenu extends Component {
     constructor(options: any);
     close(): void;
 }

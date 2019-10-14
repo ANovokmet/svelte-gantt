@@ -74,7 +74,7 @@ export function getDateByPosition (x, from, to, width) {
 
 // Returns the object on the left and right in an array using the given cmp function.
 // The compare function defined which property of the value to compare (e.g.: c => c.left)
-export function getIndicesOnly<T, C = number|Date> (input: T[], value: C, comparer: {(T): C}, strict?: boolean) {
+export function getIndicesOnly<T, C = number|Date> (input: T[], value: C, comparer: {(T: T): C}, strict?: boolean) {
     let lo = -1;
     let hi = input.length;
     while (hi - lo > 1) {
@@ -91,7 +91,7 @@ export function getIndicesOnly<T, C = number|Date> (input: T[], value: C, compar
     return [lo, hi];
 }
   
-export function get<T, C = number|Date> (input: T[], value: C, comparer: {(T): C}, strict?: boolean) {
+export function get<T, C = number|Date> (input: T[], value: C, comparer: {(T: T): C}, strict?: boolean) {
     let res = getIndicesOnly(input, value, comparer, strict);
     return [input[res[0]], input[res[1]]];
 }

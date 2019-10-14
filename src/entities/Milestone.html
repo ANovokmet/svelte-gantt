@@ -64,26 +64,16 @@
 </style>
 
 <script>
-    import { draggable } from "./core/drag/draggable";
-    import { ComponentPosProvider } from "./core/drag/componentPosProvider";
+    import { draggable, ComponentPosProvider } from "src/core/drag";
 
     export default {
         oncreate(){
-
-            const { model } = this.get();
-
-            const left = this.root.utils.getPositionByDate(model.from);
-            const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
-            const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
-
-            this.set({
-                left,
-                top,
-                height
-            });
-
         },
         onstate({ changed, current, previous }) {
+            if(!previous) {
+                this.onmount();
+            }
+
             if(!current.dragging){
                 this.set({
                     posX: current.left,
@@ -158,6 +148,19 @@
             }
         },
         methods: {
+            onmount() {
+                const { model } = this.get();
+
+                const left = this.root.utils.getPositionByDate(model.from);
+                const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
+                const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
+
+                this.set({
+                    left,
+                    top,
+                    height
+                });
+            },
             select(event){
                 const { model } = this.get();
                 if(event.ctrlKey){

@@ -1,4 +1,4 @@
-import { isLeftClick, addEventListenerOnce, getRelativePos } from "../../utils/domUtils";
+import { isLeftClick, addEventListenerOnce, getRelativePos } from "src/utils/domUtils";
 import { PositionProvider, DraggableSettings } from "./interfaces";
 import { SvelteGantt } from "../gantt";
 import { SvelteRow } from "../row";
@@ -21,8 +21,8 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
             return;
         }
 
-        const { posX, posY } = provider.getPos();
-        const widthT = provider.getWidth();
+        const { posX, posY } = provider.getPos(event);
+        const widthT = provider.getWidth(event);
 
 
         event.stopPropagation();
@@ -89,8 +89,8 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
         event.preventDefault();
         if(resizing) {
             const mousePos = getRelativePos(settings.container, event);
-            const { posX } = provider.getPos();
-            const widthT = provider.getWidth();
+            const { posX } = provider.getPos(event);
+            const widthT = provider.getWidth(event);
 
             if(direction === 'left') { //resize ulijevo
                 if(mousePos.x > posX + widthT) {
@@ -137,17 +137,19 @@ export function draggable(node, settings: DraggableSettings, provider: PositionP
     }
 
     const onmouseup = (event: MouseEvent) => {
-        const { posX, posY } = provider.getPos();
-        const widthT = provider.getWidth();
+        const { posX, posY } = provider.getPos(event);
+        const widthT = provider.getWidth(event);
         
-        onDrop({
-            posX, 
-            posY,
-            widthT,
-            event,
-            dragging,
-            resizing
-        });
+        if(resizeTriggered){
+            onDrop({
+                posX, 
+                posY,
+                widthT,
+                event,
+                dragging,
+                resizing
+            });
+        }
 
         dragging = false;
         resizing = false;
