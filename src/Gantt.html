@@ -138,7 +138,7 @@
 
   import { GanttStore } from "./core/store";
   import { getRelativePos, debounce } from "./utils/domUtils";
-  import { findByPosition, ColumnFactory } from "./core/column";
+  import { findByPosition, ColumnService } from "./core/column";
 
 
   let SvelteGantt;
@@ -228,7 +228,6 @@
         const newData = {
           initialRows: data.rows,
           initialTasks: data.tasks,
-          initialDependencies: data.dependencies,
           _ganttBodyModules: ganttModules.ganttBodyModules,
           _ganttTableModules: ganttModules.ganttTableModules
         };
@@ -266,10 +265,10 @@
         this.initGantt();
         this.initRows(initialRows);
 
-            this.store.set({
-                visibleHeight: this.refs.mainContainer.clientHeight,
-                visibleWidth: this.refs.mainContainer.clientWidth
-            });
+        this.store.set({
+            visibleHeight: this.refs.mainContainer.clientHeight,
+            visibleWidth: this.refs.mainContainer.clientWidth
+        });
 
         this.initTasks(initialTasks);
         this.broadcastModules("onGanttCreated");
@@ -364,8 +363,6 @@
             }
         },
         adjustVisibleDateRange({ from, to, unit }) {
-            console.log(from.format(), to.format());
-
             this.store.set({
                 from: from.clone(),
                 to: to.clone()
@@ -377,12 +374,8 @@
             this.store.addAllRow(rows);
         },
         initTasks(taskData) {
-            const tasks = taskData.map(currentTask => {
-                return this.taskFactory.createTask(currentTask);
-            });
-
+            const tasks = this.taskFactory.createTasks(taskData);
             this.store.addAllTask(tasks);
-            //this.selectionManager.clearSelection();
         },
         initTimeRanges(timeRangeData) {
             const timeRangeMap = {};
@@ -410,7 +403,7 @@
                 this.rowFactory = new RowFactory(this);
                 this.timeRangeFactory = new TimeRangeFactory(this);
                 this.dndManager = new DragDropManager(this);
-                this.columnFactory = new ColumnFactory(this);
+                this.columnService = new ColumnService(this);
 
                 this.api.registerEvent("tasks", "move");
                 this.api.registerEvent("tasks", "select");
@@ -445,8 +438,8 @@
             for (const id in timeRangeMap) {
                 const timeRange = timeRangeMap[id];
 
-                const newLeft = this.root.columnFactory.getPositionByDate(timeRange.model.from) | 0;
-                const newRight = this.root.columnFactory.getPositionByDate(timeRange.model.to) | 0;
+                const newLeft = this.root.columnService.getPositionByDate(timeRange.model.from) | 0;
+                const newRight = this.root.columnService.getPositionByDate(timeRange.model.to) | 0;
 
                 timeRange.left = newLeft;
                 timeRange.width = newRight - newLeft;
@@ -457,8 +450,8 @@
         refreshTasks() {
             const { allTasks } = this.store.get();
             allTasks.forEach(task => {
-                const newLeft = this.root.columnFactory.getPositionByDate(task.model.from) | 0;
-                const newRight = this.root.columnFactory.getPositionByDate(task.model.to) | 0;
+                const newLeft = this.root.columnService.getPositionByDate(task.model.from) | 0;
+                const newRight = this.root.columnService.getPositionByDate(task.model.to) | 0;
 
                 task.left = newLeft;
                 task.width = newRight - newLeft;
@@ -537,7 +530,6 @@
                 cache[task.model.resourceId].push(task.model.id);
                 return cache;
             };
-            console.log("recaculated map");
             return $allTasks.reduce(reducer, {});
         }
     }

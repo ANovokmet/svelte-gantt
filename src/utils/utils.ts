@@ -43,16 +43,6 @@ export class GanttUtils {
         }
         return date
     }
-
-    /**
-     * Returns ID of element 
-     * @param value 
-     * @param compareFn 
-     */
-    binarySearch(sortedArray, value, compareFn){
-
-    }
-
 }
 
 export function getPositionByDate (date, from, to, width) {

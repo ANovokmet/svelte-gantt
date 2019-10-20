@@ -39,9 +39,7 @@ var gantt = SvelteGantt.create(
 To use modules with your gantt, include relevant files too:
 ```html
 <link rel='stylesheet' href='svelteGantt.css'>
-<link rel='stylesheet' href='svelteGanttDependencies.css'>
 <link rel='stylesheet' href='svelteGanttTable.css'>
-<script src='svelteGanttDependencies.js'></script>
 <script src='svelteGanttTable.js'></script>
 <script src='svelteGanttExternal.js'></script>
 ```
@@ -95,10 +93,10 @@ options = {
 Holds data and keeps it updated as svelte-gantt is interacted with:
 ```js
 data  = {
+    // array of task objects
+    tasks: [],
 	// array of row objects
-	rows: [],
-	// array of dependency objects, svelteGanttDependencies module
-	dependencies: []
+    rows: []
 }
 ```
 
@@ -113,9 +111,7 @@ row = {
 	// html content of row
 	contentHtml: undefined,
 	// enable dragging of tasks to and from this row
-	enableDragging:  true,
-	// array of task elements
-	tasks: []
+	enableDragging:  true
 }
 ```
 

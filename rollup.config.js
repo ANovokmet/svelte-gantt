@@ -60,19 +60,6 @@ export default [
 		}
 	}),
 	baseConfig({
-		input: 'src/modules/dependencies/GanttDependencies.html',
-		output: {
-			sourcemap: true,
-			format: 'iife',
-			name: 'SvelteGanttDependencies',
-			file: 'public/dist/svelteGanttDependencies.js',
-			external: ['moment']
-		},
-		css: css => {
-			css.write('public/dist/svelteGanttDependencies.css');
-		}
-	}),
-	baseConfig({
 		input: 'src/modules/table/Table.html',
 		output: {
 			sourcemap: true,

@@ -10,12 +10,12 @@ export class ComponentPosProvider implements PositionProvider
     }
 
     getPos() {
-        const { posX, posY } = this.component.get();
-        return { posX, posY };
+        const { x, y } = this.component.get();
+        return { x, y };
     }
 
     getWidth() {
-        const { widthT } = this.component.get();
-        return widthT;
+        const { currWidth } = this.component.get();
+        return currWidth;
     }
 }

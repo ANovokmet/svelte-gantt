@@ -1,4 +1,4 @@
-<div class="sg-time-range" class:moving="resizing" style="width:{widthT}px;left:{posX}px">
+<div class="sg-time-range" class:moving="resizing" style="width:{currWidth}px;left:{x}px">
     <div class="sg-time-range-label">{model.label}</div>
 </div>
 <style>
@@ -29,16 +29,16 @@
         onstate({ changed, current, previous }) {
             if(!current.resizing){
                 this.set({
-                    posX: current.left,
-                    widthT: current.width
+                    x: current.left,
+                    currWidth: current.width
                 });
             }
         },
         data(){
             return {
                 resizing: false,
-                widthT: null,
-                posX: null
+                currWidth: null,
+                x: null
             }
         }
     }

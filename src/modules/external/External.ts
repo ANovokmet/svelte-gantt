@@ -1,4 +1,4 @@
-import { addEventListenerOnce, getRelativePos } from "src/utils/domUtils";
+import { getRelativePos } from "src/utils/domUtils";
 import { Draggable } from "src/core/drag";
 import { SvelteGantt } from "src/core/gantt";
 import { SvelteRow } from "src/core/row";
@@ -16,17 +16,14 @@ interface DragOptions {
 
 function drag(node, data: DragOptions) {
     const { gantt } = data;
-    const windowElement = window;
-
-
     const { rowContainerElement } = gantt.store.get();
 
     let element = null;
 
     return new Draggable(node, {
-        onDown: ({ posX, posY }) => {
+        onDown: ({ x, y }) => {
         },
-        onDrag: ({ posX, posY }) => {
+        onDrag: ({ x, y }) => {
 
             if(!element) {
                 element = data.elementContent();
@@ -35,16 +32,13 @@ function drag(node, data: DragOptions) {
             }
 
             Object.assign(element.style, {
-                top: posY + 'px',
-                left: posX + 'px'
+                top: y + 'px',
+                left: x + 'px'
             });
         },
         dragAllowed: () => data.enabled,
         resizeAllowed: false,
-        onDrop: ({ posX, posY, event }) => {
-            console.log('SUCC')
-            console.log(posX, posY)
-
+        onDrop: ({ x, y, event }) => {
             const targetRow = gantt.dndManager.getTarget('row', event);
             if (targetRow) {
 
@@ -65,10 +59,9 @@ function drag(node, data: DragOptions) {
     },
         {
             getPos: (event: MouseEvent) => {
-                console.log(event.clientX, event.clientY)
                 return {
-                    posX: event.pageX,
-                    posY: event.pageY
+                    x: event.pageX,
+                    y: event.pageY
                 };
             },
             getWidth: () => 0
@@ -106,9 +99,6 @@ SvelteGanttExternal.create = function (element: HTMLElement, options) {
     const data = Object.assign({}, SvelteGanttExternal.defaults, options);
 
     drag(element, data);
-    /*return new SvelteGanttExternal({
-        target: element,
-    });*/
     return data;
 }
 

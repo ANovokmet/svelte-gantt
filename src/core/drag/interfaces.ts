@@ -1,5 +1,5 @@
 export interface PositionProvider {
-    getPos(event?: MouseEvent): {posX: number, posY: number};
+    getPos(event?: MouseEvent): {x: number, y: number};
     getWidth(event?: MouseEvent): number;
 }
 

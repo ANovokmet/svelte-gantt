@@ -4,6 +4,6 @@
 		"module": "es6",
 		"moduleResolution": "node",
 		"target": "es6",
-		"baseUrl": "./"
+        "baseUrl": "./"
 	}
 }

@@ -23,7 +23,6 @@
         components: { Column },
         onstate({current, changed, previous}) {
             if(changed.columns) {
-                console.log('columnsGEnerated')
                 this.fire('columnsGenerated')
             }
         },

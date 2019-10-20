@@ -29,7 +29,7 @@ export function findByDate(columns: Column[], x: any) {
     return result;
 }
 
-export class ColumnFactory {
+export class ColumnService {
     
     gantt: SvelteGantt;
 

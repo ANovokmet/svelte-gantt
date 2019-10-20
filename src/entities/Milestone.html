@@ -1,12 +1,12 @@
 <div ref:milestoneElement
     class="sg-milestone {model.classes}" 
-    style="transform: translate({posX}px, {posY}px);height:{height}px;width:{height}px"
+    style="transform: translate({x}px, {y}px);height:{height}px;width:{height}px"
     use:drag 
     on:click="select(event)"
     class:selected="selected"
     class:moving="dragging">
     <div class="inside"></div>
-        <!-- <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span> -->
+        <!-- <span class="debug">x:{x|0} y:{y|0}, x:{left|0} y:{top|0}</span> -->
 </div>
 
 <style>
@@ -74,10 +74,10 @@
                 this.onmount();
             }
 
-            if(!current.dragging){
+            else if(!current.dragging){
                 this.set({
-                    posX: current.left,
-                    posY: current.top,
+                    x: current.left,
+                    y: current.top,
                 });
             }
 		},
@@ -85,7 +85,7 @@
 			drag(node) {
                 const { rowContainerElement } = this.store.get();
 
-                const ondrop = ({ posX, posY, widthT, event, dragging }) => {
+                const ondrop = ({ x, y, currWidth, event, dragging }) => {
                     const { model } = this.get();
                     const { taskMap, rowMap, rowPadding } = this.store.get();
 
@@ -106,8 +106,8 @@
                     this.set({dragging: false});
                     const task = taskMap[model.id];
                     if(rowChangeValid) {
-                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+                        const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x)); 
+                        const newLeft = this.root.columnService.getPositionByDate(newFrom);
 
                         Object.assign(model, {
                             from: newFrom
@@ -116,7 +116,7 @@
                         this.store.updateTask({
                             ...task,
                             left: newLeft,
-                            top: rowPadding + rowMap[model.resourceId].posY,
+                            top: rowPadding + rowMap[model.resourceId].y,
                             model
                         });
                     }
@@ -128,12 +128,12 @@
                     }
                 }
 
-                return new Draggable(node, {
-                    onDown: ({posX, posY}) => {
-                        //this.set({posX, posY});
+                const draggable = new Draggable(node, {
+                    onDown: ({x, y}) => {
+                        //this.set({x, y});
                     }, 
-                    onDrag: ({posX, posY}) => {
-                        this.set({posX, posY, dragging: true});
+                    onDrag: ({x, y}) => {
+                        this.set({x, y, dragging: true});
                     },
                     dragAllowed: () => {
                         const { model } = this.get();
@@ -145,20 +145,26 @@
                     onDrop: ondrop, 
                     container: rowContainerElement, 
                 }, new ComponentPosProvider(this));
+
+                return {
+                    destroy() { draggable.destroy(); }
+                }
             }
         },
         methods: {
             onmount() {
                 const { model } = this.get();
 
-                const left = this.root.utils.getPositionByDate(model.from);
-                const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
+                const left = this.root.columnService.getPositionByDate(model.from);
+                const top = this.store.get().rowMap[model.resourceId].y + this.store.get().rowPadding;
                 const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
 
                 this.set({
                     left,
                     top,
-                    height
+                    height,
+                    x: left,
+                    y: top
                 });
             },
             select(event){
@@ -180,8 +186,8 @@
                 dragging: false,
                 selected: false,
 
-                posX: null,
-                posY: null,
+                x: null,
+                y: null,
                 height: 20
             }
         },

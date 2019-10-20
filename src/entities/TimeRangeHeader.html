@@ -1,4 +1,4 @@
-<div class="sg-time-range-control" style="width:{widthT}px;left:{posX}px">
+<div class="sg-time-range-control" style="width:{currWidth}px;left:{x}px">
     <div class="sg-time-range-handle-left" use:drag></div>
     <div class="sg-time-range-handle-right" use:drag></div>
 </div>
@@ -39,8 +39,8 @@
         onstate({ changed, current, previous }) {
             if(!current.resizing){
                 this.set({
-                    posX: current.left,
-                    widthT: current.width
+                    x: current.left,
+                    currWidth: current.width
                 });
             }
 		},
@@ -48,13 +48,13 @@
             drag(node) {
                 const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-                const ondrop = ({ posX, widthT, event }) => {
+                const ondrop = ({ x, currWidth, event }) => {
                     const { model } = this.get();
                     
-                    const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); 
-                    const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));
-                    const newLeft = this.root.columnFactory.getPositionByDate(newFrom);
-                    const newRight = this.root.columnFactory.getPositionByDate(newTo);
+                    const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x)); 
+                    const newTo = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x+currWidth));
+                    const newLeft = this.root.columnService.getPositionByDate(newFrom);
+                    const newRight = this.root.columnService.getPositionByDate(newTo);
                     
                     Object.assign(model, {
                         from: newFrom,
@@ -83,8 +83,8 @@
                     onDown: (state) => {
                         updateEntity({...state, resizing: true});
                     }, 
-                    onResize: ({posX, widthT}) => {
-                        updateEntity({posX, widthT});
+                    onResize: ({x, currWidth}) => {
+                        updateEntity({x, currWidth});
                     },
                     dragAllowed: false,
                     resizeAllowed: true,
@@ -97,8 +97,8 @@
         data(){
             return {
                 resizing: false,
-                widthT: null,
-                posX: null
+                currWidth: null,
+                x: null
             }
         }
     }

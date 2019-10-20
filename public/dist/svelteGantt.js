@@ -474,12 +474,12 @@ var SvelteGantt = (function (moment) {
 	        this.component = component;
 	    }
 	    getPos() {
-	        const { posX, posY } = this.component.get();
-	        return { posX, posY };
+	        const { x, y } = this.component.get();
+	        return { x, y };
 	    }
 	    getWidth() {
-	        const { widthT } = this.component.get();
-	        return widthT;
+	        const { currWidth } = this.component.get();
+	        return currWidth;
 	    }
 	}
 	//# sourceMappingURL=componentPosProvider.js.map
@@ -500,8 +500,8 @@ var SvelteGantt = (function (moment) {
 	            if (!isLeftClick(event)) {
 	                return;
 	            }
-	            const { posX, posY } = this.provider.getPos(event);
-	            const widthT = this.provider.getWidth(event);
+	            const { x, y } = this.provider.getPos(event);
+	            const currWidth = this.provider.getWidth(event);
 	            event.stopPropagation();
 	            event.preventDefault();
 	            const canDrag = this.dragAllowed;
@@ -509,35 +509,35 @@ var SvelteGantt = (function (moment) {
 	            if (canDrag || canResize) {
 	                this.initialX = event.clientX;
 	                this.initialY = event.clientY;
-	                this.mouseStartPosX = getRelativePos(this.settings.container, event).x - posX;
-	                this.mouseStartPosY = getRelativePos(this.settings.container, event).y - posY;
-	                this.mouseStartRight = posX + widthT;
+	                this.mouseStartPosX = getRelativePos(this.settings.container, event).x - x;
+	                this.mouseStartPosY = getRelativePos(this.settings.container, event).y - y;
+	                this.mouseStartRight = x + currWidth;
 	                if (canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
 	                    this.direction = 'left';
 	                    this.resizing = true;
 	                    this.settings.onDown({
-	                        posX,
-	                        widthT,
-	                        posY,
+	                        x,
+	                        currWidth,
+	                        y,
 	                        resizing: true
 	                    });
 	                }
-	                else if (canResize && this.mouseStartPosX > widthT - this.settings.resizeHandleWidth) {
+	                else if (canResize && this.mouseStartPosX > currWidth - this.settings.resizeHandleWidth) {
 	                    this.direction = 'right';
 	                    this.resizing = true;
 	                    this.settings.onDown({
-	                        posX,
-	                        widthT,
-	                        posY,
+	                        x,
+	                        currWidth,
+	                        y,
 	                        resizing: true
 	                    });
 	                }
 	                else if (canDrag) {
 	                    this.dragging = true;
 	                    this.settings.onDown({
-	                        posX,
-	                        widthT,
-	                        posY,
+	                        x,
+	                        currWidth,
+	                        y,
 	                        dragging: true
 	                    });
 	                }
@@ -557,37 +557,37 @@ var SvelteGantt = (function (moment) {
 	            event.preventDefault();
 	            if (this.resizing) {
 	                const mousePos = getRelativePos(this.settings.container, event);
-	                const { posX } = this.provider.getPos(event);
-	                const widthT = this.provider.getWidth(event);
+	                const { x } = this.provider.getPos(event);
+	                const currWidth = this.provider.getWidth(event);
 	                if (this.direction === 'left') { //resize ulijevo
-	                    if (mousePos.x > posX + widthT) {
+	                    if (mousePos.x > x + currWidth) {
 	                        this.direction = 'right';
 	                        this.settings.onResize({
-	                            posX: this.mouseStartRight,
-	                            widthT: this.mouseStartRight - mousePos.x
+	                            x: this.mouseStartRight,
+	                            currWidth: this.mouseStartRight - mousePos.x
 	                        });
-	                        this.mouseStartRight = this.mouseStartRight + widthT;
+	                        this.mouseStartRight = this.mouseStartRight + currWidth;
 	                    }
 	                    else {
 	                        this.settings.onResize({
-	                            posX: mousePos.x,
-	                            widthT: this.mouseStartRight - mousePos.x
+	                            x: mousePos.x,
+	                            currWidth: this.mouseStartRight - mousePos.x
 	                        });
 	                    }
 	                }
 	                else if (this.direction === 'right') { //resize desno
-	                    if (mousePos.x <= posX) {
+	                    if (mousePos.x <= x) {
 	                        this.direction = 'left';
 	                        this.settings.onResize({
-	                            posX: mousePos.x,
-	                            widthT: posX - mousePos.x
+	                            x: mousePos.x,
+	                            currWidth: x - mousePos.x
 	                        });
-	                        this.mouseStartRight = posX;
+	                        this.mouseStartRight = x;
 	                    }
 	                    else {
 	                        this.settings.onResize({
-	                            posX,
-	                            widthT: mousePos.x - posX
+	                            x,
+	                            currWidth: mousePos.x - x
 	                        });
 	                    }
 	                }
@@ -596,19 +596,19 @@ var SvelteGantt = (function (moment) {
 	            if (this.dragging) {
 	                const mousePos = getRelativePos(this.settings.container, event);
 	                this.settings.onDrag({
-	                    posX: mousePos.x - this.mouseStartPosX,
-	                    posY: mousePos.y - this.mouseStartPosY
+	                    x: mousePos.x - this.mouseStartPosX,
+	                    y: mousePos.y - this.mouseStartPosY
 	                });
 	            }
 	        };
 	        this.onmouseup = (event) => {
-	            const { posX, posY } = this.provider.getPos(event);
-	            const widthT = this.provider.getWidth(event);
+	            const { x, y } = this.provider.getPos(event);
+	            const currWidth = this.provider.getWidth(event);
 	            if (this.resizeTriggered) {
 	                this.settings.onDrop({
-	                    posX,
-	                    posY,
-	                    widthT,
+	                    x,
+	                    y,
+	                    currWidth,
 	                    event,
 	                    dragging: this.dragging,
 	                    resizing: this.resizing
@@ -647,6 +647,8 @@ var SvelteGantt = (function (moment) {
 	        this.node.removeEventListener('mouseup', this.onmouseup, false);
 	    }
 	}
+	//# sourceMappingURL=draggable.js.map
+
 	class DragDropManager {
 	    constructor(gantt) {
 	        this.handlerMap = {};
@@ -676,6 +678,7 @@ var SvelteGantt = (function (moment) {
 	        }
 	    }
 	}
+	//# sourceMappingURL=dragDropManager.js.map
 
 	//# sourceMappingURL=index.js.map
 
@@ -697,11 +700,11 @@ var SvelteGantt = (function (moment) {
 	        selected: false,
 	        resizing: false,
 
-	        widthT: null,
-	        posX: null,
-	        posY: null,
+	        currWidth: null,
+	        x: null,
+	        y: null,
 
-	        animating: false
+	        animating: true
 	    }
 	}
 	var methods = {
@@ -731,29 +734,17 @@ var SvelteGantt = (function (moment) {
 	function onstate({ changed, current, previous }) {
 	    if((changed.left || changed.width || changed.top) && !current.dragging && !current.resizing){
 	        this.set({
-	            posX: current.left,
-	            widthT: current.width,
-	            posY: current.top,
-	            animating: true
+	            x: current.left,
+	            currWidth: current.width,
+	            y: current.top
 	        });
-	        setTimeout(() => {
-	            this.set({animating: false});
-	        }, 200);
 	        // should NOT animate on resize/update of columns
-	        //console.log('anim', current);
-	    }
-
-	    if(changed.animating && current.animating) {
-	        console.log('anim OFF', current);
-	        setTimeout(() => {
-	            this.set({animating: false});
-	        }, 200);
 	    }
 			}
 	function drag(node) {
 	                const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-	                const ondrop = ({ posX, posY, widthT, event, dragging, resizing }) => {
+	                const ondrop = ({ x, y, currWidth, event, dragging, resizing }) => {
 	                    const { model } = this.get();
 	                    const { taskMap, rowMap, rowPadding } = this.store.get();
 
@@ -771,16 +762,15 @@ var SvelteGantt = (function (moment) {
 	                        }
 	                    }
 	                    
-	                    this.set({dragging: false, resizing: false, animating: true});
-	                    
-	                    console.log('anim dr', this.get());
+	                    this.set({dragging: false, resizing: false});
+
 	                    const task = taskMap[model.id];
 
 	                    if(rowChangeValid) {
-	                        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); //this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-	                        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));//this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-	                        const newLeft = this.root.columnFactory.getPositionByDate(newFrom) | 0;//this.root.utils.getPositionByDate(newFrom) | 0;
-	                        const newRight = this.root.columnFactory.getPositionByDate(newTo) | 0;//this.root.utils.getPositionByDate(newTo) | 0;
+	                        const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x));
+	                        const newTo = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x+currWidth));
+	                        const newLeft = this.root.columnService.getPositionByDate(newFrom) | 0;
+	                        const newRight = this.root.columnService.getPositionByDate(newTo) | 0;
 
 	                        Object.assign(model, {
 	                            from: newFrom,
@@ -789,7 +779,7 @@ var SvelteGantt = (function (moment) {
 
 	                        const left = newLeft;
 	                        const width = newRight - newLeft;
-	                        const top = rowPadding + rowMap[model.resourceId].posY;
+	                        const top = rowPadding + rowMap[model.resourceId].y;
 	                        
 	                        this.store.updateTask({
 	                            ...task,
@@ -800,29 +790,24 @@ var SvelteGantt = (function (moment) {
 	                        });
 
 	                        this.set({
-	                            posX: left,
-	                            widthT: width,
-	                            posY: top,
+	                            x: left,
+	                            currWidth: width,
+	                            y: top,
 	                        });
 	                    }
 	                    else {
 	                        // reset position
-
 	                        this.set({
-	                            posX: task.left,
-	                            widthT: task.width,
-	                            posY: task.top,
+	                            x: task.left,
+	                            currWidth: task.width,
+	                            y: task.top,
 	                        });
-
-	                        // this.store.updateTask({
-	                        //     ...task
-	                        // });
 	                    }
 
 	                    setCursor('default');
 	                };
 
-	                return new Draggable(node, {
+	                const draggable = new Draggable(node, {
 	                    onDown: ({dragging, resizing}) => {
 	                        //this.set({dragging, resizing});
 	                        if(dragging) {
@@ -835,8 +820,8 @@ var SvelteGantt = (function (moment) {
 	                    onResize: (state) => {
 	                        this.set({...state, resizing: true});
 	                    }, 
-	                    onDrag: ({posX, posY}) => {
-	                        this.set({posX, posY, dragging: true});
+	                    onDrag: ({x, y}) => {
+	                        this.set({x, y, dragging: true});
 	                    }, 
 	                    dragAllowed: () => {
 	                        const { model } = this.get();
@@ -854,11 +839,14 @@ var SvelteGantt = (function (moment) {
 	                    container: rowContainerElement, 
 	                    resizeHandleWidth
 	                }, new ComponentPosProvider(this));
+	                return {
+	                    destroy() { draggable.destroy(); }
+	                }
 	            }
 	const file = "src\\entities\\Task.html";
 
 	function create_main_fragment(component, ctx) {
-		var div2, div0, text0, div1, text1, span, text2, text3_value = ctx.posX|0, text3, text4, text5_value = ctx.posY|0, text5, text6, text7_value = ctx.left|0, text7, text8, text9_value = ctx.top|0, text9, text10, text11, div2_class_value, drag_action, current;
+		var div2, div0, text0, div1, text1, text2, div2_class_value, drag_action, current;
 
 		function select_block_type(ctx) {
 			if (ctx.model.html) return create_if_block_2;
@@ -884,32 +872,20 @@ var SvelteGantt = (function (moment) {
 				text0 = createText("\r\n    ");
 				div1 = createElement("div");
 				if_block0.c();
-				text1 = createText("\r\n        ");
-				span = createElement("span");
-				text2 = createText("x:");
-				text3 = createText(text3_value);
-				text4 = createText(" y:");
-				text5 = createText(text5_value);
-				text6 = createText(", x:");
-				text7 = createText(text7_value);
-				text8 = createText(" y:");
-				text9 = createText(text9_value);
-				text10 = createText("\r\n        \r\n\r\n        ");
+				text1 = createText("\r\n        \r\n        \r\n\r\n        ");
 				if (if_block1) if_block1.c();
-				text11 = createText("\r\n\r\n    ");
+				text2 = createText("\r\n\r\n    ");
 				if (if_block2) if_block2.c();
 				div0.className = "sg-task-background svelte-10z3olz";
 				setStyle(div0, "width", "" + ctx.model.amountDone + "%");
-				addLoc(div0, file, 11, 4, 321);
-				span.className = "debug svelte-10z3olz";
-				addLoc(span, file, 20, 8, 627);
+				addLoc(div0, file, 11, 4, 318);
 				div1.className = "sg-task-content svelte-10z3olz";
-				addLoc(div1, file, 12, 4, 399);
+				addLoc(div1, file, 12, 4, 396);
 				addListener(div2, "click", click_handler);
 				div2.className = div2_class_value = "sg-task " + ctx.model.classes + " svelte-10z3olz";
-				setStyle(div2, "width", "" + ctx.widthT + "px");
+				setStyle(div2, "width", "" + ctx.currWidth + "px");
 				setStyle(div2, "height", "" + ctx.height + "px");
-				setStyle(div2, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				setStyle(div2, "transform", "translate(" + ctx.x + "px, " + ctx.y + "px)");
 				toggleClass(div2, "selected", ctx.selected);
 				toggleClass(div2, "moving", ctx.dragging||ctx.resizing);
 				toggleClass(div2, "animating", ctx.animating);
@@ -923,18 +899,8 @@ var SvelteGantt = (function (moment) {
 				append(div2, div1);
 				if_block0.m(div1, null);
 				append(div1, text1);
-				append(div1, span);
-				append(span, text2);
-				append(span, text3);
-				append(span, text4);
-				append(span, text5);
-				append(span, text6);
-				append(span, text7);
-				append(span, text8);
-				append(span, text9);
-				append(div1, text10);
 				if (if_block1) if_block1.m(div1, null);
-				append(div2, text11);
+				append(div2, text2);
 				if (if_block2) if_block2.m(div2, null);
 				component.refs.taskElement = div2;
 				drag_action = drag.call(component, div2) || {};
@@ -953,22 +919,6 @@ var SvelteGantt = (function (moment) {
 					if_block0 = current_block_type(component, ctx);
 					if_block0.c();
 					if_block0.m(div1, text1);
-				}
-
-				if ((changed.posX) && text3_value !== (text3_value = ctx.posX|0)) {
-					setData(text3, text3_value);
-				}
-
-				if ((changed.posY) && text5_value !== (text5_value = ctx.posY|0)) {
-					setData(text5, text5_value);
-				}
-
-				if ((changed.left) && text7_value !== (text7_value = ctx.left|0)) {
-					setData(text7, text7_value);
-				}
-
-				if ((changed.top) && text9_value !== (text9_value = ctx.top|0)) {
-					setData(text9, text9_value);
 				}
 
 				if (ctx.model.showButton) {
@@ -1001,16 +951,16 @@ var SvelteGantt = (function (moment) {
 					div2.className = div2_class_value;
 				}
 
-				if (changed.widthT) {
-					setStyle(div2, "width", "" + ctx.widthT + "px");
+				if (changed.currWidth) {
+					setStyle(div2, "width", "" + ctx.currWidth + "px");
 				}
 
 				if (changed.height) {
 					setStyle(div2, "height", "" + ctx.height + "px");
 				}
 
-				if (changed.posX || changed.posY) {
-					setStyle(div2, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				if (changed.x || changed.y) {
+					setStyle(div2, "transform", "translate(" + ctx.x + "px, " + ctx.y + "px)");
 				}
 
 				if ((changed.model || changed.selected)) {
@@ -1155,7 +1105,7 @@ var SvelteGantt = (function (moment) {
 				span = createElement("span");
 				addListener(span, "click", click_handler);
 				span.className = span_class_value = "sg-task-button " + ctx.model.buttonClasses + " svelte-10z3olz";
-				addLoc(span, file, 24, 12, 755);
+				addLoc(span, file, 24, 12, 747);
 			},
 
 			m: function mount(target, anchor) {
@@ -1192,7 +1142,7 @@ var SvelteGantt = (function (moment) {
 				label = createElement("label");
 				text = createText(text_value);
 				label.className = "sg-label-bottom svelte-10z3olz";
-				addLoc(label, file, 31, 8, 963);
+				addLoc(label, file, 31, 8, 955);
 			},
 
 			m: function mount(target, anchor) {
@@ -1232,17 +1182,15 @@ var SvelteGantt = (function (moment) {
 		if (!('$selection' in this._state)) console.warn("<Task> was created without expected data property '$selection'");
 		if (!('model' in this._state)) console.warn("<Task> was created without expected data property 'model'");
 		if (!('$rowMap' in this._state)) console.warn("<Task> was created without expected data property '$rowMap'");
-		if (!('widthT' in this._state)) console.warn("<Task> was created without expected data property 'widthT'");
+		if (!('currWidth' in this._state)) console.warn("<Task> was created without expected data property 'currWidth'");
 		if (!('height' in this._state)) console.warn("<Task> was created without expected data property 'height'");
-		if (!('posX' in this._state)) console.warn("<Task> was created without expected data property 'posX'");
-		if (!('posY' in this._state)) console.warn("<Task> was created without expected data property 'posY'");
+		if (!('x' in this._state)) console.warn("<Task> was created without expected data property 'x'");
+		if (!('y' in this._state)) console.warn("<Task> was created without expected data property 'y'");
 
 		if (!('dragging' in this._state)) console.warn("<Task> was created without expected data property 'dragging'");
 		if (!('resizing' in this._state)) console.warn("<Task> was created without expected data property 'resizing'");
 		if (!('animating' in this._state)) console.warn("<Task> was created without expected data property 'animating'");
 		if (!('$taskContent' in this._state)) console.warn("<Task> was created without expected data property '$taskContent'");
-		if (!('left' in this._state)) console.warn("<Task> was created without expected data property 'left'");
-		if (!('top' in this._state)) console.warn("<Task> was created without expected data property 'top'");
 		this._intro = !!options.intro;
 
 		this._handlers.state = [onstate];
@@ -1441,8 +1389,8 @@ var SvelteGantt = (function (moment) {
 	        dragging: false,
 	        selected: false,
 
-	        posX: null,
-	        posY: null,
+	        x: null,
+	        y: null,
 	        height: 20
 	    }
 	}
@@ -1450,14 +1398,16 @@ var SvelteGantt = (function (moment) {
 	    onmount() {
 	        const { model } = this.get();
 
-	        const left = this.root.utils.getPositionByDate(model.from);
-	        const top = this.store.get().rowMap[model.resourceId].posY + this.store.get().rowPadding;
+	        const left = this.root.columnService.getPositionByDate(model.from);
+	        const top = this.store.get().rowMap[model.resourceId].y + this.store.get().rowPadding;
 	        const height = this.store.get().rowMap[model.resourceId].height - 2 * this.store.get().rowPadding;
 
 	        this.set({
 	            left,
 	            top,
-	            height
+	            height,
+	            x: left,
+	            y: top
 	        });
 	    },
 	    select(event){
@@ -1482,17 +1432,17 @@ var SvelteGantt = (function (moment) {
 	        this.onmount();
 	    }
 
-	    if(!current.dragging){
+	    else if(!current.dragging){
 	        this.set({
-	            posX: current.left,
-	            posY: current.top,
+	            x: current.left,
+	            y: current.top,
 	        });
 	    }
 			}
 	function drag$1(node) {
 	                const { rowContainerElement } = this.store.get();
 
-	                const ondrop = ({ posX, posY, widthT, event, dragging }) => {
+	                const ondrop = ({ x, y, currWidth, event, dragging }) => {
 	                    const { model } = this.get();
 	                    const { taskMap, rowMap, rowPadding } = this.store.get();
 
@@ -1513,8 +1463,8 @@ var SvelteGantt = (function (moment) {
 	                    this.set({dragging: false});
 	                    const task = taskMap[model.id];
 	                    if(rowChangeValid) {
-	                        const newFrom = this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-	                        const newLeft = this.root.utils.getPositionByDate(newFrom);
+	                        const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x)); 
+	                        const newLeft = this.root.columnService.getPositionByDate(newFrom);
 
 	                        Object.assign(model, {
 	                            from: newFrom
@@ -1523,7 +1473,7 @@ var SvelteGantt = (function (moment) {
 	                        this.store.updateTask({
 	                            ...task,
 	                            left: newLeft,
-	                            top: rowPadding + rowMap[model.resourceId].posY,
+	                            top: rowPadding + rowMap[model.resourceId].y,
 	                            model
 	                        });
 	                    }
@@ -1535,12 +1485,12 @@ var SvelteGantt = (function (moment) {
 	                    }
 	                };
 
-	                return new Draggable(node, {
-	                    onDown: ({posX, posY}) => {
-	                        //this.set({posX, posY});
+	                const draggable = new Draggable(node, {
+	                    onDown: ({x, y}) => {
+	                        //this.set({x, y});
 	                    }, 
-	                    onDrag: ({posX, posY}) => {
-	                        this.set({posX, posY, dragging: true});
+	                    onDrag: ({x, y}) => {
+	                        this.set({x, y, dragging: true});
 	                    },
 	                    dragAllowed: () => {
 	                        const { model } = this.get();
@@ -1552,6 +1502,10 @@ var SvelteGantt = (function (moment) {
 	                    onDrop: ondrop, 
 	                    container: rowContainerElement, 
 	                }, new ComponentPosProvider(this));
+
+	                return {
+	                    destroy() { draggable.destroy(); }
+	                }
 	            }
 	const file$2 = "src\\entities\\Milestone.html";
 
@@ -1567,10 +1521,10 @@ var SvelteGantt = (function (moment) {
 				div1 = createElement("div");
 				div0 = createElement("div");
 				div0.className = "inside svelte-fuyhwd";
-				addLoc(div0, file$2, 7, 4, 269);
+				addLoc(div0, file$2, 7, 4, 263);
 				addListener(div1, "click", click_handler);
 				div1.className = div1_class_value = "sg-milestone " + ctx.model.classes + " svelte-fuyhwd";
-				setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				setStyle(div1, "transform", "translate(" + ctx.x + "px, " + ctx.y + "px)");
 				setStyle(div1, "height", "" + ctx.height + "px");
 				setStyle(div1, "width", "" + ctx.height + "px");
 				toggleClass(div1, "selected", ctx.selected);
@@ -1591,8 +1545,8 @@ var SvelteGantt = (function (moment) {
 					div1.className = div1_class_value;
 				}
 
-				if (changed.posX || changed.posY) {
-					setStyle(div1, "transform", "translate(" + ctx.posX + "px, " + ctx.posY + "px)");
+				if (changed.x || changed.y) {
+					setStyle(div1, "transform", "translate(" + ctx.x + "px, " + ctx.y + "px)");
 				}
 
 				if (changed.height) {
@@ -1647,8 +1601,8 @@ var SvelteGantt = (function (moment) {
 		if (!('$selection' in this._state)) console.warn("<Milestone> was created without expected data property '$selection'");
 		if (!('model' in this._state)) console.warn("<Milestone> was created without expected data property 'model'");
 		if (!('$rowMap' in this._state)) console.warn("<Milestone> was created without expected data property '$rowMap'");
-		if (!('posX' in this._state)) console.warn("<Milestone> was created without expected data property 'posX'");
-		if (!('posY' in this._state)) console.warn("<Milestone> was created without expected data property 'posY'");
+		if (!('x' in this._state)) console.warn("<Milestone> was created without expected data property 'x'");
+		if (!('y' in this._state)) console.warn("<Milestone> was created without expected data property 'y'");
 		if (!('height' in this._state)) console.warn("<Milestone> was created without expected data property 'height'");
 
 		if (!('dragging' in this._state)) console.warn("<Milestone> was created without expected data property 'dragging'");
@@ -1701,15 +1655,15 @@ var SvelteGantt = (function (moment) {
 	function data$2(){
 	    return {
 	        resizing: false,
-	        widthT: null,
-	        posX: null
+	        currWidth: null,
+	        x: null
 	    }
 	}
 	function onstate$2({ changed, current, previous }) {
 	    if(!current.resizing){
 	        this.set({
-	            posX: current.left,
-	            widthT: current.width
+	            x: current.left,
+	            currWidth: current.width
 	        });
 	    }
 	}
@@ -1726,8 +1680,8 @@ var SvelteGantt = (function (moment) {
 				div0.className = "sg-time-range-label svelte-18yq9be";
 				addLoc(div0, file$3, 1, 4, 96);
 				div1.className = "sg-time-range svelte-18yq9be";
-				setStyle(div1, "width", "" + ctx.widthT + "px");
-				setStyle(div1, "left", "" + ctx.posX + "px");
+				setStyle(div1, "width", "" + ctx.currWidth + "px");
+				setStyle(div1, "left", "" + ctx.x + "px");
 				toggleClass(div1, "moving", ctx.resizing);
 				addLoc(div1, file$3, 0, 0, 0);
 			},
@@ -1744,12 +1698,12 @@ var SvelteGantt = (function (moment) {
 					setData(text, text_value);
 				}
 
-				if (changed.widthT) {
-					setStyle(div1, "width", "" + ctx.widthT + "px");
+				if (changed.currWidth) {
+					setStyle(div1, "width", "" + ctx.currWidth + "px");
 				}
 
-				if (changed.posX) {
-					setStyle(div1, "left", "" + ctx.posX + "px");
+				if (changed.x) {
+					setStyle(div1, "left", "" + ctx.x + "px");
 				}
 
 				if (changed.resizing) {
@@ -1782,8 +1736,8 @@ var SvelteGantt = (function (moment) {
 		init(this, options);
 		this._state = assign(data$2(), options.data);
 		if (!('resizing' in this._state)) console.warn("<TimeRange> was created without expected data property 'resizing'");
-		if (!('widthT' in this._state)) console.warn("<TimeRange> was created without expected data property 'widthT'");
-		if (!('posX' in this._state)) console.warn("<TimeRange> was created without expected data property 'posX'");
+		if (!('currWidth' in this._state)) console.warn("<TimeRange> was created without expected data property 'currWidth'");
+		if (!('x' in this._state)) console.warn("<TimeRange> was created without expected data property 'x'");
 		if (!('model' in this._state)) console.warn("<TimeRange> was created without expected data property 'model'");
 		this._intro = !!options.intro;
 
@@ -1818,28 +1772,28 @@ var SvelteGantt = (function (moment) {
 	function data$3(){
 	    return {
 	        resizing: false,
-	        widthT: null,
-	        posX: null
+	        currWidth: null,
+	        x: null
 	    }
 	}
 	function onstate$3({ changed, current, previous }) {
 	    if(!current.resizing){
 	        this.set({
-	            posX: current.left,
-	            widthT: current.width
+	            x: current.left,
+	            currWidth: current.width
 	        });
 	    }
 			}
 	function drag$2(node) {
 	    const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-	    const ondrop = ({ posX, widthT, event }) => {
+	    const ondrop = ({ x, currWidth, event }) => {
 	        const { model } = this.get();
 	        
-	        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); 
-	        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));
-	        const newLeft = this.root.columnFactory.getPositionByDate(newFrom);
-	        const newRight = this.root.columnFactory.getPositionByDate(newTo);
+	        const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x)); 
+	        const newTo = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x+currWidth));
+	        const newLeft = this.root.columnService.getPositionByDate(newFrom);
+	        const newRight = this.root.columnService.getPositionByDate(newTo);
 	        
 	        Object.assign(model, {
 	            from: newFrom,
@@ -1868,8 +1822,8 @@ var SvelteGantt = (function (moment) {
 	        onDown: (state) => {
 	            updateEntity({...state, resizing: true});
 	        }, 
-	        onResize: ({posX, widthT}) => {
-	            updateEntity({posX, widthT});
+	        onResize: ({x, currWidth}) => {
+	            updateEntity({x, currWidth});
 	        },
 	        dragAllowed: false,
 	        resizeAllowed: true,
@@ -1894,8 +1848,8 @@ var SvelteGantt = (function (moment) {
 				div1.className = "sg-time-range-handle-right svelte-16dwney";
 				addLoc(div1, file$4, 2, 4, 140);
 				div2.className = "sg-time-range-control svelte-16dwney";
-				setStyle(div2, "width", "" + ctx.widthT + "px");
-				setStyle(div2, "left", "" + ctx.posX + "px");
+				setStyle(div2, "width", "" + ctx.currWidth + "px");
+				setStyle(div2, "left", "" + ctx.x + "px");
 				addLoc(div2, file$4, 0, 0, 0);
 			},
 
@@ -1910,12 +1864,12 @@ var SvelteGantt = (function (moment) {
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.widthT) {
-					setStyle(div2, "width", "" + ctx.widthT + "px");
+				if (changed.currWidth) {
+					setStyle(div2, "width", "" + ctx.currWidth + "px");
 				}
 
-				if (changed.posX) {
-					setStyle(div2, "left", "" + ctx.posX + "px");
+				if (changed.x) {
+					setStyle(div2, "left", "" + ctx.x + "px");
 				}
 			},
 
@@ -1946,8 +1900,8 @@ var SvelteGantt = (function (moment) {
 
 		init(this, options);
 		this._state = assign(data$3(), options.data);
-		if (!('widthT' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'widthT'");
-		if (!('posX' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'posX'");
+		if (!('currWidth' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'currWidth'");
+		if (!('x' in this._state)) console.warn("<TimeRangeHeader> was created without expected data property 'x'");
 		this._intro = !!options.intro;
 
 		this._handlers.state = [onstate$3];
@@ -2323,13 +2277,6 @@ var SvelteGantt = (function (moment) {
 	        }
 	        return date;
 	    }
-	    /**
-	     * Returns ID of element
-	     * @param value
-	     * @param compareFn
-	     */
-	    binarySearch(sortedArray, value, compareFn) {
-	    }
 	}
 	function getPositionByDate(date, from, to, width) {
 	    if (!date) {
@@ -2623,7 +2570,7 @@ var SvelteGantt = (function (moment) {
 	    const result = get$1(columns, x, c => c.from);
 	    return result;
 	}
-	class ColumnFactory {
+	class ColumnService {
 	    constructor(gantt) {
 	        this.gantt = gantt;
 	    }
@@ -3139,7 +3086,7 @@ var SvelteGantt = (function (moment) {
 
 	function data$8() {
 	    return {
-	        posX: 240
+	        x: 240
 	    }
 	}
 	function oncreate$2(){
@@ -3148,18 +3095,18 @@ var SvelteGantt = (function (moment) {
 	function resizer(node) {
 	    
 	    const dragOptions = this.dragOptions = {
-	        onDown: ({posX, posY}) => {
+	        onDown: ({x, y}) => {
 
 	        }, 
-	        onDrag: ({posX}) => {
-	            this.set({posX, dragging: true});
-	            this.fire('resize', { left: posX });
+	        onDrag: ({x}) => {
+	            this.set({x, dragging: true});
+	            this.fire('resize', { left: x });
 	            setCursor('col-resize');
 
 	        },
-	        onDrop: ({ posX }) => {
-	            this.set({posX, dragging: false});
-	            this.fire('resize', { left: posX });
+	        onDrop: ({ x }) => {
+	            this.set({x, dragging: false});
+	            this.fire('resize', { left: x });
 	            setCursor('default');
 	        }, 
 	        dragAllowed: true,
@@ -3179,7 +3126,7 @@ var SvelteGantt = (function (moment) {
 			c: function create() {
 				div = createElement("div");
 				div.className = "sg-resize svelte-3im8rp";
-				setStyle(div, "left", "" + ctx.posX + "px");
+				setStyle(div, "left", "" + ctx.x + "px");
 				addLoc(div, file$10, 0, 0, 0);
 			},
 
@@ -3190,8 +3137,8 @@ var SvelteGantt = (function (moment) {
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.posX) {
-					setStyle(div, "left", "" + ctx.posX + "px");
+				if (changed.x) {
+					setStyle(div, "left", "" + ctx.x + "px");
 				}
 			},
 
@@ -3221,7 +3168,7 @@ var SvelteGantt = (function (moment) {
 
 		init(this, options);
 		this._state = assign(data$8(), options.data);
-		if (!('posX' in this._state)) console.warn("<Resizer> was created without expected data property 'posX'");
+		if (!('x' in this._state)) console.warn("<Resizer> was created without expected data property 'x'");
 		this._intro = !!options.intro;
 
 		this._fragment = create_main_fragment$10(this, this._state);
@@ -3506,8 +3453,8 @@ var SvelteGantt = (function (moment) {
 	        model.buttonHtml = model.buttonHtml || '';
 	        // enable dragging of task
 	        model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
-	        const left = this.gantt.columnFactory.getPositionByDate(model.from) | 0;
-	        const right = this.gantt.columnFactory.getPositionByDate(model.to) | 0;
+	        const left = this.gantt.columnService.getPositionByDate(model.from) | 0;
+	        const right = this.gantt.columnService.getPositionByDate(model.to) | 0;
 	        return {
 	            model,
 	            left: left,
@@ -3516,6 +3463,9 @@ var SvelteGantt = (function (moment) {
 	            top: this.getPosY(model)
 	        };
 	    }
+	    createTasks(tasks) {
+	        return tasks.map(task => this.createTask(task));
+	    }
 	    row(resourceId) {
 	        return this.gantt.store.get().rowMap[resourceId];
 	    }
@@ -3523,7 +3473,7 @@ var SvelteGantt = (function (moment) {
 	        return this.row(model.resourceId).height - 2 * this.gantt.store.get().rowPadding;
 	    }
 	    getPosY(model) {
-	        return this.row(model.resourceId).posY + this.gantt.store.get().rowPadding;
+	        return this.row(model.resourceId).y + this.gantt.store.get().rowPadding;
 	    }
 	}
 	//# sourceMappingURL=task.js.map
@@ -3532,7 +3482,7 @@ var SvelteGantt = (function (moment) {
 	    constructor(gantt) {
 	        this.gantt = gantt;
 	    }
-	    createRow(row, posY) {
+	    createRow(row, y) {
 	        // defaults
 	        // id of task, every task needs to have a unique one
 	        //row.id = row.id || undefined;
@@ -3546,7 +3496,7 @@ var SvelteGantt = (function (moment) {
 	        const height = row.height || this.gantt.store.get().rowHeight;
 	        return {
 	            model: row,
-	            posY,
+	            y,
 	            height
 	        };
 	    }
@@ -3569,8 +3519,8 @@ var SvelteGantt = (function (moment) {
 	    create(model) {
 	        // enable dragging
 	        model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
-	        const left = this.gantt.columnFactory.getPositionByDate(model.from);
-	        const right = this.gantt.columnFactory.getPositionByDate(model.to);
+	        const left = this.gantt.columnService.getPositionByDate(model.from);
+	        const right = this.gantt.columnService.getPositionByDate(model.to);
 	        return {
 	            model,
 	            left: left,
@@ -3754,7 +3704,6 @@ var SvelteGantt = (function (moment) {
 	        cache[task.model.resourceId].push(task.model.id);
 	        return cache;
 	    };
-	    console.log("recaculated map");
 	    return $allTasks.reduce(reducer, {});
 	}
 
@@ -3838,8 +3787,6 @@ var SvelteGantt = (function (moment) {
 	        }
 	    },
 	    adjustVisibleDateRange({ from, to, unit }) {
-	        console.log(from.format(), to.format());
-
 	        this.store.set({
 	            from: from.clone(),
 	            to: to.clone()
@@ -3851,12 +3798,8 @@ var SvelteGantt = (function (moment) {
 	        this.store.addAllRow(rows);
 	    },
 	    initTasks(taskData) {
-	        const tasks = taskData.map(currentTask => {
-	            return this.taskFactory.createTask(currentTask);
-	        });
-
+	        const tasks = this.taskFactory.createTasks(taskData);
 	        this.store.addAllTask(tasks);
-	        //this.selectionManager.clearSelection();
 	    },
 	    initTimeRanges(timeRangeData) {
 	        const timeRangeMap = {};
@@ -3884,7 +3827,7 @@ var SvelteGantt = (function (moment) {
 	            this.rowFactory = new RowFactory(this);
 	            this.timeRangeFactory = new TimeRangeFactory(this);
 	            this.dndManager = new DragDropManager(this);
-	            this.columnFactory = new ColumnFactory(this);
+	            this.columnService = new ColumnService(this);
 
 	            this.api.registerEvent("tasks", "move");
 	            this.api.registerEvent("tasks", "select");
@@ -3919,8 +3862,8 @@ var SvelteGantt = (function (moment) {
 	        for (const id in timeRangeMap) {
 	            const timeRange = timeRangeMap[id];
 
-	            const newLeft = this.root.columnFactory.getPositionByDate(timeRange.model.from) | 0;
-	            const newRight = this.root.columnFactory.getPositionByDate(timeRange.model.to) | 0;
+	            const newLeft = this.root.columnService.getPositionByDate(timeRange.model.from) | 0;
+	            const newRight = this.root.columnService.getPositionByDate(timeRange.model.to) | 0;
 
 	            timeRange.left = newLeft;
 	            timeRange.width = newRight - newLeft;
@@ -3931,8 +3874,8 @@ var SvelteGantt = (function (moment) {
 	    refreshTasks() {
 	        const { allTasks } = this.store.get();
 	        allTasks.forEach(task => {
-	            const newLeft = this.root.columnFactory.getPositionByDate(task.model.from) | 0;
-	            const newRight = this.root.columnFactory.getPositionByDate(task.model.to) | 0;
+	            const newLeft = this.root.columnService.getPositionByDate(task.model.from) | 0;
+	            const newRight = this.root.columnService.getPositionByDate(task.model.to) | 0;
 
 	            task.left = newLeft;
 	            task.width = newRight - newLeft;
@@ -3969,10 +3912,10 @@ var SvelteGantt = (function (moment) {
 	    this.initGantt();
 	    this.initRows(initialRows);
 
-	        this.store.set({
-	            visibleHeight: this.refs.mainContainer.clientHeight,
-	            visibleWidth: this.refs.mainContainer.clientWidth
-	        });
+	    this.store.set({
+	        visibleHeight: this.refs.mainContainer.clientHeight,
+	        visibleWidth: this.refs.mainContainer.clientWidth
+	    });
 
 	    this.initTasks(initialTasks);
 	    this.broadcastModules("onGanttCreated");
@@ -4061,7 +4004,6 @@ var SvelteGantt = (function (moment) {
 	    const newData = {
 	      initialRows: data.rows,
 	      initialTasks: data.tasks,
-	      initialDependencies: data.dependencies,
 	      _ganttBodyModules: ganttModules.ganttBodyModules,
 	      _ganttTableModules: ganttModules.ganttTableModules
 	    };

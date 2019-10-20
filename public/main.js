@@ -9,13 +9,12 @@ function generateData() {
 	const data = {
 		rows: [],
 		tasks: [],
-		dependencies: []
 	}
 
-	const ids = [ ...Array(10).keys() ];
+	const ids = [ ...Array(1000).keys() ];
 	shuffleArray(ids);
 
-	for(let i = 0; i < 10; i++) {
+	for(let i = 0; i < 1000; i++) {
 
 		let rand_bool = Math.random() < 0.2;
 
@@ -137,8 +136,6 @@ gantt.initTimeRanges([{
 	classes: null,
 	label: 'Lunch' //?
 }]);
-
-//gantt.initMilestones([]);
 
 //gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
 //gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));

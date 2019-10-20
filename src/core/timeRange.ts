@@ -28,8 +28,8 @@ export class TimeRangeFactory {
         // enable dragging
         model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
 
-        const left = this.gantt.columnFactory.getPositionByDate(model.from);
-        const right = this.gantt.columnFactory.getPositionByDate(model.to); 
+        const left = this.gantt.columnService.getPositionByDate(model.from);
+        const right = this.gantt.columnService.getPositionByDate(model.to); 
 
         return {
             model,

@@ -59,8 +59,8 @@ export class TaskFactory {
         // enable dragging of task
         model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
         
-        const left = this.gantt.columnFactory.getPositionByDate(model.from) | 0;
-        const right = this.gantt.columnFactory.getPositionByDate(model.to) | 0; 
+        const left = this.gantt.columnService.getPositionByDate(model.from) | 0;
+        const right = this.gantt.columnService.getPositionByDate(model.to) | 0; 
 
         return {
             model,
@@ -69,6 +69,10 @@ export class TaskFactory {
             height: this.getHeight(model),
             top: this.getPosY(model)
         }
+    }
+
+    createTasks(tasks: TaskModel[]) {
+        return tasks.map(task => this.createTask(task));
     }
 
     row(resourceId): SvelteRow{
@@ -80,7 +84,7 @@ export class TaskFactory {
     }
 
     getPosY(model){
-        return this.row(model.resourceId).posY + this.gantt.store.get().rowPadding;
+        return this.row(model.resourceId).y + this.gantt.store.get().rowPadding;
     }
 }
 

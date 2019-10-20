@@ -7,7 +7,7 @@ interface ContextMenu extends Component {
     close(): void;
 }
 
-export default class {
+export class ContextMenuManager {
     current: ContextMenu;
     gantt: SvelteGantt;
 

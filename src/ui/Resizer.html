@@ -1,4 +1,4 @@
-<div class="sg-resize" style="left:{posX}px" use:resizer></div>
+<div class="sg-resize" style="left:{x}px" use:resizer></div>
 <style>
     .sg-resize {
         z-index: 1;
@@ -29,18 +29,18 @@
             resizer(node) {
                 
                 const dragOptions = this.dragOptions = {
-                    onDown: ({posX, posY}) => {
+                    onDown: ({x, y}) => {
 
                     }, 
-                    onDrag: ({posX}) => {
-                        this.set({posX, dragging: true});
-                        this.fire('resize', { left: posX });
+                    onDrag: ({x}) => {
+                        this.set({x, dragging: true});
+                        this.fire('resize', { left: x });
                         setCursor('col-resize');
 
                     },
-                    onDrop: ({ posX }) => {
-                        this.set({posX, dragging: false});
-                        this.fire('resize', { left: posX });
+                    onDrop: ({ x }) => {
+                        this.set({x, dragging: false});
+                        this.fire('resize', { left: x });
                         setCursor('default');
                     }, 
                     dragAllowed: true,
@@ -54,7 +54,7 @@
         },
         data() {
             return {
-                posX: 240
+                x: 240
             }
         }
     }

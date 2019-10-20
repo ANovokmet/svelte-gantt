@@ -1,9 +1,9 @@
 <div ref:taskElement
     class="sg-task {model.classes}" 
     style="
-    width:{widthT}px;
+    width:{currWidth}px;
     height:{height}px;
-    transform: translate({posX}px, {posY}px);"
+    transform: translate({x}px, {y}px);"
     use:drag 
     on:click="select(event)"
     class:selected="selected"
@@ -18,7 +18,7 @@
         {:else}
             {model.label}
         {/if}
-        <span class="debug">x:{posX|0} y:{posY|0}, x:{left|0} y:{top|0}</span>
+        <!-- <span class="debug">x:{x} y:{y}, x:{left} y:{top}</span> -->
         
 
         {#if model.showButton}
@@ -141,30 +141,18 @@
         onstate({ changed, current, previous }) {
             if((changed.left || changed.width || changed.top) && !current.dragging && !current.resizing){
                 this.set({
-                    posX: current.left,
-                    widthT: current.width,
-                    posY: current.top,
-                    animating: true
+                    x: current.left,
+                    currWidth: current.width,
+                    y: current.top
                 });
-                setTimeout(() => {
-                    this.set({animating: false});
-                }, 200);
                 // should NOT animate on resize/update of columns
-                //console.log('anim', current);
-            }
-
-            if(changed.animating && current.animating) {
-                console.log('anim OFF', current);
-                setTimeout(() => {
-                    this.set({animating: false});
-                }, 200);
             }
 		},
         actions: {
 			drag(node) {
                 const { rowContainerElement, resizeHandleWidth } = this.store.get();
 
-                const ondrop = ({ posX, posY, widthT, event, dragging, resizing }) => {
+                const ondrop = ({ x, y, currWidth, event, dragging, resizing }) => {
                     const { model } = this.get();
                     const { taskMap, rowMap, rowPadding } = this.store.get();
 
@@ -182,16 +170,15 @@
                         }
                     }
                     
-                    this.set({dragging: false, resizing: false, animating: true});
-                    
-                    console.log('anim dr', this.get());
+                    this.set({dragging: false, resizing: false});
+
                     const task = taskMap[model.id];
 
                     if(rowChangeValid) {
-                        const newFrom = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX)); //this.root.utils.roundTo(this.root.utils.getDateByPosition(posX)); 
-                        const newTo = this.root.utils.roundTo(this.root.columnFactory.getDateByPosition(posX+widthT));//this.root.utils.roundTo(this.root.utils.getDateByPosition(posX+widthT));
-                        const newLeft = this.root.columnFactory.getPositionByDate(newFrom) | 0;//this.root.utils.getPositionByDate(newFrom) | 0;
-                        const newRight = this.root.columnFactory.getPositionByDate(newTo) | 0;//this.root.utils.getPositionByDate(newTo) | 0;
+                        const newFrom = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x));
+                        const newTo = this.root.utils.roundTo(this.root.columnService.getDateByPosition(x+currWidth));
+                        const newLeft = this.root.columnService.getPositionByDate(newFrom) | 0;
+                        const newRight = this.root.columnService.getPositionByDate(newTo) | 0;
 
                         Object.assign(model, {
                             from: newFrom,
@@ -200,7 +187,7 @@
 
                         const left = newLeft;
                         const width = newRight - newLeft;
-                        const top = rowPadding + rowMap[model.resourceId].posY;
+                        const top = rowPadding + rowMap[model.resourceId].y;
                         
                         this.store.updateTask({
                             ...task,
@@ -211,29 +198,24 @@
                         });
 
                         this.set({
-                            posX: left,
-                            widthT: width,
-                            posY: top,
+                            x: left,
+                            currWidth: width,
+                            y: top,
                         });
                     }
                     else {
                         // reset position
-
                         this.set({
-                            posX: task.left,
-                            widthT: task.width,
-                            posY: task.top,
+                            x: task.left,
+                            currWidth: task.width,
+                            y: task.top,
                         });
-
-                        // this.store.updateTask({
-                        //     ...task
-                        // });
                     }
 
                     setCursor('default');
                 }
 
-                return new Draggable(node, {
+                const draggable = new Draggable(node, {
                     onDown: ({dragging, resizing}) => {
                         //this.set({dragging, resizing});
                         if(dragging) {
@@ -246,8 +228,8 @@
                     onResize: (state) => {
                         this.set({...state, resizing: true});
                     }, 
-                    onDrag: ({posX, posY}) => {
-                        this.set({posX, posY, dragging: true});
+                    onDrag: ({x, y}) => {
+                        this.set({x, y, dragging: true});
                     }, 
                     dragAllowed: () => {
                         const { model } = this.get();
@@ -265,6 +247,9 @@
                     container: rowContainerElement, 
                     resizeHandleWidth
                 }, new ComponentPosProvider(this));
+                return {
+                    destroy() { draggable.destroy(); }
+                }
             }
         },
         methods: {
@@ -296,11 +281,11 @@
                 selected: false,
                 resizing: false,
 
-                widthT: null,
-                posX: null,
-                posY: null,
+                currWidth: null,
+                x: null,
+                y: null,
 
-                animating: false
+                animating: true
             }
         },
         computed: {

@@ -1,6 +1,4 @@
 import { SvelteGantt } from "./gantt";
-import { SvelteTask, TaskModel } from "./task";
-import { Component } from "./svelte";
 
 export interface RowModel {
     id: number;
@@ -13,7 +11,7 @@ export interface RowModel {
 export interface SvelteRow {
     model: RowModel;
     
-    posY: number;
+    y: number;
     height: number;
 }
 
@@ -24,7 +22,7 @@ export class RowFactory {
         this.gantt = gantt;
     }
 
-    createRow(row: RowModel, posY: number): SvelteRow {
+    createRow(row: RowModel, y: number): SvelteRow {
         // defaults
         // id of task, every task needs to have a unique one
         //row.id = row.id || undefined;
@@ -39,7 +37,7 @@ export class RowFactory {
 
         return {
             model: row,
-            posY,
+            y,
             height
         }
     }
