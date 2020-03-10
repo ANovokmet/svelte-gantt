@@ -1,4 +1,4 @@
-import { SvelteGantt } from "./gantt";
+import { ColumnService } from "./column";
 
 export interface TimeRangeModel {
     id: number; // | string;
@@ -18,18 +18,18 @@ export interface SvelteTimeRange {
 }
 
 export class TimeRangeFactory {
-    gantt: SvelteGantt;
+    columnService: ColumnService;
 
-    constructor(gantt: SvelteGantt) {
-        this.gantt = gantt;
+    constructor(columnService: ColumnService) {
+        this.columnService = columnService;
     }
 
     create(model: TimeRangeModel): SvelteTimeRange {
         // enable dragging
         model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
 
-        const left = this.gantt.columnService.getPositionByDate(model.from);
-        const right = this.gantt.columnService.getPositionByDate(model.to); 
+        const left = this.columnService.getPositionByDate(model.from);
+        const right = this.columnService.getPositionByDate(model.to); 
 
         return {
             model,

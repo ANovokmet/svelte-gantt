@@ -1,4 +1,4 @@
-import { SvelteGantt } from "./gantt";
+import { GanttStore } from './store';
 
 export interface RowModel {
     id: number;
@@ -16,10 +16,10 @@ export interface SvelteRow {
 }
 
 export class RowFactory {
-    gantt: SvelteGantt;
+    store: GanttStore;
 
-    constructor(gantt: SvelteGantt){
-        this.gantt = gantt;
+    constructor(store: GanttStore){
+        this.store = store;
     }
 
     createRow(row: RowModel, y: number): SvelteRow {
@@ -33,7 +33,7 @@ export class RowFactory {
         // enable dragging of tasks to and from this row 
         row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
         // height of row element
-        const height = row.height || this.gantt.store.get().rowHeight;
+        const height = row.height || this.store.get().rowHeight;
 
         return {
             model: row,

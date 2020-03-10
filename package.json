@@ -1,27 +1,31 @@
 {
-  "name": "svelte-gantt",
-  "version": "2.0.0-alpha",
-  "devDependencies": {
-    "npm-run-all": "^4.1.3",
-    "rollup": "^0.58.2",
-    "rollup-plugin-buble": "^0.19.2",
-    "rollup-plugin-commonjs": "^9.1.3",
-    "rollup-plugin-node-resolve": "^3.0.3",
-    "rollup-plugin-svelte": "^4.0.0",
-    "rollup-plugin-typescript2": "^0.18.1",
-    "rollup-plugin-uglify": "^3.0.0",
-    "serve": "^7.1.3",
-    "svelte": "^2.16.0",
-    "tslib": "^1.9.3",
-    "typescript": "^3.2.2"
-  },
-  "scripts": {
-    "build": "rollup -c",
-    "autobuild": "rollup -c -w",
-    "dev": "run-p start autobuild",
-    "start": "serve public"
-  },
-  "dependencies": {
-    "moment": "^2.22.2"
-  }
+	"name": "svelte-gantt",
+	"version": "2.0.0-alpha",
+	"scripts": {
+		"build": "rollup -c",
+		"autobuild": "rollup -c -w",
+		"dev": "run-p start autobuild",
+		"start": "serve public"
+	},
+	"types": "types/index.d.ts",
+	"main": "index.es.js",
+	"es2015": "index.es.js",
+	"dependencies": {
+		"moment": "^2.22.2",
+		"svelte": "^2.16.0"
+	},
+	"devDependencies": {
+		"del": "^5.1.0",
+		"npm-run-all": "^4.1.3",
+		"rollup": "^0.58.2",
+		"rollup-plugin-buble": "^0.19.2",
+		"rollup-plugin-commonjs": "^9.1.3",
+		"rollup-plugin-node-resolve": "^3.0.3",
+		"rollup-plugin-svelte": "^4.0.0",
+		"rollup-plugin-typescript2": "^0.18.1",
+		"rollup-plugin-uglify": "^3.0.0",
+		"serve": "^7.1.3",
+		"tslib": "^1.9.3",
+		"typescript": "^3.2.2"
+	}
 }

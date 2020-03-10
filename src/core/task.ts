@@ -1,5 +1,6 @@
-import { SvelteRow } from "./row";
-import { SvelteGantt } from "./gantt";
+import { SvelteRow } from './row';
+import { ColumnService } from './column';
+import { GanttStore } from './store';
 
 export interface TaskModel {
     id: number; // | string;
@@ -28,10 +29,12 @@ export interface SvelteTask {
 }
 
 export class TaskFactory {
-    gantt: SvelteGantt;
+    columnService: ColumnService;
+	store: GanttStore;
 
-    constructor(gantt: SvelteGantt) {
-        this.gantt = gantt;
+    constructor(columnService: ColumnService, store: GanttStore) {
+		this.columnService = columnService;
+		this.store = store;
     }
     
     createTask(model: TaskModel): SvelteTask {
@@ -59,8 +62,8 @@ export class TaskFactory {
         // enable dragging of task
         model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
         
-        const left = this.gantt.columnService.getPositionByDate(model.from) | 0;
-        const right = this.gantt.columnService.getPositionByDate(model.to) | 0; 
+        const left = this.columnService.getPositionByDate(model.from) | 0;
+        const right = this.columnService.getPositionByDate(model.to) | 0; 
 
         return {
             model,
@@ -76,15 +79,15 @@ export class TaskFactory {
     }
 
     row(resourceId): SvelteRow{
-        return this.gantt.store.get().rowMap[resourceId];
+        return this.store.get().rowMap[resourceId];
     }
 
     getHeight(model){
-        return this.row(model.resourceId).height - 2 * this.gantt.store.get().rowPadding;
+        return this.row(model.resourceId).height - 2 * this.store.get().rowPadding;
     }
 
     getPosY(model){
-        return this.row(model.resourceId).y + this.gantt.store.get().rowPadding;
+        return this.row(model.resourceId).y + this.store.get().rowPadding;
     }
 }
 

@@ -1,5 +1,4 @@
-import { get } from 'src/utils/utils';
-import { SvelteGantt } from './gantt';
+import { get } from '../utils/utils';
 import * as moment_ from 'moment';
 const moment = moment_;
 
@@ -31,9 +30,9 @@ export function findByDate(columns: Column[], x: any) {
 
 export class ColumnService {
     
-    gantt: SvelteGantt;
+    gantt: any;
 
-    constructor(gantt: SvelteGantt) {
+    constructor(gantt: any) {
         this.gantt = gantt;
     }
 

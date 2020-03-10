@@ -1,16 +1,16 @@
-import { getRelativePos } from "src/utils/domUtils";
-import { Draggable } from "src/core/drag";
-import { SvelteGantt } from "src/core/gantt";
-import { SvelteRow } from "src/core/row";
+import { getRelativePos } from "../../utils/domUtils";
+import { Draggable } from "../../core/drag";
+import { SvelteRow } from "../../core/row";
+import { SvelteGanttComponent } from "../../gantt";
 
 let SvelteGanttExternal;
 
 interface DragOptions {
-    gantt: SvelteGantt;
+    gantt: SvelteGanttComponent;
     elementContent(): any;
     dragging: boolean;
     enabled: boolean;
-    onsuccess(target: SvelteRow, date, gantt: SvelteGantt): void;
+    onsuccess(target: SvelteRow, date, gantt: SvelteGanttComponent): void;
     onfail(): void;
 }
 
@@ -97,9 +97,8 @@ SvelteGanttExternal.defaults = {
 
 SvelteGanttExternal.create = function (element: HTMLElement, options) {
     const data = Object.assign({}, SvelteGanttExternal.defaults, options);
-
     drag(element, data);
     return data;
 }
 
-export default SvelteGanttExternal;
+export { SvelteGanttExternal };

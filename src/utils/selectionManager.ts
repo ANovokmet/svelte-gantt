@@ -1,9 +1,9 @@
-import { Store } from 'svelte/store.js';
+import { GanttStore } from '../core/store';
 
 export class SelectionManager {
-    store: Store;
+    store: GanttStore;
 
-    constructor(store: Store) {
+    constructor(store: GanttStore) {
         this.store = store;
         this.store.set({selection: []});
     }

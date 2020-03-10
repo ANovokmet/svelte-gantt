@@ -211,8 +211,6 @@
                             y: task.top,
                         });
                     }
-
-                    setCursor('default');
                 }
 
                 const draggable = new Draggable(node, {
@@ -225,6 +223,9 @@
                             setCursor('e-resize');
                         }
                     }, 
+                    onMouseUp: () => {
+                        setCursor('default');
+                    },
                     onResize: (state) => {
                         this.set({...state, resizing: true});
                     }, 

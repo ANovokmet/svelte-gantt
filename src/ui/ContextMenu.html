@@ -27,7 +27,7 @@
 </style>
 <script>
         export default {
-            oncreate(dsds) {
+            oncreate() {
                 this.position(this.options.position);
                 //this.set({ actions: this.options.actions });
             },
@@ -39,7 +39,8 @@
                     event.stopPropagation();
                     action.action();
 
-                    this.options.onactionend();
+                    const { onactionend } = this.get();
+                    onactionend && onactionend();
                     //close();
                 },
                 close() {
@@ -54,7 +55,8 @@
                 return {
                     actions: [],
                     top: 0,
-                    left: 0
+                    left: 0,
+                    onactionend: null
                 }
             }
         };

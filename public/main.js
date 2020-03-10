@@ -127,7 +127,7 @@ let options = {
 	//taskContent: (task) => '<i class="sg-icon fas fa-calendar"></i>' + task.model.label
 }
 
-var gantt = SvelteGantt.create(document.getElementById('example-gantt'), generateData(), options);
+var gantt = create(document.getElementById('example-gantt'), generateData(), options);
 
 gantt.initTimeRanges([{
 	id: 0, 

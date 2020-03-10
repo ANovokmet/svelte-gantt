@@ -1,0 +1,64 @@
+'use strict';
+
+const fs = require('fs');
+const del = require('del');
+const rollup = require('rollup');
+const resolve = require('rollup-plugin-node-resolve');
+const commonjs = require('rollup-plugin-commonjs');
+const pkg = require('../package.json');
+
+const svelte = require('rollup-plugin-svelte');
+const uglify = require('rollup-plugin-uglify');
+const typescript = require('rollup-plugin-typescript2');
+
+let promise = Promise.resolve();
+
+// Clean up the output directory
+promise = promise.then(() => del(['dist/*']));
+
+promise = promise.then(() => rollup.rollup({
+    input: 'src/index.ts',
+    external: Object.keys(pkg.dependencies),
+    output: {
+        globals: { 
+            moment: 'moment'
+        }
+    },
+    plugins: [
+        svelte({
+            skipIntroByDefault: true,
+            nestedTransitions: true,
+            dev: false,
+            css: css => {
+                css.write('dist/css/svelteGantt.css');
+            }
+        }),
+        typescript({ useTsconfigDeclarationDir: true }),
+        commonjs(),
+        resolve(),
+    ],
+}));
+
+// Compile source code into a distributable format
+['es', 'iife'].forEach(format => { // /*, 'cjs', 'umd'*/
+    promise.then(bundle => bundle.write({
+		file: `dist/${format === 'cjs' ? 'index' : `index.${format}`}.js`,
+		format,
+        sourceMap: true,
+        extend: format === 'iife',
+		name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
+	}));
+});
+
+// Copy package.json and LICENSE.txt
+promise = promise.then(() => {
+	delete pkg.private;
+	delete pkg.devDependencies;
+	delete pkg.scripts;
+	delete pkg.eslintConfig;
+
+	fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8');
+	fs.writeFileSync('dist/LICENSE.txt', fs.readFileSync('LICENSE.txt', 'utf-8'), 'utf-8');
+});
+
+promise.catch(err => console.error(err.stack)); // eslint-disable-line no-console

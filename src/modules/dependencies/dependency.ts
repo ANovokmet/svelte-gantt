@@ -1,6 +1,6 @@
 import { SvelteTask } from "../../core/task";
-import { SvelteGantt } from "../../core/gantt";
 import { Component } from "../../core/svelte";
+import { SvelteGanttComponent } from "../../gantt";
 
 export interface DependencyModel {
     id: number;
@@ -9,7 +9,7 @@ export interface DependencyModel {
 
 export default class SvelteDependency {
 
-    gantt: SvelteGantt;
+    gantt: SvelteGanttComponent;
     model: DependencyModel;
     fromTask: SvelteTask;
     toTask: SvelteTask;

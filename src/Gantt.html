@@ -125,8 +125,6 @@
   import { Columns, ColumnHeaders } from './column';
   import { Resizer } from "./ui";
 
-  import { Store } from "svelte/store.js";
-  
   import { GanttUtils, getPositionByDate } from "./utils/utils";
   import { GanttApi } from "./core/api";
 
@@ -140,117 +138,9 @@
   import { getRelativePos, debounce } from "./utils/domUtils";
   import { findByPosition, ColumnService } from "./core/column";
 
-
-  let SvelteGantt;
-
   export default {
     setup(component) {
-      SvelteGantt = component;
-      SvelteGantt.defaults = {
-        // datetime timeline starts on, currently moment-js object
-        from: null,
-        // datetime timeline ends on, currently moment-js object
-        to: null,
-        // width of main gantt area in px
-        minWidth: 800, //rename to timelinewidth
-        // should timeline stretch width to fit, true overrides timelineWidth
-        stretchTimelineWidthToFit: false,
-        // minimum unit of time task date values will round to
-        magnetUnit: "minute",
-        // amount of units task date values will round to
-        magnetOffset: 15,
-        // duration unit of columns
-        columnUnit: "minute",
-        // duration width of column
-        columnOffset: 15,
-        // list of headers used for main gantt area
-        // unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-        // format: datetime format used for header cell label
-        headers: [
-          { unit: "day", format: "DD.MM.YYYY" },
-          { unit: "hour", format: "HH" }
-        ],
-        zoomLevels: [
-          {
-            headers: [
-              { unit: "day", format: "DD.MM.YYYY" },
-              { unit: "hour", format: "HH" }
-            ],
-            minWidth: 800,
-            stretchTimelineWidthToFit: true
-          },
-          {
-            headers: [
-              { unit: "hour", format: "ddd D/M, H A" },
-              { unit: "minute", format: "mm", offset: 15 }
-            ],
-            minWidth: 5000,
-            stretchTimelineWidthToFit: false
-          }
-        ],
-        zoom: 0,
-        // height of a single row in px
-        rowHeight: 52,
-        rowPadding: 6,
-        // modules used in gantt
-        modules: [],
-        // enables right click context menu
-        enableContextMenu: false,
-        // sets top level gantt class which can be used for styling
-        classes: "",
-        // width of handle for resizing task
-        resizeHandleWidth: 10,
-        // handler of button clicks
-        onTaskButtonClick: null, // e.g. (task) => {debugger},
-        // task content factory function
-        taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
 
-        rows: [],
-        tasks: [],
-        _timeRanges: []
-      };
-
-      SvelteGantt.create = function(target, data, options) {
-        // bind gantt modules
-        const ganttModules = {
-          ganttBodyModules: [],
-          ganttTableModules: [],
-          defaults: {}
-        };
-
-        if (options.modules) {
-          options.modules.forEach(module => {
-            module.bindToGantt(ganttModules);
-          });
-        }
-
-        // initialize gantt state
-        const newData = {
-          initialRows: data.rows,
-          initialTasks: data.tasks,
-          _ganttBodyModules: ganttModules.ganttBodyModules,
-          _ganttTableModules: ganttModules.ganttTableModules
-        };
-
-        // initialize all the gantt options
-        const ganttOptions = Object.assign(
-          {
-            scrollTop: 0,
-            scrollLeft: 0
-          },
-          SvelteGantt.defaults,
-          ganttModules.defaults,
-          options
-        );
-
-        const store = new GanttStore(ganttOptions);
-
-        return new SvelteGantt({
-          target,
-          data: newData,
-          store
-        });
-      };
     },
     components: { Row, Columns, ColumnHeaders, TimeRange, TimeRangeHeader, Resizer },
     oncreate() {
@@ -397,14 +287,14 @@
                 });
 
                 this.selectionManager = new SelectionManager(this.store);
-                this.utils = new GanttUtils(this);
+                this.utils = new GanttUtils(this.store);
                 this.api = new GanttApi();
-                this.taskFactory = new TaskFactory(this);
-                this.rowFactory = new RowFactory(this);
-                this.timeRangeFactory = new TimeRangeFactory(this);
-                this.dndManager = new DragDropManager(this);
+                this.rowFactory = new RowFactory(this.store);
+                this.dndManager = new DragDropManager(this.store);
                 this.columnService = new ColumnService(this);
-
+                this.timeRangeFactory = new TimeRangeFactory(this.columnService);
+				this.taskFactory = new TaskFactory(this.columnService, this.store);
+				
                 this.api.registerEvent("tasks", "move");
                 this.api.registerEvent("tasks", "select");
                 this.api.registerEvent("tasks", "switchRow");

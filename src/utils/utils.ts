@@ -1,10 +1,10 @@
-import { SvelteGantt } from "../core/gantt";
+import { GanttStore } from "../core/store";
 
 export class GanttUtils {
-    gantt: SvelteGantt;
+    store: GanttStore;
 
-    constructor(gantt) {
-        this.gantt = gantt;
+    constructor(store) {
+        this.store = store;
     }
 
     /**
@@ -12,12 +12,12 @@ export class GanttUtils {
      * @param {*} date 
      */
     getPositionByDate (date) {
-        const {from, to, width} = this.gantt.store.get();
+        const {from, to, width} = this.store.get();
         return getPositionByDate(date, from, to, width); 
     }
 
     getDateByPosition (x) {
-        const {from, to, width} = this.gantt.store.get();
+        const {from, to, width} = this.store.get();
         return getDateByPosition(x, from, to, width);
     }
 
@@ -27,7 +27,7 @@ export class GanttUtils {
      * @returns {Moment} rounded date passed as parameter
      */
     roundTo (date) {
-        const {magnetUnit, magnetOffset} = this.gantt.store.get();
+        const {magnetUnit, magnetOffset} = this.store.get();
 
         let value = date.get(magnetUnit)
     

@@ -1,8 +1,6 @@
-import { isLeftClick, addEventListenerOnce, getRelativePos } from "src/utils/domUtils";
-import { PositionProvider, DraggableSettings } from "./interfaces";
-import { SvelteGantt } from "src/core/gantt";
-import { SvelteRow } from "src/core/row";
-import { MIN_DRAG_Y, MIN_DRAG_X } from "src/core/constants";
+import { isLeftClick, addEventListenerOnce, getRelativePos } from 'src/utils/domUtils';
+import { PositionProvider, DraggableSettings } from './interfaces';
+import { MIN_DRAG_Y, MIN_DRAG_X } from 'src/core/constants';
 
 /**
  * Applies dragging interaction to gantt elements
@@ -169,6 +167,8 @@ export class Draggable {
         const { x, y } = this.provider.getPos(event);
         const currWidth = this.provider.getWidth(event);
         
+        this.settings.onMouseUp && this.settings.onMouseUp();
+
         if(this.resizeTriggered){
             this.settings.onDrop({
                 x, 

@@ -1,22 +1,22 @@
-import { SvelteGantt } from "../gantt";
-import { SvelteRow } from "../row";
+import { SvelteRow } from '../row';
+import { GanttStore } from '../store';
 
 export type DropHandler = (event: MouseEvent) => any;
 
 export class DragDropManager
 {
-    gantt: SvelteGantt;
+    store: GanttStore;
     handlerMap: {[key:string]: DropHandler} = {};
 
-    constructor(gantt) {
-        this.gantt = gantt;
+    constructor(store) {
+        this.store = store;
         
         this.register('row', (event) => {
             let elements = document.elementsFromPoint(event.clientX, event.clientY);
-            let rowElement = elements.find((element) => !!element.getAttribute("data-row-id"));
+            let rowElement = elements.find((element) => !!element.getAttribute('data-row-id'));
             if(rowElement !== undefined) {
-                const rowId = parseInt(rowElement.getAttribute("data-row-id"));
-                const { rowMap } = this.gantt.store.get();
+                const rowId = parseInt(rowElement.getAttribute('data-row-id'));
+                const { rowMap } = this.store.get();
                 const targetRow = rowMap[rowId];
 
                 if(targetRow.model.enableDragging){
