@@ -2,6 +2,7 @@
 //import moment from "../node_modules/moment/src/moment.js";
 let startOfToday = moment().startOf('day');
 
+const dependencies = [];
 const colors = ['blue','green','orange']
 
 let generation = 0;
@@ -11,10 +12,10 @@ function generateData() {
 		tasks: [],
 	}
 
-	const ids = [ ...Array(1000).keys() ];
+	const ids = [ ...Array(100).keys() ];
 	shuffleArray(ids);
 
-	for(let i = 0; i < 1000; i++) {
+	for(let i = 0; i < 100; i++) {
 
 		let rand_bool = Math.random() < 0.2;
 
@@ -24,7 +25,6 @@ function generateData() {
 			id: i,
             label: 'Row #'+i,
             age: (Math.random() * 80) | 0,
-			tasks: [],
 			enableDragging: true,
 			imageSrc: 'Content/joe.jpg',
 			//contentHtml: '<s>Test</s>'
@@ -39,7 +39,7 @@ function generateData() {
 		const rand_h = (Math.random() * 10) | 0
 		const rand_d = (Math.random() * 5) | 0 + 1
 
-		//if(i === 5)
+		//if(i === 5 || i === 1)
 		data.tasks.push({
 			type: 'task',
 			generation,
@@ -78,14 +78,12 @@ function generateData() {
 	}
 
 	generation += 1;
-	
-	/*for(let i = 0; i < 499; i++) {
-		data.dependencies.push({
-			id: i, 
-			fromTask: i, 
-			toTask: i+1 
-		});
-	}*/
+    
+    dependencies.push({
+        id: 0, 
+        fromId: 1, 
+        toId: 5 
+    });
 
 	return data;
 }
@@ -122,8 +120,9 @@ let options = {
 	from: currentStart,
 	to: currentEnd,
 	tableHeaders: [{title: 'Label', property: 'label', width: 140, type: 'resourceInfo'}, {title: 'Age', property: 'age', width: 140}],
-	tableWidth: 140,
+	tableWidth: 240,
     modules: [SvelteGanttTable],
+    dependencies
 	//taskContent: (task) => '<i class="sg-icon fas fa-calendar"></i>' + task.model.label
 }
 

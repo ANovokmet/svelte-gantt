@@ -1,5 +1,5 @@
 <div class="sg-table sg-view" style="width:{tableWidth}px;">
-    <div class="sg-table-header" ref:sideHeaderContainer style="height:{$headerHeight}px"> 
+    <div class="sg-table-header" ref:sideHeaderContainer style="height:{$headerHeight}px">
         {#each $tableHeaders as header}
             <div class="sg-table-header-cell sg-table-cell"> <!--style="width:{header.width}px"-->
                 {header.title}
@@ -83,51 +83,42 @@
 
     export default {
         setup(component) {
+            component.type = 'table';
+
             component.defaults = {
                 // list of columns used in the table
                 // title: label to display in the header
                 // property: property of row to display in the cell
                 // width: width of column
-                tableHeaders: [{title: 'Name', property: 'label', width: 100}],
+                tableHeaders: [{ title: 'Name', property: 'label', width: 100 }],
                 // total width of the table, if width is smaller than sum of column widths, a scrollbar shows
                 tableWidth: 100
             }
-
-            component.bindToGantt = function (params) {
-                params.ganttTableModules.push(component);
-                Object.assign(params.defaults, component.defaults);
-            }
         },
         components: { TableRow },
-        oncreate(){
-            this.fire('init', {module: this});
-            
+        oncreate() {
+            this.fire('init', { module: this });
         },
         methods: {
-            initModule (options) {
+            initModule(options) {
                 this.set(options);
-                const {_gantt} = this.get();
-                const {scrollables} = _gantt.get();
-                scrollables.push({node: this.refs.scrollable});
+                const { _gantt } = this.get();
+                const { scrollables } = _gantt.get();
+                scrollables.push({ node: this.refs.scrollable });
             },
             onGanttCreated() {
-                const {_gantt} = this.get();
-            }
-        },
-        data() {
-            return {
-                visibleRows: null
+                const { _gantt } = this.get();
             }
         },
         computed: {
-            scrollWidth: ({$tableHeaders}) => {
+            scrollWidth: ({ $tableHeaders }) => {
                 let sum = 0;
                 $tableHeaders.forEach(header => {
                     sum += header.width;
                 });
                 return sum;
             },
-            bottomScrollbarVisible: ({$visibleWidth, $width}) => $width > $visibleWidth
+            bottomScrollbarVisible: ({ $visibleWidth, $width }) => $width > $visibleWidth
         }
     }
 </script>

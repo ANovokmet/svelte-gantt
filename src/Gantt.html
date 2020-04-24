@@ -1,9 +1,9 @@
 <svelte:window on:resize="onWindowResizeEventHandler(event)" />
 <div class="sg-gantt {$classes}" ref:ganttElement>
 	{#each _ganttTableModules as module (module.key)}
-	<svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} {tableWidth} on:init="initModule(event.module)" {visibleRows} />
+	<svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} tableWidth={$tableWidth} on:init="initModule(event.module)" {visibleRows} />
 
-    <Resizer on:resize="onresize(event)"></Resizer>
+    <Resizer x={$tableWidth} on:resize="onresize(event)"></Resizer>
 	{/each}
 
 	<div class="sg-timeline sg-view">
@@ -40,7 +40,7 @@
 					{/each}
 				</div>
 				{#each _ganttBodyModules as module (module.key)}
-				<svelte:component this={module} on:init="initModule(event.module)" />
+				<svelte:component this={module} {paddingTop} {paddingBottom} {visibleRows} on:init="initModule(event.module)" />
 				{/each}
 			</div>
 		</div>
@@ -85,6 +85,7 @@
         position: absolute;
         width: 100%;
         height: 100%;
+        z-index: 1;
     }
 
     .sg-rows {
@@ -198,7 +199,7 @@
     },
     methods: {
         onresize({ left }) {
-            this.set({tableWidth: left});
+            this.store.set({tableWidth: left});
             setTimeout(() => {
                 this.refreshTasks();
             }, 0);
@@ -367,8 +368,6 @@
     },
     data() {
         return {
-            tableWidth: 240,
-
             scrollables: [],
             visibleRows: [],
             visibleTasks: [],

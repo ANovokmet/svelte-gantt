@@ -19,8 +19,6 @@
             {model.label}
         {/if}
         <!-- <span class="debug">x:{x} y:{y}, x:{left} y:{top}</span> -->
-        
-
         {#if model.showButton}
             <span class="sg-task-button {model.buttonClasses}" on:click="onclick(event)">
                 {@html model.buttonHtml}
@@ -281,11 +279,6 @@
                 dragging: false,
                 selected: false,
                 resizing: false,
-
-                currWidth: null,
-                x: null,
-                y: null,
-
                 animating: true
             }
         },

@@ -8,23 +8,32 @@ A lightweight and fast interactive gantt chart/resource booking component made w
 
 Dependent on [Moment.js](https://momentjs.com/)
 
-## Installation
+## Installation (IIFE bundle)
 
  1. Clone or download repository.  
- 2. Include relevant css and javascript
-    files from *./public*:
+ 2. Run the build:
+```
+node tools/build
+```
+ 3. Include relevant css and javascript
+    files from *./dist*:
 
 ```html
-<link  rel='stylesheet'  href='gantt-default.css'>
-<link  rel='stylesheet'  href='svelteGantt.css'>
+<link  rel='stylesheet'  href='public/gantt-default.css'>
+<link  rel='stylesheet'  href='dist/css/svelteGantt.css'>
 
 <script  src='moment.js'></script>
-<script  src='svelteGantt.js'></script>
+<script  src='dist/index.iife.js'></script>
+```
+Or use ES6 imports in your code:
+
+```js
+import { create as createGantt, SvelteGanttTable } from 'svelte-gantt';
 ```
 
  3. Initialize svelte-gantt:
 ```js
-var gantt = SvelteGantt.create(
+var gantt = create(
 	// target a DOM element
 	document.body, 
 	// svelte-gantt data model
@@ -35,31 +44,19 @@ var gantt = SvelteGantt.create(
 ```
 ..or run the example by opening *./public/index.html*
 
-### Modules
-To use modules with your gantt, include relevant files too:
-```html
-<link rel='stylesheet' href='svelteGantt.css'>
-<link rel='stylesheet' href='svelteGanttTable.css'>
-<script src='svelteGanttTable.js'></script>
-<script src='svelteGanttExternal.js'></script>
-```
-... and include them in options.modules.
-
 ## Options
 
 ### Gantt
 ```js
 options = {
-	// datetime timeline starts on, currently moment-js object
-	from:  null,
-	// datetime timeline ends on, currently moment-js object
-	to:  null,
+	// datetime timeline starts on, moment-js
+	from: moment("9:00", "HH:mm"),
+	// datetime timeline ends on, moment-js
+	to: moment("17:00", "HH:mm"),
 	// width of main gantt area in px
-	width:  800, //rename to timelinewidth
+	width:  800, 
 	// should timeline stretch width to fit, true overrides timelineWidth
 	stretchTimelineWidthToFit:  false,
-	// height of main gantt area in px
-	height:  400,
 	// minimum unit of time task date values will round to
 	magnetUnit:  'minute',
 	// amount of units task date values will round to
@@ -83,9 +80,9 @@ options = {
 	// width of handle for resizing task
 	resizeHandleWidth:  5,
 	// handler of button clicks
-	onTaskButtonClick:  null, // e.g. (task) => {debugger},
+	onTaskButtonClick:  (task) => { console.log('Clicked: ', task); },
 	// task content factory function
-	taskContent:  null  // e.g. (task) => '<div>Custom task content</div>'
+	taskContent: (task) => `<div>Task ${task.model.label}</div>` 
 };
 ```
 
@@ -103,15 +100,19 @@ data  = {
 ### Row
 Renders a row:
 ```js
-row = {
+{
 	// id of row, every row needs to have a unique one
-	id: 0,
+    id: 1234,
 	// css classes
-	classes: '',
-	// html content of row
-	contentHtml: undefined,
+	classes: 'row-disabled',
+	// html content of row, renders as background to a row
+    contentHtml: '<div class="row-leave">On sick leave</s>',
 	// enable dragging of tasks to and from this row
-	enableDragging:  true
+    enableDragging: true,
+    // label of row, could be any other property, can be displayed with SvelteGanttTable
+    label: 'Andrey Plenkovich',
+    // html content of table row header, displayed in SvelteGanttTable
+    headerHtml: '<s>Andrey Plenkovich <img src="image.jpg"></s>'
 }
 ```
 
@@ -119,25 +120,25 @@ row = {
 ### Task
 Renders a task inside a row:
 ```js
-task = {
+{
 	// id of task, every task needs to have a unique one
-	id: 0;
+	id: 91993,
 	// completion %, indicated on task
-	amountDone:  0;
+	amountDone: 50,
 	// css classes
-	classes: '';
+	classes: 'shadow-sm',
 	// datetime task starts on, currently moment-js object
-	from: null;
+	from: moment("9:00", "HH:mm"),
 	// datetime task ends on, currently moment-js object
-	to: null;
+	to: moment("12:30", "HH:mm"),
 	// label of task
-	label: undefined;
+	label: 'Weekly planning';
 	// html content of task, will override label
-	html: undefined;
+	html: '<b>Weekly planning</b>',
 	// show button bar
 	showButton: false
 	// button classes, useful for fontawesome icons
-	buttonClasses: ''
+	buttonClasses: 'fa fa-gear'
 	// html content of button
 	buttonHtml: undefined,
 	// enable dragging of task
@@ -146,15 +147,21 @@ task = {
 ```
 
 ### Dependencies 
-Renders a dependency between two tasks. Used by svelteGanttDependencies module:
-```js
-dependency = {
+Renders a dependency between two tasks. Used by SvelteGanttDependencies module:
+```ts
+{
 	// unique id of dependency
-	id:  0,
-	// id of dependent task
-	fromTask:  0,
-	// id of task that the task is dependent on
-	toTask:  1
+	id: 95,
+    /** Id of dependent task */
+    fromId: 13,
+    /** Id of dependency task */
+    toId: 9,
+    /** Stroke color */
+    stroke: 'red',
+    /** Width of stroke */
+    strokeWidth: 2,
+    /** Size of the arrow head */
+    arrowSize: 3
 }
 ```
 ### Events
@@ -207,37 +214,25 @@ SvelteGanttExternal.create(
 );
 ```
 
-## Build
-
-  
+## Development build
 
 If you want to build from sources:
 Install the dependencies...
-
-  
 
 ```bash
 cd svelte-gantt
 npm install
 ```
 
-  
-
 ...then start [Rollup](https://rollupjs.org):
-
-  
 
 ```bash
 npm run dev
 ```
 
-  
-
 Navigate to [localhost:5000](http://localhost:5000). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
 
 ## TBD
 
- - Milestones 
  - Context-menus (click on row, task or dependency)
- - Animations
 

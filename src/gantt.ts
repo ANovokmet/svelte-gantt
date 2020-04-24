@@ -153,5 +153,5 @@ export const defaults: SvelteGanttOptions = {
 
 	rows: [],
 	tasks: [],
-	_timeRanges: []
+	_timeRanges: [],
 };
