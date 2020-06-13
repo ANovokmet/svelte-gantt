@@ -1,4 +1,19 @@
-<div class="sg-time-range" class:moving="resizing" style="width:{currWidth}px;left:{x}px">
+<script>
+    export let model;
+    export let left;
+    export let width;
+    export let resizing = false;
+
+    const _position = {
+        width,
+        x: left
+    }
+    $: {
+        _position.x = left, _position.width = width;
+    };
+</script>
+
+<div class="sg-time-range" class:moving="{resizing}" style="width:{_position.width}px;left:{_position.x}px">
     <div class="sg-time-range-label">{model.label}</div>
 </div>
 <style>
@@ -24,22 +39,3 @@
         font-size: 10px;
     }
 </style>
-<script>
-    export default {
-        onstate({ changed, current, previous }) {
-            if(!current.resizing){
-                this.set({
-                    x: current.left,
-                    currWidth: current.width
-                });
-            }
-        },
-        data(){
-            return {
-                resizing: false,
-                currWidth: null,
-                x: null
-            }
-        }
-    }
-</script>

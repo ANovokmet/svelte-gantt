@@ -16,13 +16,11 @@ interface DragOptions {
 
 function drag(node, data: DragOptions) {
     const { gantt } = data;
-    const { rowContainerElement } = gantt.store.get();
+    const { rowContainerElement } = gantt.rowContainerElement;
 
     let element = null;
 
     return new Draggable(node, {
-        onDown: ({ x, y }) => {
-        },
         onDrag: ({ x, y }) => {
 
             if(!element) {
@@ -38,11 +36,11 @@ function drag(node, data: DragOptions) {
         },
         dragAllowed: () => data.enabled,
         resizeAllowed: false,
-        onDrop: ({ x, y, event }) => {
-            const targetRow = gantt.dndManager.getTarget('row', event);
+        onDrop: (event) => {
+            const targetRow = gantt.dndManager.getTarget('row', event.mouseEvent);
             if (targetRow) {
 
-                const mousePos = getRelativePos(rowContainerElement, event);
+                const mousePos = getRelativePos(rowContainerElement, event.mouseEvent);
                 const date = gantt.utils.getDateByPosition(mousePos.x);
 
                 data.onsuccess(targetRow, date, gantt);
@@ -56,17 +54,10 @@ function drag(node, data: DragOptions) {
             element = null;
         },
         container: document.body,
-    },
-        {
-            getPos: (event: MouseEvent) => {
-                return {
-                    x: event.pageX,
-                    y: event.pageY
-                };
-            },
-            getWidth: () => 0
-        }
-    );
+        getX: (event: MouseEvent) => event.pageX,
+        getY: (event: MouseEvent) => event.pageY,
+        getWidth: () => 0
+    });
 }
 
 SvelteGanttExternal = {};

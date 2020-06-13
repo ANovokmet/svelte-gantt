@@ -1,4 +1,4 @@
-import _svelteGanttDependencies from './GanttDependencies.html';
+import _svelteGanttDependencies from './GanttDependencies.svelte';
 import { ComponentCreator, Component } from '../../core/svelte';
 import { DependencyModel } from './dependency';
 

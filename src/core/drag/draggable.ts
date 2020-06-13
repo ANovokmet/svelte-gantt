@@ -1,6 +1,6 @@
-import { isLeftClick, addEventListenerOnce, getRelativePos } from 'src/utils/domUtils';
-import { PositionProvider, DraggableSettings } from './interfaces';
-import { MIN_DRAG_Y, MIN_DRAG_X } from 'src/core/constants';
+import { isLeftClick, addEventListenerOnce, getRelativePos } from '../../utils/domUtils';
+import { DraggableSettings, DownDropEvent } from './interfaces';
+import { MIN_DRAG_Y, MIN_DRAG_X } from '../constants';
 
 /**
  * Applies dragging interaction to gantt elements
@@ -19,12 +19,10 @@ export class Draggable {
     resizeTriggered = false;
 
     settings: DraggableSettings;
-    provider: PositionProvider;
     node: HTMLElement;
     
-    constructor(node: HTMLElement, settings: DraggableSettings, provider: PositionProvider) {
+    constructor(node: HTMLElement, settings: DraggableSettings) {
         this.settings = settings;
-        this.provider = provider;
         this.node = node;
 
         node.addEventListener('mousedown', this.onmousedown, false);
@@ -51,15 +49,15 @@ export class Draggable {
             return;
         }
 
-        const { x, y } = this.provider.getPos(event);
-        const currWidth = this.provider.getWidth(event);
-
         event.stopPropagation();
         event.preventDefault();
         
         const canDrag = this.dragAllowed;
         const canResize = this.resizeAllowed;
         if(canDrag || canResize){
+            const x = this.settings.getX();
+            const y = this.settings.getY();
+            const width = this.settings.getWidth();
 
             this.initialX = event.clientX;
             this.initialY = event.clientY;
@@ -67,35 +65,31 @@ export class Draggable {
 
             this.mouseStartPosX = getRelativePos(this.settings.container, event).x - x;
             this.mouseStartPosY = getRelativePos(this.settings.container, event).y - y;
-            this.mouseStartRight = x + currWidth;
+            this.mouseStartRight = x + width;
+
 
             if(canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
                 this.direction = 'left';
                 this.resizing = true;
-                this.settings.onDown({
-                    x,
-                    currWidth,
-                    y,
-                    resizing: true
-                });
             }
-            else if(canResize && this.mouseStartPosX > currWidth - this.settings.resizeHandleWidth) {
+            
+            if(canResize && this.mouseStartPosX > width - this.settings.resizeHandleWidth) {
                 this.direction = 'right';
                 this.resizing = true;
-                this.settings.onDown({
-                    x,
-                    currWidth,
-                    y,
-                    resizing: true
-                });
             }
-            else if(canDrag) {
+            
+            if(canDrag && !this.resizing) {
                 this.dragging = true;
+            }
+
+            if((this.dragging || this.resizing) && this.settings.onDown) {
                 this.settings.onDown({
+                    mouseEvent: event,
                     x,
-                    currWidth,
+                    width,
                     y,
-                    dragging: true
+                    resizing: this.resizing,
+                    dragging: this.dragging
                 });
             }
 
@@ -116,47 +110,49 @@ export class Draggable {
         event.preventDefault();
         if(this.resizing) {
             const mousePos = getRelativePos(this.settings.container, event);
-            const { x } = this.provider.getPos(event);
-            const currWidth = this.provider.getWidth(event);
+            const x = this.settings.getX();
+            const width = this.settings.getWidth();
+
+            let resultX: number;
+            let resultWidth: number;
 
             if(this.direction === 'left') { //resize ulijevo
-                if(mousePos.x > x + currWidth) {
+                if(mousePos.x > x + width) {
                     this.direction = 'right';
-                    this.settings.onResize({
-                        x: this.mouseStartRight,
-                        currWidth: this.mouseStartRight - mousePos.x
-                    });
-                    this.mouseStartRight = this.mouseStartRight + currWidth;
+                    resultX = this.mouseStartRight;
+                    resultWidth = this.mouseStartRight - mousePos.x;
+                    this.mouseStartRight = this.mouseStartRight + width;
                 }
                 else{
-                    this.settings.onResize({
-                        x: mousePos.x,
-                        currWidth: this.mouseStartRight - mousePos.x
-                    });
+                    resultX = mousePos.x;
+                    resultWidth = this.mouseStartRight - mousePos.x;
                 }
             }
             else if(this.direction === 'right') {//resize desno
                 if(mousePos.x <= x) {
                     this.direction = 'left';
-                    this.settings.onResize({
-                        x: mousePos.x,
-                        currWidth: x - mousePos.x
-                    });
+                    resultX = mousePos.x;
+                    resultWidth = x - mousePos.x;
                     this.mouseStartRight = x;
                 }
                 else {
-                    this.settings.onResize({
-                        x,
-                        currWidth: mousePos.x - x
-                    });
+                    resultX = x;
+                    resultWidth = mousePos.x - x;
                 }
             }
+            
+            this.settings.onResize && this.settings.onResize({
+                mouseEvent: event,
+                x: resultX,
+                width: resultWidth
+            });
         }
 
         // mouseup
-        if(this.dragging) {
+        if(this.dragging && this.settings.onDrag) {
             const mousePos = getRelativePos(this.settings.container, event);
             this.settings.onDrag({
+                mouseEvent: event,
                 x: mousePos.x - this.mouseStartPosX,
                 y: mousePos.y - this.mouseStartPosY
             });
@@ -164,17 +160,18 @@ export class Draggable {
     }
 
     onmouseup = (event: MouseEvent) => {
-        const { x, y } = this.provider.getPos(event);
-        const currWidth = this.provider.getWidth(event);
+        const x = this.settings.getX();
+        const y = this.settings.getY();
+        const width = this.settings.getWidth();
         
         this.settings.onMouseUp && this.settings.onMouseUp();
 
-        if(this.resizeTriggered){
+        if(this.resizeTriggered && this.settings.onDrop){
             this.settings.onDrop({
+                mouseEvent: event,
                 x, 
                 y,
-                currWidth,
-                event,
+                width,
                 dragging: this.dragging,
                 resizing: this.resizing
             });

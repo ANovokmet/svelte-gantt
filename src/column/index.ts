@@ -1,7 +1,7 @@
-import Column from './Column.html';
-import ColumnHeader from './ColumnHeader.html';
-import ColumnHeaders from './ColumnHeaders.html';
-import Columns from './Columns.html';
+import Column from './Column.svelte';
+import ColumnHeader from './ColumnHeader.svelte';
+import ColumnHeaders from './ColumnHeaders.svelte';
+import Columns from './Columns.svelte';
 
 export {
     Column,

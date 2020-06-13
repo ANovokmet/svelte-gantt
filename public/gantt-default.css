@@ -64,12 +64,15 @@
 .sg-task.orange {
     background-color: rgb(254, 172, 49)
 }
+
 .sg-task.orange:hover {
     background-color: rgb(238, 161, 45)
 }
+
 .sg-task.orange.selected {
     background-color: rgb(219, 149, 45)
 }
+
 .sg-task.orange.selected:hover {
     background-color: rgb(199, 135, 38)
 }
@@ -78,9 +81,9 @@
 
 
 .sg-table-body-cell {
-    border-bottom: #efefef 1px solid;  
-    background-color: #fbfbfb;  
-    font-weight: bold;  
+    border-bottom: #efefef 1px solid;
+    background-color: #fbfbfb;
+    font-weight: bold;
 }
 
 .sg-table-cell {
@@ -91,7 +94,7 @@
     border-top: 1px solid #ddd;
 } */
 
-.column-header {    
+.column-header {
     border-right: #efefef 1px solid;
     border-bottom: #efefef 1px solid;
 }
@@ -103,8 +106,8 @@
 
 
 .sg-table-header {
-    border-bottom: #efefef 1px solid; 
-    background-color: #fbfbfb; 
+    border-bottom: #efefef 1px solid;
+    background-color: #fbfbfb;
 }
 
 .column {
@@ -116,10 +119,19 @@
 }
 
 .row-disabled {
-    background: repeating-linear-gradient(45deg, rgba(55,55,55,0.1), rgba(55,55,55,0.1) 10px, transparent 10px, transparent 20px);
+    background: repeating-linear-gradient(45deg, rgba(55, 55, 55, 0.1), rgba(55, 55, 55, 0.1) 10px, transparent 10px, transparent 20px);
 }
 
 
 .sg-icon {
     margin-right: 5px;
+}
+
+
+/* fix sg-table-body-cell color - move to sg-body-row */
+.sg-table-row.row-group .sg-table-body-cell {
+    background-color: #fbfbfb;
+}
+.sg-table-body-cell {
+    background-color: #ffffff;
 }

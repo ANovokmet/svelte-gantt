@@ -1,4 +1,3 @@
-import { GanttStore } from "./core/store";
 import { ColumnService } from './core/column';
 import { GanttUtils } from './utils/utils';
 import { GanttApi } from './core/api';
@@ -72,14 +71,17 @@ export interface SvelteGanttData {
 }
 
 export interface SvelteGanttComponent extends Component {
-	api: GanttApi;
-	utils: GanttUtils;
-	columnService: ColumnService;
-	store: GanttStore;
+    api: GanttApi;
+    
+    rowContainerElement: any;
+    // utils: GanttUtils;
+    utils: any;
+	// columnService: ColumnService;
+	// store: GanttStore;
 	dndManager: DragDropManager;
-	taskFactory: TaskFactory;
-	rowFactory: RowFactory;
-	timeRangeFactory: TimeRangeFactory;
+	// taskFactory: TaskFactory;
+	// rowFactory: RowFactory;
+	// timeRangeFactory: TimeRangeFactory;
 
 	refreshTasksDebounced();
 	adjustVisibleDateRange({ from, to, unit });

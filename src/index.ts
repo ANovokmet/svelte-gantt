@@ -4,14 +4,13 @@
 // export declare var SvelteGanttTable: SvelteGanttTableComponent;
 // export declare var SvelteGantt: SvelteGanttComponent;
 
-import _svelteGantt from './Gantt.html';
+import _svelteGantt from './Gantt.svelte';
 
 import { SvelteGanttComponent, defaults } from './gantt';
-import { GanttStore } from './core/store';
 import { ComponentCreator } from './core/svelte';
 import { SvelteGanttTable } from './modules/table';
 import { SvelteGanttDependencies } from './modules/dependencies';
-import { SvelteGanttExternal } from './modules/external/External';
+import { SvelteGanttExternal } from './modules/external/external';
 
 var SvelteGantt = _svelteGantt as any as ComponentCreator<SvelteGanttComponent>;
 
@@ -46,20 +45,20 @@ function create(target, data, options) {
     };
 
     // initialize all the gantt options
-    const store = new GanttStore(Object.assign(
-        {
-            scrollTop: 0,
-            scrollLeft: 0
-        },
-        defaults,
-        ganttModules.defaults,
-        options
-    ));
+    // const store = new GanttStore(Object.assign(
+    //     {
+    //         scrollTop: 0,
+    //         scrollLeft: 0
+    //     },
+    //     defaults,
+    //     ganttModules.defaults,
+    //     options
+    // ));
 
     return new SvelteGantt({
         target,
-        data: newData,
-        store
+        props: {...options, ...newData},
+        //store
     });
 };
 

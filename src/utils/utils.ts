@@ -1,10 +1,13 @@
-import { GanttStore } from "../core/store";
+import { Moment } from "moment";
 
 export class GanttUtils {
-    store: GanttStore;
+    from: Moment;
+    to: Moment;
+    width: number;
+    magnetOffset: number;
+    magnetUnit: string;
 
-    constructor(store) {
-        this.store = store;
+    constructor() {
     }
 
     /**
@@ -12,13 +15,11 @@ export class GanttUtils {
      * @param {*} date 
      */
     getPositionByDate (date) {
-        const {from, to, width} = this.store.get();
-        return getPositionByDate(date, from, to, width); 
+        return getPositionByDate(date, this.from, this.to, this.width); 
     }
 
     getDateByPosition (x) {
-        const {from, to, width} = this.store.get();
-        return getDateByPosition(x, from, to, width);
+        return getDateByPosition(x, this.from, this.to, this.width);
     }
 
     /**
@@ -27,17 +28,15 @@ export class GanttUtils {
      * @returns {Moment} rounded date passed as parameter
      */
     roundTo (date) {
-        const {magnetUnit, magnetOffset} = this.store.get();
-
-        let value = date.get(magnetUnit)
+        let value = date.get(this.magnetUnit)
     
-        value = Math.round(value / magnetOffset);
+        value = Math.round(value / this.magnetOffset);
     
-        date.set(magnetUnit, value * magnetOffset);
+        date.set(this.magnetUnit, value * this.magnetOffset);
 
         //round all smaller units to 0
         const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
-        const indexOf = units.indexOf(magnetUnit);
+        const indexOf = units.indexOf(this.magnetUnit);
         for (let i = 0; i < indexOf; i++) {
             date.set(units[i], 0)
         }

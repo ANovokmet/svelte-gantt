@@ -1,30 +1,30 @@
-import { GanttStore } from '../core/store';
+import { writable, Writable } from 'svelte/store';
 
 export class SelectionManager {
-    store: GanttStore;
+    selection: Writable<any[]>;
 
-    constructor(store: GanttStore) {
-        this.store = store;
-        this.store.set({selection: []});
+    constructor() {
+        this.selection = writable([]);
     }
 
-    selectSingle(item){
-        this.store.set({selection: [item]});
+    selectSingle(item) {
+        this.selection.set([item]);
     }
 
-    toggleSelection(item){
-        const { selection } = this.store.get();
-        const index = selection.indexOf(item);
-        if(index !== -1){
-            selection.splice(index, 1);
-        }
-        else{
-            selection.push(item);
-        }
-        this.store.set({selection});
+    toggleSelection(item) {
+        this.selection.update(items => {
+            const index = items.indexOf(item);
+            if (index !== -1) {
+                items.splice(index, 1);
+            }
+            else {
+                items.push(item);
+            }
+            return items;
+        });
     }
 
-    clearSelection(){
-        this.store.set({selection: []});
+    clearSelection() {
+        this.selection.set([]);
     }
 }

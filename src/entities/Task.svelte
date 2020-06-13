@@ -1,0 +1,258 @@
+<script>
+    import { beforeUpdate, afterUpdate, getContext, onMount, onDestroy, tick } from "svelte";
+
+    import { setCursor } from "src/utils/domUtils";
+    import { taskStore, rowStore } from '../core/store';
+    import { Draggable } from "../core/drag";
+
+    export let model;
+    export let height;
+    export let left;
+    export let top;
+    export let width;
+
+    let animating = true;
+
+    let _dragging = false;
+    let _resizing = false;
+
+    let _position = {
+        x: left,
+        y: top,
+        width: width,
+    }
+
+    $: updatePosition(left, top, width);
+    function updatePosition(x, y, width) {
+        if(!_dragging && !_resizing) {
+            _position.x = x;
+            _position.y = y;//row.y + 6;
+            _position.width = width;
+            // should NOT animate on resize/update of columns
+        }
+    }
+
+    const { dimensionsChanged } = getContext('dimensions');
+    const { rowContainer } = getContext('gantt');
+    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick } = getContext('options');
+    const { dndManager, api, utils, selectionManager, columnService } = getContext('services');
+
+    function drag(node) {
+        const ondrop = (event) => {
+            let rowChangeValid = true;
+            //row switching
+            if (event.dragging) {
+                const sourceRow = $rowStore.entities[model.resourceId];
+                const targetRow = dndManager.getTarget("row", event.mouseEvent);
+                if (targetRow) {
+                    model.resourceId = targetRow.model.id;
+                    api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                } else {
+                    rowChangeValid = false;
+                }
+            }
+
+            _dragging = _resizing = false;
+
+            const task = $taskStore.entities[model.id];
+
+            if (rowChangeValid) {
+                const newFrom = model.from = utils.roundTo(columnService.getDateByPosition(event.x));
+                const newTo = model.to = utils.roundTo(columnService.getDateByPosition(event.x + event.width));
+                const newLeft = columnService.getPositionByDate(newFrom) | 0;
+                const newRight = columnService.getPositionByDate(newTo) | 0;
+
+                const left = newLeft;
+                const width = newRight - newLeft;
+                const top = $rowPadding + $rowStore.entities[model.resourceId].y;
+                
+                updatePosition(left, top, width);
+                taskStore.update({
+                    ...task,
+                    left: left,
+                    width: width,
+                    top: top,
+                    model
+                });
+            }
+            else {
+                // reset position
+                (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
+            }
+        };
+
+        const draggable = new Draggable(node, {
+            onDown: (event) => {
+                if (event.dragging) {
+                    setCursor("move");
+                }
+                if (event.resizing) {
+                    setCursor("e-resize");
+                }
+            },
+            onMouseUp: () => {
+                setCursor("default");
+            },
+            onResize: (event) => {
+                (_position.x = event.x), (_position.width = event.width), (_resizing = true);
+            },
+            onDrag: (event) => {
+                (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+            },
+            dragAllowed: () => {
+                return row.model.enableDragging && model.enableDragging;
+            },
+            resizeAllowed: () => {
+                return row.model.enableDragging && model.enableDragging;
+            },
+            onDrop: ondrop,
+            container: rowContainer,
+            resizeHandleWidth, 
+            getX: () => _position.x,
+            getY: () => _position.y,
+            getWidth: () => _position.width
+        });
+        return {
+            destroy: () => draggable.destroy()
+        };
+    }
+
+    export function onclick(event) {
+        if (onTaskButtonClick) {
+            onTaskButtonClick(task);
+        }
+    }
+
+    let selection = selectionManager.selection;
+    let selected = false;
+    $: {
+        selected = $selection.indexOf(model.id) !== -1;
+    
+        if (selected) {
+            api.tasks.raise.select(model);
+        }
+    }
+
+    let row;
+    $: row = $rowStore.entities[model.resourceId];
+</script>
+
+<style>
+  .sg-label-bottom {
+    position: absolute;
+    top: calc(100% + 10px);
+    color: #888;
+  }
+
+  .debug {
+    position: absolute;
+    top: -10px;
+    right: 0;
+    font-size: 8px;
+    color: black;
+  }
+
+  .sg-task {
+    position: absolute;
+
+    white-space: nowrap;
+    /* overflow: hidden; */
+
+    transition: background-color 0.2s, opacity 0.2s;
+    pointer-events: all;
+  }
+
+  .sg-task-background {
+    position: absolute;
+    height: 100%;
+    top: 0;
+  }
+
+  .sg-task-content {
+    position: absolute;
+    height: 100%;
+    top: 0;
+
+    padding-left: 14px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .sg-task:not(.moving) {
+    transition: transform 0.2s, background-color 0.2s, width 0.2s;
+  }
+
+  .sg-task.moving {
+    z-index: 1;
+  }
+
+  .sg-task:hover::before {
+    content: "";
+    width: 4px;
+    height: 50%;
+    top: 25%;
+    position: absolute;
+    cursor: ew-resize;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.5);
+
+    margin-left: 3px;
+    left: 0;
+    border-width: 0 1px;
+    z-index: 1;
+  }
+
+  .sg-task:hover::after {
+    content: "";
+    width: 4px;
+    height: 50%;
+    top: 25%;
+    position: absolute;
+    cursor: ew-resize;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.5);
+
+    margin-right: 3px;
+    right: 0;
+    border-width: 0 1px;
+    z-index: 1;
+  }
+
+  .sg-task.selected {
+    outline: 2px solid rgba(3, 169, 244, 0.5);
+    outline-offset: 3px;
+    z-index: 1;
+  }
+</style>
+
+<div
+  data-task-id="{model.id}"
+  use:drag
+  class="sg-task {model.classes}"
+  style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
+  class:moving={_dragging || _resizing}
+  class:selected
+  class:animating>
+  {#if model.amountDone}
+  <div class="sg-task-background" style="width:{model.amountDone}%" />
+  {/if}
+  <div class="sg-task-content">
+    {#if model.html}
+      {@html model.html}
+    {:else if $taskContent}
+      {@html $taskContent(this)}
+    {:else}{model.label}{/if}
+    <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span>
+    {#if model.showButton}
+      <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
+        {@html model.buttonHtml}
+      </span>
+    {/if}
+  </div>
+
+  {#if model.labelBottom}
+    <label class="sg-label-bottom">{model.labelBottom}</label>
+  {/if}
+</div>

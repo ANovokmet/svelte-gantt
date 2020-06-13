@@ -1,6 +1,5 @@
 import { SvelteRow } from './row';
 import { ColumnService } from './column';
-import { GanttStore } from './store';
 
 export interface TaskModel {
     id: number; // | string;
@@ -30,11 +29,12 @@ export interface SvelteTask {
 
 export class TaskFactory {
     columnService: ColumnService;
-	store: GanttStore;
+    
+    rowPadding: number;
+    rowEntities: {[key:number]: SvelteRow}
 
-    constructor(columnService: ColumnService, store: GanttStore) {
+    constructor(columnService: ColumnService) {
 		this.columnService = columnService;
-		this.store = store;
     }
     
     createTask(model: TaskModel): SvelteTask {
@@ -79,15 +79,15 @@ export class TaskFactory {
     }
 
     row(resourceId): SvelteRow{
-        return this.store.get().rowMap[resourceId];
+        return this.rowEntities[resourceId];
     }
 
     getHeight(model){
-        return this.row(model.resourceId).height - 2 * this.store.get().rowPadding;
+        return this.row(model.resourceId).height - 2 * this.rowPadding;
     }
 
     getPosY(model){
-        return this.row(model.resourceId).y + this.store.get().rowPadding;
+        return this.row(model.resourceId).y + this.rowPadding;
     }
 }
 

@@ -1,6 +1,6 @@
 import { get } from '../utils/utils';
-import * as moment_ from 'moment';
-const moment = moment_;
+import * as moment from 'moment';
+//const moment = moment_;
 
 interface Column {
     from: any;
@@ -71,7 +71,7 @@ export class ColumnService {
         x = x - column.left;
 
         let positionDuration = column.duration / column.width * x;
-        const date = moment(column.from).add(positionDuration, 'milliseconds');
+        const date = column.from.clone().add(positionDuration, 'milliseconds');
 
         return date;
     }

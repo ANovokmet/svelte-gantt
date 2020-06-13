@@ -1,166 +1,77 @@
-import { Store } from 'svelte/store';
+import { writable, Readable, derived } from 'svelte/store';
 import { SvelteTask } from './task';
 import { SvelteRow } from './row';
 import { SvelteTimeRange } from './timeRange';
 
-export class GanttStore extends Store {
-
-    constructor(data){
-        super(Object.assign({
-            taskIds: [],
-            taskMap: {},
-            rowIds: [],
-            rowMap: {},
-            timeRangeMap: {},
-            columns: []
-        }, data),{ 
-            immutable: !true 
-        });
-
-        this.compute('allTasks', ['taskIds', 'taskMap'], (ids: string[], entities: {[key:string]:any}) => {
-            return ids.map(id => entities[id]);
-        });
-        this.compute('allRows', ['rowIds', 'rowMap'], (ids: string[], entities: {[key:string]:any}) => {
-            return ids.map(id => entities[id]);
-        });
-    }
-
-    addTask(task: SvelteTask) {
-        const { taskIds, taskMap } = this.get();
-        const newState = add(task, {ids: taskIds, entities: taskMap});
-        this.set({taskIds: newState.ids, taskMap: newState.entities});
-    }
-
-    addAllTask(tasks: SvelteTask[]) {
-        const newState = addAll(tasks);
-        this.set({taskIds: newState.ids, taskMap: newState.entities});
-    }
-
-    addAllRow(rows: SvelteRow[]) {
-        const newState = addAll(rows);
-        this.set({rowIds: newState.ids, rowMap: newState.entities});
-    }
-
-    addRow(row: SvelteRow) {
-        const { rowIds, rowMap } = this.get();
-        const newState = add(row, {ids: rowIds, entities: rowMap});
-        this.set({rowIds: newState.ids, rowMap: newState.entities});
-    }
-
-    updateTask(task: SvelteTask) {
-        const { taskMap } = this.get();
-        this.set({taskMap: update(task, {entities: taskMap}).entities});
-    }
-
-    updateRow(row: SvelteRow) {
-        const { rowMap } = this.get();
-        this.set({rowMap: update(row, {entities: rowMap})});
-    }
-
-
-    addTimeRange(timeRange: SvelteTimeRange) {
-        const { timeRangeMap } = this.get();
-        const newState = add(timeRange, {ids: [], entities: timeRangeMap});
-        this.set({timeRangeMap: newState.entities});
-    }
-
-    updateTimeRange(timeRange: SvelteTimeRange) {
-        const { timeRangeMap } = this.get();
-        const n = update(timeRange, {entities: timeRangeMap})
-        this.set({timeRangeMap: n.entities});
-    }
+interface EntityState<T> {
+    ids: number[],
+    entities: { [key: number]: T }
 }
 
-interface EntityState {
-    ids?: number[], 
-    entities: any
+interface EntityType {
+    model: { id: number }
 }
 
-function add(entity, state: EntityState) {
+export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
+    _update(updater: (value: EntityState<T>) => EntityState<T>): void;
+    add(entity: T): void;
+    update(entity: T): void;
+    addAll(entities: T[]): void;
+    refresh(): void;
+    set(value: EntityState<T>): void;
+}
+
+function createEntityStore<T extends EntityType>(): EntityStore<T> {
+    const { subscribe, set, update } = writable<EntityState<T>>({ ids: [], entities: {} });
+
     return {
-        ids: [ ...state.ids, entity.model.id ],
-        entities: {
-            ...state.entities,
-            [entity.model.id]: entity
-        }
+        set,
+        _update: update,
+        subscribe,
+        add: (item: T) => update(({ ids, entities }) => ({
+            ids: [...ids, item.model.id],
+            entities: {
+                ...entities,
+                [item.model.id]: item
+            }
+        })),
+        update: (item: T) => update(({ ids, entities }) => ({
+            ids,
+            entities: {
+                ...entities,
+                [item.model.id]: item
+            }
+        })),
+        addAll: (items: T[]) => {
+            const ids = [];
+            const entities = {};
+
+            for(const entity of items) {
+                ids.push(entity.model.id);
+                entities[entity.model.id] = entity;
+            }
+
+            set({ ids, entities });
+        },
+        refresh: () => update(store => ({...store}))
     };
 }
 
-function addMany(entities, state: EntityState) {
+export const taskStore = createEntityStore<SvelteTask>();
+export const rowStore = createEntityStore<SvelteRow>();
+export const timeRangeStore = createEntityStore<SvelteTimeRange>();
 
-    for(const entity of entities) {
-        state.ids.push(entity.model.id);
-        state.entities[entity.model.id] = entity;
-    }
+export const allTasks = derived(taskStore, ({ids, entities}) => ids.map(id => entities[id]));
+export const allRows = derived(rowStore, ({ids, entities}) => ids.map(id => entities[id]));
+export const allTimeRanges = derived(timeRangeStore, ({ids, entities}) => ids.map(id => entities[id]));
 
-    return {
-        ids: state.ids.map(i => i),
-        entities: state.entities
-    }
-}
-function addAll(entities) {
-    const ids = [];
-    const newEntities = {};
+export const filteredRows = derived(allRows, $allRows => $allRows.filter(row => !row.hidden));
 
-    for(const entity of entities) {
-        ids.push(entity.model.id);
-        newEntities[entity.model.id] = entity;
-    }
-
-    return {
-        ids: ids,
-        entities: newEntities
-    }
-}
-
-function update(entity, state: EntityState){
-    return {
-        entities: {
-            ...state.entities,
-            [entity.model.id]: entity
-        }
-    };
-}
-
-// add(entity){
-//     const { ids, entities } = this.get();
-//     this.set({
-//         ids: [ ...ids, entity.id ],
-//         entities: {
-//             ...entities,
-//             [entity.id]: entity
-//         }
-//     });
-// }
-
-// addMany(entityArr){
-//     const { entities } = this.get();
-//     const newEntities = {
-//         ...entities,
-//         ...entityArr
-//     }
-
-//     this.set({
-//         ids: Object.keys(newEntities),
-//         entities: newEntities
-//     });
-// }
-
-// update(entity){
-//     const { entities } = this.get();
-//     this.set({
-//         entities: {
-//             ...entities,
-//             [entity.id]: entity
-//         }
-//     });
-// }
-
-// remove(id){
-//     const { ids, entities } = this.get();
-//     const { [id]: entity, ...newEntities } = entities;
-//     this.set({
-//         ids: ids.filter(i => i === id),
-//         entities: newEntities
-//     });
-// }
+export const rowTaskCache = derived(allTasks, $allTasks => {
+    return $allTasks.reduce((cache, task) => {
+        if (!cache[task.model.resourceId]) 
+            cache[task.model.resourceId] = [];
+        cache[task.model.resourceId].push(task.model.id);
+        return cache;
+    }, {});
+});

@@ -1,16 +1,35 @@
-export interface PositionProvider {
-    getPos(event?: MouseEvent): {x: number, y: number};
-    getWidth(event?: MouseEvent): number;
-}
-
 export interface DraggableSettings {
-    onDown(state: any): void; 
-    onResize?(state: any): void;
-    onDrag?(state: any): void;
+    onDown?(event?: DownDropEvent): void; 
+    onResize?(event?: ResizeEvent): void;
+    onDrag?(event?: DragEvent): void;
     onMouseUp?(): void;
-    onDrop(state: any): void; 
+    onDrop(event?: DownDropEvent): void; 
     dragAllowed: (() => boolean) | boolean;
     resizeAllowed: (() => boolean) | boolean;
     container: any; 
     resizeHandleWidth?: any;
+    getX?: (event?: MouseEvent) => number;
+    getY?: (event?: MouseEvent) => number;
+    getWidth?: () => number;
+}
+
+export interface DownDropEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    y: number;
+    width: number;
+    resizing: boolean;
+    dragging: boolean;
+}
+
+export interface DragEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    y: number;
+}
+
+export interface ResizeEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    width: number;
 }

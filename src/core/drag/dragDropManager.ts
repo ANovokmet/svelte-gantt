@@ -1,23 +1,21 @@
 import { SvelteRow } from '../row';
-import { GanttStore } from '../store';
+import { Writable, get } from 'svelte/store';
+import { EntityStore } from '../store';
 
 export type DropHandler = (event: MouseEvent) => any;
 
 export class DragDropManager
 {
-    store: GanttStore;
     handlerMap: {[key:string]: DropHandler} = {};
 
-    constructor(store) {
-        this.store = store;
-        
+    constructor(rowStore: Writable<EntityStore<SvelteRow>>) {
         this.register('row', (event) => {
             let elements = document.elementsFromPoint(event.clientX, event.clientY);
             let rowElement = elements.find((element) => !!element.getAttribute('data-row-id'));
             if(rowElement !== undefined) {
                 const rowId = parseInt(rowElement.getAttribute('data-row-id'));
-                const { rowMap } = this.store.get();
-                const targetRow = rowMap[rowId];
+                const { entities } = get(rowStore);
+                const targetRow = entities[rowId];
 
                 if(targetRow.model.enableDragging){
                     return targetRow;
