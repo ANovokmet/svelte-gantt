@@ -107,6 +107,7 @@ function generateData() {
     return data;
 }
 
+
 // var interval = setInterval(() => {
 // 	var data = generateData();
 // 	gantt.initTasks(data.tasks);

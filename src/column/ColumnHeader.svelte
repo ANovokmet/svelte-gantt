@@ -1,86 +1,52 @@
 <script>
-    import { createEventDispatcher, getContext } from 'svelte';
+    import { getContext } from 'svelte';
+    import { duration as momentDuration } from 'moment';
+    import { getPositionByDate } from '../utils/utils';
 
-    const dispatch = createEventDispatcher();
-
-    import * as moment from 'moment';
+    import ColumnHeaderRow from './ColumnHeaderRow.svelte';
+    
+    /**
+     * Container component for header rows 
+     */
+    export let headers = [];
+    export let columnUnit = 'minute';
+    export let columnOffset = 15;
 
     const { from, to, width } = getContext('dimensions');
-    
-    export let header;
-    export let baseWidth;
-    export let baseDuration;
 
-    export let columnWidth;
+    let minHeader;
     $: {
-        const offset = header.offset || 1;
-        const duration = moment.duration(offset, header.unit).asMilliseconds();
-        const ratio = duration / baseDuration;
-        columnWidth = baseWidth * ratio;
+        let result = null; 
+        let minDuration = null;
+
+        [...headers, {unit: columnUnit, offset: columnOffset}].forEach(header => {
+            
+            const offset = header.offset || 1;
+            const duration = momentDuration(offset, header.unit).asMilliseconds();
+            if(duration < minDuration || minDuration === null) {
+                minDuration = duration;
+                result = header;
+            }
+        });
+
+        minHeader = result;
     }
 
-    export let columnCount;
-    $: columnCount = Math.ceil($width / columnWidth);
-
-    let _headers = [];
+    let baseHeaderWidth;
     $: {
-        const headers = [];
-        let headerTime = $from.clone().startOf(header.unit);
-        const offset = header.offset || 1;
+        baseHeaderWidth = getPositionByDate($from.clone().add(minHeader.offset || 1, minHeader.unit), $from, $to, $width) | 0;
+    }
 
-        for(let i = 0; i < columnCount; i++){
-            headers.push({
-                width: Math.min(columnWidth, $width), 
-                label: headerTime.format(header.format),
-                from: headerTime.clone(),
-                to: headerTime.clone().add(offset, header.unit),
-                unit: header.unit
-            });
-            headerTime.add(offset, header.unit);
-        }
-        _headers = headers;
+    let baseHeaderDuration;
+    $: {
+        baseHeaderDuration = momentDuration(minHeader.offset || 1, minHeader.unit).asMilliseconds();
     }
 </script>
 
-<div class="column-header-row">
-    {#each _headers as header}
-        <div class="column-header" style="width:{header.width}px" on:click="{() => dispatch('dateSelected', { from: header.from, to: header.to, unit: header.unit })}">
-            {header.label || 'N/A'}
-        </div>
-    {/each}
-</div>
+{#each headers as header}
+<ColumnHeaderRow {header} baseWidth={baseHeaderWidth} baseDuration={baseHeaderDuration} on:dateSelected/>
+{/each}
+
 <style>
-    .column-header-row {
-        box-sizing: border-box;
-        white-space: nowrap;
-        overflow: hidden;
-
-        height: 32px;
-    }
-
-    .column-header {
-        position: relative;
-        display: inline-block;
-        height: 100%;
-        box-sizing: border-box;
-        text-overflow: clip;
-        /* vertical-align: top; */
-        text-align: center;
-
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1em;    
-        font-size: 14px;
-        font-weight: 300;
-        transition: background 0.2s;
-
-        cursor: pointer;     
-        user-select: none;
-    }
-
-    .column-header:hover {
-        background: #f9f9f9;
-    }
     
 </style>

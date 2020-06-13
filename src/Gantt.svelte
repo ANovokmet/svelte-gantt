@@ -11,7 +11,7 @@
 
     import { rowStore, taskStore, timeRangeStore, allTasks, filteredRows, allTimeRanges, rowTaskCache } from './core/store';
     import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
-    import { Columns, ColumnHeaders } from './column';
+    import { Columns, ColumnHeader } from './column';
     import { Resizer } from "./ui";
 
     import { GanttUtils, getPositionByDate } from "./utils/utils";
@@ -471,7 +471,7 @@
         <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight="{$headerHeight}" class:right-scrollbar-visible="{rightScrollbarVisible}">
             <div class="sg-header-scroller" use:horizontalScrollListener>
                 <div class="header-container" style="width:{$_width}px">
-                    <ColumnHeaders {headers} on:dateSelected="{onDateSelected}" />
+                    <ColumnHeader {headers} on:dateSelected="{onDateSelected}" />
                     {#each $allTimeRanges as timeRange (timeRange.id)}
                     <TimeRangeHeader {...timeRange} />
                     {/each}
