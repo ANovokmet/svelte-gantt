@@ -14,7 +14,9 @@ export interface SvelteRow {
     height: number;
     hidden?: boolean;
     children?: SvelteRow[];
+    allChildren?: SvelteRow[];
     parent?: SvelteRow;
+    allParents?: SvelteRow[];
     expanded?: boolean;
     childLevel?: number;
 }
@@ -48,24 +50,40 @@ export class RowFactory {
 
     createRows(rows: RowModel[]) {
         const ctx = { y: 0, result: [] };
-        this._createRows(rows, ctx);
+        this.createChildRows(rows, ctx);
         return ctx.result;
     }
 
-    _createRows(rowModels: RowModel[], ctx: { y: number, result: SvelteRow[] }, parent: SvelteRow = null, level: number = 0) {
+    createChildRows(rowModels: RowModel[], ctx: { y: number, result: SvelteRow[] }, parent: SvelteRow = null, level: number = 0, parents: SvelteRow[] = []) {
         const rowsAtLevel = [];
+        const allRows = [];
+
+        if(parent) {
+            parents = [...parents, parent];
+        }
+
         rowModels.forEach(rowModel => {
             const row = this.createRow(rowModel, ctx.y);
             ctx.result.push(row);
             rowsAtLevel.push(row);
+            allRows.push(row);
+
             row.childLevel = level;
             row.parent = parent;
+            row.allParents = parents;
+            
             ctx.y += row.height;
 
             if(rowModel.children) {
-                row.children = this._createRows(rowModel.children, ctx, row, level+1);
+                const nextLevel = this.createChildRows(rowModel.children, ctx, row, level+1, parents);
+                row.children = nextLevel.rows;
+                row.allChildren = nextLevel.allRows;
+                allRows.push(...nextLevel.allRows);
             }
         });
-        return rowsAtLevel;
+        return {
+            rows: rowsAtLevel,
+            allRows
+        };
     }
 }

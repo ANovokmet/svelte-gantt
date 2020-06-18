@@ -25,6 +25,7 @@ export interface SvelteTask {
     width: number;
 
     height: number;
+    reflections?: string[];
 }
 
 export class TaskFactory {
@@ -70,7 +71,8 @@ export class TaskFactory {
             left: left,
             width: right-left,
             height: this.getHeight(model),
-            top: this.getPosY(model)
+            top: this.getPosY(model),
+            reflections: []
         }
     }
 
@@ -93,4 +95,25 @@ export class TaskFactory {
 
 function overlap(one: SvelteTask, other: SvelteTask){
     return !(one.left + one.width <= other.left || one.left >= other.left + other.width);
+}
+
+export function reflectTask(task: SvelteTask, row: SvelteRow, options: { rowPadding: number }) {
+    const reflectedId = `reflected-task-${task.model.id}-${row.model.id}`;
+
+    const model = {
+        ...task.model,
+        resourceId: row.model.id,
+        id: reflectedId,
+        enableDragging: false
+    };
+
+    return {
+        ...task,
+        model,
+        top: row.y + options.rowPadding,
+        reflected: true,
+        reflectedOnParent: false,
+        reflectedOnChild: true,
+        originalId: task.model.id
+    };
 }

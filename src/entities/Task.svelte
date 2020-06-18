@@ -4,12 +4,14 @@
     import { setCursor } from "src/utils/domUtils";
     import { taskStore, rowStore } from '../core/store';
     import { Draggable } from "../core/drag";
+    import { reflectTask } from "src/core/task";
 
     export let model;
     export let height;
     export let left;
     export let top;
     export let width;
+    export let reflected = false;
 
     let animating = true;
 
@@ -34,7 +36,7 @@
 
     const { dimensionsChanged } = getContext('dimensions');
     const { rowContainer } = getContext('gantt');
-    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick } = getContext('options');
+    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows } = getContext('options');
     const { dndManager, api, utils, selectionManager, columnService } = getContext('services');
 
     function drag(node) {
@@ -62,18 +64,60 @@
                 const newLeft = columnService.getPositionByDate(newFrom) | 0;
                 const newRight = columnService.getPositionByDate(newTo) | 0;
 
+                const targetRow = $rowStore.entities[model.resourceId];
                 const left = newLeft;
                 const width = newRight - newLeft;
-                const top = $rowPadding + $rowStore.entities[model.resourceId].y;
+                const top = $rowPadding + targetRow.y;
                 
                 updatePosition(left, top, width);
-                taskStore.update({
+
+                const newTask = {
                     ...task,
                     left: left,
                     width: width,
                     top: top,
                     model
-                });
+                }
+
+                taskStore.update(newTask);
+
+                // update shadow tasks
+                if(newTask.reflections) {
+                    taskStore.deleteAll(newTask.reflections);
+                }
+
+                const reflectedTasks = [];
+                if(reflectOnChildRows && targetRow.allChildren) {
+                    if(!newTask.reflections)
+                        newTask.reflections = [];
+
+                    const opts = { rowPadding: $rowPadding };
+                    targetRow.allChildren.forEach(r => {
+                        const reflectedTask = reflectTask(newTask, r, opts);
+                        newTask.reflections.push(reflectedTask.model.id);
+                        reflectedTasks.push(reflectedTask);
+                    });
+                }
+
+                if(reflectOnParentRows && targetRow.allParents.length > 0) {
+                    if(!newTask.reflections)
+                        newTask.reflections = [];
+
+                    const opts = { rowPadding: $rowPadding };
+                    targetRow.allParents.forEach(r => {
+                        const reflectedTask = reflectTask(newTask, r, opts);
+                        newTask.reflections.push(reflectedTask.model.id);
+                        reflectedTasks.push(reflectedTask);
+                    });
+                }
+
+                if(reflectedTasks.length > 0) {
+                    taskStore.upsertAll(reflectedTasks);
+                }
+
+                if(!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
+                    newTask.reflections = null;
+                }
             }
             else {
                 // reset position
@@ -135,6 +179,7 @@
 
     let row;
     $: row = $rowStore.entities[model.resourceId];
+	import { fade } from 'svelte/transition';
 </script>
 
 <style>
@@ -225,16 +270,22 @@
     outline-offset: 3px;
     z-index: 1;
   }
+
+  .sg-task-reflected {
+      opacity: 0.5;
+  }
 </style>
 
 <div
+    transition:fade={{duration:reflected ? 200 : 0}}
   data-task-id="{model.id}"
   use:drag
   class="sg-task {model.classes}"
   style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
   class:moving={_dragging || _resizing}
   class:selected
-  class:animating>
+  class:animating
+  class:sg-task-reflected={reflected}>
   {#if model.amountDone}
   <div class="sg-task-background" style="width:{model.amountDone}%" />
   {/if}

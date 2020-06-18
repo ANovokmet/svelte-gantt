@@ -9,7 +9,7 @@
     let scrollables = [];
     let mounted = false;
 
-    import { rowStore, taskStore, timeRangeStore, allTasks, filteredRows, allTimeRanges, rowTaskCache } from './core/store';
+    import { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache } from './core/store';
     import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
     import { Columns, ColumnHeader } from './column';
     import { Resizer } from "./ui";
@@ -18,7 +18,7 @@
     import { getRelativePos, debounce, throttle } from "./utils/domUtils";
     import { SelectionManager } from "./utils/selectionManager";
     import { GanttApi } from "./core/api";
-    import { TaskFactory } from "./core/task";
+    import { TaskFactory, reflectTask } from "./core/task";
     import { RowFactory } from "./core/row";
     import { TimeRangeFactory } from "./core/timeRange";
     import { DragDropManager } from "./core/drag";
@@ -80,6 +80,9 @@
     // export until Svelte3 implements Svelte2's setup(component) hook
     export let ganttTableModules = [];
     export let ganttBodyModules = [];
+
+    export let reflectOnParentRows = true;
+    export let reflectOnChildRows = false;
 
     const visibleWidth = writable();
     const visibleHeight = writable();
@@ -187,33 +190,13 @@
         taskContent,
         rowPadding: _rowPadding,
         rowHeight: _rowHeight,
-        resizeHandleWidth: 10
-    });
-
-    onDelegatedEvent('click', 'data-task-id', (event, data, target) => {
-        const taskId = +data;
-        if (event.ctrlKey) {
-            selectionManager.toggleSelection(taskId);
-        } else {
-            selectionManager.selectSingle(taskId);
-        }
+        resizeHandleWidth: 10,
+        reflectOnParentRows,
+        reflectOnChildRows
     });
 
     const hoveredRow = writable();
     const selectedRow = writable();
-
-    onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
-        $hoveredRow = +data;
-    });
-
-    onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
-        $selectedRow = +data;
-    });
-    
-    onDestroy(() => {
-        offDelegatedEvent('click', 'data-task-id');
-        offDelegatedEvent('click', 'data-row-id');
-    });
 
     const ganttContext = { 
         scrollables, 
@@ -226,8 +209,7 @@
         Object.assign(ganttContext, {
             rowContainer,
             mainContainer,
-            mainHeaderContainer,
-            scrollables
+            mainHeaderContainer
         });
 
         api.registerEvent('tasks', 'move');
@@ -238,6 +220,28 @@
         api.registerEvent('gantt', 'viewChanged');
 
         mounted = true;
+    });
+
+    onDelegatedEvent('click', 'data-task-id', (event, data, target) => {
+        const taskId = +data;
+        if (event.ctrlKey) {
+            selectionManager.toggleSelection(taskId);
+        } else {
+            selectionManager.selectSingle(taskId);
+        }
+    });
+
+    onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
+        $hoveredRow = +data;
+    });
+
+    onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
+        $selectedRow = +data;
+    });
+    
+    onDestroy(() => {
+        offDelegatedEvent('click', 'data-task-id');
+        offDelegatedEvent('click', 'data-row-id');
     });
 
     let __scrollTop = 0;
@@ -335,7 +339,32 @@
 
     async function initTasks(taskData) {
         await tick();
-        const tasks = taskFactory.createTasks(taskData);
+
+        const tasks = [];
+        const opts = { rowPadding: $_rowPadding };
+        taskData.forEach(t => {
+            const task = taskFactory.createTask(t);
+            const row = $rowStore.entities[task.model.resourceId];
+            task.reflections = [];
+
+            if(reflectOnChildRows && row.allChildren) {
+                row.allChildren.forEach(r => {
+                    const reflectedTask = reflectTask(task, r, opts);
+                    task.reflections.push(reflectedTask.model.id);
+                    tasks.push(reflectedTask);
+                });
+            }
+
+            if(reflectOnParentRows && row.allParents.length > 0) {
+                row.allParents.forEach(r => {
+                    const reflectedTask = reflectTask(task, r, opts);
+                    task.reflections.push(reflectedTask.model.id);
+                    tasks.push(reflectedTask);
+                });
+            }
+
+            tasks.push(task);
+        });
         taskStore.addAll(tasks);
     }
 
@@ -416,26 +445,29 @@
         }
     }
 
+    let filteredRows = [];
+    $: filteredRows = $allRows.filter(row => !row.hidden);
+
     let rightScrollbarVisible;
     $: rightScrollbarVisible = rowContainerHeight > $visibleHeight;
 
     let rowContainerHeight;
-    $: rowContainerHeight = $filteredRows.length * rowHeight;
+    $: rowContainerHeight = filteredRows.length * rowHeight;
 
     let startIndex;
     $: startIndex = Math.floor(__scrollTop / rowHeight);
 
     let endIndex;
-    $: endIndex = Math.min(startIndex + Math.ceil($visibleHeight / rowHeight), $filteredRows.length - 1);
+    $: endIndex = Math.min(startIndex + Math.ceil($visibleHeight / rowHeight), filteredRows.length - 1);
 
     let paddingTop = 0;
     $: paddingTop = startIndex * rowHeight;
 
     let paddingBottom = 0;
-    $: paddingBottom = ($filteredRows.length - endIndex - 1) * rowHeight;
+    $: paddingBottom = (filteredRows.length - endIndex - 1) * rowHeight;
 
     let visibleRows = [];
-    $: visibleRows = $filteredRows.slice(startIndex, endIndex + 1);
+    $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
 
     let visibleTasks;
     $: {
