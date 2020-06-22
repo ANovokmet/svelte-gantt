@@ -169,13 +169,7 @@
 
     let selection = selectionManager.selection;
     let selected = false;
-    $: {
-        selected = $selection.indexOf(model.id) !== -1;
-    
-        if (selected) {
-            api.tasks.raise.select(model);
-        }
-    }
+    $: selected = $selection.indexOf(model.id) !== -1;
 
     let row;
     $: row = $rowStore.entities[model.resourceId];
@@ -277,7 +271,6 @@
 </style>
 
 <div
-    transition:fade={{duration:reflected ? 200 : 0}}
   data-task-id="{model.id}"
   use:drag
   class="sg-task {model.classes}"
@@ -295,7 +288,7 @@
     {:else if $taskContent}
       {@html $taskContent(this)}
     {:else}{model.label}{/if}
-    <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span>
+    <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
     {#if model.showButton}
       <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
         {@html model.buttonHtml}

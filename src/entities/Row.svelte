@@ -11,8 +11,6 @@
     {#if row.model.contentHtml}
         {@html row.model.contentHtml}
     {/if}
-
-    {row.y}
 </div>    
 <style>
     .sg-row {

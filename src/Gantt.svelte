@@ -229,6 +229,7 @@
         } else {
             selectionManager.selectSingle(taskId);
         }
+        api.tasks.raise.select($taskStore.entities[taskId]);
     });
 
     onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
@@ -375,7 +376,7 @@
         timeRangeStore.addAll(timeRanges);
     }
 
-    const api = new GanttApi() 
+    export const api = new GanttApi();
     const selectionManager = new SelectionManager();
 
     const taskFactory = new TaskFactory(columnService);
@@ -390,7 +391,7 @@
     const dndManager = new DragDropManager(rowStore);
     const timeRangeFactory = new TimeRangeFactory(columnService);
 
-    const utils = new GanttUtils();
+    export const utils = new GanttUtils();
     $: {
         utils.from = $_from;
         utils.to = $_to;
@@ -406,7 +407,6 @@
         selectionManager,
         columnService
     });
-
 
     function onModuleInit(module) {
         console.log('onModuleInit', module);
@@ -443,6 +443,62 @@
         if (task) {
             selectionManager.selectSingle(task);
         }
+    }
+
+    export function scrollToRow(id, scrollBehavior = 'auto') {
+        const { scrollTop, clientHeight } = mainContainer;
+        
+        const index = $allRows.findIndex(r => r.model.id == id);
+        if(index === -1) return;
+        const targetTop = index * rowHeight;
+
+        if(targetTop < scrollTop) {
+            mainContainer.scrollTo({
+                top: targetTop,
+                behavior: scrollBehavior
+            });
+        }
+
+        if(targetTop > scrollTop + clientHeight) {
+            mainContainer.scrollTo({
+                top: targetTop + rowHeight - clientHeight,
+                behavior: scrollBehavior
+            });
+        }
+    }
+
+	export function scrollToTask(id, scrollBehavior = 'auto') {
+        const { scrollLeft, scrollTop, clientWidth, clientHeight } = mainContainer;
+        
+        const task = $taskStore.entities[id];
+        if(!task) return;
+        const targetLeft = task.left;
+        const rowIndex = $allRows.findIndex(r => r.model.id == task.model.resourceId);
+        const targetTop = rowIndex * rowHeight;
+        
+        const options = {
+            top: undefined,
+            left: undefined,
+            behavior: scrollBehavior
+        };
+
+        if(targetLeft < scrollLeft) {
+            options.left = targetLeft;
+        }
+
+        if(targetLeft > scrollLeft + clientWidth) {
+            options.left = targetLeft + task.width - clientWidth;
+        }
+
+        if(targetTop < scrollTop) {
+            options.top = targetTop;
+        }
+
+        if(targetTop > scrollTop + clientHeight) {
+            options.top = targetTop + rowHeight - clientHeight;
+        }
+        
+        mainContainer.scrollTo(options);
     }
 
     let filteredRows = [];

@@ -15,11 +15,7 @@ const data = {
         iconClass: 'fas fa-calculator',
         children: [{
             id: 11,
-            label: "Petunia Mulliner",
-            children: [{
-                id: 111,
-                label: "Petunia Mulliner"
-            }]
+            label: "Petunia Mulliner"
         }, {
             id: 12,
             label: "Mélina Giacovetti"

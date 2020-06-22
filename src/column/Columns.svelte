@@ -1,5 +1,5 @@
 <script>
-    import { getContext } from 'svelte';
+    import { getContext, onMount } from 'svelte';
     
     import Column from './Column.svelte';
     /**
@@ -7,16 +7,19 @@
      */
     export let columns = [];
 
+    function lineAt(ctx, x) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 20);
+        ctx.stroke();
+    }
 
-
-    function createCanvas(width, height) {
+    function createBackground(columns) {
         const canvas = document.createElement('canvas');
-        canvas.width = 800;
+        canvas.width = columns.length * columns[0].width;
         canvas.height = 20;
+
         const ctx = canvas.getContext('2d');
-        ctx.translate(0.5, 0.5);
-
-
         ctx.shadowColor = "rgba(128,128,128,0.5)";
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
@@ -24,43 +27,35 @@
         ctx.lineWidth = 1;
         ctx.lineCap = "square";
         ctx.strokeStyle = '#efefef';
-    }
+        ctx.translate(0.5, 0.5);
 
-    function lineAt(x) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 20);
-        ctx.stroke();
-    }
+        columns.forEach(column => {
+            lineAt(ctx, column.left);
+        });
 
-    function setDataURL() {
         const dataURL = canvas.toDataURL();
-        document.getElementById('canvas').appendChild(canvas);
+        return `url("${dataURL}")`;
+    }
 
-        const result = document.getElementById('result');
-        result.style.width = '960px';
-        result.style.backgroundImage = `url("${dataURL}")`;
-        // result.style.backgroundSize = '2304px';
-        // result.style.backgroundPositionX = '-773px';
-
-        // #result {
-        //     height: 20px;
-        //     z-index: 1;
-        //     background-repeat: repeat;
-        // }
+    let backgroundImage;
+    $: {
+        backgroundImage = createBackground(columns.slice(0,4));
     }
 </script>
 
-<div class="sg-columns">
-	{#each columns as column}
+<div class="sg-columns" style="background-image:{backgroundImage};">
+	<!-- {#each columns as column}
 	<Column left={column.left} width={column.width} />
-	{/each}
+	{/each} -->
 </div>
 <style>
     .sg-columns {
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+
+        background-repeat: repeat;
+        background-position-x: -1px;
     }
 </style>
