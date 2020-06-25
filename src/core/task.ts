@@ -1,6 +1,5 @@
 import { SvelteRow } from './row';
 import { ColumnService } from './column';
-import { GanttStore } from './store';
 
 export interface TaskModel {
     id: number; // | string;
@@ -26,15 +25,17 @@ export interface SvelteTask {
     width: number;
 
     height: number;
+    reflections?: string[];
 }
 
 export class TaskFactory {
     columnService: ColumnService;
-	store: GanttStore;
+    
+    rowPadding: number;
+    rowEntities: {[key:number]: SvelteRow}
 
-    constructor(columnService: ColumnService, store: GanttStore) {
+    constructor(columnService: ColumnService) {
 		this.columnService = columnService;
-		this.store = store;
     }
     
     createTask(model: TaskModel): SvelteTask {
@@ -70,7 +71,8 @@ export class TaskFactory {
             left: left,
             width: right-left,
             height: this.getHeight(model),
-            top: this.getPosY(model)
+            top: this.getPosY(model),
+            reflections: []
         }
     }
 
@@ -79,18 +81,39 @@ export class TaskFactory {
     }
 
     row(resourceId): SvelteRow{
-        return this.store.get().rowMap[resourceId];
+        return this.rowEntities[resourceId];
     }
 
     getHeight(model){
-        return this.row(model.resourceId).height - 2 * this.store.get().rowPadding;
+        return this.row(model.resourceId).height - 2 * this.rowPadding;
     }
 
     getPosY(model){
-        return this.row(model.resourceId).y + this.store.get().rowPadding;
+        return this.row(model.resourceId).y + this.rowPadding;
     }
 }
 
 function overlap(one: SvelteTask, other: SvelteTask){
     return !(one.left + one.width <= other.left || one.left >= other.left + other.width);
+}
+
+export function reflectTask(task: SvelteTask, row: SvelteRow, options: { rowPadding: number }) {
+    const reflectedId = `reflected-task-${task.model.id}-${row.model.id}`;
+
+    const model = {
+        ...task.model,
+        resourceId: row.model.id,
+        id: reflectedId,
+        enableDragging: false
+    };
+
+    return {
+        ...task,
+        model,
+        top: row.y + options.rowPadding,
+        reflected: true,
+        reflectedOnParent: false,
+        reflectedOnChild: true,
+        originalId: task.model.id
+    };
 }

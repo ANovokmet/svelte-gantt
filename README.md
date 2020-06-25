@@ -1,12 +1,13 @@
-
-*work in progress*
-
----
-
 # svelte-gantt
-A lightweight and fast interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/).
+A lightweight and fast interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/). Works with any JS library or framework.
 
 Dependent on [Moment.js](https://momentjs.com/)
+
+Features include: Large datasets, drag'n'drop, tree view, zooming in/out, dependencies, date ranges...
+
+DEMO: [Large dataset](https://anovokmet.github.io/svelte-gantt/),
+[Tree](https://anovokmet.github.io/svelte-gantt/tree),
+[Dependencies](https://anovokmet.github.io/svelte-gantt/dependencies)
 
 ## Installation (IIFE bundle)
 
@@ -28,35 +29,57 @@ node tools/build
 Or use ES6 imports in your code:
 
 ```js
-import { create as createGantt, SvelteGanttTable } from 'svelte-gantt';
+import { SvelteGantt, SvelteGanttTable } from 'svelte-gantt';
 ```
 
  3. Initialize svelte-gantt:
 ```js
-var gantt = create(
+var gantt = new SvelteGantt({ 
 	// target a DOM element
-	document.body, 
-	// svelte-gantt data model
-	data, 
+    target: document.getElementById('example-gantt'), 
 	// svelte-gantt options
-	options
-);
+    props: options
+});
 ```
 ..or run the example by opening *./public/index.html*
 
 ## Options
 
+Pass options object as `props` to the SvelteGantt constructor. To update use `$set`, eg.
+```js
+gantt.$set({ 
+    from: moment().startOf('week'),
+    to: moment().endOf('week')
+});
+```
+
 ### Gantt
 ```js
-options = {
+var options = {
+    /**
+     * Rows to load in the gantt, see below
+     */
+    rows: []
+    /**
+     * Tasks that display in the gantt, see below
+     */
+    tasks: [],
+    /**
+     * Timeranges that display in the gantt, see below
+     */
+    timeRanges: [],
+    /**
+     * Dependencies that display in the gantt, used with the SvelteGanttDependencies module, see below
+     */
+    dependencies: [],
 	// datetime timeline starts on, moment-js
 	from: moment("9:00", "HH:mm"),
 	// datetime timeline ends on, moment-js
 	to: moment("17:00", "HH:mm"),
-	// width of main gantt area in px
-	width:  800, 
-	// should timeline stretch width to fit, true overrides timelineWidth
-	stretchTimelineWidthToFit:  false,
+	// Minimum width of gantt area in px
+	minWidth:  800, 
+	// should timeline stretch width to fit
+	fitWidth:  false,
 	// minimum unit of time task date values will round to
 	magnetUnit:  'minute',
 	// amount of units task date values will round to
@@ -68,13 +91,42 @@ options = {
 	// list of headers used for main gantt area
 	// unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
 	// format: datetime format used for header cell label
-	headers: [{unit:  'day', format:  'DD.MM.YYYY'}, {unit:  'hour', format:  'HH'}],
+    headers: [{unit:  'day', format:  'DD.MM.YYYY'}, {unit:  'hour', format:  'HH'}],
+    /**
+     * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
+     */
+	zoomLevels: [
+		{
+			headers: [
+				{ unit: 'day', format: 'DD.MM.YYYY' },
+				{ unit: 'hour', format: 'HH' }
+			],
+			minWidth: 800,
+			fitWidth: true
+		},
+		{
+			headers: [
+				{ unit: 'hour', format: 'ddd D/M, H A' },
+				{ unit: 'minute', format: 'mm', offset: 15 }
+			],
+			minWidth: 5000,
+			fitWidth: false
+		}
+	],
 	// height of a single row in px
-	rowHeight:  52,
-	// modules used in gantt
-	modules: [],
-	// enables right click context menu
-	enableContextMenu:  false,
+	rowHeight: 52,
+	rowPadding: 6,
+	/** modules used in gantt */
+    ganttTableModules: [SvelteGanttTable],
+    ganttBodyModules: [SvelteGanttDependencies],
+    /**
+     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree. 
+     */
+    reflectOnParentRows: false,
+    /**
+     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. 
+     */
+    reflectOnChildRows: true,
 	// sets top level gantt class which can be used for styling
 	classes:  '',
 	// width of handle for resizing task
@@ -82,25 +134,22 @@ options = {
 	// handler of button clicks
 	onTaskButtonClick:  (task) => { console.log('Clicked: ', task); },
 	// task content factory function
-	taskContent: (task) => `<div>Task ${task.model.label}</div>` 
+    taskContent: (task) => `<div>Task ${task.model.label}</div>`,
+    /**
+     * Width of table, used with SvelteGanttTable module
+     */
+    tableWidth: 200,
+    /**
+     * Headers of table, used with SvelteGanttTable module
+     */
+    tableHeaders: [{ title: 'Name', property: 'label', width: 100 }]
 };
 ```
 
-### Data
-Holds data and keeps it updated as svelte-gantt is interacted with:
-```js
-data  = {
-    // array of task objects
-    tasks: [],
-	// array of row objects
-    rows: []
-}
-```
-
 ### Row
-Renders a row:
+Rows are defined as a list of objects. Rows can be rendered as a collapsible tree (rows are collapsed with SvelteGanttTable module). Row objects may have these parameters:
 ```js
-{
+options.rows = [{
 	// id of row, every row needs to have a unique one
     id: 1234,
 	// css classes
@@ -112,15 +161,15 @@ Renders a row:
     // label of row, could be any other property, can be displayed with SvelteGanttTable
     label: 'Andrey Plenkovich',
     // html content of table row header, displayed in SvelteGanttTable
-    headerHtml: '<s>Andrey Plenkovich <img src="image.jpg"></s>'
-}
+    headerHtml: '<s>Andrey Plenkovich <img src="image.jpg"></s>',
+    // list of children row objects, these can have their own children
+    children: []
+}];
 ```
-
-
 ### Task
-Renders a task inside a row:
+Tasks are defined as a list of objects. Each will render a row and has these parameters:
 ```js
-{
+options.tasks = [{
 	// id of task, every task needs to have a unique one
 	id: 91993,
 	// completion %, indicated on task
@@ -143,13 +192,13 @@ Renders a task inside a row:
 	buttonHtml: undefined,
 	// enable dragging of task
 	enableDragging:  true
-}
+}];
 ```
 
 ### Dependencies 
 Renders a dependency between two tasks. Used by SvelteGanttDependencies module:
 ```ts
-{
+options.dependencies = [{
 	// unique id of dependency
 	id: 95,
     /** Id of dependent task */
@@ -162,11 +211,30 @@ Renders a dependency between two tasks. Used by SvelteGanttDependencies module:
     strokeWidth: 2,
     /** Size of the arrow head */
     arrowSize: 3
-}
+}];
 ```
+
+### Time ranges
+Renders a block of time spanning all the rows:
+```ts
+options.timeRanges = [{
+    /** Unique id of time range */
+    id: 15,
+    /** Time from (moment) */
+    from: time('10:00', 'HH:mm'),
+    /** Time to (moment) */
+    to: time('12:00', 'HH:mm'),
+    /** CSS classes */
+    classes: 'sg-lunch',
+    /** Display label */
+    label: 'Lunch'
+}];
+```
+
+
 ### Events
 ```js
-// after svelte-gantt is created with SvelteGantt.create
+// after svelte-gantt is created
 gantt.api.tasks.on.move((task) =>  console.log('Listener: task move', task));
 gantt.api.tasks.on.switchRow((task, row, previousRow) =>  console.log('Listener: task switched row', task));
 gantt.api.tasks.on.select((task) =>  console.log('Listener: task selected', task));
@@ -179,22 +247,22 @@ gantt.api.tasks.on.moveEnd((task) =>  console.log('Listener: task move end', tas
  - *SvelteGanttExternal*: Enables external DOM elements to be draggable to svelte-gantt. Useful for creating new tasks:
 
 ```js
-SvelteGanttExternal.create(
+new SvelteGanttExternal(
 	// external DOM element
 	document.getElementById('newTaskButton'), 
 	// options
 	{
-		// reference to your svelte-gantt 
+		// reference to instance of svelte-gantt 
 		gantt,
 		// if enabled
     	enabled: true,
-		// callback
+		// success callback
 		// row: row element was dropped on
 		// date: date element was dropped on
-		// g: svelte-gantt
-		onsuccess: (row, date, g) => {
+		// gantt: instance of svelte-gantt
+		onsuccess: (row, date, gantt) => {
 			// here you can add a task to row, see './public/main.js'
-		}
+		},
 		// called when dragged outside main gantt area
     	onfail: () => { },
 		// factory function, creates HTMLElement that will follow the mouse
@@ -231,6 +299,10 @@ npm run dev
 ```
 
 Navigate to [localhost:5000](http://localhost:5000). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+
+## Issues
+
+ - Transitions on task drop sometimes do not play - issue introduced in Svelte 3
 
 ## TBD
 

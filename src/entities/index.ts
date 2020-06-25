@@ -1,8 +1,8 @@
-import Task from './Task.html';
-import Row from './Row.html';
-import Milestone from './Milestone.html';
-import TimeRange from './TimeRange.html';
-import TimeRangeHeader from './TimeRangeHeader.html';
+import Task from './Task.svelte';
+import Row from './Row.svelte';
+import Milestone from './Milestone.svelte';
+import TimeRange from './TimeRange.svelte';
+import TimeRangeHeader from './TimeRangeHeader.svelte';
 
 export {
     Task,

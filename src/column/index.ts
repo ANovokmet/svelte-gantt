@@ -1,11 +1,11 @@
-import Column from './Column.html';
-import ColumnHeader from './ColumnHeader.html';
-import ColumnHeaders from './ColumnHeaders.html';
-import Columns from './Columns.html';
+import Column from './Column.svelte';
+import ColumnHeaderRow from './ColumnHeaderRow.svelte';
+import ColumnHeader from './ColumnHeader.svelte';
+import Columns from './Columns.svelte';
 
 export {
     Column,
+    ColumnHeaderRow,
     ColumnHeader,
-    ColumnHeaders,
     Columns
 };

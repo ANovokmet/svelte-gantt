@@ -2,83 +2,25 @@ import { getRelativePos } from "../../utils/domUtils";
 import { Draggable } from "../../core/drag";
 import { SvelteRow } from "../../core/row";
 import { SvelteGanttComponent } from "../../gantt";
-
-let SvelteGanttExternal;
+import { Moment } from "moment";
 
 interface DragOptions {
+    /** SvelteGantt this is binded to */
     gantt: SvelteGanttComponent;
-    elementContent(): any;
+    /** Creates a dragging indicator element */
+    elementContent(): HTMLElement;
+    /** Is currently being dragged */
     dragging: boolean;
+    /** Is enabled */
     enabled: boolean;
-    onsuccess(target: SvelteRow, date, gantt: SvelteGanttComponent): void;
-    onfail(): void;
+    /** Success callback, when dragged over a row */
+    onsuccess?(target: SvelteRow, date: Moment, gantt: SvelteGanttComponent): void;
+    /** Fail callback, when dragged outside gantt */
+    onfail?(): void;
 }
 
-function drag(node, data: DragOptions) {
-    const { gantt } = data;
-    const { rowContainerElement } = gantt.store.get();
-
-    let element = null;
-
-    return new Draggable(node, {
-        onDown: ({ x, y }) => {
-        },
-        onDrag: ({ x, y }) => {
-
-            if(!element) {
-                element = data.elementContent();
-                document.body.appendChild(element);
-                data.dragging = true;
-            }
-
-            Object.assign(element.style, {
-                top: y + 'px',
-                left: x + 'px'
-            });
-        },
-        dragAllowed: () => data.enabled,
-        resizeAllowed: false,
-        onDrop: ({ x, y, event }) => {
-            const targetRow = gantt.dndManager.getTarget('row', event);
-            if (targetRow) {
-
-                const mousePos = getRelativePos(rowContainerElement, event);
-                const date = gantt.utils.getDateByPosition(mousePos.x);
-
-                data.onsuccess(targetRow, date, gantt);
-            }
-            else {
-                data.onfail();
-            }
-
-            document.body.removeChild(element);
-            data.dragging = false;
-            element = null;
-        },
-        container: document.body,
-    },
-        {
-            getPos: (event: MouseEvent) => {
-                return {
-                    x: event.pageX,
-                    y: event.pageY
-                };
-            },
-            getWidth: () => 0
-        }
-    );
-}
-
-SvelteGanttExternal = {};
-
-SvelteGanttExternal.defaults = {
-    // if enabled
+const defaults = {
     enabled: true,
-    // called when dragged over a row 
-    onsuccess: (targetRow, dropDate, gantt) => { },
-    // called when dragged outside main gantt area
-    onfail: () => { },
-    // factory function, creates HTMLElement 
     elementContent: () => {
         const element = document.createElement('div');
         element.innerHTML = 'New Task';
@@ -90,15 +32,54 @@ SvelteGanttExternal.defaults = {
             pointerEvents: 'none',
         });
         return element;
-    },
-    // gantt to bind this draggable to
-    gantt: null
+    }
 }
 
-SvelteGanttExternal.create = function (element: HTMLElement, options) {
-    const data = Object.assign({}, SvelteGanttExternal.defaults, options);
-    drag(element, data);
-    return data;
-}
+export class SvelteGanttExternal {
+    draggable: Draggable;
+    element: HTMLElement;
+    public options: DragOptions;
 
-export { SvelteGanttExternal };
+    constructor(node: HTMLElement, options: DragOptions) {
+        this.options = Object.assign({}, defaults, options);
+        this.draggable = new Draggable(node, {
+            onDrag: this.onDrag.bind(this),
+            dragAllowed: () => this.options.enabled,
+            resizeAllowed: false,
+            onDrop: this.onDrop.bind(this),
+            container: document.body,
+            getX: (event: MouseEvent) => event.pageX,
+            getY: (event: MouseEvent) => event.pageY,
+            getWidth: () => 0
+        });
+    }
+
+    onDrag({ x, y }) {
+        if(!this.element) {
+            this.element = this.options.elementContent();
+            document.body.appendChild(this.element);
+            this.options.dragging = true;
+        }
+
+        this.element.style.top = y + 'px';
+        this.element.style.left = x + 'px';
+    }
+
+    onDrop(event) {
+        const gantt = this.options.gantt;
+        const targetRow = gantt.dndManager.getTarget('row', event.mouseEvent);
+        if (targetRow) {
+            const mousePos = getRelativePos(gantt.getRowContainer(), event.mouseEvent);
+            const date = gantt.utils.getDateByPosition(mousePos.x);
+
+            this.options?.onsuccess(targetRow, date, gantt);
+        }
+        else {
+            this.options?.onfail();
+        }
+
+        document.body.removeChild(this.element);
+        this.options.dragging = false;
+        this.element = null;
+    }
+}

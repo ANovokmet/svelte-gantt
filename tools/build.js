@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs');
 const del = require('del');
 const rollup = require('rollup');
@@ -19,23 +17,16 @@ promise = promise.then(() => del(['dist/*']));
 promise = promise.then(() => rollup.rollup({
     input: 'src/index.ts',
     external: Object.keys(pkg.dependencies),
-    output: {
-        globals: { 
-            moment: 'moment'
-        }
-    },
     plugins: [
         svelte({
-            skipIntroByDefault: true,
-            nestedTransitions: true,
             dev: false,
             css: css => {
                 css.write('dist/css/svelteGantt.css');
             }
         }),
-        typescript({ useTsconfigDeclarationDir: true }),
-        commonjs(),
         resolve(),
+        commonjs(),
+        typescript({ useTsconfigDeclarationDir: true }),
     ],
 }));
 
@@ -43,8 +34,11 @@ promise = promise.then(() => rollup.rollup({
 ['es', 'iife'].forEach(format => { // /*, 'cjs', 'umd'*/
     promise.then(bundle => bundle.write({
 		file: `dist/${format === 'cjs' ? 'index' : `index.${format}`}.js`,
+        sourcemap: true,
 		format,
-        sourceMap: true,
+        globals: { 
+            moment: 'moment'
+        },
         extend: format === 'iife',
 		name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
 	}));

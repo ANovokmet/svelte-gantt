@@ -1,157 +1,123 @@
-import { GanttStore } from "./core/store";
 import { ColumnService } from './core/column';
-import { GanttUtils } from './utils/utils';
 import { GanttApi } from './core/api';
+import { Component } from "./core/svelte";
 import { DragDropManager } from './core/drag';
 import { RowModel, RowFactory } from './core/row';
 import { TaskModel, TaskFactory, SvelteTask } from './core/task';
 import { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
+import { GanttUtils } from './utils/utils';
+import { DependencyModel } from './modules/dependencies';
 import { Moment } from 'moment';
-import { Component } from "./core/svelte";
 
-type Header = { unit:string, format:string, offset?: number };
-// can actually contain any option
-type Zoom = {
-	headers: Header[],
-	minWidth: number,
-	stretchTimelineWidthToFit: boolean
+interface Header { 
+    unit:string; 
+    format:string; 
+    offset?: number;
+}
+
+interface Zoom {
+	headers: Header[];
+	minWidth: number;
+	fitWidth: boolean;
 }
 type TaskButtonClickHandler = (task: SvelteTask) => void;
 type TaskContentTemplate = (task: SvelteTask) => string;
 
+interface TableHeader {
+    title: string;
+    property: string; 
+    width?: number;
+}
+
 export interface SvelteGanttOptions {
+    /**
+     * Rows to load in the gantt
+     */
+    rows?: RowModel[];
+    /**
+     * Tasks that display in the gantt
+     */
+    tasks?: TaskModel[];
+    /**
+     * Timeranges that display in the gantt
+     */
+    timeRanges?: TimeRangeModel[];
+    /**
+     * Dependencies that display in the gantt, used with the SvelteGanttDependencies module
+     */
+    dependencies?: DependencyModel[];
 	/** datetime timeline starts on, moment */
 	from?: Moment;
 	/** datetime timeline ends on, moment */
 	to?: Moment;
-	/** width of main gantt area in px, rename to timelineWidth */
+	/** Minimum width of main gantt area in px */
 	minWidth?: number;
-	/** should timeline stretch width to fit, true overrides timelineWidth */
-	stretchTimelineWidthToFit?: boolean,
+	/** should timeline stretch width to fit */
+	fitWidth?: boolean;
 	/** minimum unit of time task date values will round to */
-	magnetUnit?: string,
+	magnetUnit?: string;
 	/** amount of units task date values will round to */
-	magnetOffset?: number,
+	magnetOffset?: number;
 	/** duration unit of columns */
-	columnUnit?: string,
+	columnUnit?: string;
 	/** duration width of column */
-	columnOffset?: number,
+	columnOffset?: number;
 	/** 
 	 * list of headers used for main gantt area
 	 *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
 	 *  - format: datetime format used for header cell label 
 	 **/
-	headers?: Header[],
-	zoomLevels?: Zoom[],
-	/** current zoom level */
-	zoom?: number,
+    headers?: Header[];
+    /**
+     * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
+     */
+	zoomLevels?: Zoom[];
 	/** height of a single row in px */
-	rowHeight?: number,
-	rowPadding?: number,
+	rowHeight?: number;
+	rowPadding?: number;
 	/** modules used in gantt */
-	modules?: any[],
-	/** enables right click context menu */
-	enableContextMenu?: boolean,
+    ganttTableModules?: any[];
+    ganttBodyModules?: any[];
+    /**
+     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree. 
+     */
+    reflectOnParentRows?: boolean;
+    /**
+     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. 
+     */
+    reflectOnChildRows?: boolean;
 	/** sets top level gantt class which can be used for styling */
-	classes?: string | string[],
+	classes?: string | string[];
 	/** width of handle for resizing task */
-	resizeHandleWidth?: number,
+	resizeHandleWidth?: number;
 	/** handler of button clicks */
-	onTaskButtonClick?: TaskButtonClickHandler, // e.g. (task) => {debugger},
+	onTaskButtonClick?: TaskButtonClickHandler; // e.g. (task) => {debugger},
 	/** task content factory function */
-	taskContent?: TaskContentTemplate, // e.g. (task) => '<div>Custom task content</div>'
-
-	rows?: RowModel[],
-	tasks?: TaskModel[],
-	_timeRanges?: TimeRangeModel[]
+	taskContent?: TaskContentTemplate; // e.g. (task) => '<div>Custom task content</div>'
+    /**
+     * Width of table, used with SvelteGanttTable module
+     */
+    tableWidth?: number;
+    /**
+     * Headers of table, used with SvelteGanttTable module
+     */
+    tableHeaders?: TableHeader[];
 }
 
-export interface SvelteGanttData {
-	rows: RowModel[],
-	tasks: TaskModel[],
-}
-
-export interface SvelteGanttComponent extends Component {
-	api: GanttApi;
-	utils: GanttUtils;
+export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
+    api: GanttApi;
+    utils: GanttUtils;
 	columnService: ColumnService;
-	store: GanttStore;
 	dndManager: DragDropManager;
 	taskFactory: TaskFactory;
 	rowFactory: RowFactory;
 	timeRangeFactory: TimeRangeFactory;
 
-	refreshTasksDebounced();
-	adjustVisibleDateRange({ from, to, unit });
-	initRows(rowsData: RowModel[]);
-	initTasks(taskData: TaskModel[]);
-	initTimeRanges(timeRangeData: TimeRangeModel[]);
-	updateVisibleEntities();
-	refreshTasks();
-	updateView(options: SvelteGanttOptions);
-	selectTask(id: number);
+    refreshTasks();
+    refreshTimeRanges();
+    getRowContainer(): HTMLElement;
+    selectTask(id: number);
+    scrollToTask(id: number, scrollBehavior?: string);
+    scrollToRow(id: number, scrollBehavior?: string);
+    updateTask(model: TaskModel);
 }
-
-export const defaults: SvelteGanttOptions = {
-	// datetime timeline starts on, currently moment-js object
-	from: null,
-	// datetime timeline ends on, currently moment-js object
-	to: null,
-	// width of main gantt area in px
-	minWidth: 800, //rename to timelinewidth
-	// should timeline stretch width to fit, true overrides timelineWidth
-	stretchTimelineWidthToFit: false,
-	// minimum unit of time task date values will round to
-	magnetUnit: 'minute',
-	// amount of units task date values will round to
-	magnetOffset: 15,
-	// duration unit of columns
-	columnUnit: 'minute',
-	// duration width of column
-	columnOffset: 15,
-	// list of headers used for main gantt area
-	// unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-	// format: datetime format used for header cell label
-	headers: [
-		{ unit: 'day', format: 'DD.MM.YYYY' },
-		{ unit: 'hour', format: 'HH' }
-	],
-	zoomLevels: [
-		{
-			headers: [
-				{ unit: 'day', format: 'DD.MM.YYYY' },
-				{ unit: 'hour', format: 'HH' }
-			],
-			minWidth: 800,
-			stretchTimelineWidthToFit: true
-		},
-		{
-			headers: [
-				{ unit: 'hour', format: 'ddd D/M, H A' },
-				{ unit: 'minute', format: 'mm', offset: 15 }
-			],
-			minWidth: 5000,
-			stretchTimelineWidthToFit: false
-		}
-	],
-	zoom: 0,
-	// height of a single row in px
-	rowHeight: 52,
-	rowPadding: 6,
-	// modules used in gantt
-	modules: [],
-	// enables right click context menu
-	enableContextMenu: false,
-	// sets top level gantt class which can be used for styling
-	classes: '',
-	// width of handle for resizing task
-	resizeHandleWidth: 10,
-	// handler of button clicks
-	onTaskButtonClick: null, // e.g. (task) => {debugger},
-	// task content factory function
-	taskContent: null, // e.g. (task) => '<div>Custom task content</div>'
-
-	rows: [],
-	tasks: [],
-	_timeRanges: [],
-};
