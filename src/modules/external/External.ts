@@ -72,10 +72,10 @@ export class SvelteGanttExternal {
             const mousePos = getRelativePos(gantt.getRowContainer(), event.mouseEvent);
             const date = gantt.utils.getDateByPosition(mousePos.x);
 
-            this.options?.onsuccess(targetRow, date, gantt);
+            this.options.onsuccess?.(targetRow, date, gantt);
         }
         else {
-            this.options?.onfail();
+            this.options.onfail?.();
         }
 
         document.body.removeChild(this.element);
