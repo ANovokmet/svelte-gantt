@@ -1,6 +1,41 @@
 import { isLeftClick, addEventListenerOnce, getRelativePos } from '../../utils/domUtils';
-import { DraggableSettings, DownDropEvent } from './interfaces';
 import { MIN_DRAG_Y, MIN_DRAG_X } from '../constants';
+
+export interface DraggableSettings {
+    onDown?(event?: DownDropEvent): void; 
+    onResize?(event?: ResizeEvent): void;
+    onDrag?(event?: DragEvent): void;
+    onMouseUp?(): void;
+    onDrop(event?: DownDropEvent): void; 
+    dragAllowed: (() => boolean) | boolean;
+    resizeAllowed: (() => boolean) | boolean;
+    container: any; 
+    resizeHandleWidth?: any;
+    getX?: (event?: MouseEvent) => number;
+    getY?: (event?: MouseEvent) => number;
+    getWidth?: () => number;
+}
+
+export interface DownDropEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    y: number;
+    width: number;
+    resizing: boolean;
+    dragging: boolean;
+}
+
+export interface DragEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    y: number;
+}
+
+export interface ResizeEvent {
+    mouseEvent: MouseEvent;
+    x: number;
+    width: number;
+}
 
 /**
  * Applies dragging interaction to gantt elements
@@ -55,8 +90,8 @@ export class Draggable {
         const canDrag = this.dragAllowed;
         const canResize = this.resizeAllowed;
         if(canDrag || canResize){
-            const x = this.settings.getX();
-            const y = this.settings.getY();
+            const x = this.settings.getX(event);
+            const y = this.settings.getY(event);
             const width = this.settings.getWidth();
 
             this.initialX = event.clientX;
@@ -110,7 +145,7 @@ export class Draggable {
         event.preventDefault();
         if(this.resizing) {
             const mousePos = getRelativePos(this.settings.container, event);
-            const x = this.settings.getX();
+            const x = this.settings.getX(event);
             const width = this.settings.getWidth();
 
             let resultX: number;
@@ -160,8 +195,8 @@ export class Draggable {
     }
 
     onmouseup = (event: MouseEvent) => {
-        const x = this.settings.getX();
-        const y = this.settings.getY();
+        const x = this.settings.getX(event);
+        const y = this.settings.getY(event);
         const width = this.settings.getWidth();
         
         this.settings.onMouseUp && this.settings.onMouseUp();

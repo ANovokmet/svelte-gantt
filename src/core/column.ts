@@ -1,6 +1,4 @@
 import { get } from '../utils/utils';
-import * as moment from 'moment';
-//const moment = moment_;
 
 interface Column {
     from: any;

@@ -4,26 +4,22 @@
  * Store typings were taken from 'svelte' npm package. 
  */
 
-export interface ComponentOptions {
-	target?: HTMLElement;
-	data?: any;
-	store?: any;
+export interface ComponentOptions<T> {
+    target: Element;
+    anchor?: Element;
+    props?: T;
+    hydrate?: boolean;
+    intro?: boolean;
 }
 
-interface Cancellable {
-	cancel: () => void;
+export interface Component<T = Record<string, any>> {
+	constructor(options: ComponentOptions<T>);
+
+    $set(props?: T): void;
+    $on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
+    $destroy(): void;
 }
 
-export interface Component {
-	constructor(options: ComponentOptions);
-
-	destroy(detach?: boolean): void;
-	get(): any;
-	set(newState: any): any;
-	fire(eventName: string, data: any): void;
-	on(eventName: string, handler: (event: any) => void): Cancellable;
-}
-
-export interface ComponentCreator<C extends Component> {
-	new(params?: any): C;
+export interface ComponentCreator<C extends Component<T>, T = Record<string, any>> {
+	new(options: ComponentOptions<T>): C;
 }

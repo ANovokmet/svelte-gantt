@@ -14,7 +14,8 @@ export default {
     output: {
         sourcemap: true,
         format: 'iife',
-        name: 'app',
+        name: 'window',
+        extend: true,
         file: 'public/dist/lib.js',
         globals: {
             moment: 'moment'

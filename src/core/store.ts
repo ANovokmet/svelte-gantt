@@ -15,9 +15,10 @@ interface EntityType {
 export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
     _update(updater: (value: EntityState<T>) => EntityState<T>): void;
     add(entity: T): void;
-    update(entity: T): void;
-    upsertAll(entities: T[]): void;
     addAll(entities: T[]): void;
+    update(entity: T): void;
+    upsert(entity: T): void;
+    upsertAll(entities: T[]): void;
     delete(id: number): void;
     deleteAll(ids: number[]): void;
     refresh(): void;
@@ -66,6 +67,17 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
                 [item.model.id]: item
             }
         })),
+        upsert: (item: T) => update(({ ids, entities }) => {
+            const hasIndex = ids.indexOf(item.model.id) !== -1;
+
+            return {
+                ids: hasIndex ? ids : [...ids, item.model.id],
+                entities: {
+                    ...entities,
+                    [item.model.id]: item
+                }
+            }
+        }),
         upsertAll: (items: T[]) => update(state => {
             const entities = { ...state.entities };
             const ids = [...state.ids];

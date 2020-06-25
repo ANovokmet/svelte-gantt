@@ -133,7 +133,7 @@ const options = {
     to: currentEnd,
     tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
     tableWidth: 240,
-    ganttTableModules: [app.SvelteGanttTable]
+    ganttTableModules: [SvelteGanttTable]
 };
 
-var gantt = new app.SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
+var gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });

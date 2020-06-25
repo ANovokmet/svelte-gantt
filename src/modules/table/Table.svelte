@@ -1,19 +1,9 @@
 <script context="module">
     export const type = 'table';
-    export const defaults = {
-        // list of columns used in the table
-        // title: label to display in the header
-        // property: property of row to display in the cell
-        // width: width of column
-        tableHeaders: [{ title: 'Name', property: 'label', width: 100 }],
-        // total width of the table, if width is smaller than sum of column widths, a scrollbar shows
-        tableWidth: 100
-    }
 </script>
 
 <script>
     import { createEventDispatcher, onMount, getContext } from 'svelte';
-
 
     const dispatch = createEventDispatcher();
 
@@ -64,10 +54,6 @@
         scrollWidth = sum;
     }
 
-    $: {
-        tableHeaders[0].leading = true;
-    }
-
     function onRowExpanded(event) {
         const row = event.detail.row;
         row.expanded = true;
@@ -75,7 +61,6 @@
             show(row.children);
         updateYPositions();
     }
-
 
     function onRowCollapsed(event) {
         const row = event.detail.row;

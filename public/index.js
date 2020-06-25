@@ -72,10 +72,10 @@ let options = {
     to: currentEnd,
     tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
     tableWidth: 240,
-    ganttTableModules: [app.SvelteGanttTable]
+    ganttTableModules: [SvelteGanttTable]
 }
 
-var gantt = new app.SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
+var gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
 
 //gantt.api.tasks.on.move((task) => console.log('Listener: task move', task));
 //gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
@@ -145,24 +145,27 @@ onClick('reInit', () => {
     gantt.$set({...data});
 });
 
-// SvelteGanttExternal.create(document.getElementById('newTask'), {
-//     gantt,
-//     onsuccess: (row, date, g) => {
-
-//         console.log(row.model.id, date.format())
-
-//         const task = g.taskFactory.createTask({
-//             id: 5000 + Math.floor(Math.random() * 1000),
-//             label: 'Task #' + 4343,
-//             from: date,
-//             to: date.clone().add(3, 'hour'),
-//             classes: colors[(Math.random() * colors.length) | 0],
-//             resourceId: row.model.id
-//         });
-
-//         gantt.store.addTask(task);
-//     }
-// });
+var external = new SvelteGanttExternal(document.getElementById('newTask'), {
+    gantt,
+    onsuccess: (row, date, gantt) => {
+        console.log(row.model.id, date.format())
+        const id = 5000 + Math.floor(Math.random() * 1000);
+        gantt.updateTask({
+            id,
+            label: `Task #${id}`,
+            from: date,
+            to: date.clone().add(3, 'hour'),
+            classes: colors[(Math.random() * colors.length) | 0],
+            resourceId: row.model.id
+        });
+    },
+    elementContent: () => {
+        const element = document.createElement('div');
+        element.innerHTML = 'New Task';
+        element.className = 'sg-external-indicator';
+        return element;
+    }
+});
 
 function shuffle(array) {
     for (var i = array.length - 1; i > 0; i--) {

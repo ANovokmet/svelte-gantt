@@ -71,6 +71,8 @@
 	];
     export let taskContent = null;
     export let tableWidth = 100;
+    export let resizeHandleWidth = 10;
+    export let onTaskButtonClick = null;
 
     export let magnetUnit = 'minute';
     export let magnetOffset = 15;
@@ -91,7 +93,7 @@
         return stretch && visible > min ? visible : min;
     });
     
-    const columnService = {
+    export const columnService = {
         getColumnByDate(date) {
             const pair = findByDate(columns, date);
             return !pair[0] ? pair[1] : pair[0];
@@ -190,9 +192,10 @@
         taskContent,
         rowPadding: _rowPadding,
         rowHeight: _rowHeight,
-        resizeHandleWidth: 10,
+        resizeHandleWidth: resizeHandleWidth,
         reflectOnParentRows,
-        reflectOnChildRows
+        reflectOnChildRows,
+        onTaskButtonClick
     });
 
     const hoveredRow = writable();
@@ -328,7 +331,7 @@
         }
     }
 
-    export function onDateSelected(event) {
+    function onDateSelected(event) {
         $_from = event.detail.from.clone();
         $_to = event.detail.to.clone();
     }
@@ -375,21 +378,32 @@
         });
         timeRangeStore.addAll(timeRanges);
     }
+    
+    function onModuleInit(module) {
+        
+    }
+
+    async function tickWithoutCSSTransition() {
+        disableTransition = false;
+        await tick();
+        ganttElement.offsetHeight; // force a reflow
+        disableTransition = true;
+    }
 
     export const api = new GanttApi();
     const selectionManager = new SelectionManager();
 
-    const taskFactory = new TaskFactory(columnService);
+    export const taskFactory = new TaskFactory(columnService);
     $: {
         taskFactory.rowPadding = $_rowPadding;
         taskFactory.rowEntities = $rowStore.entities;
     }
 
-    const rowFactory = new RowFactory();
+    export const rowFactory = new RowFactory();
     $: rowFactory.rowHeight = rowHeight;
 
-    const dndManager = new DragDropManager(rowStore);
-    const timeRangeFactory = new TimeRangeFactory(columnService);
+    export const dndManager = new DragDropManager(rowStore);
+    export const timeRangeFactory = new TimeRangeFactory(columnService);
 
     export const utils = new GanttUtils();
     $: {
@@ -407,10 +421,6 @@
         selectionManager,
         columnService
     });
-
-    function onModuleInit(module) {
-        console.log('onModuleInit', module);
-    }
 
     export function refreshTimeRanges() {
         timeRangeStore._update(({ids, entities}) => {
@@ -436,6 +446,10 @@
         });
 
         taskStore.refresh();
+    }
+
+    export function getRowContainer() {
+        return rowContainer;
     }
 
     export function selectTask(id) {
@@ -501,6 +515,11 @@
         mainContainer.scrollTo(options);
     }
 
+    export function updateTask(model) {
+        const task = taskFactory.createTask(model);
+        taskStore.upsert(task);
+    }
+
     let filteredRows = [];
     $: filteredRows = $allRows.filter(row => !row.hidden);
 
@@ -540,12 +559,6 @@
 
     let disableTransition = true;
     $: if($dimensionsChanged) tickWithoutCSSTransition();
-    async function tickWithoutCSSTransition() {
-        disableTransition = false;
-        await tick();
-        ganttElement.offsetHeight; // force a reflow
-        disableTransition = true;
-    }
 </script>
 
 <div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:click={onEvent} on:mouseover={onEvent}>

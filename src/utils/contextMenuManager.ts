@@ -1,35 +1,26 @@
 import { ContextMenu } from '../ui';
-import { Component } from '../core/svelte';
-import { GanttStore } from '../core/store';
-
-interface ContextMenu extends Component {
-    constructor(options: any);
-    close(): void;
-}
 
 export class ContextMenuManager {
     current: ContextMenu;
-    store: GanttStore;
 
-    constructor(store) {
+    constructor() {
         this.current = null;
-        this.store = store;
     }
 
     open(actions, position) {
         if(this.current) {
-            this.current.close();
+            this.current.$destroy();
         }
         
         const contextMenu = new ContextMenu({
-            target: document.body,//this.gantt.refs.ganttElement,//todo: fix, styles (font size, font face), positioning
-            data: { 
+            target: document.body,
+            props: { 
                 actions,
                 left: position.x,
                 top: position.y,
-                onactionend: () => contextMenu.close()
+                onactionend: () => contextMenu.$destroy()
             }
-        }) as ContextMenu;
+        });
 
         this.current = contextMenu;
         return this.current;
@@ -37,7 +28,7 @@ export class ContextMenuManager {
 
     close() {
         if(this.current) {
-            this.current.close();
+            this.current.$destroy();
             this.current = null;
         }
     }

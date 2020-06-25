@@ -105,8 +105,8 @@ let options = {
     to: currentEnd,
     tableHeaders: [{ title: 'Label', property: 'label', width: 140 }],
     tableWidth: 240,
-    ganttTableModules: [app.SvelteGanttTable],
-    ganttBodyModules: [app.SvelteGanttDependencies]
+    ganttTableModules: [SvelteGanttTable],
+    ganttBodyModules: [SvelteGanttDependencies]
 }
 
-var gantt = new app.SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
+var gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });

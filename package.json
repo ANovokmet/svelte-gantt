@@ -7,11 +7,13 @@
 		"dev": "run-p start autobuild",
 		"start": "serve public"
 	},
+	"types": "types/index.d.ts",
+	"main": "index.es.js",
+	"es2015": "index.es.js",
 	"dependencies": {
 		"moment": "^2.22.2"
 	},
 	"devDependencies": {
-		"@pyoner/svelte-ts-preprocess": "^1.2.1",
 		"del": "^5.1.0",
 		"npm-run-all": "^4.1.3",
 		"rollup": "^2.7.3",
@@ -21,7 +23,7 @@
 		"rollup-plugin-svelte": "^5.2.1",
 		"rollup-plugin-typescript2": "^0.22.1",
 		"rollup-plugin-uglify": "^3.0.0",
-		"serve": "^7.1.3",
+		"serve": "^11.3.2",
 		"svelte": "^3.23.0",
 		"svelte-ts-preprocess": "^1.1.3",
 		"tslib": "^1.9.3",
