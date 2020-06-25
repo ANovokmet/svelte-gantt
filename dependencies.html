@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="">
+<head>
+	<meta charset='utf8'>
+	<meta name='viewport' content='width=device-width'>
+
+	<title>Svelte gantt</title>
+    <link rel="icon" href="favicon.png" sizes="16x16" type="image/png">
+
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/solid.css">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/fontawesome.css">
+	<link rel='stylesheet' href='global.css'>
+	<link rel='stylesheet' href='gantt-default.css'>
+	<link rel='stylesheet' href='dist/svelteGantt.css'>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js"></script>
+</head>
+
+<body>
+	<script src='dist/lib.js'></script>
+	<header class="control-header">
+		<input id="setPreviousDay" type="button" value="<"/>
+		<input id="setDayView" type="button" value="Day view"/>
+		<input id="setNextDay" type="button" value=">"/>
+
+		<input id="setWeekView" type="button" value="Week view"/>
+		<input id="reInit" type="button" value="Re-init"/>
+		<input id="newTask" type="button" value="Drag to gantt"/>
+	</header>
+	<div id="example-gantt"></div>
+	<script src='dependencies.js'></script>
+</body>
+</html>
