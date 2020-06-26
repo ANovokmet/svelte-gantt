@@ -8,9 +8,9 @@
     /**
      * Container component for header rows 
      */
-    export let headers = [];
-    export let columnUnit = 'minute';
-    export let columnOffset = 15;
+    export let headers;
+    export let columnUnit;
+    export let columnOffset;
 
     const { from, to, width } = getContext('dimensions');
 
@@ -35,6 +35,8 @@
     let baseHeaderWidth;
     $: {
         baseHeaderWidth = getPositionByDate($from.clone().add(minHeader.offset || 1, minHeader.unit), $from, $to, $width) | 0;
+        if(baseHeaderWidth <= 0)
+            console.error('baseHeaderWidth is invalid, columns or headers might be too short for the current view.');
     }
 
     let baseHeaderDuration;

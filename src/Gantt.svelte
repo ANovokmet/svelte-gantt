@@ -166,7 +166,7 @@
             left += width;
             columnFrom = to;
         }
-
+        
         return columns;
     }
 
@@ -572,7 +572,7 @@
         <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight="{$headerHeight}" class:right-scrollbar-visible="{rightScrollbarVisible}">
             <div class="sg-header-scroller" use:horizontalScrollListener>
                 <div class="header-container" style="width:{$_width}px">
-                    <ColumnHeader {headers} on:dateSelected="{onDateSelected}" />
+                    <ColumnHeader {headers} {columnUnit} {columnOffset} on:dateSelected="{onDateSelected}" />
                     {#each $allTimeRanges as timeRange (timeRange.id)}
                     <TimeRangeHeader {...timeRange} />
                     {/each}

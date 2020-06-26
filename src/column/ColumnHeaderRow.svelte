@@ -20,7 +20,13 @@
     }
 
     export let columnCount;
-    $: columnCount = Math.ceil($width / columnWidth);
+    $: {
+        columnCount = Math.ceil($width / columnWidth);
+        if(!isFinite(columnCount)){
+            console.error('columnCount is not finite');
+            columnCount = 0;
+        }
+    }
 
     let _headers = [];
     $: {
