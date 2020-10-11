@@ -4,8 +4,11 @@
 	"scripts": {
 		"build": "rollup -c",
 		"autobuild": "rollup -c -w",
+		"start": "serve public",
 		"dev": "run-p start autobuild",
-		"start": "serve public"
+		"docs:autobuild": "rollup -c docs/rollup.config.js -w",
+		"docs:start": "serve docs",
+		"dev:docs": "run-p docs:* autobuild"
 	},
 	"types": "types/index.d.ts",
 	"main": "index.es.js",

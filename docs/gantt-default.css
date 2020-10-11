@@ -135,3 +135,15 @@
 .sg-table-body-cell {
     background-color: #ffffff;
 }
+
+.sg-external-indicator {
+    position: absolute;
+    background: #eee;
+    padding: 0.5em 1em;
+    font-size: 12px;
+    pointer-events: none;
+    background-color: rgb(116, 191, 255);
+    color: white;
+    font-family: 'Lato', sans-serif;
+    z-index: 10;
+}

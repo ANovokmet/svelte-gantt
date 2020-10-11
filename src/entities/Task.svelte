@@ -173,7 +173,6 @@
 
     let row;
     $: row = $rowStore.entities[model.resourceId];
-	import { fade } from 'svelte/transition';
 </script>
 
 <style>

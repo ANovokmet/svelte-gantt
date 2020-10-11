@@ -1,13 +1,6 @@
+import { time } from '../utils';
 
-function time(input) {
-    return moment(input, 'HH:mm');
-}
-let startOfToday = moment().startOf('day');
-
-const currentStart = time('06:00');
-const currentEnd = time('18:00');
-
-const data = {
+export const data = {
     rows: [{
         id: 10,
         label: "Accounting",
@@ -121,19 +114,6 @@ const data = {
         "from": time("14:30"),
         "to": time("15:30"),
         "classes": "orange"
-    }]
-};
-
-const options = {
-    rows: data.rows,
-    tasks: data.tasks,
-    headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
-    fitWidth: true,
-    from: currentStart,
-    to: currentEnd,
-    tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
-    tableWidth: 240,
-    ganttTableModules: [SvelteGanttTable]
-};
-
-var gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
+    }],
+    dependencies: []
+}
