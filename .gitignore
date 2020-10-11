@@ -85,4 +85,5 @@ to do.txt
 .rpt2_cache/
 
 # npm published files
-dist/ 
+dist/
+!docs/dist
