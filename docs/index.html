@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="">
+
+<head>
+    <meta charset='utf8'>
+    <meta property="og:title" content="Svelte-gantt">
+    <meta property="og:description" content="Lightweight and fast gantt chart demo.">
+    <meta name="author" content="Ante Novokmet">
+    <meta name='viewport' content='width=device-width'>
+
+    <title>Svelte gantt</title>
+    <link rel="icon" href="favicon.png" sizes="16x16" type="image/png">
+
+    <!-- External libs -->
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/solid.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/fontawesome.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js"></script>
+
+    <!-- svelte-gantt library and docs -->
+    <link rel='stylesheet' href='gantt-default.css'>
+    <link rel='stylesheet' href='dist/svelteGantt.css'>
+    <script src='dist/lib.js'></script>
+    <link rel='stylesheet' href='public/index.css'>
+    <style>
+        html, body {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Lato', sans-serif;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="/public/index.js"></script>
+</body>
+
+</html>

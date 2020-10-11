@@ -13,10 +13,10 @@ export default {
     external: Object.keys(pkg.dependencies),
     output: {
         sourcemap: true,
-        format: 'iife',
+        format: 'es',
         name: 'window',
         extend: true,
-        file: 'public/dist/lib.js',
+        file: 'docs/dist/index.js',
         globals: {
             moment: 'moment'
         }
@@ -25,7 +25,7 @@ export default {
         svelte({
             dev: !production,
             css: css => {
-                css.write('public/dist/svelteGantt.css');
+                css.write('docs/dist/svelteGantt.css');
             }
         }),
         resolve(),

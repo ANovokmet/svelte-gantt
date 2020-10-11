@@ -11,8 +11,8 @@ Dependent on [Moment.js](https://momentjs.com/).
 Features include: Large datasets, drag'n'drop, tree view, zooming in/out, dependencies, date ranges...
 
 DEMO: [Large dataset](https://anovokmet.github.io/svelte-gantt/),
-[Tree](https://anovokmet.github.io/svelte-gantt/tree),
-[Dependencies](https://anovokmet.github.io/svelte-gantt/dependencies)
+[Tree](https://anovokmet.github.io/svelte-gantt/#/tree),
+[Dependencies](https://anovokmet.github.io/svelte-gantt/#/dependencies)
 
 # Installation
 
@@ -250,7 +250,7 @@ npm install
 ...then start [Rollup](https://rollupjs.org):
 
 ```bash
-npm run dev
+npm run dev:docs
 ```
 
 Navigate to [localhost:5000](http://localhost:5000). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.

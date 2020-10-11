@@ -1,18 +1,6 @@
-//import SvelteGantt from './Grid.svelte';
-//import moment from "../node_modules/moment/src/moment.js";
+import { time } from '../utils';
 
-function time(input) {
-    return moment(input, 'HH:mm');
-}
-let startOfToday = moment().startOf('day');
-
-const currentStart = time('06:00');
-const currentEnd = time('18:00');
-
-const dependencies = [];
-const colors = ['blue', 'green', 'orange']
-
-const data = {
+export const data = {
     rows: [{
         "id": 1,
         "label": "Preparation and Planning"
@@ -94,19 +82,3 @@ const data = {
         toId: 5
     }]
 };
-
-let options = {
-    rows: data.rows,
-    tasks: data.tasks,
-    dependencies: data.dependencies,
-    headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
-    fitWidth: true,
-    from: currentStart,
-    to: currentEnd,
-    tableHeaders: [{ title: 'Label', property: 'label', width: 140 }],
-    tableWidth: 240,
-    ganttTableModules: [SvelteGanttTable],
-    ganttBodyModules: [SvelteGanttDependencies]
-}
-
-var gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
