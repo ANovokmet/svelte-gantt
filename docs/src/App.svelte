@@ -27,7 +27,8 @@
         tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
         tableWidth: 240,
         ganttTableModules: [SvelteGanttTable],
-        ganttBodyModules: [SvelteGanttDependencies]
+        ganttBodyModules: [SvelteGanttDependencies],
+        // taskContent: (task) => `${task.label} ${task.from.format('HH:mm')}`
     }
 
     let gantt;
@@ -38,6 +39,7 @@
         //gantt.api.tasks.on.switchRow((task, row, previousRow) => console.log('Listener: task switched row', task));
         gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task));
         //gantt.api.tasks.on.moveEnd((task) => console.log('Listener: task move end', task));
+        gantt.api.tasks.on.change(([data]) => console.log('Listener: task change', data));
         gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task));
 
         const external = new SvelteGanttExternal(document.getElementById('new-task'), {

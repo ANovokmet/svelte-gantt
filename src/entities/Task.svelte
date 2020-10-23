@@ -43,8 +43,8 @@
         const ondrop = (event) => {
             let rowChangeValid = true;
             //row switching
+            const sourceRow = $rowStore.entities[model.resourceId];
             if (event.dragging) {
-                const sourceRow = $rowStore.entities[model.resourceId];
                 const targetRow = dndManager.getTarget("row", event.mouseEvent);
                 if (targetRow) {
                     model.resourceId = targetRow.model.id;
@@ -59,6 +59,8 @@
             const task = $taskStore.entities[model.id];
 
             if (rowChangeValid) {
+                const prevFrom = model.from;
+                const prevTo = model.to;
                 const newFrom = model.from = utils.roundTo(columnService.getDateByPosition(event.x));
                 const newTo = model.to = utils.roundTo(columnService.getDateByPosition(event.x + event.width));
                 const newLeft = columnService.getPositionByDate(newFrom) | 0;
@@ -79,7 +81,16 @@
                     model
                 }
 
+                const changed = !prevFrom.isSame(newFrom) || !prevTo.isSame(newTo) || (sourceRow && sourceRow.model.id !== targetRow.model.id);
+                if(changed) {
+                    gantt.api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
+                }
+
                 taskStore.update(newTask);
+
+                if(changed) {
+                    gantt.api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
+                }
 
                 // update shadow tasks
                 if(newTask.reflections) {
@@ -284,8 +295,8 @@
   <div class="sg-task-content">
     {#if model.html}
       {@html model.html}
-    {:else if $taskContent}
-      {@html $taskContent(this)}
+    {:else if taskContent}
+      {@html taskContent(model)}
     {:else}{model.label}{/if}
     <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
     {#if model.showButton}

@@ -194,6 +194,8 @@ gantt.api.tasks.on.select((task) => console.log('Listener: task selected', task)
 - `switchRow` (`task`, `row`, `previousRow`) Runs when user switches row of task.
 - `select` (`task`) Runs when user selects task.
 - `moveEnd` (`task`) Runs when user stops moving task.
+- `change` (`task`) Runs after dropping a task, before it is updated.
+- `changed` (`task`) Runs after dropping a task, after it is updated.
 
 ## Available modules
 

@@ -219,6 +219,7 @@
         api.registerEvent('tasks', 'select');
         api.registerEvent('tasks', 'switchRow');
         api.registerEvent('tasks', 'moveEnd');
+        api.registerEvent('tasks', 'change');
         api.registerEvent('tasks', 'changed');
         api.registerEvent('gantt', 'viewChanged');
 
