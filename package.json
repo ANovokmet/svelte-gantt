@@ -11,8 +11,7 @@
 		"dev:docs": "run-p docs:* autobuild"
 	},
 	"types": "types/index.d.ts",
-	"main": "index.es.js",
-	"es2015": "index.es.js",
+	"main": "index.js",
 	"dependencies": {
 		"moment": "^2.22.2"
 	},

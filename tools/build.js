@@ -33,7 +33,7 @@ promise = promise.then(() => rollup.rollup({
 // Compile source code into a distributable format
 ['es', 'iife'].forEach(format => { // /*, 'cjs', 'umd'*/
     promise.then(bundle => bundle.write({
-		file: `dist/${format === 'cjs' ? 'index' : `index.${format}`}.js`,
+		file: `dist/${format === 'es' ? 'index' : `index.${format}`}.js`,
         sourcemap: true,
 		format,
         globals: { 
@@ -49,10 +49,10 @@ promise = promise.then(() => {
 	delete pkg.private;
 	delete pkg.devDependencies;
 	delete pkg.scripts;
-	delete pkg.eslintConfig;
-
-	fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8');
-	fs.writeFileSync('dist/LICENSE.txt', fs.readFileSync('LICENSE.txt', 'utf-8'), 'utf-8');
+    delete pkg.eslintConfig;
+    
+    fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, '  '), { encoding: 'utf-8', flag: 'w' });
+    fs.writeFileSync('dist/LICENSE.txt', fs.readFileSync('LICENSE.txt', 'utf-8'), { encoding: 'utf-8', flag: 'w' });
 });
 
 promise.catch(err => console.error(err.stack)); // eslint-disable-line no-console
