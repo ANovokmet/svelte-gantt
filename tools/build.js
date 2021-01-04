@@ -59,6 +59,7 @@ promise = promise.then(() => {
     
     fs.writeFileSync(`${outputDir}/package.json`, JSON.stringify(pkg, null, '  '), { encoding: 'utf-8', flag: 'w' });
     fs.writeFileSync(`${outputDir}/LICENSE.txt`, fs.readFileSync('./LICENSE.txt', 'utf-8'), { encoding: 'utf-8', flag: 'w' });
+    fs.writeFileSync(`${outputDir}/README.md`, fs.readFileSync('./README.md', 'utf-8'), { encoding: 'utf-8', flag: 'w' });
 });
 
 promise.catch(err => console.error(err.stack)); // eslint-disable-line no-console
