@@ -6,13 +6,13 @@
 
 import _svelteGantt from './Gantt.svelte';
 
-import { SvelteGanttComponent } from './gantt';
+import { SvelteGanttComponent, SvelteGanttOptions } from './gantt';
 import { ComponentCreator } from './core/svelte';
 import { SvelteGanttTable } from './modules/table';
 import { SvelteGanttDependencies } from './modules/dependencies';
 import { SvelteGanttExternal } from './modules/external/external';
 
-var SvelteGantt = _svelteGantt as unknown as ComponentCreator<SvelteGanttComponent>;
+var SvelteGantt = _svelteGantt as unknown as ComponentCreator<SvelteGanttComponent, SvelteGanttOptions>;
 
 export {
     SvelteGantt,
