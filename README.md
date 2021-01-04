@@ -16,25 +16,23 @@ DEMO: [Large dataset](https://anovokmet.github.io/svelte-gantt/),
 
 # Installation
 
- 1. Clone or download repository.  
- 2. Run the build:
 ```
-node tools/build
+npm install svelte-gantt
 ```
- 3. Include relevant css and javascript
-    files from *./dist*:
 
-```html
-<link  rel='stylesheet'  href='public/gantt-default.css'>
-<link  rel='stylesheet'  href='dist/css/svelteGantt.css'>
-
-<script  src='moment.js'></script>
-<script  src='dist/index.iife.js'></script>
-```
-Or use ES6 imports in your code:
+Use ES6 imports in your code:
 
 ```js
 import { SvelteGantt, SvelteGanttTable } from 'svelte-gantt';
+```
+
+or use the IIFE build:
+
+```html
+<link  rel='stylesheet'  href='node_modules/svelte-gantt/css/svelteGantt.css'>
+
+<script  src='moment.js'></script>
+<script  src='node_modules/svelte-gantt/index.iife.js'></script>
 ```
 
  3. Initialize svelte-gantt:
@@ -256,6 +254,18 @@ npm run dev:docs
 ```
 
 Navigate to [localhost:5000](http://localhost:5000). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+
+## Build the package
+
+To build the package yourself:
+
+ 1. Clone or download repository.  
+ 2. Run the build:
+```
+node tools/build
+```
+ 3. The package is built in *./dist*
+
 
 # Issues
 
