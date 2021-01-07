@@ -1,4 +1,7 @@
 <script>
+    import * as moment_ from 'moment';
+    const moment = moment_
+        
     import { onMount, setContext, tick, onDestroy } from 'svelte';
     import { writable, derived } from 'svelte/store';
 

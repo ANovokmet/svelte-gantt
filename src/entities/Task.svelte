@@ -83,13 +83,13 @@
 
                 const changed = !prevFrom.isSame(newFrom) || !prevTo.isSame(newTo) || (sourceRow && sourceRow.model.id !== targetRow.model.id);
                 if(changed) {
-                    gantt.api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
+                    api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
                 }
 
                 taskStore.update(newTask);
 
                 if(changed) {
-                    gantt.api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
+                    api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
                 }
 
                 // update shadow tasks
