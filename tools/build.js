@@ -46,7 +46,7 @@ promise = promise.then(() => rollup.rollup({
             moment: 'moment'
         },
         extend: format === 'iife',
-		name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
+		name: format === 'iife' ? 'window' : pkg.name // pkg.name : undefined,
 	}));
 });
 
