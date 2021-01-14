@@ -1,6 +1,7 @@
 <script>
     import { onMount, setContext, tick, onDestroy } from 'svelte';
     import { writable, derived } from 'svelte/store';
+    import moment from 'moment';
 
     let ganttElement;
     let mainHeaderContainer;
