@@ -3,7 +3,7 @@
 
     const dispatch = createEventDispatcher();
 
-    import * as moment from 'moment';
+    import { duration as momentDuration } from 'moment';
 
     const { from, to, width } = getContext('dimensions');
     
@@ -14,7 +14,7 @@
     export let columnWidth;
     $: {
         const offset = header.offset || 1;
-        const duration = moment.duration(offset, header.unit).asMilliseconds();
+        const duration = momentDuration(offset, header.unit).asMilliseconds();
         const ratio = duration / baseDuration;
         columnWidth = baseWidth * ratio;
     }

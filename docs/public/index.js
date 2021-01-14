@@ -1,5 +1,9 @@
-var app = (function (moment$1) {
+var app = (function (moment) {
     'use strict';
+
+    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+    var moment__default = /*#__PURE__*/_interopDefaultLegacy(moment);
 
     function noop() { }
     function add_location(element, file, line, column, char) {
@@ -1594,7 +1598,7 @@ var app = (function (moment$1) {
     			div = element$1("div");
     			attr_dev$1(div, "class", "sg-task-background svelte-19txnoa");
     			set_style(div, "width", /*model*/ ctx[0].amountDone + "%");
-    			add_location$1(div, file, 292, 2, 8875);
+    			add_location$1(div, file, 292, 2, 8863);
     		},
     		m: function mount(target, anchor) {
     			insert_dev$1(target, div, anchor);
@@ -1725,7 +1729,7 @@ var app = (function (moment$1) {
     		c: function create() {
     			span = element$1("span");
     			attr_dev$1(span, "class", span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-19txnoa");
-    			add_location$1(span, file, 302, 6, 9253);
+    			add_location$1(span, file, 302, 6, 9241);
     		},
     		m: function mount(target, anchor) {
     			insert_dev$1(target, span, anchor);
@@ -1771,7 +1775,7 @@ var app = (function (moment$1) {
     			label = element$1("label");
     			t = text$1(t_value);
     			attr_dev$1(label, "class", "sg-label-bottom svelte-19txnoa");
-    			add_location$1(label, file, 309, 4, 9428);
+    			add_location$1(label, file, 309, 4, 9416);
     		},
     		m: function mount(target, anchor) {
     			insert_dev$1(target, label, anchor);
@@ -1804,7 +1808,6 @@ var app = (function (moment$1) {
     	let t2;
     	let div1_data_task_id_value;
     	let div1_class_value;
-    	let drag_action;
     	let mounted;
     	let dispose;
     	let if_block0 = /*model*/ ctx[0].amountDone && create_if_block_4(ctx);
@@ -1832,7 +1835,7 @@ var app = (function (moment$1) {
     			t2 = space$1();
     			if (if_block3) if_block3.c();
     			attr_dev$1(div0, "class", "sg-task-content svelte-19txnoa");
-    			add_location$1(div0, file, 294, 2, 8956);
+    			add_location$1(div0, file, 294, 2, 8944);
     			attr_dev$1(div1, "data-task-id", div1_data_task_id_value = /*model*/ ctx[0].id);
     			attr_dev$1(div1, "class", div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-19txnoa");
     			set_style(div1, "width", /*_position*/ ctx[6].width + "px");
@@ -1842,7 +1845,7 @@ var app = (function (moment$1) {
     			toggle_class(div1, "selected", /*selected*/ ctx[7]);
     			toggle_class(div1, "animating", /*animating*/ ctx[8]);
     			toggle_class(div1, "sg-task-reflected", /*reflected*/ ctx[2]);
-    			add_location$1(div1, file, 282, 0, 8534);
+    			add_location$1(div1, file, 282, 0, 8522);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1859,7 +1862,7 @@ var app = (function (moment$1) {
     			if (if_block3) if_block3.m(div1, null);
 
     			if (!mounted) {
-    				dispose = action_destroyer(drag_action = /*drag*/ ctx[11].call(null, div1));
+    				dispose = action_destroyer(ctx[11].call(null, div1));
     				mounted = true;
     			}
     		},
@@ -2047,13 +2050,13 @@ var app = (function (moment$1) {
     				const changed = !prevFrom.isSame(newFrom) || !prevTo.isSame(newTo) || sourceRow && sourceRow.model.id !== targetRow.model.id;
 
     				if (changed) {
-    					gantt.api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
+    					api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
     				}
 
     				taskStore.update(newTask);
 
     				if (changed) {
-    					gantt.api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
+    					api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
     				}
 
     				// update shadow tasks
@@ -2593,7 +2596,6 @@ var app = (function (moment$1) {
     	let div1;
     	let div0;
     	let div1_class_value;
-    	let drag_action;
     	let mounted;
     	let dispose;
 
@@ -2621,7 +2623,7 @@ var app = (function (moment$1) {
 
     			if (!mounted) {
     				dispose = [
-    					action_destroyer(drag_action = /*drag*/ ctx[10].call(null, div1)),
+    					action_destroyer(ctx[10].call(null, div1)),
     					listen_dev$1(div1, "click", /*select*/ ctx[2], false, false, false)
     				];
 
@@ -3155,10 +3157,8 @@ var app = (function (moment$1) {
     function create_fragment$4(ctx) {
     	let div2;
     	let div0;
-    	let drag_action;
     	let t;
     	let div1;
-    	let drag_action_1;
     	let mounted;
     	let dispose;
 
@@ -3188,8 +3188,8 @@ var app = (function (moment$1) {
 
     			if (!mounted) {
     				dispose = [
-    					action_destroyer(drag_action = /*drag*/ ctx[1].call(null, div0)),
-    					action_destroyer(drag_action_1 = /*drag*/ ctx[1].call(null, div1))
+    					action_destroyer(ctx[1].call(null, div0)),
+    					action_destroyer(ctx[1].call(null, div1))
     				];
 
     				mounted = true;
@@ -3548,7 +3548,7 @@ var app = (function (moment$1) {
     			t1 = space$1();
     			attr_dev$1(div, "class", "column-header-cell svelte-86q30t");
     			set_style(div, "width", /*header*/ ctx[0].width + "px");
-    			add_location$1(div, file$6, 52, 8, 1521);
+    			add_location$1(div, file$6, 52, 8, 1539);
     		},
     		m: function mount(target, anchor) {
     			insert_dev$1(target, div, anchor);
@@ -3605,7 +3605,7 @@ var app = (function (moment$1) {
     			}
 
     			attr_dev$1(div, "class", "column-header-row svelte-86q30t");
-    			add_location$1(div, file$6, 50, 0, 1448);
+    			add_location$1(div, file$6, 50, 0, 1466);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -3703,7 +3703,7 @@ var app = (function (moment$1) {
     		createEventDispatcher,
     		getContext,
     		dispatch,
-    		moment: moment$1,
+    		momentDuration: moment.duration,
     		from,
     		to,
     		width,
@@ -3734,7 +3734,7 @@ var app = (function (moment$1) {
     		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 385) {
     			 {
     				const offset = header.offset || 1;
-    				const duration$1 = moment$1.duration(offset, header.unit).asMilliseconds();
+    				const duration$1 = moment.duration(offset, header.unit).asMilliseconds();
     				const ratio = duration$1 / baseDuration;
     				$$invalidate(5, columnWidth = baseWidth * ratio);
     			}
@@ -4144,7 +4144,7 @@ var app = (function (moment$1) {
 
     	$$self.$capture_state = () => ({
     		getContext,
-    		momentDuration: moment$1.duration,
+    		momentDuration: moment.duration,
     		getPositionByDate,
     		ColumnHeaderRow,
     		headers,
@@ -4182,7 +4182,7 @@ var app = (function (moment$1) {
 
     				[...headers, { unit: columnUnit, offset: columnOffset }].forEach(header => {
     					const offset = header.offset || 1;
-    					const duration$1 = moment$1.duration(offset, header.unit).asMilliseconds();
+    					const duration$1 = moment.duration(offset, header.unit).asMilliseconds();
 
     					if (duration$1 < minDuration || minDuration === null) {
     						minDuration = duration$1;
@@ -4203,7 +4203,7 @@ var app = (function (moment$1) {
 
     		if ($$self.$$.dirty & /*minHeader*/ 256) {
     			 {
-    				$$invalidate(2, baseHeaderDuration = moment$1.duration(minHeader.offset || 1, minHeader.unit).asMilliseconds());
+    				$$invalidate(2, baseHeaderDuration = moment.duration(minHeader.offset || 1, minHeader.unit).asMilliseconds());
     			}
     		}
     	};
@@ -4427,7 +4427,6 @@ var app = (function (moment$1) {
 
     function create_fragment$9(ctx) {
     	let div;
-    	let resizer_action;
     	let mounted;
     	let dispose;
 
@@ -4445,7 +4444,7 @@ var app = (function (moment$1) {
     			insert_dev$1(target, div, anchor);
 
     			if (!mounted) {
-    				dispose = action_destroyer(resizer_action = /*resizer*/ ctx[1].call(null, div));
+    				dispose = action_destroyer(ctx[1].call(null, div));
     				mounted = true;
     			}
     		},
@@ -4810,7 +4809,7 @@ var app = (function (moment$1) {
     	return child_ctx;
     }
 
-    // (566:4) {#each ganttTableModules as module}
+    // (567:4) {#each ganttTableModules as module}
     function create_each_block_5(ctx) {
     	let t;
     	let current;
@@ -4937,14 +4936,14 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block_5.name,
     		type: "each",
-    		source: "(566:4) {#each ganttTableModules as module}",
+    		source: "(567:4) {#each ganttTableModules as module}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (577:20) {#each $allTimeRanges as timeRange (timeRange.id)}
+    // (578:20) {#each $allTimeRanges as timeRange (timeRange.id)}
     function create_each_block_4(key_1, ctx) {
     	let first;
     	let current;
@@ -4999,14 +4998,14 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block_4.name,
     		type: "each",
-    		source: "(577:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
+    		source: "(578:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (590:24) {#each visibleRows as row (row.model.id)}
+    // (591:24) {#each visibleRows as row (row.model.id)}
     function create_each_block_3(key_1, ctx) {
     	let first;
     	let current;
@@ -5053,14 +5052,14 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block_3.name,
     		type: "each",
-    		source: "(590:24) {#each visibleRows as row (row.model.id)}",
+    		source: "(591:24) {#each visibleRows as row (row.model.id)}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (596:20) {#each $allTimeRanges as timeRange (timeRange.id)}
+    // (597:20) {#each $allTimeRanges as timeRange (timeRange.id)}
     function create_each_block_2(key_1, ctx) {
     	let first;
     	let current;
@@ -5112,14 +5111,14 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block_2.name,
     		type: "each",
-    		source: "(596:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
+    		source: "(597:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (600:20) {#each visibleTasks as task (task.model.id)}
+    // (601:20) {#each visibleTasks as task (task.model.id)}
     function create_each_block_1(key_1, ctx) {
     	let first;
     	let current;
@@ -5187,14 +5186,14 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block_1.name,
     		type: "each",
-    		source: "(600:20) {#each visibleTasks as task (task.model.id)}",
+    		source: "(601:20) {#each visibleTasks as task (task.model.id)}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (605:16) {#each ganttBodyModules as module}
+    // (606:16) {#each ganttBodyModules as module}
     function create_each_block$2(ctx) {
     	let switch_instance_anchor;
     	let current;
@@ -5293,7 +5292,7 @@ var app = (function (moment$1) {
     		block,
     		id: create_each_block$2.name,
     		type: "each",
-    		source: "(605:16) {#each ganttBodyModules as module}",
+    		source: "(606:16) {#each ganttBodyModules as module}",
     		ctx
     	});
 
@@ -5310,7 +5309,6 @@ var app = (function (moment$1) {
     	let t1;
     	let each_blocks_4 = [];
     	let each1_lookup = new Map();
-    	let horizontalScrollListener_action;
     	let div2_resize_listener;
     	let t2;
     	let div7;
@@ -5328,7 +5326,6 @@ var app = (function (moment$1) {
     	let each_blocks_1 = [];
     	let each4_lookup = new Map();
     	let t6;
-    	let scrollable_action;
     	let div7_resize_listener;
     	let div9_class_value;
     	let current;
@@ -5470,32 +5467,32 @@ var app = (function (moment$1) {
 
     			attr_dev$1(div0, "class", "header-container svelte-t99ngj");
     			set_style(div0, "width", /*$_width*/ ctx[20] + "px");
-    			add_location$1(div0, file$9, 574, 16, 18698);
+    			add_location$1(div0, file$9, 575, 16, 18732);
     			attr_dev$1(div1, "class", "sg-header-scroller svelte-t99ngj");
-    			add_location$1(div1, file$9, 573, 12, 18619);
+    			add_location$1(div1, file$9, 574, 12, 18653);
     			attr_dev$1(div2, "class", "sg-header svelte-t99ngj");
     			add_render_callback$1(() => /*div2_elementresize_handler*/ ctx[107].call(div2));
     			toggle_class(div2, "right-scrollbar-visible", /*rightScrollbarVisible*/ ctx[13]);
-    			add_location$1(div2, file$9, 572, 8, 18458);
+    			add_location$1(div2, file$9, 573, 8, 18492);
     			set_style(div3, "transform", "translateY(" + /*paddingTop*/ ctx[15] + "px)");
-    			add_location$1(div3, file$9, 588, 20, 19526);
+    			add_location$1(div3, file$9, 589, 20, 19560);
     			attr_dev$1(div4, "class", "sg-rows svelte-t99ngj");
     			set_style(div4, "height", /*rowContainerHeight*/ ctx[14] + "px");
-    			add_location$1(div4, file$9, 587, 16, 19419);
+    			add_location$1(div4, file$9, 588, 16, 19453);
     			attr_dev$1(div5, "class", "sg-foreground svelte-t99ngj");
-    			add_location$1(div5, file$9, 594, 16, 19791);
+    			add_location$1(div5, file$9, 595, 16, 19825);
     			attr_dev$1(div6, "class", "content svelte-t99ngj");
     			set_style(div6, "width", /*$_width*/ ctx[20] + "px");
-    			add_location$1(div6, file$9, 585, 12, 19308);
+    			add_location$1(div6, file$9, 586, 12, 19342);
     			attr_dev$1(div7, "class", "sg-timeline-body svelte-t99ngj");
     			add_render_callback$1(() => /*div7_elementresize_handler*/ ctx[110].call(div7));
     			toggle_class(div7, "zooming", /*zooming*/ ctx[12]);
-    			add_location$1(div7, file$9, 583, 8, 19094);
+    			add_location$1(div7, file$9, 584, 8, 19128);
     			attr_dev$1(div8, "class", "sg-timeline sg-view svelte-t99ngj");
-    			add_location$1(div8, file$9, 571, 4, 18415);
+    			add_location$1(div8, file$9, 572, 4, 18449);
     			attr_dev$1(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-t99ngj");
     			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[19]);
-    			add_location$1(div9, file$9, 564, 0, 17945);
+    			add_location$1(div9, file$9, 565, 0, 17979);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -5560,8 +5557,8 @@ var app = (function (moment$1) {
 
     			if (!mounted) {
     				dispose = [
-    					action_destroyer(horizontalScrollListener_action = /*horizontalScrollListener*/ ctx[39].call(null, div1)),
-    					action_destroyer(scrollable_action = /*scrollable*/ ctx[38].call(null, div7)),
+    					action_destroyer(ctx[39].call(null, div1)),
+    					action_destroyer(ctx[38].call(null, div7)),
     					listen_dev$1(div7, "wheel", /*onwheel*/ ctx[41], false, false, false),
     					listen_dev$1(div9, "click", onEvent, false, false, false),
     					listen_dev$1(div9, "mouseover", onEvent, false, false, false)
@@ -5962,7 +5959,7 @@ var app = (function (moment$1) {
     			const column = this.getColumnByPosition(x);
     			x = x - column.left;
     			let positionDuration = column.duration / column.width * x;
-    			const date = moment(column.from).add(positionDuration, "milliseconds");
+    			const date = moment__default['default'](column.from).add(positionDuration, "milliseconds");
     			return date;
     		},
     		/**
@@ -6416,6 +6413,7 @@ var app = (function (moment$1) {
     		onDestroy,
     		writable,
     		derived,
+    		moment: moment__default['default'],
     		ganttElement,
     		mainHeaderContainer,
     		mainContainer,
@@ -8497,7 +8495,6 @@ var app = (function (moment$1) {
     	let div3;
     	let div2;
     	let div1;
-    	let scrollListener_action;
     	let current;
     	let mounted;
     	let dispose;
@@ -8580,7 +8577,7 @@ var app = (function (moment$1) {
     			current = true;
 
     			if (!mounted) {
-    				dispose = action_destroyer(scrollListener_action = /*scrollListener*/ ctx[13].call(null, div2));
+    				dispose = action_destroyer(ctx[13].call(null, div2));
     				mounted = true;
     			}
     		},
@@ -9883,7 +9880,7 @@ var app = (function (moment$1) {
     var SvelteGantt = Gantt;
 
     function time(input) {
-        return moment(input, 'HH:mm');
+        return moment__default['default'](input, 'HH:mm');
     }
 
     const colors = ['blue', 'green', 'orange'];
