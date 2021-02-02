@@ -5465,32 +5465,32 @@ var app = (function (moment) {
     				each_blocks[i].c();
     			}
 
-    			attr_dev$1(div0, "class", "header-container svelte-t99ngj");
+    			attr_dev$1(div0, "class", "header-container svelte-1g8hbwk");
     			set_style(div0, "width", /*$_width*/ ctx[20] + "px");
     			add_location$1(div0, file$9, 575, 16, 18732);
-    			attr_dev$1(div1, "class", "sg-header-scroller svelte-t99ngj");
+    			attr_dev$1(div1, "class", "sg-header-scroller svelte-1g8hbwk");
     			add_location$1(div1, file$9, 574, 12, 18653);
-    			attr_dev$1(div2, "class", "sg-header svelte-t99ngj");
+    			attr_dev$1(div2, "class", "sg-header svelte-1g8hbwk");
     			add_render_callback$1(() => /*div2_elementresize_handler*/ ctx[107].call(div2));
     			toggle_class(div2, "right-scrollbar-visible", /*rightScrollbarVisible*/ ctx[13]);
     			add_location$1(div2, file$9, 573, 8, 18492);
     			set_style(div3, "transform", "translateY(" + /*paddingTop*/ ctx[15] + "px)");
     			add_location$1(div3, file$9, 589, 20, 19560);
-    			attr_dev$1(div4, "class", "sg-rows svelte-t99ngj");
+    			attr_dev$1(div4, "class", "sg-rows svelte-1g8hbwk");
     			set_style(div4, "height", /*rowContainerHeight*/ ctx[14] + "px");
     			add_location$1(div4, file$9, 588, 16, 19453);
-    			attr_dev$1(div5, "class", "sg-foreground svelte-t99ngj");
+    			attr_dev$1(div5, "class", "sg-foreground svelte-1g8hbwk");
     			add_location$1(div5, file$9, 595, 16, 19825);
-    			attr_dev$1(div6, "class", "content svelte-t99ngj");
+    			attr_dev$1(div6, "class", "content svelte-1g8hbwk");
     			set_style(div6, "width", /*$_width*/ ctx[20] + "px");
     			add_location$1(div6, file$9, 586, 12, 19342);
-    			attr_dev$1(div7, "class", "sg-timeline-body svelte-t99ngj");
+    			attr_dev$1(div7, "class", "sg-timeline-body svelte-1g8hbwk");
     			add_render_callback$1(() => /*div7_elementresize_handler*/ ctx[110].call(div7));
     			toggle_class(div7, "zooming", /*zooming*/ ctx[12]);
     			add_location$1(div7, file$9, 584, 8, 19128);
-    			attr_dev$1(div8, "class", "sg-timeline sg-view svelte-t99ngj");
+    			attr_dev$1(div8, "class", "sg-timeline sg-view svelte-1g8hbwk");
     			add_location$1(div8, file$9, 572, 4, 18449);
-    			attr_dev$1(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-t99ngj");
+    			attr_dev$1(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1g8hbwk");
     			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[19]);
     			add_location$1(div9, file$9, 565, 0, 17979);
     		},
@@ -5694,7 +5694,7 @@ var app = (function (moment) {
     				toggle_class(div7, "zooming", /*zooming*/ ctx[12]);
     			}
 
-    			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-t99ngj")) {
+    			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1g8hbwk")) {
     				attr_dev$1(div9, "class", div9_class_value);
     			}
 

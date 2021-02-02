@@ -661,7 +661,7 @@
 
     .sg-timeline-body {
         overflow: auto;
-        flex: 1 1 0;
+        flex: 1 1 auto;
     }
 
     .sg-header {
