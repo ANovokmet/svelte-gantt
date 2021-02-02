@@ -49,6 +49,10 @@
     export let fitWidth = false;
     const _minWidth = writable(minWidth);
     const _fitWidth = writable(fitWidth);
+    $: {
+        $_minWidth = minWidth;
+        $_fitWidth = fitWidth;
+    } 
 
     export let classes = [];
     export let headers = [{unit: 'day', format: 'MMMM Do'}, {unit: 'hour', format: 'H:mm'}];
@@ -703,12 +707,12 @@
     }
 
     .header-container {
-        position: relative;
     }
 
     .sg-header-scroller {
         border-right: 1px solid #efefef;
         overflow: hidden;
+        position: relative;
     }
 
     .content {

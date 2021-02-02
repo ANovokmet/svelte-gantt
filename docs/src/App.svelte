@@ -89,7 +89,7 @@
             from: currentStart.clone().startOf('week'),
             to: currentStart.clone().endOf('week'),
             minWidth: 5000,
-            headers: [{ unit: 'month', format: 'MMMM YYYY' }, { unit: 'day', format: 'ddd DD' }]
+            headers: [{ unit: 'month', format: 'MMMM YYYY', sticky: true }, { unit: 'day', format: 'ddd DD', sticky: true }]
         });
     };
 

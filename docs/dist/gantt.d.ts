@@ -12,6 +12,7 @@ interface Header {
     unit: string;
     format: string;
     offset?: number;
+    sticky?: boolean;
 }
 interface Zoom {
     headers: Header[];

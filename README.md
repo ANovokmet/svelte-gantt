@@ -101,6 +101,8 @@ Represents a row of header cells that render over the gantt.
 - `format` {`String`} Datetime format used to label header cells.
     - eg. `'DD.MM.YYYY'`, `'HH'`
 - `offset` {`Number`} Duration width of header cell.
+- `sticky` {`Boolean`} Use sticky positioning for header labels.
+
 
 ## Table Header
 

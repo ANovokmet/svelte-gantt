@@ -49,9 +49,9 @@
 </script>
 
 <div class="column-header-row">
-    {#each _headers as header}
-        <div class="column-header-cell" style="width:{header.width}px" on:click="{() => dispatch('dateSelected', { from: header.from, to: header.to, unit: header.unit })}">
-            {header.label || 'N/A'}
+    {#each _headers as _header}
+        <div class="column-header-cell" class:sticky={header.sticky} style="width:{_header.width}px" on:click="{() => dispatch('dateSelected', { from: _header.from, to: _header.to, unit: _header.unit })}">
+            <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
         </div>
     {/each}
 </div>
@@ -59,13 +59,10 @@
     .column-header-row {
         box-sizing: border-box;
         white-space: nowrap;
-        overflow: hidden;
-
         height: 32px;
     }
 
     .column-header-cell {
-        position: relative;
         display: inline-block;
         height: 100%;
         box-sizing: border-box;
@@ -83,6 +80,11 @@
 
         cursor: pointer;     
         user-select: none;
+    }
+
+    .column-header-cell.sticky > .column-header-cell-label {
+        position: sticky;
+        left: 1rem;
     }
 
     .column-header-cell:hover {

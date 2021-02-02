@@ -3192,52 +3192,62 @@ const file$6 = "src\\column\\ColumnHeaderRow.svelte";
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[0] = list[i];
+	child_ctx[13] = list[i];
 	return child_ctx;
 }
 
-// (52:4) {#each _headers as header}
+// (52:4) {#each _headers as _header}
 function create_each_block(ctx) {
-	let div;
-	let t0_value = (/*header*/ ctx[0].label || "N/A") + "";
+	let div1;
+	let div0;
+	let t0_value = (/*_header*/ ctx[13].label || "N/A") + "";
 	let t0;
 	let t1;
 	let mounted;
 	let dispose;
 
 	function click_handler(...args) {
-		return /*click_handler*/ ctx[12](/*header*/ ctx[0], ...args);
+		return /*click_handler*/ ctx[12](/*_header*/ ctx[13], ...args);
 	}
 
 	const block = {
 		c: function create() {
-			div = element("div");
+			div1 = element("div");
+			div0 = element("div");
 			t0 = text(t0_value);
 			t1 = space();
-			attr_dev(div, "class", "column-header-cell svelte-86q30t");
-			set_style(div, "width", /*header*/ ctx[0].width + "px");
-			add_location(div, file$6, 52, 8, 1539);
+			attr_dev(div0, "class", "column-header-cell-label svelte-2mrscm");
+			add_location(div0, file$6, 53, 12, 1751);
+			attr_dev(div1, "class", "column-header-cell svelte-2mrscm");
+			set_style(div1, "width", /*_header*/ ctx[13].width + "px");
+			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
+			add_location(div1, file$6, 52, 8, 1540);
 		},
 		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-			append_dev(div, t0);
-			append_dev(div, t1);
+			insert_dev(target, div1, anchor);
+			append_dev(div1, div0);
+			append_dev(div0, t0);
+			append_dev(div1, t1);
 
 			if (!mounted) {
-				dispose = listen_dev(div, "click", click_handler, false, false, false);
+				dispose = listen_dev(div1, "click", click_handler, false, false, false);
 				mounted = true;
 			}
 		},
 		p: function update(new_ctx, dirty) {
 			ctx = new_ctx;
-			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*header*/ ctx[0].label || "N/A") + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data_dev(t0, t0_value);
 
 			if (dirty & /*_headers*/ 2) {
-				set_style(div, "width", /*header*/ ctx[0].width + "px");
+				set_style(div1, "width", /*_header*/ ctx[13].width + "px");
+			}
+
+			if (dirty & /*header*/ 1) {
+				toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 			}
 		},
 		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+			if (detaching) detach_dev(div1);
 			mounted = false;
 			dispose();
 		}
@@ -3247,7 +3257,7 @@ function create_each_block(ctx) {
 		block,
 		id: create_each_block.name,
 		type: "each",
-		source: "(52:4) {#each _headers as header}",
+		source: "(52:4) {#each _headers as _header}",
 		ctx
 	});
 
@@ -3272,7 +3282,7 @@ function create_fragment$6(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div, "class", "column-header-row svelte-86q30t");
+			attr_dev(div, "class", "column-header-row svelte-2mrscm");
 			add_location(div, file$6, 50, 0, 1466);
 		},
 		l: function claim(nodes) {
@@ -3286,7 +3296,7 @@ function create_fragment$6(ctx) {
 			}
 		},
 		p: function update(ctx, [dirty]) {
-			if (dirty & /*_headers, dispatch*/ 6) {
+			if (dirty & /*_headers, header, dispatch*/ 7) {
 				each_value = /*_headers*/ ctx[1];
 				validate_each_argument(each_value);
 				let i;
@@ -3353,10 +3363,10 @@ function instance$6($$self, $$props, $$invalidate) {
 	let { $$slots = {}, $$scope } = $$props;
 	validate_slots("ColumnHeaderRow", $$slots, []);
 
-	const click_handler = header => dispatch("dateSelected", {
-		from: header.from,
-		to: header.to,
-		unit: header.unit
+	const click_handler = _header => dispatch("dateSelected", {
+		from: _header.from,
+		to: _header.to,
+		unit: _header.unit
 	});
 
 	$$self.$set = $$props => {
@@ -4477,7 +4487,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (601:4) {#each ganttTableModules as module}
+// (605:4) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let t;
 	let current;
@@ -4604,14 +4614,14 @@ function create_each_block_5(ctx) {
 		block,
 		id: create_each_block_5.name,
 		type: "each",
-		source: "(601:4) {#each ganttTableModules as module}",
+		source: "(605:4) {#each ganttTableModules as module}",
 		ctx
 	});
 
 	return block;
 }
 
-// (612:20) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (616:20) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_4(key_1, ctx) {
 	let first;
 	let current;
@@ -4666,14 +4676,14 @@ function create_each_block_4(key_1, ctx) {
 		block,
 		id: create_each_block_4.name,
 		type: "each",
-		source: "(612:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
+		source: "(616:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
 		ctx
 	});
 
 	return block;
 }
 
-// (625:24) {#each visibleRows as row (row.model.id)}
+// (629:24) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
@@ -4720,14 +4730,14 @@ function create_each_block_3(key_1, ctx) {
 		block,
 		id: create_each_block_3.name,
 		type: "each",
-		source: "(625:24) {#each visibleRows as row (row.model.id)}",
+		source: "(629:24) {#each visibleRows as row (row.model.id)}",
 		ctx
 	});
 
 	return block;
 }
 
-// (631:20) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (635:20) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_2(key_1, ctx) {
 	let first;
 	let current;
@@ -4779,14 +4789,14 @@ function create_each_block_2(key_1, ctx) {
 		block,
 		id: create_each_block_2.name,
 		type: "each",
-		source: "(631:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
+		source: "(635:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
 		ctx
 	});
 
 	return block;
 }
 
-// (635:20) {#each visibleTasks as task (task.model.id)}
+// (639:20) {#each visibleTasks as task (task.model.id)}
 function create_each_block_1(key_1, ctx) {
 	let first;
 	let current;
@@ -4854,14 +4864,14 @@ function create_each_block_1(key_1, ctx) {
 		block,
 		id: create_each_block_1.name,
 		type: "each",
-		source: "(635:20) {#each visibleTasks as task (task.model.id)}",
+		source: "(639:20) {#each visibleTasks as task (task.model.id)}",
 		ctx
 	});
 
 	return block;
 }
 
-// (640:16) {#each ganttBodyModules as module}
+// (644:16) {#each ganttBodyModules as module}
 function create_each_block$2(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -4960,7 +4970,7 @@ function create_each_block$2(ctx) {
 		block,
 		id: create_each_block$2.name,
 		type: "each",
-		source: "(640:16) {#each ganttBodyModules as module}",
+		source: "(644:16) {#each ganttBodyModules as module}",
 		ctx
 	});
 
@@ -5133,34 +5143,34 @@ function create_fragment$a(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div0, "class", "header-container svelte-1g8hbwk");
+			attr_dev(div0, "class", "header-container svelte-12fxs8g");
 			set_style(div0, "width", /*$_width*/ ctx[20] + "px");
-			add_location(div0, file$9, 609, 16, 19684);
-			attr_dev(div1, "class", "sg-header-scroller svelte-1g8hbwk");
-			add_location(div1, file$9, 608, 12, 19605);
-			attr_dev(div2, "class", "sg-header svelte-1g8hbwk");
+			add_location(div0, file$9, 613, 16, 19766);
+			attr_dev(div1, "class", "sg-header-scroller svelte-12fxs8g");
+			add_location(div1, file$9, 612, 12, 19687);
+			attr_dev(div2, "class", "sg-header svelte-12fxs8g");
 			add_render_callback(() => /*div2_elementresize_handler*/ ctx[114].call(div2));
 			toggle_class(div2, "right-scrollbar-visible", /*rightScrollbarVisible*/ ctx[13]);
-			add_location(div2, file$9, 607, 8, 19444);
+			add_location(div2, file$9, 611, 8, 19526);
 			set_style(div3, "transform", "translateY(" + /*paddingTop*/ ctx[15] + "px)");
-			add_location(div3, file$9, 623, 20, 20512);
-			attr_dev(div4, "class", "sg-rows svelte-1g8hbwk");
+			add_location(div3, file$9, 627, 20, 20594);
+			attr_dev(div4, "class", "sg-rows svelte-12fxs8g");
 			set_style(div4, "height", /*rowContainerHeight*/ ctx[14] + "px");
-			add_location(div4, file$9, 622, 16, 20405);
-			attr_dev(div5, "class", "sg-foreground svelte-1g8hbwk");
-			add_location(div5, file$9, 629, 16, 20777);
-			attr_dev(div6, "class", "content svelte-1g8hbwk");
+			add_location(div4, file$9, 626, 16, 20487);
+			attr_dev(div5, "class", "sg-foreground svelte-12fxs8g");
+			add_location(div5, file$9, 633, 16, 20859);
+			attr_dev(div6, "class", "content svelte-12fxs8g");
 			set_style(div6, "width", /*$_width*/ ctx[20] + "px");
-			add_location(div6, file$9, 620, 12, 20294);
-			attr_dev(div7, "class", "sg-timeline-body svelte-1g8hbwk");
+			add_location(div6, file$9, 624, 12, 20376);
+			attr_dev(div7, "class", "sg-timeline-body svelte-12fxs8g");
 			add_render_callback(() => /*div7_elementresize_handler*/ ctx[117].call(div7));
 			toggle_class(div7, "zooming", /*zooming*/ ctx[12]);
-			add_location(div7, file$9, 618, 8, 20080);
-			attr_dev(div8, "class", "sg-timeline sg-view svelte-1g8hbwk");
-			add_location(div8, file$9, 606, 4, 19401);
-			attr_dev(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1g8hbwk");
+			add_location(div7, file$9, 622, 8, 20162);
+			attr_dev(div8, "class", "sg-timeline sg-view svelte-12fxs8g");
+			add_location(div8, file$9, 610, 4, 19483);
+			attr_dev(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-12fxs8g");
 			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[19]);
-			add_location(div9, file$9, 599, 0, 18931);
+			add_location(div9, file$9, 603, 0, 19013);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -5362,7 +5372,7 @@ function create_fragment$a(ctx) {
 				toggle_class(div7, "zooming", /*zooming*/ ctx[12]);
 			}
 
-			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1g8hbwk")) {
+			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-12fxs8g")) {
 				attr_dev(div9, "class", div9_class_value);
 			}
 
@@ -5497,14 +5507,14 @@ function instance$a($$self, $$props, $$invalidate) {
 	let $$restProps = compute_rest_props($$props, omit_props_names);
 	let $_from;
 	let $_to;
+	let $_minWidth;
+	let $_fitWidth;
 	let $_width;
 	let $columnWidth;
 	let $dimensionsChanged;
 	let $taskStore;
 	let $hoveredRow;
 	let $selectedRow;
-	let $_minWidth;
-	let $_fitWidth;
 	let $_rowPadding;
 	let $rowStore;
 	let $allTasks;
@@ -5515,7 +5525,7 @@ function instance$a($$self, $$props, $$invalidate) {
 	let $allTimeRanges;
 	let $visibleWidth;
 	validate_store(taskStore, "taskStore");
-	component_subscribe($$self, taskStore, $$value => $$invalidate(94, $taskStore = $$value));
+	component_subscribe($$self, taskStore, $$value => $$invalidate(96, $taskStore = $$value));
 	validate_store(rowStore, "rowStore");
 	component_subscribe($$self, rowStore, $$value => $$invalidate(100, $rowStore = $$value));
 	validate_store(allTasks, "allTasks");
@@ -5553,10 +5563,10 @@ function instance$a($$self, $$props, $$invalidate) {
 	let { fitWidth = false } = $$props;
 	const _minWidth = writable(minWidth);
 	validate_store(_minWidth, "_minWidth");
-	component_subscribe($$self, _minWidth, value => $$invalidate(97, $_minWidth = value));
+	component_subscribe($$self, _minWidth, value => $$invalidate(92, $_minWidth = value));
 	const _fitWidth = writable(fitWidth);
 	validate_store(_fitWidth, "_fitWidth");
-	component_subscribe($$self, _fitWidth, value => $$invalidate(98, $_fitWidth = value));
+	component_subscribe($$self, _fitWidth, value => $$invalidate(93, $_fitWidth = value));
 	let { classes = [] } = $$props;
 	let { headers = [{ unit: "day", format: "MMMM Do" }, { unit: "hour", format: "H:mm" }] } = $$props;
 
@@ -5655,7 +5665,7 @@ function instance$a($$self, $$props, $$invalidate) {
 
 	const columnWidth = writable(getPositionByDate($_from.clone().add(columnOffset, columnUnit), $_from, $_to, $_width) | 0);
 	validate_store(columnWidth, "columnWidth");
-	component_subscribe($$self, columnWidth, value => $$invalidate(92, $columnWidth = value));
+	component_subscribe($$self, columnWidth, value => $$invalidate(94, $columnWidth = value));
 	let columnCount = Math.ceil($_width / $columnWidth);
 	let columns = getColumns($_from, columnCount, columnOffset, columnUnit, $columnWidth);
 
@@ -5678,7 +5688,7 @@ function instance$a($$self, $$props, $$invalidate) {
 
 	const dimensionsChanged = derived([columnWidth, _from, _to], () => ({}));
 	validate_store(dimensionsChanged, "dimensionsChanged");
-	component_subscribe($$self, dimensionsChanged, value => $$invalidate(93, $dimensionsChanged = value));
+	component_subscribe($$self, dimensionsChanged, value => $$invalidate(95, $dimensionsChanged = value));
 
 	setContext("dimensions", {
 		from: _from,
@@ -5702,10 +5712,10 @@ function instance$a($$self, $$props, $$invalidate) {
 
 	const hoveredRow = writable();
 	validate_store(hoveredRow, "hoveredRow");
-	component_subscribe($$self, hoveredRow, value => $$invalidate(95, $hoveredRow = value));
+	component_subscribe($$self, hoveredRow, value => $$invalidate(97, $hoveredRow = value));
 	const selectedRow = writable();
 	validate_store(selectedRow, "selectedRow");
-	component_subscribe($$self, selectedRow, value => $$invalidate(96, $selectedRow = value));
+	component_subscribe($$self, selectedRow, value => $$invalidate(98, $selectedRow = value));
 	const ganttContext = { scrollables, hoveredRow, selectedRow };
 	setContext("gantt", ganttContext);
 
@@ -6245,14 +6255,14 @@ function instance$a($$self, $$props, $$invalidate) {
 		disableTransition,
 		$_from,
 		$_to,
+		$_minWidth,
+		$_fitWidth,
 		$_width,
 		$columnWidth,
 		$dimensionsChanged,
 		$taskStore,
 		$hoveredRow,
 		$selectedRow,
-		$_minWidth,
-		$_fitWidth,
 		$_rowPadding,
 		$rowStore,
 		$allTasks,
@@ -6338,19 +6348,26 @@ function instance$a($$self, $$props, $$invalidate) {
 			 set_store_value(_to, $_to = to);
 		}
 
+		if ($$self.$$.dirty[1] & /*minWidth, fitWidth*/ 25165824) {
+			 {
+				set_store_value(_minWidth, $_minWidth = minWidth);
+				set_store_value(_fitWidth, $_fitWidth = fitWidth);
+			}
+		}
+
 		if ($$self.$$.dirty[0] & /*columnOffset, columnUnit, $_width*/ 1048588 | $$self.$$.dirty[2] & /*$_from, $_to*/ 805306368) {
 			 set_store_value(columnWidth, $columnWidth = getPositionByDate($_from.clone().add(columnOffset, columnUnit), $_from, $_to, $_width) | 0);
 		}
 
-		if ($$self.$$.dirty[0] & /*$_width*/ 1048576 | $$self.$$.dirty[2] & /*$columnWidth*/ 1073741824) {
+		if ($$self.$$.dirty[0] & /*$_width*/ 1048576 | $$self.$$.dirty[3] & /*$columnWidth*/ 2) {
 			 $$invalidate(83, columnCount = Math.ceil($_width / $columnWidth));
 		}
 
-		if ($$self.$$.dirty[0] & /*columnOffset, columnUnit*/ 12 | $$self.$$.dirty[2] & /*$_from, columnCount, $columnWidth*/ 1344274432) {
+		if ($$self.$$.dirty[0] & /*columnOffset, columnUnit*/ 12 | $$self.$$.dirty[2] & /*$_from, columnCount*/ 270532608 | $$self.$$.dirty[3] & /*$columnWidth*/ 2) {
 			 $$invalidate(11, columns = getColumns($_from, columnCount, columnOffset, columnUnit, $columnWidth));
 		}
 
-		if ($$self.$$.dirty[3] & /*$dimensionsChanged*/ 1) {
+		if ($$self.$$.dirty[3] & /*$dimensionsChanged*/ 4) {
 			 {
 				if ($dimensionsChanged) {
 					refreshTasks();
@@ -6412,7 +6429,7 @@ function instance$a($$self, $$props, $$invalidate) {
 			 $$invalidate(17, visibleRows = filteredRows.slice(startIndex, endIndex + 1));
 		}
 
-		if ($$self.$$.dirty[0] & /*visibleRows*/ 131072 | $$self.$$.dirty[3] & /*$rowTaskCache, $taskStore*/ 1026) {
+		if ($$self.$$.dirty[0] & /*visibleRows*/ 131072 | $$self.$$.dirty[3] & /*$rowTaskCache, $taskStore*/ 1032) {
 			 {
 				const tasks = [];
 
@@ -6428,7 +6445,7 @@ function instance$a($$self, $$props, $$invalidate) {
 			}
 		}
 
-		if ($$self.$$.dirty[3] & /*$dimensionsChanged*/ 1) {
+		if ($$self.$$.dirty[3] & /*$dimensionsChanged*/ 4) {
 			 if ($dimensionsChanged) tickWithoutCSSTransition();
 		}
 	};
@@ -6526,13 +6543,13 @@ function instance$a($$self, $$props, $$invalidate) {
 		endIndex,
 		$_from,
 		$_to,
+		$_minWidth,
+		$_fitWidth,
 		$columnWidth,
 		$dimensionsChanged,
 		$taskStore,
 		$hoveredRow,
 		$selectedRow,
-		$_minWidth,
-		$_fitWidth,
 		$_rowPadding,
 		$rowStore,
 		$allTasks,
