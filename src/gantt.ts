@@ -2,7 +2,7 @@ import { ColumnService } from './core/column';
 import { GanttApi } from './core/api';
 import { Component } from "./core/svelte";
 import { DragDropManager } from './core/drag';
-import { RowModel, RowFactory } from './core/row';
+import { RowModel, RowFactory, SvelteRow } from './core/row';
 import { TaskModel, TaskFactory, SvelteTask } from './core/task';
 import { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
 import { GanttUtils } from './utils/utils';
@@ -117,7 +117,15 @@ export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
     refreshTimeRanges();
     getRowContainer(): HTMLElement;
     selectTask(id: number);
+    unselectTasks();
     scrollToTask(id: number, scrollBehavior?: string);
     scrollToRow(id: number, scrollBehavior?: string);
+
     updateTask(model: TaskModel);
+    updateTasks(models: TaskModel[]);
+    updateRow(model: RowModel);
+    updateRowss(models: RowModel[]);
+    getTask(id): SvelteTask;
+    getTasks(resourceId): SvelteTask[];
+    getRow(id): SvelteRow;
 }

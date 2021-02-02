@@ -461,6 +461,10 @@
         }
     }
 
+    export function unselectTasks() {
+        selectionManager.clearSelection();
+    }
+
     export function scrollToRow(id, scrollBehavior = 'auto') {
         const { scrollTop, clientHeight } = mainContainer;
         
@@ -520,6 +524,36 @@
     export function updateTask(model) {
         const task = taskFactory.createTask(model);
         taskStore.upsert(task);
+    }
+
+    export function updateTasks(taskModels) {
+        const tasks = taskModels.map(model => taskFactory.createTask(model));
+        taskStore.upsertAll(tasks);
+    }
+
+    export function updateRow(model) {
+        const row = rowFactory.createRow(model);
+        rowStore.upsert(row);
+    }
+
+    export function updateRows(rowModels) {
+        const rows = rowModels.map(model => rowFactory.createRow(model));
+        rowStore.upsertAll(rows);
+    }
+
+    export function getRow(resourceId) {
+        return $rowStore.entities[resourceId];
+    }
+
+    export function getTask(id) {
+        return $taskStore.entities[id];
+    }
+
+    export function getTasks(resourceId) {
+        if ($rowTaskCache[resourceId]) {
+            return $rowTaskCache[resourceId].map(id => $taskStore.entities[id]);
+        }
+        return null;
     }
 
     let filteredRows = [];

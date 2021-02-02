@@ -171,12 +171,29 @@ Renders a block of time spanning all the rows:
 
 - `selectTask(id)` Selects task by id.
     - `id` {`Number`|`String`} Id of task
+- `unselectTasks()` Unselects tasks.
 - `scrollToTask(id, scrollBehavior)` Scrolls the view to a task.
     - `id` {`Number`|`String`} Id of task
     - `scrollBehaviour` {`String`} `auto` or `smooth`.
 - `scrollToRow(id, scrollBehavior)` Scrolls the view to a row.
     - `id` {`Number`|`String`} Id of row
     - `scrollBehaviour` {`String`} `auto` or `smooth`.
+
+- `updateTask(model)` Updates or inserts task.
+    - `model` {`Task`} Task object
+- `updateTasks(models)` Updates or inserts tasks.
+    - `models` {`Array<Task>`} Task objects
+- `updateRow(model)` Updates or inserts row.
+    - `model` {`Row`} Row object
+- `updateRows(models)` Updates or inserts rows.
+    - `models` {`Array<Row>`} Row objects
+
+- `getTask(id)` Get task by id.
+    - `id` {`Number`|`String`} Id of task
+- `getRow(id)` Get row by id.
+    - `id` {`Number`|`String`} Id of row
+- `getTasks(rowId)` Get tasks by row id.
+    - `rowId` {`Number`|`String`} Id of row
 
 ## Events
 
