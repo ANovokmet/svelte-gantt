@@ -187,97 +187,115 @@
 </script>
 
 <style>
-  .sg-label-bottom {
-    position: absolute;
-    top: calc(100% + 10px);
-    color: #888;
-  }
+    .sg-label-bottom {
+        position: absolute;
+        top: calc(100% + 10px);
+        color: #888;
+    }
 
-  .debug {
-    position: absolute;
-    top: -10px;
-    right: 0;
-    font-size: 8px;
-    color: black;
-  }
+    .debug {
+        position: absolute;
+        top: -10px;
+        right: 0;
+        font-size: 8px;
+        color: black;
+    }
 
-  .sg-task {
-    position: absolute;
+    .sg-task {
+        position: absolute;
 
-    white-space: nowrap;
-    /* overflow: hidden; */
+        white-space: nowrap;
+        /* overflow: hidden; */
 
-    transition: background-color 0.2s, opacity 0.2s;
-    pointer-events: all;
-  }
+        transition: background-color 0.2s, opacity 0.2s;
+        pointer-events: all;
+    }
 
-  .sg-task-background {
-    position: absolute;
-    height: 100%;
-    top: 0;
-  }
+    .sg-task-background {
+        position: absolute;
+        height: 100%;
+        top: 0;
+    }
 
-  .sg-task-content {
-    position: absolute;
-    height: 100%;
-    top: 0;
+    .sg-task-content {
+        position: absolute;
+        height: 100%;
+        top: 0;
 
-    padding-left: 14px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-  }
+        padding-left: 14px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
 
-  .sg-task:not(.moving) {
-    transition: transform 0.2s, background-color 0.2s, width 0.2s;
-  }
+    .sg-task:not(.moving) {
+        transition: transform 0.2s, background-color 0.2s, width 0.2s;
+    }
 
-  .sg-task.moving {
-    z-index: 1;
-  }
+    .sg-task.moving {
+        z-index: 1;
+        opacity: 0.5;
+    }
 
-  .sg-task:hover::before {
-    content: "";
-    width: 4px;
-    height: 50%;
-    top: 25%;
-    position: absolute;
-    cursor: ew-resize;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, 0.5);
+    .sg-task:hover::before {
+        content: "";
+        width: 4px;
+        height: 50%;
+        top: 25%;
+        position: absolute;
+        cursor: ew-resize;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.5);
 
-    margin-left: 3px;
-    left: 0;
-    border-width: 0 1px;
-    z-index: 1;
-  }
+        margin-left: 3px;
+        left: 0;
+        border-width: 0 1px;
+        z-index: 1;
+    }
 
-  .sg-task:hover::after {
-    content: "";
-    width: 4px;
-    height: 50%;
-    top: 25%;
-    position: absolute;
-    cursor: ew-resize;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, 0.5);
+    .sg-task:hover::after {
+        content: "";
+        width: 4px;
+        height: 50%;
+        top: 25%;
+        position: absolute;
+        cursor: ew-resize;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.5);
 
-    margin-right: 3px;
-    right: 0;
-    border-width: 0 1px;
-    z-index: 1;
-  }
+        margin-right: 3px;
+        right: 0;
+        border-width: 0 1px;
+        z-index: 1;
+    }
 
-  .sg-task.selected {
-    outline: 2px solid rgba(3, 169, 244, 0.5);
-    outline-offset: 3px;
-    z-index: 1;
-  }
+    .sg-task.selected {
+        outline: 2px solid rgba(3, 169, 244, 0.5);
+        outline-offset: 3px;
+        z-index: 1;
+    }
 
-  .sg-task-reflected {
-      opacity: 0.5;
-  }
+    .sg-task-reflected {
+        opacity: 0.5;
+    }
+
+    .sg-task-background {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    :global(.sg-task) {
+        color: white;
+        background: rgb(116, 191, 255);
+    }
+
+    :global(.sg-task:hover) {
+        background: rgb(98, 161, 216);
+    }
+
+    :global(.sg-task.selected) {
+        background: rgb(69, 112, 150);
+    }
 </style>
 
 <div

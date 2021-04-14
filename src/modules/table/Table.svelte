@@ -135,7 +135,6 @@
 </div>
 
 <style>
-
     /* This class should take into account varying widths of the scroll bar */
     .bottom-scrollbar-visible {
         padding-bottom: 17px;
@@ -156,8 +155,9 @@
     .sg-table-header {
         display: flex;
         align-items: stretch;
-        /* width: 100%; */
         overflow: hidden;
+        border-bottom: #efefef 1px solid;
+        background-color: #fbfbfb;
     }
 
     .sg-table-rows {

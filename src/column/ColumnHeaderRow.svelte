@@ -80,15 +80,17 @@
 
         cursor: pointer;     
         user-select: none;
+
+        border-right: #efefef 1px solid;
+        border-bottom: #efefef 1px solid;
+    }
+
+    .column-header-cell:hover {
+        background: #f9f9f9;
     }
 
     .column-header-cell.sticky > .column-header-cell-label {
         position: sticky;
         left: 1rem;
     }
-
-    .column-header-cell:hover {
-        background: #f9f9f9;
-    }
-    
 </style>

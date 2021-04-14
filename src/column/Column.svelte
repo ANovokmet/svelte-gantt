@@ -10,4 +10,8 @@
         height: 100%;
         box-sizing: border-box;
     }
+    
+    .column {
+        border-right: #efefef 1px solid;
+    }
 </style>
