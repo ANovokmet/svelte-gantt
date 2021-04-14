@@ -7,6 +7,9 @@
      */
     export let columns = [];
 
+    export let columnStrokeWidth = 1;
+    export let columnStrokeColor = '#efefef';
+
     function lineAt(ctx, x) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -16,7 +19,7 @@
 
     function createBackground(columns) {
         const canvas = document.createElement('canvas');
-        canvas.width = columns.length * columns[0].width;
+        canvas.width = (columns.length - 1) * columns[0].width;
         canvas.height = 20;
 
         const ctx = canvas.getContext('2d');
@@ -24,9 +27,9 @@
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         ctx.shadowBlur = 0.5;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = columnStrokeWidth;
         ctx.lineCap = "square";
-        ctx.strokeStyle = '#efefef';
+        ctx.strokeStyle = columnStrokeColor;
         ctx.translate(0.5, 0.5);
 
         columns.forEach(column => {
@@ -39,7 +42,7 @@
 
     let backgroundImage;
     $: {
-        backgroundImage = createBackground(columns.slice(0,4));
+        backgroundImage = createBackground(columns.slice(0,5));
     }
 </script>
 

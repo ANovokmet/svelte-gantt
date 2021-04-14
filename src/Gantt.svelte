@@ -91,6 +91,9 @@
     export let reflectOnParentRows = true;
     export let reflectOnChildRows = false;
 
+    export let columnStrokeColor;
+    export let columnStrokeWidth;
+
     const visibleWidth = writable();
     const visibleHeight = writable();
     const headerHeight = writable();
@@ -623,7 +626,7 @@
         <div class="sg-timeline-body" bind:this={mainContainer} use:scrollable class:zooming="{zooming}" on:wheel="{onwheel}"
          bind:clientHeight="{$visibleHeight}" bind:clientWidth="{$visibleWidth}">
             <div class="content" style="width:{$_width}px">
-                <Columns columns={columns}/>
+                <Columns columns={columns} {columnStrokeColor} {columnStrokeWidth}/>
                 <div class="sg-rows" bind:this={rowContainer} style="height:{rowContainerHeight}px;">
                     <div style="transform: translateY({paddingTop}px);">
                         {#each visibleRows as row (row.model.id)}

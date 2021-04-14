@@ -91,6 +91,9 @@ gantt.$set({
     - eg. `` (task) => `<div>Task ${task.model.label}</div>` ``
 - `tableWidth` {`Number`} Width of table, used with SvelteGanttTable module.
 - `tableHeaders` {`Array`} Headers of table, used with SvelteGanttTable module.
+- `columnStrokeColor` {`string`} Color of column lines.
+    - eg. `'#efefef'`
+- `columnStrokeWidth` {`number`} Width of column lines.
 
 ## Header
 
