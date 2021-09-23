@@ -23,7 +23,7 @@
     export let tableHeaders = [{ title: 'Name', property: 'label', width: 100 }];
 
     const { from, to, width, visibleWidth, headerHeight } = getContext('dimensions');
-    const { rowPadding } = getContext('options');
+    const { rowPadding, rowHeight } = getContext('options');
 
     onMount(() => {
         dispatch('init', { module: this });
@@ -76,7 +76,7 @@
             const row = $rowStore.entities[id];
             if(!row.hidden) {
                 $rowStore.entities[id].y = y;
-                y+= 52; 
+                y+= $rowHeight;
             }
         });
 
