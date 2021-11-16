@@ -2,25 +2,26 @@
     export const type = 'table';
 </script>
 
-<script>
+<script lang="ts">
     import { createEventDispatcher, onMount, getContext } from 'svelte';
 
     const dispatch = createEventDispatcher();
 
     import TableRow from './TableRow.svelte';
-    import { H_SCROLLBAR_WIDTH } from 'src/core/constants';
     import { rowStore, taskStore } from "../../core/store";
+    import type { TableHeader } from './tableHeader';
+    import type { SvelteRow } from 'src/core/row';
 
     export let tableWidth;
     export let paddingTop;
     export let paddingBottom;
     export let rowContainerHeight;
-    export let visibleRows;
+    export let visibleRows: SvelteRow[];
     // list of columns used in the table
     // title: label to display in the header
     // property: property of row to display in the cell
     // width: width of column
-    export let tableHeaders = [{ title: 'Name', property: 'label', width: 100 }];
+    export let tableHeaders: TableHeader[] = [{ title: 'Name', property: 'label', width: 100 }];
 
     const { from, to, width, visibleWidth, headerHeight } = getContext('dimensions');
     const { rowPadding } = getContext('options');

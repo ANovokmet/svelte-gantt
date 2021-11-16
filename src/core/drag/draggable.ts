@@ -59,7 +59,6 @@ export class Draggable {
     constructor(node: HTMLElement, settings: DraggableSettings) {
         this.settings = settings;
         this.node = node;
-
         node.addEventListener('mousedown', this.onmousedown, false);
     }
 

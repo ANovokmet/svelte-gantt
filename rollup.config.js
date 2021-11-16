@@ -2,7 +2,8 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import uglify from 'rollup-plugin-uglify';
-import typescript from 'rollup-plugin-typescript2';
+import sveltePreprocess from 'svelte-preprocess';
+import typescript from '@rollup/plugin-typescript';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -16,17 +17,19 @@ export default {
         format: 'es',
         name: 'window',
         extend: true,
-        file: 'docs/dist/index.js',
+        dir: 'docs/dist',
         globals: {
             moment: 'moment'
-        }
+        },
+        // dir: 'dist'
     },
     plugins: [
         svelte({
             dev: !production,
             css: css => {
                 css.write('docs/dist/svelteGantt.css');
-            }
+            },
+            preprocess: sveltePreprocess()
         }),
         resolve(),
         commonjs(),

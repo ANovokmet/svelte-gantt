@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { beforeUpdate, onMount, getContext } from 'svelte';
 
     let milestoneElement;
@@ -6,7 +6,7 @@
     import { Draggable } from '../core/drag';
     import { rowStore, taskStore } from '../core/store';
     const { rowPadding } = getContext('options');
-    const { selectionManager, api, rowContainer, dndManager, columnService} = getContext('services');
+    const { selectionManager, api, rowContainer, dndManager, columnService, utils } = getContext('services');
 
     export let left;
     export let top;
@@ -25,46 +25,6 @@
     }
 
     function drag(node) {
-        const ondrop = ({ x, y, currWidth, event, dragging }) => {
-            let rowChangeValid = true;
-            //row switching
-            if(dragging){
-                const sourceRow = $rowStore.entities[model.resourceId];
-                const targetRow = dndManager.getTarget('row', event);
-                if(targetRow){
-                    model.resourceId = targetRow.model.id;
-                    api.tasks.raise.switchRow(this, targetRow, sourceRow);
-                }
-                else{
-                    rowChangeValid = false;
-                }
-            }
-            
-            dragging = false;
-            const task = $taskStore.entities[model.id];
-            if(rowChangeValid) {
-                const newFrom = utils.roundTo(columnService.getDateByPosition(x)); 
-                const newLeft = columnService.getPositionByDate(newFrom);
-
-                Object.assign(model, {
-                    from: newFrom
-                });
-                
-                $taskStore.update({
-                    ...task,
-                    left: newLeft,
-                    top: rowPadding + $rowStore.entities[model.resourceId].y,
-                    model
-                });
-            }
-            else {
-                // reset position
-                $taskStore.update({
-                    ...task
-                });
-            }
-        }
-
         const draggable = new Draggable(node, {
             onDown: ({x, y}) => {
                 //this.set({x, y});
@@ -76,7 +36,45 @@
                 return row.model.enableDragging && model.enableDragging;
             },
             resizeAllowed: false,
-            onDrop: ondrop, 
+            onDrop: ({ x, y, width, mouseEvent, dragging }) => {
+                let rowChangeValid = true;
+                //row switching
+                if(dragging){
+                    const sourceRow = $rowStore.entities[model.resourceId];
+                    const targetRow = dndManager.getTarget('row', event);
+                    if(targetRow){
+                        model.resourceId = targetRow.model.id;
+                        api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                    }
+                    else{
+                        rowChangeValid = false;
+                    }
+                }
+                
+                dragging = false;
+                const task = $taskStore.entities[model.id];
+                if(rowChangeValid) {
+                    const newFrom = utils.roundTo(columnService.getDateByPosition(x)); 
+                    const newLeft = columnService.getPositionByDate(newFrom);
+
+                    Object.assign(model, {
+                        from: newFrom
+                    });
+                    
+                    taskStore.update({
+                        ...task,
+                        left: newLeft,
+                        top: rowPadding + $rowStore.entities[model.resourceId].y,
+                        model
+                    });
+                }
+                else {
+                    // reset position
+                    taskStore.update({
+                        ...task
+                    });
+                }
+            }, 
             container: rowContainer, 
             getX: () => x,
             getY: () => y

@@ -1,9 +1,8 @@
-<script>
+<script lang="ts">
     import { onMount, setContext, tick, onDestroy } from 'svelte';
     import { writable, derived } from 'svelte/store';
-    import moment from 'moment';
 
-    let ganttElement;
+    let ganttElement: HTMLElement;
     let mainHeaderContainer;
     let mainContainer;
     let rowContainer;
@@ -13,16 +12,17 @@
     import { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache } from './core/store';
     import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
     import { Columns, ColumnHeader } from './column';
-    import { Resizer } from "./ui";
+    import { Resizer } from './ui';
 
-    import { GanttUtils, getPositionByDate } from "./utils/utils";
-    import { getRelativePos, debounce, throttle } from "./utils/domUtils";
-    import { SelectionManager } from "./utils/selectionManager";
-    import { GanttApi } from "./core/api";
-    import { TaskFactory, reflectTask } from "./core/task";
-    import { RowFactory } from "./core/row";
-    import { TimeRangeFactory } from "./core/timeRange";
-    import { DragDropManager } from "./core/drag";
+    import { GanttUtils, getPositionByDate } from './utils/utils';
+    import { getRelativePos, debounce, throttle } from './utils/domUtils';
+    import { SelectionManager } from './utils/selectionManager';
+    import { GanttApi } from './core/api';
+    import { TaskFactory, reflectTask } from './core/task';
+    import type { SvelteTask } from './core/task';
+    import { RowFactory } from './core/row';
+    import { TimeRangeFactory } from './core/timeRange';
+    import { DragDropManager } from './core/drag';
     import { findByPosition, findByDate } from './core/column';
     import { onEvent, onDelegatedEvent, offDelegatedEvent } from './core/events';
 
@@ -94,9 +94,11 @@
     export let columnStrokeColor;
     export let columnStrokeWidth;
 
-    const visibleWidth = writable();
-    const visibleHeight = writable();
-    const headerHeight = writable();
+    export let taskElementHook = null;
+
+    const visibleWidth = writable<number>(null);
+    const visibleHeight = writable<number>(null);
+    const headerHeight = writable<number>(null);
     const _width = derived([visibleWidth, _minWidth, _fitWidth], ([visible, min, stretch]) => {
         return stretch && visible > min ? visible : min;
     });
@@ -125,7 +127,7 @@
             x = x - column.left;
 
             let positionDuration = column.duration / column.width * x;
-            const date = moment(column.from).add(positionDuration, 'milliseconds');
+            const date = column.from.clone().add(positionDuration, 'milliseconds');
 
             return date;
         },
@@ -197,6 +199,7 @@
     });
 
     setContext('options', {
+        taskElementHook,
         taskContent,
         rowPadding: _rowPadding,
         rowHeight: _rowHeight,
@@ -206,8 +209,8 @@
         onTaskButtonClick
     });
 
-    const hoveredRow = writable();
-    const selectedRow = writable();
+    const hoveredRow = writable<number>(null);
+    const selectedRow = writable<number>(null);
 
     const ganttContext = { 
         scrollables, 
@@ -241,7 +244,7 @@
         } else {
             selectionManager.selectSingle(taskId);
         }
-        api.tasks.raise.select($taskStore.entities[taskId]);
+        api['tasks'].raise.select($taskStore.entities[taskId]);
     });
 
     onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
@@ -264,7 +267,7 @@
             const { scrollTop, scrollLeft } = node;
 
             scrollables.forEach(scrollable => {
-                if (scrollable.orientation === "horizontal") {
+                if (scrollable.orientation === 'horizontal') {
                     scrollable.node.scrollLeft = scrollLeft;
                 } else {
                     scrollable.node.scrollTop = scrollTop;
@@ -275,16 +278,16 @@
             __scrollLeft = scrollLeft;
         };
 
-        node.addEventListener("scroll", onscroll);
+        node.addEventListener('scroll', onscroll);
         return {
             destroy() {
-                node.removeEventListener("scroll", onscroll, false);
+                node.removeEventListener('scroll', onscroll, false);
             }
         };
     }
 
     function horizontalScrollListener(node) {
-        scrollables.push({ node, orientation: "horizontal" });
+        scrollables.push({ node, orientation: 'horizontal' });
     }
 
     function onResize(event) {
@@ -331,7 +334,7 @@
                 if(options.fitWidth)
                     $_fitWidth = options.fitWidth;
 
-                api.gantt.raise.viewChanged();
+                api['gantt'].raise.viewChanged();
                 zooming = true;
                 await tick();
                 node.scrollLeft = scrollLeft;
@@ -539,12 +542,12 @@
     }
 
     export function updateRow(model) {
-        const row = rowFactory.createRow(model);
+        const row = rowFactory.createRow(model, null);
         rowStore.upsert(row);
     }
 
     export function updateRows(rowModels) {
-        const rows = rowModels.map(model => rowFactory.createRow(model));
+        const rows = rowModels.map(model => rowFactory.createRow(model, null));
         rowStore.upsertAll(rows);
     }
 
@@ -587,7 +590,7 @@
     let visibleRows = [];
     $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
 
-    let visibleTasks;
+    let visibleTasks: SvelteTask[];
     $: {
         const tasks = [];
         visibleRows.forEach(row => {
@@ -616,7 +619,7 @@
             <div class="sg-header-scroller" use:horizontalScrollListener>
                 <div class="header-container" style="width:{$_width}px">
                     <ColumnHeader {headers} {columnUnit} {columnOffset} on:dateSelected="{onDateSelected}" />
-                    {#each $allTimeRanges as timeRange (timeRange.id)}
+                    {#each $allTimeRanges as timeRange (timeRange.model.id)}
                     <TimeRangeHeader {...timeRange} />
                     {/each}
                 </div>
@@ -635,7 +638,7 @@
                     </div>
                 </div>
                 <div class="sg-foreground">
-                    {#each $allTimeRanges as timeRange (timeRange.id)}
+                    {#each $allTimeRanges as timeRange (timeRange.model.id)}
                     <TimeRange {...timeRange} />
                     {/each}
 

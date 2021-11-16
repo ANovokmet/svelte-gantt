@@ -8,13 +8,22 @@
 
     const colors = ['blue', 'green', 'orange']
 
-    const timeRanges = [{
-        id: 0,
-        from: time('10:00'),
-        to: time('12:00'),
-        classes: null,
-        label: 'Lunch'
-    }];
+    const timeRanges = [
+        {
+            id: 0,
+            from: time('10:00'),
+            to: time('12:00'),
+            classes: null,
+            label: 'Lunch'
+        },
+        {
+            id: 1,
+            from: time('15:00'),
+            to: time('17:00'),
+            classes: null,
+            label: 'Dinner'
+        }
+    ];
 
     const options = {
         rows: [],
@@ -28,6 +37,21 @@
         tableWidth: 240,
         ganttTableModules: [SvelteGanttTable],
         ganttBodyModules: [SvelteGanttDependencies],
+        // taskElementHook: (node, task) => {
+
+        //     function onHover() {
+        //         console.log('hover', task);
+        //     }
+
+        //     node.addEventListener('mouseenter', onHover);
+
+        //     return {
+        //         destroy() {
+        //             console.log('destroy');
+        //             node.removeEventListener('mouseenter', onHover);
+        //         }
+        //     }
+        // }
         // taskContent: (task) => `${task.label} ${task.from.format('HH:mm')}`
     }
 

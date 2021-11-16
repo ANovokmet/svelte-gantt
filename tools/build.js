@@ -6,6 +6,7 @@ const commonjs = require('rollup-plugin-commonjs');
 const pkg = require('../package.json');
 
 const svelte = require('rollup-plugin-svelte');
+const sveltePreprocess = require('svelte-preprocess');
 const uglify = require('rollup-plugin-uglify');
 const typescript = require('rollup-plugin-typescript2');
 
@@ -28,7 +29,8 @@ promise = promise.then(() => rollup.rollup({
             dev: false,
             css: css => {
                 css.write(`${outputDir}/css/svelteGantt.css`);
-            }
+            },
+            preprocess: sveltePreprocess()
         }),
         resolve(),
         commonjs(),

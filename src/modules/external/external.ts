@@ -1,8 +1,8 @@
 import { getRelativePos } from "../../utils/domUtils";
 import { Draggable } from "../../core/drag";
-import { SvelteRow } from "../../core/row";
-import { SvelteGanttComponent } from "../../gantt";
-import { Moment } from "moment";
+import type { SvelteRow } from "../../core/row";
+import type { SvelteGanttComponent } from "../../gantt";
+import type { Moment } from "moment";
 
 interface DragOptions {
     /** SvelteGantt this is binded to */
@@ -55,7 +55,7 @@ export class SvelteGanttExternal {
     }
 
     onDrag({ x, y }) {
-        if(!this.element) {
+        if (!this.element) {
             this.element = this.options.elementContent();
             document.body.appendChild(this.element);
             this.options.dragging = true;

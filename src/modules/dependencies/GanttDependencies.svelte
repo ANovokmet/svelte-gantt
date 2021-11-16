@@ -1,8 +1,4 @@
-<script context="module">
-    const type = 'body';
-</script>
-
-<script>
+<script lang="ts">
     import { getContext } from 'svelte';
 
     import Dependency from './Dependency.svelte';

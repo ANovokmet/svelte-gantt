@@ -4,8 +4,8 @@ import { SvelteRow } from './row';
 import { SvelteTimeRange } from './timeRange';
 
 interface EntityState<T> {
-    ids: number[],
-    entities: { [key: number]: T }
+    ids: (string | number)[],
+    entities: { [key: string]: T }
 }
 
 interface EntityType {
@@ -19,8 +19,8 @@ export interface EntityStore<T extends EntityType> extends Readable<EntityState<
     update(entity: T): void;
     upsert(entity: T): void;
     upsertAll(entities: T[]): void;
-    delete(id: number): void;
-    deleteAll(ids: number[]): void;
+    delete(id: number | string): void;
+    deleteAll(ids: (number | string)[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
 }
@@ -39,14 +39,14 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
                 [item.model.id]: item
             }
         })),
-        delete: (id: number) => update(state => {
+        delete: (id: number | string) => update(state => {
             const { [id]: _, ...entities } = state.entities;
             return {
                 ids: state.ids.filter(i => i !== id),
                 entities
             };
         }),
-        deleteAll: (ids: number[]) => update(state => {
+        deleteAll: (ids: (number | string)[]) => update(state => {
             const entities = { ...state.entities };
             const idState = {};
 

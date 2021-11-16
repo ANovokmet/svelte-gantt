@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { beforeUpdate, afterUpdate, getContext, onMount, onDestroy, tick } from "svelte";
 
     import { setCursor } from "src/utils/domUtils";
@@ -36,7 +36,7 @@
 
     const { dimensionsChanged } = getContext('dimensions');
     const { rowContainer } = getContext('gantt');
-    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows } = getContext('options');
+    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } = getContext('options');
     const { dndManager, api, utils, selectionManager, columnService } = getContext('services');
 
     function drag(node) {
@@ -172,12 +172,19 @@
         };
     }
 
-    export function onclick(event) {
-        if (onTaskButtonClick) {
-            onTaskButtonClick(task);
+    function taskElement(node, model) {
+        console.log({node, model})
+        if(taskElementHook) {
+            return taskElementHook(node, model);
         }
     }
 
+    export function onclick(event) {
+        if (onTaskButtonClick) {
+            onTaskButtonClick(model);
+        }
+    }
+    
     let selection = selectionManager.selection;
     let selected = false;
     $: selected = $selection.indexOf(model.id) !== -1;
@@ -209,6 +216,10 @@
 
         transition: background-color 0.2s, opacity 0.2s;
         pointer-events: all;
+    }
+
+    :global(.sg-task) {
+        background: rgb(116, 191, 255);
     }
 
     .sg-task-background {
@@ -301,6 +312,7 @@
 <div
   data-task-id="{model.id}"
   use:drag
+  use:taskElement={model}
   class="sg-task {model.classes}"
   style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
   class:moving={_dragging || _resizing}

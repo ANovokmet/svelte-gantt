@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import Arrow from './Arrow.svelte';
 
     import { taskStore } from '../../core/store';

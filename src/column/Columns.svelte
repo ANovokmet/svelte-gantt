@@ -1,7 +1,4 @@
-<script>
-    import { getContext, onMount } from 'svelte';
-    
-    import Column from './Column.svelte';
+<script lang="ts">
     /**
      * Container component for columns rendered as gantt body background
      */

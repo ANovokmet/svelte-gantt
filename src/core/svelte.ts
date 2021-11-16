@@ -13,7 +13,7 @@ export interface ComponentOptions<T> {
 }
 
 export interface Component<T = Record<string, any>> {
-	constructor(options: ComponentOptions<T>);
+    constructor(options: ComponentOptions<T>);
 
     $set(props?: T): void;
     $on<T = any>(event: string, callback: (event: CustomEvent<T>) => void): () => void;
@@ -21,5 +21,32 @@ export interface Component<T = Record<string, any>> {
 }
 
 export interface ComponentCreator<C extends Component<T>, T = Record<string, any>> {
-	new(options: ComponentOptions<T>): C;
+    new(options: ComponentOptions<T>): C;
+}
+
+/**
+ * Avoid installing svelte in projects
+ */
+declare module "svelte/store" {
+    interface Writable<T> extends Readable<T> {
+        /**
+         * Set value and inform subscribers.
+         * @param value to set
+         */
+        set(value: T): void;
+        /**
+         * Update value using callback and inform subscribers.
+         * @param updater callback
+         */
+        update(updater: (state: T) => T): void;
+    }
+    
+    interface Readable<T> {
+        /**
+         * Subscribe on value changes.
+         * @param run subscription callback
+         * @param invalidate cleanup callback
+         */
+        subscribe(run: (value: T) => void, invalidate?: (value?: T) => void): () => void;
+    }
 }

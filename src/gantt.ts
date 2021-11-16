@@ -8,6 +8,7 @@ import { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
 import { GanttUtils } from './utils/utils';
 import { DependencyModel } from './modules/dependencies';
 import { Moment } from 'moment';
+import { TableHeader } from './modules/table/tableHeader';
 
 interface Header { 
     unit:string; 
@@ -23,12 +24,6 @@ interface Zoom {
 }
 type TaskButtonClickHandler = (task: SvelteTask) => void;
 type TaskContentTemplate = (task: SvelteTask) => string;
-
-interface TableHeader {
-    title: string;
-    property: string; 
-    width?: number;
-}
 
 export interface SvelteGanttOptions {
     /**
@@ -95,6 +90,8 @@ export interface SvelteGanttOptions {
 	onTaskButtonClick?: TaskButtonClickHandler; // e.g. (task) => {debugger},
 	/** task content factory function */
 	taskContent?: TaskContentTemplate; // e.g. (task) => '<div>Custom task content</div>'
+    /** task element hook */
+    taskElementHook?: (node: HTMLElement, task: SvelteTask) => { update?(task), destroy?() }
     /**
      * Width of table, used with SvelteGanttTable module
      */

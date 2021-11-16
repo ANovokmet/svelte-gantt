@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     export let model;
     export let left;
     export let width;

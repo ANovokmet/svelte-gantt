@@ -89,6 +89,8 @@ gantt.$set({
     - eg. `(task) => console.log('clicked on: ', task)`
 - `taskContent` {`Function`} ,task content factory function.
     - eg. `` (task) => `<div>Task ${task.model.label}</div>` ``
+- `taskElementHook` {`Function`} ,task element hook function, it is a svelte action.
+    - eg. `` (node, task) => { node.addEventListener('click', console.log); return { destroy() { node.removeEventListener('click', console.log); } }; } ``
 - `tableWidth` {`Number`} Width of table, used with SvelteGanttTable module.
 - `tableHeaders` {`Array`} Headers of table, used with SvelteGanttTable module.
 - `columnStrokeColor` {`string`} Color of column lines.

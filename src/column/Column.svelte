@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     export let left;
     export let width;
 </script>

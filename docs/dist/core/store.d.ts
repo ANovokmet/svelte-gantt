@@ -31,7 +31,7 @@ export declare const timeRangeStore: EntityStore<SvelteTimeRange>;
 export declare const allTasks: Readable<SvelteTask[]>;
 export declare const allRows: Readable<SvelteRow[]>;
 export declare const allTimeRanges: Readable<SvelteTimeRange[]>;
-export declare const rowTaskCache: Readable<{}>;
+export declare const rowTaskCache: import("svelte/types/runtime/store").Readable<{}>;
 export declare function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]>;
 export declare function where<T extends EntityType>(store: EntityStore<T>, filterFn: (value: T) => any): Readable<T[]>;
 export {};

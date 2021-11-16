@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { beforeUpdate, getContext } from 'svelte';
 
     import { Draggable } from '../core/drag';
@@ -54,7 +54,7 @@
             _position.width = state.width;
         }
 
-        return new Draggable(node, {
+        const draggable = new Draggable(node, {
             onDown: (event) => {
                 update({
                     left: event.x,
@@ -80,6 +80,8 @@
             getY: () => 0,
             getWidth: () => _position.width
         });
+
+        return { destroy: () => draggable.destroy() };
     }
 </script>
 

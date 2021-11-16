@@ -1,10 +1,12 @@
-<script>
+<script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
 
     import TableTreeCell from './TableTreeCell.svelte';
+    import type { TableHeader } from './tableHeader';
+    import type { SvelteRow } from "src/core/row";
 
-    export let headers = null;
-    export let row = null;
+    export let headers: TableHeader[] = null;
+    export let row: SvelteRow = null;
 
     const { rowHeight } = getContext('options');
     const { hoveredRow, selectedRow } = getContext('gantt');
@@ -18,7 +20,12 @@
 
 </script>
 
-<div class="sg-table-row {row.model.class || ''}" style="height:{$rowHeight}px" data-row-id={row.model.id} class:sg-row-expanded="{row.expanded}" class:sg-hover={$hoveredRow == row.model.id} class:sg-selected={$selectedRow == row.model.id}>
+<div data-row-id={row.model.id} 
+    style="height:{$rowHeight}px" 
+    class="sg-table-row {row.model.classes || ''}" 
+    class:sg-row-expanded="{row.expanded}" 
+    class:sg-hover={$hoveredRow == row.model.id} 
+    class:sg-selected={$selectedRow == row.model.id}>
     {#each headers as header}
         <div class="sg-table-body-cell sg-table-cell" style="width:{header.width}px">
             {#if header.type == 'tree'}

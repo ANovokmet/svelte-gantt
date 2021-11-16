@@ -1,7 +1,7 @@
 {
     "name": "svelte-gantt",
     "description": "Interactive JavaScript Gantt chart/resource booking component",
-    "version": "3.0.4-beta",
+    "version": "3.1.1-beta",
     "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
     "scripts": {
         "build": "rollup -c",
@@ -10,7 +10,8 @@
         "dev": "run-p start autobuild",
         "docs:autobuild": "rollup -c docs/rollup.config.js -w",
         "docs:start": "serve docs",
-        "dev:docs": "run-p docs:* autobuild"
+        "dev:docs": "run-p docs:* autobuild",
+        "validate": "svelte-check"
     },
     "repository": {
         "type": "git",
@@ -38,6 +39,8 @@
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^17.0.0",
+        "@rollup/plugin-typescript": "^6.0.0",
+        "@tsconfig/svelte": "^1.0.0",
         "del": "^5.1.0",
         "npm-run-all": "^4.1.3",
         "rollup": "^2.36.1",
@@ -50,7 +53,9 @@
         "serve": "^11.3.2",
         "svelte": "^3.23.0",
         "svelte-ts-preprocess": "^1.1.3",
-        "tslib": "^1.9.3",
-        "typescript": "^3.8.3"
+        "tslib": "^2.0.0",
+        "typescript": "^3.9.3",
+        "svelte-check": "^1.0.0",
+        "svelte-preprocess": "^4.0.0"
     }
 }

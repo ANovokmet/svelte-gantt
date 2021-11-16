@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { getContext } from 'svelte';
     import { duration as momentDuration } from 'moment';
     import { getPositionByDate } from '../utils/utils';
