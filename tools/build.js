@@ -4,9 +4,9 @@ const rollup = require('rollup');
 const resolve = require('rollup-plugin-node-resolve');
 const commonjs = require('rollup-plugin-commonjs');
 const pkg = require('../package.json');
+const sveltePreprocess = require('svelte-preprocess');
 
 const svelte = require('rollup-plugin-svelte');
-const sveltePreprocess = require('svelte-preprocess');
 const uglify = require('rollup-plugin-uglify');
 const typescript = require('rollup-plugin-typescript2');
 
@@ -34,7 +34,14 @@ promise = promise.then(() => rollup.rollup({
         }),
         resolve(),
         commonjs(),
-        typescript({ useTsconfigDeclarationDir: true }),
+        typescript({ 
+            useTsconfigDeclarationDir: true,
+            tsconfigOverride: { 
+                compilerOptions: {
+                    declarationDir: `${outputDir}/types`,  
+                } 
+            }
+        }),
     ],
 }));
 

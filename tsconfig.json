@@ -10,8 +10,8 @@
             "svelte"
         ],
 		"declaration": true,
-		// "declarationDir": "./docs/dist/types",
-		"declarationDir": "./dist/types",
+		"declarationDir": "./docs/dist/types",
+		// "declarationDir": "./dist/types",
         "importsNotUsedAsValues": "remove",
         "isolatedModules": false
     },
