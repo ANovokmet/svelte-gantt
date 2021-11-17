@@ -2,8 +2,8 @@ import { ColumnService } from "./column";
 
 export interface TimeRangeModel {
     id: number; // | string;
-    from: any; // moment
-    to: any; // moment
+    from: any; // date
+    to: any; // date
 
     classes?: string | string[];
     label?: string;

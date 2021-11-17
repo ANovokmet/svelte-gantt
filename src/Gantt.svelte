@@ -25,6 +25,8 @@
     import { DragDropManager } from './core/drag';
     import { findByPosition, findByDate } from './core/column';
     import { onEvent, onDelegatedEvent, offDelegatedEvent } from './core/events';
+    import { NoopSvelteGanttDateAdapter, getDuration } from './utils/date';
+    import type { SvelteGanttDateAdapter } from './utils/date';
 
     function assertSet(values) {
         for (const name in values) {
@@ -88,11 +90,32 @@
     export let tableWidth = 100;
     export let resizeHandleWidth = 10;
     export let onTaskButtonClick = null;
+    
+    export let dateAdapter: SvelteGanttDateAdapter = new NoopSvelteGanttDateAdapter();
 
     export let magnetUnit = 'minute';
     export let magnetOffset = 15;
+    let magnetDuration;
+    $: setMagnetDuration(magnetUnit, magnetOffset);
+    setMagnetDuration(magnetUnit, magnetOffset);
+
+    function setMagnetDuration(unit, offset) {
+        if(unit && offset) {
+            magnetDuration = getDuration(unit, offset);
+        }
+    }
+
     export let columnUnit = 'minute';
     export let columnOffset = 15;
+    let columnDuration;
+    $: setColumnDuration(columnUnit, columnOffset);
+    setColumnDuration(columnUnit, columnOffset);
+
+    function setColumnDuration(unit, offset) {
+        if(unit && offset) {
+            columnDuration = getDuration(unit, offset);
+        }
+    }
 
     // export until Svelte3 implements Svelte2's setup(component) hook
     export let ganttTableModules = [];
@@ -114,68 +137,59 @@
     });
     
     export const columnService = {
-        getColumnByDate(date) {
+        getColumnByDate(date: number) {
             const pair = findByDate(columns, date);
             return !pair[0] ? pair[1] : pair[0];
         },
-        getColumnByPosition(x) {
+        getColumnByPosition(x: number) {
             const pair = findByPosition(columns, x);
             return !pair[0] ? pair[1] : pair[0];
         },
-        getPositionByDate (date) {
+        getPositionByDate (date: number) {
             if(!date) return null;
             const column = this.getColumnByDate(date);
             
-            let durationTo = date.diff(column.from, 'milliseconds');
+            let durationTo = date - column.from;
             const position = durationTo / column.duration * column.width;
 
             //multiples - skip every nth col, use other duration
             return column.left + position;
         },
-        getDateByPosition (x) {
+        getDateByPosition (x: number) {
             const column = this.getColumnByPosition(x);
             x = x - column.left;
 
             let positionDuration = column.duration / column.width * x;
-            const date = column.from.clone().add(positionDuration, 'milliseconds');
+            const date = column.from + positionDuration;
 
             return date;
         },
         /**
          * 
-         * @param {Moment} date - Date
-         * @returns {Moment} rounded date passed as parameter
+         * @param {number} date - Date
+         * @returns {number} rounded date passed as parameter
          */
-        roundTo(date) {
-            let value = date.get(magnetUnit);
-            value = Math.round(value / magnetOffset);
-            date.set(magnetUnit, value * magnetOffset);
-
-            //round all smaller units to 0
-            const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
-            const indexOf = units.indexOf(magnetUnit);
-            for (let i = 0; i < indexOf; i++) {
-                date.set(units[i], 0)
-            }
-            return date
+        roundTo(date: number) {
+            let value = Math.round(date / magnetDuration) * magnetDuration;
+            return value;
         }
     }
 
-    const columnWidth = writable(getPositionByDate($_from.clone().add(columnOffset, columnUnit), $_from, $_to, $_width) | 0);
-    $: $columnWidth = getPositionByDate($_from.clone().add(columnOffset, columnUnit), $_from, $_to, $_width) | 0;
+    const columnWidth = writable(getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0);
+    $: $columnWidth = getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0;
     let columnCount = Math.ceil($_width / $columnWidth);
     $: columnCount = Math.ceil($_width / $columnWidth);
-    let columns = getColumns($_from, columnCount, columnOffset, columnUnit, $columnWidth);
-    $: columns = getColumns($_from, columnCount, columnOffset, columnUnit, $columnWidth);
+    let columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
+    $: columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
 
-    function getColumns(from, count, offset, unit, width) {
+    function getColumns(from: number, count: number, dur: number, width: number) {
         let columns = [];
-        let columnFrom = from.clone();
+        let columnFrom = from;
         let left = 0;
         for (let i = 0; i < count; i++) {
-            const from = columnFrom.clone();
-            const to = columnFrom.add(offset, unit);
-            const duration = to.diff(from, 'milliseconds');
+            const from = columnFrom;
+            const to = columnFrom + dur;
+            const duration = to - from;
 
             columns.push({
                 width: width,
@@ -209,6 +223,7 @@
     });
 
     setContext('options', {
+        dateAdapter,
         taskElementHook,
         taskContent,
         rowPadding: _rowPadding,
@@ -306,7 +321,7 @@
 
     let zoomLevel = 0;
     let zooming = false;
-    async function onwheel(event) {
+    async function onwheel(event: WheelEvent) {
         if (event.ctrlKey) {
             event.preventDefault();
 
@@ -354,8 +369,8 @@
     }
 
     function onDateSelected(event) {
-        $_from = event.detail.from.clone();
-        $_to = event.detail.to.clone();
+        $_from = event.detail.from;
+        $_to = event.detail.to;
     }
 
     function initRows(rowsData) {
@@ -434,6 +449,7 @@
         utils.width = $_width;
         utils.magnetOffset = magnetOffset;
         utils.magnetUnit = magnetUnit;
+        utils.magnetDuration = magnetDuration;
     }
 
     setContext('services', {

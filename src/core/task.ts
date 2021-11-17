@@ -4,8 +4,8 @@ import { ColumnService } from './column';
 export interface TaskModel {
     id: number; // | string;
     resourceId: number; // | string
-    from: any; // moment
-    to: any; // moment
+    from: any; // date
+    to: any; // date
 
     amountDone?: number;
     classes?: string | string[];
@@ -46,9 +46,9 @@ export class TaskFactory {
         model.amountDone = model.amountDone || 0;
         // css classes
         model.classes = model.classes || '';
-        // datetime task starts on, currently moment-js object
+        // date task starts on
         model.from = model.from || null;
-        // datetime task ends on, currently moment-js object
+        // date task ends on
         model.to = model.to || null;
         // label of task
         model.label = model.label || undefined;

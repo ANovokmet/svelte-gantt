@@ -51,9 +51,6 @@ promise = promise.then(() => rollup.rollup({
 		file: `${outputDir}/${format === 'es' ? 'index' : `index.${format}`}.js`,
         sourcemap: true,
 		format,
-        globals: { 
-            moment: 'moment'
-        },
         extend: format === 'iife',
 		name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
 	}));

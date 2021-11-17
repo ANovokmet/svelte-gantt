@@ -3,18 +3,20 @@
 
     const dispatch = createEventDispatcher();
 
-    import { duration as momentDuration } from 'moment';
+    import type { SvelteGanttDateAdapter } from '../utils/date';
+    import { startOf, getDuration } from '../utils/date';
 
     const { from, to, width } = getContext('dimensions');
-    
+    const { dateAdapter }: { dateAdapter: SvelteGanttDateAdapter } = getContext('options');
+
     export let header;
     export let baseWidth;
     export let baseDuration;
 
     export let columnWidth;
     $: {
-        const offset = header.offset || 1;
-        const duration = momentDuration(offset, header.unit).asMilliseconds();
+        header.duration = getDuration(header.unit, header.offset);
+        const duration = header.duration;
         const ratio = duration / baseDuration;
         columnWidth = baseWidth * ratio;
     }
@@ -31,18 +33,17 @@
     let _headers = [];
     $: {
         const headers = [];
-        let headerTime = $from.clone().startOf(header.unit);
-        const offset = header.offset || 1;
+        let headerTime = startOf($from, header.unit);
 
         for(let i = 0; i < columnCount; i++){
             headers.push({
                 width: Math.min(columnWidth, $width), 
-                label: headerTime.format(header.format),
-                from: headerTime.clone(),
-                to: headerTime.clone().add(offset, header.unit),
+                label: dateAdapter.format(headerTime, header.format),
+                from: headerTime,
+                to: headerTime + header.duration,
                 unit: header.unit
             });
-            headerTime.add(offset, header.unit);
+            headerTime += header.duration;
         }
         _headers = headers;
     }

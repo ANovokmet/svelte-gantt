@@ -2,7 +2,6 @@ import { getRelativePos } from "../../utils/domUtils";
 import { Draggable } from "../../core/drag";
 import type { SvelteRow } from "../../core/row";
 import type { SvelteGanttComponent } from "../../gantt";
-import type { Moment } from "moment";
 
 interface DragOptions {
     /** SvelteGantt this is binded to */
@@ -14,7 +13,7 @@ interface DragOptions {
     /** Is enabled */
     enabled: boolean;
     /** Success callback, when dragged over a row */
-    onsuccess?(target: SvelteRow, date: Moment, gantt: SvelteGanttComponent): void;
+    onsuccess?(target: SvelteRow, date: number, gantt: SvelteGanttComponent): void;
     /** Fail callback, when dragged outside gantt */
     onfail?(): void;
 }

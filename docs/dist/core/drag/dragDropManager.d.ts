@@ -1,6 +1,6 @@
-import { SvelteRow } from '../row';
+import type { SvelteRow } from '../row';
 import { Writable } from 'svelte/store';
-import { EntityStore } from '../store';
+import type { EntityStore } from '../store';
 export declare type DropHandler = (event: MouseEvent) => any;
 export declare class DragDropManager {
     handlerMap: {

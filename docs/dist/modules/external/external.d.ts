@@ -1,7 +1,6 @@
 import { Draggable } from "../../core/drag";
-import { SvelteRow } from "../../core/row";
-import { SvelteGanttComponent } from "../../gantt";
-import { Moment } from "moment";
+import type { SvelteRow } from "../../core/row";
+import type { SvelteGanttComponent } from "../../gantt";
 interface DragOptions {
     /** SvelteGantt this is binded to */
     gantt: SvelteGanttComponent;
@@ -12,7 +11,7 @@ interface DragOptions {
     /** Is enabled */
     enabled: boolean;
     /** Success callback, when dragged over a row */
-    onsuccess?(target: SvelteRow, date: Moment, gantt: SvelteGanttComponent): void;
+    onsuccess?(target: SvelteRow, date: number, gantt: SvelteGanttComponent): void;
     /** Fail callback, when dragged outside gantt */
     onfail?(): void;
 }

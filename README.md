@@ -1,12 +1,10 @@
 # svelte-gantt
 
-A **lightweight** and **fast** interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/). Compatible with any JS library or framework.
+A **lightweight** and **fast** interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/). Compatible with any JS library or framework. ZERO dependencies.
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/ANovokmet/svelte-gantt)
 
 ![svelte-gantt](https://i.imgur.com/IqT5PL4.png)
-
-Dependent on [Moment.js](https://momentjs.com/).
 
 Features include: Large datasets, drag'n'drop, tree view, zooming in/out, dependencies, date ranges...
 
@@ -29,9 +27,6 @@ import { SvelteGantt, SvelteGanttTable } from 'svelte-gantt';
 or use the IIFE build:
 
 ```html
-<link  rel='stylesheet'  href='node_modules/svelte-gantt/css/svelteGantt.css'>
-
-<script  src='moment.js'></script>
 <script  src='node_modules/svelte-gantt/index.iife.js'></script>
 ```
 
@@ -50,13 +45,23 @@ var gantt = new SvelteGantt({
 ```
 ..or run the example by opening *./public/index.html*
 
+# Migrating from version 3.x.x-4.x.x
+
+`svelte-gantt` no longer requires `moment`. You can still use it as `MomentSvelteGanttDateAdapter`. All parameters that were previously moment objects became numbers (milliseconds since UNIX epoch). 
+
+ALL date parameters should be UNIX timestamps (JavaScript `Date` and `moment` objects will work in most of the cases).
+
+Date parameters can stay moment or JavaScript Date objects because they will be transformed to UNIX timestamps.
+
+CSS is now injected so no need to include `svelteGantt.css` in your HTML.
+
 # Documentation
 
 Pass options object as `props` to the SvelteGantt constructor. To update use `$set`, eg.
 ```js
 gantt.$set({ 
-    from: moment().startOf('week'),
-    to: moment().endOf('week')
+    from: moment().startOf('week').valueOf(),
+    to: moment().endOf('week').valueOf()
 });
 ```
 
@@ -74,6 +79,8 @@ gantt.$set({
 - `columnOffset` {`Number`} Duration width of column.
     - eg. `columnUnit: 'minute', columnOffset: 15` will create a column for every 15 minutes.
 - `headers` {`Array`} List of headers used for main gantt area.
+- `dateAdapter` {`Object`} A date adapter is an object of interface `{ format(date: number, format: string): string; }` that formats a date in UNIX miliseconds to a string using the specified format template, eg. 'MMMM Do'.
+
 - `zoomLevels` {`Array`} List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
 - `rowHeight` {`Number`} Height of a single row in px.
 - `rowPadding` {`Number`} Padding of a single row in px.
@@ -108,6 +115,20 @@ Represents a row of header cells that render over the gantt.
 - `offset` {`Number`} Duration width of header cell.
 - `sticky` {`Boolean`} Use sticky positioning for header labels.
 
+### Formatting
+
+By default `svelte-gantt` is only able to format a small set of date templates, eg. 'HH:mm'. For more you can use `MomentSvelteGanttDateAdapter` as `dateAdapter` or a custom one,
+as long as it implements the interface `{ format(date: number, format: string): string; }`.
+
+```js
+import { MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+import moment from 'Moment';
+
+const ganttOptions = {
+    dateAdapter = new MomentSvelteGanttDateAdapter(moment)
+    ...
+}
+```
 
 ## Table Header
 
@@ -143,8 +164,8 @@ Tasks are defined as a list of objects:
 - `id` {`Number`|`String`} Id of task, every task needs to have a unique one.
 - `amountDone` {`Number`} Task completion in percent, indicated on task.
 - `classes` {`String`|`Array`} Custom CSS classes to apply to task.
-- `from` {`Moment`} Datetime task starts on.
-- `to` {`Moment`} Datetime task ends on.
+- `from` {`number`} Datetime task starts on.
+- `to` {`number`} Datetime task ends on.
 - `label` {`String`} Label of task.
 - `html` {`String`} Html content of task, will override label.
 - `showButton` {`Boolean`} Show button bar.
@@ -169,8 +190,8 @@ Renders a dependency between two tasks. Used by SvelteGanttDependencies module:
 Renders a block of time spanning all the rows:
 
 - `id` {`Number`|`String`} Unique id of time range.
-- `from` {`Moment`} Datetime timeRange starts on.
-- `to` {`Moment`} Datetime timeRange ends on.
+- `from` {`number`} Datetime timeRange starts on.
+- `to` {`number`} Datetime timeRange ends on.
 - `classes` {`String`|`Array`} Custom CSS classes.
 - `label` {`String`} Display label.
 

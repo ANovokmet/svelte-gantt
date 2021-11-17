@@ -1,4 +1,3 @@
-import { Moment } from 'moment';
 import { get } from '../utils/utils';
 
 interface Column {
@@ -35,7 +34,7 @@ export interface ColumnService {
 
     getPositionByDate (date): number;
 
-    getDateByPosition (x): Moment;
+    getDateByPosition (x): number;
 
-    roundTo(date): Moment;
+    roundTo(date): number;
 }

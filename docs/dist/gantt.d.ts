@@ -7,7 +7,7 @@ import { TaskModel, TaskFactory, SvelteTask } from './core/task';
 import { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
 import { GanttUtils } from './utils/utils';
 import { DependencyModel } from './modules/dependencies';
-import { Moment } from 'moment';
+import { TableHeader } from './modules/table/tableHeader';
 interface Header {
     unit: string;
     format: string;
@@ -21,11 +21,6 @@ interface Zoom {
 }
 declare type TaskButtonClickHandler = (task: SvelteTask) => void;
 declare type TaskContentTemplate = (task: SvelteTask) => string;
-interface TableHeader {
-    title: string;
-    property: string;
-    width?: number;
-}
 export interface SvelteGanttOptions {
     /**
      * Rows to load in the gantt
@@ -43,10 +38,10 @@ export interface SvelteGanttOptions {
      * Dependencies that display in the gantt, used with the SvelteGanttDependencies module
      */
     dependencies?: DependencyModel[];
-    /** datetime timeline starts on, moment */
-    from?: Moment;
-    /** datetime timeline ends on, moment */
-    to?: Moment;
+    /** datetime timeline starts on, date */
+    from?: number;
+    /** datetime timeline ends on, date */
+    to?: number;
     /** Minimum width of main gantt area in px */
     minWidth?: number;
     /** should timeline stretch width to fit */
@@ -91,6 +86,11 @@ export interface SvelteGanttOptions {
     onTaskButtonClick?: TaskButtonClickHandler;
     /** task content factory function */
     taskContent?: TaskContentTemplate;
+    /** task element hook */
+    taskElementHook?: (node: HTMLElement, task: SvelteTask) => {
+        update?(task: any): any;
+        destroy?(): any;
+    };
     /**
      * Width of table, used with SvelteGanttTable module
      */

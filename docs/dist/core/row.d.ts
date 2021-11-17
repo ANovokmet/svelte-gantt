@@ -4,7 +4,14 @@ export interface RowModel {
     contentHtml?: string;
     enableDragging?: boolean;
     height: number;
+    /** Child rows in expandable tree */
     children?: RowModel[];
+    /** Content of row header, html string */
+    headerHtml?: string;
+    /** Class of icon in row header */
+    iconClass?: string;
+    /** Url of image in row header */
+    imageSrc?: string;
 }
 export interface SvelteRow {
     model: RowModel;

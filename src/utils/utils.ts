@@ -1,11 +1,10 @@
-import { Moment } from "moment";
-
 export class GanttUtils {
-    from: Moment;
-    to: Moment;
+    from: number;
+    to: number;
     width: number;
     magnetOffset: number;
     magnetUnit: string;
+    magnetDuration: number;
 
     constructor() {
     }
@@ -14,7 +13,7 @@ export class GanttUtils {
      * Returns position of date on a line if from and to represent length of width
      * @param {*} date 
      */
-    getPositionByDate (date) {
+    getPositionByDate (date: number) {
         return getPositionByDate(date, this.from, this.to, this.width); 
     }
 
@@ -22,42 +21,26 @@ export class GanttUtils {
         return getDateByPosition(x, this.from, this.to, this.width);
     }
 
-    /**
-     * 
-     * @param {Moment} date - Date
-     * @returns {Moment} rounded date passed as parameter
-     */
-    roundTo (date) {
-        let value = date.get(this.magnetUnit)
-    
-        value = Math.round(value / this.magnetOffset);
-    
-        date.set(this.magnetUnit, value * this.magnetOffset);
-
-        //round all smaller units to 0
-        const units = ['millisecond', 'second', 'minute', 'hour', 'date', 'month', 'year'];
-        const indexOf = units.indexOf(this.magnetUnit);
-        for (let i = 0; i < indexOf; i++) {
-            date.set(units[i], 0)
-        }
-        return date
+    roundTo (date: number) {
+        let value = Math.round(date / this.magnetDuration) * this.magnetDuration;
+        return value;
     }
 }
 
-export function getPositionByDate (date, from, to, width) {
+export function getPositionByDate (date: number, from: number, to: number, width: number) {
     if (!date) {
       return undefined
     }
 
-    let durationTo = date.diff(from, 'milliseconds')
-    let durationToEnd = to.diff(from, 'milliseconds')
+    let durationTo = date - from;
+    let durationToEnd = to - from;
 
     return durationTo / durationToEnd * width;
 }
 
-export function getDateByPosition (x, from, to, width) {
-    let durationTo = x / width * to.diff(from, 'milliseconds');
-    let dateAtPosition = from.clone().add(durationTo, 'milliseconds');
+export function getDateByPosition (x: number, from: number, to: number, width: number) {
+    let durationTo = x / width * (to - from);
+    let dateAtPosition = from + durationTo;
     return dateAtPosition; 
 }
 

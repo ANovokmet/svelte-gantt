@@ -81,7 +81,7 @@
                     model
                 }
 
-                const changed = !prevFrom.isSame(newFrom) || !prevTo.isSame(newTo) || (sourceRow && sourceRow.model.id !== targetRow.model.id);
+                const changed = prevFrom != newFrom || prevTo != newTo || (sourceRow && sourceRow.model.id !== targetRow.model.id);
                 if(changed) {
                     api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
                 }
@@ -173,7 +173,6 @@
     }
 
     function taskElement(node, model) {
-        console.log({node, model})
         if(taskElementHook) {
             return taskElementHook(node, model);
         }

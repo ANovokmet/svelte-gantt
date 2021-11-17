@@ -3,9 +3,9 @@ import { SvelteTask } from './task';
 import { SvelteRow } from './row';
 import { SvelteTimeRange } from './timeRange';
 interface EntityState<T> {
-    ids: number[];
+    ids: (string | number)[];
     entities: {
-        [key: number]: T;
+        [key: string]: T;
     };
 }
 interface EntityType {
@@ -20,8 +20,8 @@ export interface EntityStore<T extends EntityType> extends Readable<EntityState<
     update(entity: T): void;
     upsert(entity: T): void;
     upsertAll(entities: T[]): void;
-    delete(id: number): void;
-    deleteAll(ids: number[]): void;
+    delete(id: number | string): void;
+    deleteAll(ids: (number | string)[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
 }
@@ -31,7 +31,7 @@ export declare const timeRangeStore: EntityStore<SvelteTimeRange>;
 export declare const allTasks: Readable<SvelteTask[]>;
 export declare const allRows: Readable<SvelteRow[]>;
 export declare const allTimeRanges: Readable<SvelteTimeRange[]>;
-export declare const rowTaskCache: import("svelte/types/runtime/store").Readable<{}>;
+export declare const rowTaskCache: Readable<{}>;
 export declare function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]>;
 export declare function where<T extends EntityType>(store: EntityStore<T>, filterFn: (value: T) => any): Readable<T[]>;
 export {};

@@ -1,7 +1,8 @@
 <script>
-    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable } from '../dist/index';
+    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from '../dist/index';
     import { onMount } from 'svelte';
     import { time } from './utils';
+    import moment from 'moment';
 
     const currentStart = time('06:00');
     const currentEnd = time('18:00');
@@ -26,6 +27,7 @@
     ];
 
     const options = {
+        dateAdapter: new MomentSvelteGanttDateAdapter(moment),
         rows: [],
         tasks: [],
         timeRanges,

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import { duration as momentDuration } from 'moment';
     import { getPositionByDate } from '../utils/utils';
+    import { getDuration } from '../utils/date';
 
     import ColumnHeaderRow from './ColumnHeaderRow.svelte';
     
@@ -21,8 +21,7 @@
 
         [...headers, {unit: columnUnit, offset: columnOffset}].forEach(header => {
             
-            const offset = header.offset || 1;
-            const duration = momentDuration(offset, header.unit).asMilliseconds();
+            const duration = header.duration = header.duration || getDuration(header.unit, header.offset);
             if(duration < minDuration || minDuration === null) {
                 minDuration = duration;
                 result = header;
@@ -34,14 +33,14 @@
 
     let baseHeaderWidth;
     $: {
-        baseHeaderWidth = getPositionByDate($from.clone().add(minHeader.offset || 1, minHeader.unit), $from, $to, $width) | 0;
+        baseHeaderWidth = getPositionByDate($from + minHeader.duration, $from, $to, $width) | 0;
         if(baseHeaderWidth <= 0)
             console.error('baseHeaderWidth is invalid, columns or headers might be too short for the current view.');
     }
 
     let baseHeaderDuration;
     $: {
-        baseHeaderDuration = momentDuration(minHeader.offset || 1, minHeader.unit).asMilliseconds();
+        baseHeaderDuration = minHeader.duration;
     }
 </script>
 
