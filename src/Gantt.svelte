@@ -26,9 +26,18 @@
     import { findByPosition, findByDate } from './core/column';
     import { onEvent, onDelegatedEvent, offDelegatedEvent } from './core/events';
 
+    function assertSet(values) {
+        for (const name in values) {
+            if (values[name] == null) {
+                throw new Error(`"${name}" is not set`);
+            }
+        }
+    }
+
     export let rows;
     export let tasks = [];
     export let timeRanges = [];
+    assertSet({rows});
     $: if(mounted) initRows(rows);
     $: if(mounted) initTasks(tasks);
     $: if(mounted) initTimeRanges(timeRanges);
@@ -40,6 +49,7 @@
 
     export let from;
     export let to;
+    assertSet({from, to});
     const _from = writable(from);
     const _to = writable(to);
     $: $_from = from;

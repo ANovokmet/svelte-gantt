@@ -4,6 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import uglify from 'rollup-plugin-uglify';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
+import postcss from 'rollup-plugin-postcss';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -26,12 +27,14 @@ export default {
     plugins: [
         svelte({
             dev: !production,
-            css: css => {
-                css.write('docs/dist/svelteGantt.css');
-            },
+            // css: css => {
+            //     css.write('docs/dist/svelteGantt.css');
+            // },
+            emitCss: true,
             preprocess: sveltePreprocess()
         }),
-        resolve(),
+        postcss(),
+        resolve({ browser: true }),
         commonjs(),
         typescript(),
         production && uglify()
