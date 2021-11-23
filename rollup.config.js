@@ -8,21 +8,14 @@ import postcss from 'rollup-plugin-postcss';
 
 const production = !process.env.ROLLUP_WATCH;
 
-import pkg from './package.json';
-
 export default {
     input: 'src/index.ts',
-    external: Object.keys(pkg.dependencies),
     output: {
         sourcemap: true,
         format: 'es',
         name: 'window',
         extend: true,
-        dir: 'docs/dist',
-        globals: {
-            moment: 'moment'
-        },
-        // dir: 'dist'
+        dir: 'dist'
     },
     plugins: [
         svelte({

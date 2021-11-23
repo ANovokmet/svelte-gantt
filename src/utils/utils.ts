@@ -6,6 +6,10 @@ export class GanttUtils {
     magnetUnit: string;
     magnetDuration: number;
 
+    /** because gantt width is not always correct */
+    totalColumnDuration: number;
+    totalColumnWidth: number;
+
     constructor() {
     }
 
@@ -14,11 +18,11 @@ export class GanttUtils {
      * @param {*} date 
      */
     getPositionByDate (date: number) {
-        return getPositionByDate(date, this.from, this.to, this.width); 
+        return getPositionByDate(date, this.from, this.from + this.totalColumnDuration, this.totalColumnWidth); 
     }
 
     getDateByPosition (x) {
-        return getDateByPosition(x, this.from, this.to, this.width);
+        return getDateByPosition(x, this.from, this.from + this.totalColumnDuration, this.totalColumnWidth);
     }
 
     roundTo (date: number) {
@@ -39,7 +43,7 @@ export function getPositionByDate (date: number, from: number, to: number, width
 }
 
 export function getDateByPosition (x: number, from: number, to: number, width: number) {
-    let durationTo = x / width * (to - from);
+    let durationTo = (x / width) * (to - from);
     let dateAtPosition = from + durationTo;
     return dateAtPosition; 
 }

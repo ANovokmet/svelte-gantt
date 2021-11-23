@@ -2,7 +2,6 @@
     import type { SvelteRow } from 'src/core/row';
     import { getContext } from 'svelte';
     export let row: SvelteRow;
-
     const { rowHeight } = getContext('options');
     const { hoveredRow, selectedRow } = getContext('gantt');
 </script>

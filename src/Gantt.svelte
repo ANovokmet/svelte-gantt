@@ -48,14 +48,20 @@
     export let rowHeight = 52;
     const _rowHeight = writable(rowHeight);
     const _rowPadding = writable(rowPadding);
+    $: $_rowHeight = rowHeight;
+    $: $_rowPadding = rowPadding;
+
+    function toDateNum(date: number | Date) {
+        return date instanceof Date ? date.valueOf() : date;
+    }
 
     export let from;
     export let to;
     assertSet({from, to});
-    const _from = writable(from);
-    const _to = writable(to);
-    $: $_from = from;
-    $: $_to = to;
+    const _from = writable(toDateNum(from));
+    const _to = writable(toDateNum(to));
+    $: $_from = toDateNum(from);
+    $: $_to = toDateNum(to);
 
     export let minWidth = 800;
     export let fitWidth = false;
@@ -175,6 +181,16 @@
         }
     }
 
+    function add(a: number | Date, b: number | Date) {
+        if(a instanceof Date) {
+            a = a.valueOf();
+        }
+        if(b instanceof Date) {
+            b = b.valueOf();
+        }
+        return a + b;
+    }
+
     const columnWidth = writable(getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0);
     $: $columnWidth = getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0;
     let columnCount = Math.ceil($_width / $columnWidth);
@@ -183,6 +199,12 @@
     $: columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
 
     function getColumns(from: number, count: number, dur: number, width: number) {
+
+        if(!isFinite(count))
+            throw new Error('column count is not a finite number');
+        if(width <= 0)
+            throw new Error('column width is not a positive number');
+
         let columns = [];
         let columnFrom = from;
         let left = 0;
@@ -450,6 +472,9 @@
         utils.magnetOffset = magnetOffset;
         utils.magnetUnit = magnetUnit;
         utils.magnetDuration = magnetDuration;
+
+        utils.totalColumnDuration = columnCount * columnDuration;
+        utils.totalColumnWidth = columnCount * $columnWidth;
     }
 
     setContext('services', {

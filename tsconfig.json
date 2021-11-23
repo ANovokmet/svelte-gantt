@@ -11,7 +11,7 @@
             "svelte"
         ],
 		"declaration": true,
-		"declarationDir": "./docs/dist",
+		"declarationDir": "./dist",
 		// "declarationDir": "./dist/types",
         "importsNotUsedAsValues": "remove",
         "isolatedModules": false

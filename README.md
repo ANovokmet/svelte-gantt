@@ -49,7 +49,7 @@ var gantt = new SvelteGantt({
 
 `svelte-gantt` no longer requires `moment`. You can still use it as `MomentSvelteGanttDateAdapter`. All parameters that were previously moment objects became numbers (milliseconds since UNIX epoch). 
 
-ALL date parameters should be UNIX timestamps (JavaScript `Date` and `moment` objects will work in most of the cases).
+ALL date parameters should be UNIX timestamps (JavaScript `Date` and `moment` objects will still work in most of the cases).
 
 Date parameters can stay moment or JavaScript Date objects because they will be transformed to UNIX timestamps.
 

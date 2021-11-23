@@ -9,6 +9,7 @@ const sveltePreprocess = require('svelte-preprocess');
 const svelte = require('rollup-plugin-svelte');
 const uglify = require('rollup-plugin-uglify');
 const typescript = require('rollup-plugin-typescript2');
+const postcss = require('rollup-plugin-postcss');
 
 let promise = Promise.resolve();
 
@@ -23,15 +24,17 @@ if (!fs.existsSync(outputDir)){
 
 promise = promise.then(() => rollup.rollup({
     input: './src/index.ts',
-    external: Object.keys(pkg.dependencies),
+    // external: Object.keys(pkg.dependencies),
     plugins: [
         svelte({
             dev: false,
-            css: css => {
-                css.write(`${outputDir}/css/svelteGantt.css`);
-            },
+            // css: css => {
+            //     css.write(`${outputDir}/css/svelteGantt.css`);
+            // },
+            emitCss: true,
             preprocess: sveltePreprocess()
         }),
+        postcss(),
         resolve(),
         commonjs(),
         typescript({ 
