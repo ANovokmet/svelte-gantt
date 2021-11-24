@@ -50,9 +50,40 @@ function pad(value: number): string {
 }
 
 export function startOf(date: number, unit: string): number {
-    let unitMs = getDuration(unit);
-    const value = Math.floor(date / unitMs) * unitMs;
-    return value;
+    let d = new Date(date);
+    let y = d.getFullYear();
+    let m = d.getMonth();
+    let dt = d.getDate();
+
+    switch (unit) {
+        case 'y':
+        case 'year':
+            return startOfDate(y, 0, 1);
+        case 'month':
+            return startOfDate(y, m, 1);
+        case 'd':
+        case 'day':
+            return startOfDate(y, m, dt);
+        case 'h':
+        case 'hour':
+        case 'm':
+        case 'minute':
+        case 's':
+        case 'second':
+            let unitMs = getDuration(unit);
+            const value = Math.floor(date / unitMs) * unitMs;
+            return value;
+        default:
+            throw new Error(`Unknown unit: ${unit}`);
+    }
+}
+
+function startOfDate(y: number, m: number, d: number) {    
+    if (y < 100 && y >= 0) {
+        return new Date(y + 400, m, d).valueOf() - 31536000000;
+    } else {
+        return new Date(y, m, d).valueOf();
+    }
 }
 
 export function getDuration(unit: string, offset = 1): number {
@@ -78,3 +109,34 @@ export function getDuration(unit: string, offset = 1): number {
             throw new Error(`Unknown unit: ${unit}`);
     }
 }
+
+
+// function startOf(date, unit) {
+//     let unitMs = getDuration(unit);
+//     const value = Math.floor(date / unitMs) * unitMs;
+//     return value;
+// }
+
+// function getDuration(unit, offset = 1) {
+//     switch (unit) {
+//         case 'y':
+//         case 'year':
+//             return offset * 31536000000;
+//         case 'month':
+//             return offset * 30 * 24 * 60 * 60 * 1000;
+//         case 'd':
+//         case 'day':
+//             return offset * 24 * 60 * 60 * 1000 - 60 * 60 * 1000;
+//         case 'h':
+//         case 'hour':
+//             return offset * 60 * 60 * 1000;
+//         case 'm':
+//         case 'minute':
+//             return offset * 60 * 1000;
+//         case 's':
+//         case 'second':
+//             return offset * 1000;
+//         default:
+//             throw new Error(`Unknown unit: ${unit}`);
+//     }
+// }

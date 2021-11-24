@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { time } from '../utils';
     import moment from 'moment';
+    import GanttOptions from '../components/GanttOptions.svelte';
 
     const currentStart = time('06:00');
     const currentEnd = time('18:00');
@@ -134,6 +135,12 @@
     onMount(() => {
         window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: options });
     });
+
+    function onChangeOptions(event) {
+        const opts = event.detail;
+        Object.assign(options, opts);
+        gantt.$set(options);
+    }
 </script>
 
 <style>
@@ -151,4 +158,5 @@
 
 <div class="container">
     <div id="example-gantt"></div>
+    <GanttOptions options={options} on:change={onChangeOptions}/>
 </div>

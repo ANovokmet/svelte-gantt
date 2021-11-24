@@ -1,4 +1,4 @@
-import { SvelteRow } from "src/core/row";
+import { SvelteRow } from "../../core/row";
 
 export interface TableHeader {
     /** Table column title */

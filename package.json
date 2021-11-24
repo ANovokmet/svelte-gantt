@@ -1,7 +1,7 @@
 {
     "name": "svelte-gantt",
     "description": "Interactive JavaScript Gantt chart/resource booking component",
-    "version": "4.0.1-beta",
+    "version": "4.0.3-beta",
     "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
     "scripts": {
         "build": "rollup -c",

@@ -8,10 +8,6 @@
     const currentStart = time('06:00');
     const currentEnd = time('18:00');
 
-    const colors = ['blue', 'green', 'orange']
-    
-    let options2 = getContext('options');
-
     export const data = {
         rows: [{
             id: 1,
