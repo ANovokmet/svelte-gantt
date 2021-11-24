@@ -19998,9 +19998,9 @@ var app = (function () {
     			create_component$1(ganttoptions.$$.fragment);
     			attr_dev$1(div0, "id", "example-gantt-events");
     			attr_dev$1(div0, "class", "svelte-4h7flc");
-    			add_location$1(div0, file$2, 166, 4, 5029);
+    			add_location$1(div0, file$2, 197, 4, 6358);
     			attr_dev$1(div1, "class", "container svelte-4h7flc");
-    			add_location$1(div1, file$2, 165, 0, 5000);
+    			add_location$1(div1, file$2, 196, 0, 6329);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -20037,6 +20037,30 @@ var app = (function () {
     	});
 
     	return block;
+    }
+
+    function createPopup(task, node) {
+    	const rect = node.getBoundingClientRect();
+    	const div = document.createElement("div");
+    	div.className = "sg-popup";
+
+    	div.innerHTML = `
+            <div class="sg-popup-title">${task.label}</div>
+            <div class="sg-popup-item">
+                <div class="sg-popup-item-label">From:</div>
+                <div class="sg-popup-item-value">${new Date(task.from).toLocaleTimeString()}</div>
+            </div>
+            <div class="sg-popup-item">
+                <div class="sg-popup-item-label">To:</div>
+                <div class="sg-popup-item-value">${new Date(task.to).toLocaleTimeString()}</div>
+            </div>
+        `;
+
+    	div.style.position = "absolute";
+    	div.style.top = `${rect.bottom}px`;
+    	div.style.left = `${rect.left + rect.width / 2}px`;
+    	document.body.appendChild(div);
+    	return div;
     }
 
     function instance$2($$self, $$props, $$invalidate) {
@@ -20147,16 +20171,29 @@ var app = (function () {
     		ganttTableModules: [SvelteGanttTable],
     		ganttBodyModules: [SvelteGanttDependencies],
     		taskElementHook: (node, task) => {
+    			let popup;
+
     			function onHover() {
     				console.log("[task] hover", task);
+    				popup = createPopup(task, node);
+    			}
+
+    			function onLeave() {
+    				console.log("[task] hover", task);
+
+    				if (popup) {
+    					popup.remove();
+    				}
     			}
 
     			node.addEventListener("mouseenter", onHover);
+    			node.addEventListener("mouseleave", onLeave);
 
     			return {
     				destroy() {
     					console.log("[task] destroy");
     					node.removeEventListener("mouseenter", onHover);
+    					node.removeEventListener("mouseleave", onLeave);
     				}
     			};
     		}
@@ -20212,6 +20249,7 @@ var app = (function () {
     		data,
     		options,
     		gantt,
+    		createPopup,
     		onChangeOptions
     	});
 

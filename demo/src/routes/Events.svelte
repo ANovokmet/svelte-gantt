@@ -105,17 +105,27 @@
         ganttTableModules: [SvelteGanttTable],
         ganttBodyModules: [SvelteGanttDependencies],
         taskElementHook: (node, task) => {
-
+            let popup;
             function onHover() {
                 console.log('[task] hover', task);
+                popup = createPopup(task, node);
+            }
+
+            function onLeave() {
+                console.log('[task] hover', task);
+                if(popup) {
+                    popup.remove();
+                }
             }
 
             node.addEventListener('mouseenter', onHover);
+            node.addEventListener('mouseleave', onLeave);
 
             return {
                 destroy() {
                     console.log('[task] destroy');
                     node.removeEventListener('mouseenter', onHover);
+                    node.removeEventListener('mouseleave', onLeave);
                 }
             }
         },
@@ -134,6 +144,27 @@
         gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task));
     });
 
+    function createPopup(task, node) {
+        const rect = node.getBoundingClientRect();
+        const div = document.createElement('div');
+        div.className = 'sg-popup';
+        div.innerHTML = `
+            <div class="sg-popup-title">${task.label}</div>
+            <div class="sg-popup-item">
+                <div class="sg-popup-item-label">From:</div>
+                <div class="sg-popup-item-value">${new Date(task.from).toLocaleTimeString()}</div>
+            </div>
+            <div class="sg-popup-item">
+                <div class="sg-popup-item-label">To:</div>
+                <div class="sg-popup-item-value">${new Date(task.to).toLocaleTimeString()}</div>
+            </div>
+        `;
+        div.style.position = 'absolute';
+        div.style.top = `${rect.bottom}px`;
+        div.style.left = `${rect.left + rect.width / 2}px`;
+        document.body.appendChild(div);
+        return div;
+    }
 
     function onChangeOptions(event) {
         const opts = event.detail;

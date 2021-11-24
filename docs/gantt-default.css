@@ -85,3 +85,24 @@
     font-family: 'Lato', sans-serif;
     z-index: 10;
 }
+
+.sg-popup {
+    padding: 0.5rem;
+    background: #fff;
+    border: #ccc 1px solid;
+    z-index: 10;
+    transform: translateX(-50%);
+}
+
+.sg-popup-title {
+    text-align: center;
+}
+
+.sg-popup-item {
+    display: flex;
+}
+
+.sg-popup-item-label {
+    font-weight: 300;
+    flex: 30% 1 1;
+}
