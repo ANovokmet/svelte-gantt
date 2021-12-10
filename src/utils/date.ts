@@ -34,6 +34,27 @@ export class NoopSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`;
             case 'dd/MM/yyyy hh:mm:ss':
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+            // VPY More formats supported 10/12/2021
+            case 'YYYY':
+                return `${d.getFullYear()}`;
+            case 'MMMM':
+                var month = d.toLocaleString('default', { month: 'long' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)}`;
+            case 'MMMM - YYYY':
+                var month = d.toLocaleString('default', { month: 'long' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)}-${d.getFullYear()}`;
+            case 'MMMM YYYY':
+                var month = d.toLocaleString('default', { month: 'long' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)} ${d.getFullYear()}`; 
+            case 'MMM':
+                var month = d.toLocaleString('default', { month: 'short' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)}`;
+            case 'MMM - YYYY':
+                var month = d.toLocaleString('default', { month: 'short' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)} - ${d.getFullYear()}`;
+            case 'MMM YYYY':
+                var month = d.toLocaleString('default', { month: 'short' });
+                return `${month.charAt(0).toUpperCase()}${month.substring(1)} ${d.getFullYear()}`;
             default:
                 console.warn(`Date Format "${format}" is not supported, use another date adapter.`);
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
