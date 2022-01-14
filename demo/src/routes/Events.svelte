@@ -142,6 +142,7 @@
         //gantt.api.tasks.on.moveEnd((task) => console.log('Listener: task move end', task));
         gantt.api.tasks.on.change(([data]) => console.log('Listener: task change', data));
         gantt.api.tasks.on.changed((task) => console.log('Listener: task changed', task));
+        gantt.api.tasks.on.dblclicked((task) => console.log('Listener: task double clicked', task));
     });
 
     function createPopup(task, node) {
