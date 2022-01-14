@@ -87,6 +87,8 @@ export function startOf(date: number, unit: string): number {
             return startOfDate(y, m, dt);
         case 'h':
         case 'hour':
+            d.setMinutes(0, 0, 0);
+            return d.valueOf();
         case 'm':
         case 'minute':
         case 's':
@@ -113,7 +115,7 @@ export function getDuration(unit: string, offset = 1): number {
         case 'year':
             return offset * 31536000000;
         case 'month':
-            return offset * 30 * 24 * 60 * 60 * 1000;
+            return offset * 30 * 24 * 60 * 60 * 1000; // incorrect since months are of different durations
         case 'd':
         case 'day':
             return offset * 24 * 60 * 60 * 1000;
@@ -130,7 +132,6 @@ export function getDuration(unit: string, offset = 1): number {
             throw new Error(`Unknown unit: ${unit}`);
     }
 }
-
 
 // function startOf(date, unit) {
 //     let unitMs = getDuration(unit);
