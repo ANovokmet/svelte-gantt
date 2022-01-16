@@ -280,6 +280,7 @@
         api.registerEvent('tasks', 'change');
         api.registerEvent('tasks', 'changed');
         api.registerEvent('gantt', 'viewChanged');
+        api.registerEvent('tasks', 'dblclicked');
 
         mounted = true;
     });

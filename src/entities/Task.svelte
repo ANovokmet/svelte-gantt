@@ -309,7 +309,8 @@
 </style>
 
 <div
-  data-task-id="{model.id}"
+  data-task-id="{model.id}"  
+  on:dblclick={() => {api.tasks.raise.dblclicked(model)}} 
   use:drag
   use:taskElement={model}
   class="sg-task {model.classes}"
