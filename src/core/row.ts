@@ -12,6 +12,7 @@ export interface RowModel {
     iconClass?: string;
     /** Url of image in row header */
     imageSrc?: string;
+    expanded?:boolean
 }
 
 export interface SvelteRow {
