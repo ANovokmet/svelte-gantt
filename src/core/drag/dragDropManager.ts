@@ -13,7 +13,7 @@ export class DragDropManager
             let elements = document.elementsFromPoint(event.clientX, event.clientY);
             let rowElement = elements.find((element) => !!element.getAttribute('data-row-id'));
             if(rowElement !== undefined) {
-                const rowId = parseInt(rowElement.getAttribute('data-row-id'));
+                const rowId = rowElement.getAttribute('data-row-id');
                 const { entities } = get(rowStore);
                 const targetRow = entities[rowId];
 
@@ -32,6 +32,7 @@ export class DragDropManager
     getTarget(target: string, event: MouseEvent): SvelteRow {
         //const rowCenterX = this.root.refs.mainContainer.getBoundingClientRect().left + this.root.refs.mainContainer.getBoundingClientRect().width / 2;
         var handler = this.handlerMap[target];
+
         if(handler){
             return handler(event);
         }
