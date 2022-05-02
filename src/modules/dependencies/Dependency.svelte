@@ -6,6 +6,8 @@
     export let id;
     export let fromId;
     export let toId;
+    export let stroke;
+    export let strokeWidth;
 
     let fromTask;
     $: fromTask = $taskStore.entities[fromId];
@@ -16,7 +18,7 @@
 
 <div class="sg-dependency" style="left:0;top:0" data-dependency-id="{id}">
     <Arrow startX={fromTask.left + fromTask.width} startY={fromTask.top + fromTask.height / 2} endX={toTask.left}
-        endY={toTask.top + toTask.height / 2} />
+        endY={toTask.top + toTask.height / 2} {stroke} {strokeWidth} />
 </div>
 
 <style>
