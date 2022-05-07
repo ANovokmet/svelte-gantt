@@ -301,9 +301,19 @@
     });
 
     onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
+        unselectTasks();
+        if($selectedRow == +data){
+            $selectedRow = null;
+            return
+        }
         $selectedRow = +data;
     });
-    
+
+    onDelegatedEvent('mouseleave', 'empty', (event, data, target) => {
+        $hoveredRow = null;
+    });
+
+
     onDestroy(() => {
         offDelegatedEvent('click', 'data-task-id');
         offDelegatedEvent('click', 'data-row-id');
@@ -661,7 +671,7 @@
     $: if($dimensionsChanged) tickWithoutCSSTransition();
 </script>
 
-<div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:click={onEvent} on:mouseover={onEvent}>
+<div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:click={onEvent} on:mouseover={onEvent} on:mouseleave={onEvent}>
     {#each ganttTableModules as module}
     <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} tableWidth={tableWidth} {...$$restProps} on:init="{onModuleInit}" {visibleRows} />
 
