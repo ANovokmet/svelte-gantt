@@ -33,5 +33,7 @@ export function onEvent(e) {
     }
     if (match && cbs[match.attr]) {
         cbs[match.attr](e, match.data, element);
+    }else if(cbs['empty']){
+        cbs['empty'](e, null, element);
     }
 }
