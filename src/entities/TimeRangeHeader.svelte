@@ -83,9 +83,14 @@
 
         return { destroy: () => draggable.destroy() };
     }
+
+    function setClass(node){
+        if(!model.classes) return;
+        node.classList.add(model.classes);
+    }
 </script>
 
-<div class="sg-time-range-control" style="width:{_position.width}px;left:{_position.x}px">
+<div class="sg-time-range-control" style="width:{_position.width}px;left:{_position.x}px" use:setClass>
     <div class="sg-time-range-handle-left" use:drag></div>
     <div class="sg-time-range-handle-right" use:drag></div>
 </div>
