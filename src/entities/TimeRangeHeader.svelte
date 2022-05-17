@@ -14,6 +14,8 @@
         visibleWidth
     } = getContext('dimensions');
 
+    const { api } = getContext('services');
+
     export let model;
     export let width;
     export let left;
@@ -56,6 +58,7 @@
 
         const draggable = new Draggable(node, {
             onDown: (event) => {
+                api.timeranges.raise.clicked({model});
                 update({
                     left: event.x,
                     width: event.width,
@@ -64,6 +67,7 @@
                 });
             }, 
             onResize: (event) => {
+                api.timeranges.raise.resized({model, left:event.x, width:event.width});
                 update({
                     left: event.x,
                     width: event.width,

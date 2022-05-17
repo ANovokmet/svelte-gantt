@@ -282,6 +282,8 @@
         api.registerEvent('gantt', 'viewChanged');
         api.registerEvent('gantt', 'dateSelected');
         api.registerEvent('tasks', 'dblclicked');
+        api.registerEvent('timeranges', 'clicked');
+        api.registerEvent('timeranges', 'resized');
 
         mounted = true;
     });
