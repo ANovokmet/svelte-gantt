@@ -11,9 +11,14 @@
     $: {
         _position.x = left, _position.width = width;
     };
+
+    function setClass(node){
+        if(!model.classes) return;
+        node.classList.add(model.classes);
+    }
 </script>
 
-<div class="sg-time-range" class:moving="{resizing}" style="width:{_position.width}px;left:{_position.x}px">
+<div class="sg-time-range" class:moving="{resizing}" style="width:{_position.width}px;left:{_position.x}px" use:setClass>
     <div class="sg-time-range-label">{model.label}</div>
 </div>
 <style>
