@@ -1,5 +1,6 @@
 export interface RowModel {
-    id: number;
+    id: number | string;
+    label: string;
     classes?: string | string[];
     contentHtml?: string;
     enableDragging?: boolean;
