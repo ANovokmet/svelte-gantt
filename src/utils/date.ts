@@ -55,6 +55,11 @@ export class NoopSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
             case 'MMM YYYY':
                 var month = d.toLocaleString('default', { month: 'short' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)} ${d.getFullYear()}`;
+            case 'W':
+                return `${getWeekNumber(d)}`;
+            case 'WW':
+                const weeknumber = getWeekNumber(d);
+                return `${weeknumber.toString().length == 1 ? "0" : ''}${weeknumber}`;
             default:
                 console.warn(`Date Format "${format}" is not supported, use another date adapter.`);
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -82,6 +87,8 @@ export function startOf(date: number, unit: string): number {
             return startOfDate(y, 0, 1);
         case 'month':
             return startOfDate(y, m, 1);
+        case 'week':
+            return startOfDate(y, m, dt, true);
         case 'd':
         case 'day':
             return startOfDate(y, m, dt);
@@ -101,13 +108,39 @@ export function startOf(date: number, unit: string): number {
     }
 }
 
-function startOfDate(y: number, m: number, d: number) {    
+function startOfDate(y: number, m: number, d: number, week=false) {    
     if (y < 100 && y >= 0) {
         return new Date(y + 400, m, d).valueOf() - 31536000000;
+    } else if (week){
+        return getFirstDayOfWeek(new Date(y,m,d).valueOf()).valueOf();
     } else {
         return new Date(y, m, d).valueOf();
     }
 }
+
+function getWeekNumber(d:Date) {
+    // Copy date so don't modify original
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    // Get first day of year
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    // Calculate full weeks to nearest Thursday
+    const weekNo = Math.ceil(( ( (d.valueOf() - yearStart.valueOf()) / 86400000) + 1)/7);
+    // Return array of year and week number
+    return weekNo;
+}
+
+function getFirstDayOfWeek(d:number) {
+    // 👇️ clone date object, so we don't mutate it
+    const date = new Date(d);
+    const day = date.getDay(); // 👉️ get day of week
+    // 👇️ day of month - day of week (-6 if Sunday), otherwise +1
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  
+    return new Date(date.setDate(diff));
+  }
 
 export function getDuration(unit: string, offset = 1): number {
     switch (unit) {
@@ -116,6 +149,9 @@ export function getDuration(unit: string, offset = 1): number {
             return offset * 31536000000;
         case 'month':
             return offset * 30 * 24 * 60 * 60 * 1000; // incorrect since months are of different durations
+            // 4 cases : 28 - 29 - 30 - 31
+        case 'week':
+            return offset * 7 * 24 * 60 * 60 * 1000;
         case 'd':
         case 'day':
             return offset * 24 * 60 * 60 * 1000;
