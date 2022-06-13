@@ -34,18 +34,67 @@
     $: {
         const headers = [];
         let headerTime = startOf($from, header.unit);
-
-        for(let i = 0; i < columnCount; i++){
-            headers.push({
-                width: Math.min(columnWidth, $width), 
-                label: dateAdapter.format(headerTime, header.format),
-                from: headerTime,
-                to: headerTime + header.duration,
-                unit: header.unit
-            });
-            headerTime += header.duration;
+        
+        // /!\ Temporary : Corrects labels of headers when unit == month
+        if(header.unit == 'month'){
+            defineCorrections(headerTime, columnCount)
+            .then((res) => {
+                let array_corrections = res;
+                for(let i = 0; i < columnCount; i++){
+                    headers.push({
+                        width: Math.min(columnWidth, $width), 
+                        label: dateAdapter.format(headerTime, header.format),
+                        from: headerTime,
+                        to: headerTime + header.duration,
+                        unit: header.unit
+                    });
+                    const correction_temp = (24 * 60 * 60 * 1000 * array_corrections[i]);    
+                    headerTime += header.duration + correction_temp
+                }
+                _headers = headers;
+            })
+        }else{
+            for(let i = 0; i < columnCount; i++){
+                headers.push({
+                    width: Math.min(columnWidth, $width), 
+                    label: dateAdapter.format(headerTime, header.format),
+                    from: headerTime,
+                    to: headerTime + header.duration,
+                    unit: header.unit
+                });
+                headerTime += header.duration; 
+            }
+            _headers = headers;
         }
-        _headers = headers;
+    }
+
+
+    function defineCorrections(headerTime, columnCount){
+        let dtemp = new Date(headerTime);
+        let array_return = [];
+        let array_31 = [0,2,4,6,7,9,11];
+        for(let i=0; i<columnCount; i++){
+            let correction = 0;
+            const month = dtemp.getMonth();
+            if(month == 1){
+                const isLeap = year => new Date(year, 1, 29).getDate() === 29;
+                correction = (isLeap(dtemp.getFullYear()) ? -1 : -2);
+            }else if(array_31.includes(month)){
+                correction = 1
+                if(month == 9){
+                    correction += 1/24;
+                }else if (month == 2){
+                    correction -= 1/24;
+                }
+            }
+
+            array_return[i] = correction;
+            dtemp = new Date(dtemp.setMonth(dtemp.getMonth()+1));
+        }
+        const promiseTemp = new Promise(resolve => {
+            resolve(array_return)
+        });
+        return promiseTemp;
     }
 </script>
 
