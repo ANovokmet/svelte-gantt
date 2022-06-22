@@ -36,8 +36,8 @@
         let headerTime = startOf($from, header.unit);
         
         // /!\ Temporary : Corrects labels of headers when unit == month
-        if(header.unit == 'month'){
-            defineCorrections(headerTime, columnCount)
+        if(header.unit == 'month' || header.unit == 'year'){
+            defineCorrections(header.unit, headerTime, columnCount, header?.offset || 1)
             .then((res) => {
                 let array_corrections = res;
                 for(let i = 0; i < columnCount; i++){
@@ -69,32 +69,50 @@
     }
 
 
-    function defineCorrections(headerTime, columnCount){
+    function defineCorrections(unit, headerTime, columnCount, offset=1){
         let dtemp = new Date(headerTime);
         let array_return = [];
-        let array_31 = [0,2,4,6,7,9,11];
-        for(let i=0; i<columnCount; i++){
-            let correction = 0;
-            const month = dtemp.getMonth();
-            if(month == 1){
-                const isLeap = year => new Date(year, 1, 29).getDate() === 29;
-                correction = (isLeap(dtemp.getFullYear()) ? -1 : -2);
-            }else if(array_31.includes(month)){
-                correction = 1
-                if(month == 9){
-                    correction += 1/24;
-                }else if (month == 2){
-                    correction -= 1/24;
-                }
-            }
 
-            array_return[i] = correction;
-            dtemp = new Date(dtemp.setMonth(dtemp.getMonth()+1));
+        if(unit == 'month'){
+            let array_31 = [0,2,4,6,7,9,11];
+            for(let i=0; i<columnCount; i++){
+                let correction_totale = 0;
+                for(let j=0; j<offset; j++){
+                    let correction = 0;
+                    const month = dtemp.getMonth();
+                    if(month == 1){
+                        const isLeap = year => new Date(year, 1, 29).getDate() === 29;
+                        correction = (isLeap(dtemp.getFullYear()) ? -1 : -2);
+                    }else if(array_31.includes(month)){
+                        correction = 1
+                        if(month == 9){
+                            correction += 1/24;
+                        }else if (month == 2){
+                            correction -= 1/24;
+                        }
+                    }
+
+                    correction_totale += correction;
+                    dtemp = new Date(dtemp.setMonth(dtemp.getMonth()+header.offset));
+                }
+
+                array_return[i] = correction_totale;
+
+            }
+        }else if(unit == 'year'){
+            for(let i=0; i<columnCount; i++){
+                let correction = 0;
+                if(dtemp.getFullYear()%4 == 0) correction = 1;
+                array_return[i] = correction;
+                dtemp = new Date(dtemp.setFullYear(dtemp.getFullYear()+header.offset));
+            }
         }
+
         const promiseTemp = new Promise(resolve => {
             resolve(array_return)
         });
         return promiseTemp;
+
     }
 </script>
 
