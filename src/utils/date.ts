@@ -37,6 +37,17 @@ export class NoopSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
             // VPY More formats supported 10/12/2021
             case 'YYYY':
                 return `${d.getFullYear()}`;
+            case 'Q':
+                return `${Math.floor(d.getMonth()/3 + 1)}`;
+            case '[Q]Q':
+                return `Q${Math.floor(d.getMonth()/3 + 1)}`;
+            case 'YYYY[Q]Q':
+                return `${d.getFullYear()}Q${Math.floor(d.getMonth()/3 + 1)}`;
+            case 'MM':
+                // var month = d.toLocaleString('default', { month: 'long' });
+                var month = String(d.getMonth()+1);
+                if(month.length == 1) month = `0${month}`;
+                return `${month}`;
             case 'MMMM':
                 var month = d.toLocaleString('default', { month: 'long' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)}`;
@@ -146,7 +157,8 @@ export function getDuration(unit: string, offset = 1): number {
     switch (unit) {
         case 'y':
         case 'year':
-            return offset * 31536000000;
+            return offset * 31536000000; // Incorrect since there is years with 366 days 
+            // 2 cases 31622400000 (366) - 31536000000 (365)
         case 'month':
             return offset * 30 * 24 * 60 * 60 * 1000; // incorrect since months are of different durations
             // 4 cases : 28 - 29 - 30 - 31
