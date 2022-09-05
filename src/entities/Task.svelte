@@ -248,32 +248,30 @@
         opacity: 0.5;
     }
 
-    .sg-task:hover::before {
+    .sg-task.dragging-enabled:hover::before{
         content: "";
         width: 4px;
         height: 50%;
         top: 25%;
         position: absolute;
-        cursor: ew-resize;
         border-style: solid;
         border-color: rgba(255, 255, 255, 0.5);
-
+        cursor: ew-resize;
         margin-left: 3px;
         left: 0;
         border-width: 0 1px;
         z-index: 1;
     }
 
-    .sg-task:hover::after {
+    .sg-task.dragging-enabled:hover::after{
         content: "";
         width: 4px;
         height: 50%;
         top: 25%;
         position: absolute;
-        cursor: ew-resize;
         border-style: solid;
         border-color: rgba(255, 255, 255, 0.5);
-
+        cursor: ew-resize;
         margin-right: 3px;
         right: 0;
         border-width: 0 1px;
@@ -318,7 +316,9 @@
   class:moving={_dragging || _resizing}
   class:selected
   class:animating
-  class:sg-task-reflected={reflected}>
+  class:sg-task-reflected={reflected}
+  class:dragging-enabled={row.model.enableDragging}
+  >
   {#if model.amountDone}
   <div class="sg-task-background" style="width:{model.amountDone}%" />
   {/if}
