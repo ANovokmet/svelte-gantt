@@ -36,9 +36,12 @@
         }
     }
 
+    export let highlightWeekends = false;
+    export let highlightColor = "#6eb859";
     export let rows;
     export let tasks = [];
     export let timeRanges = [];
+
     assertSet({rows});
     $: if(mounted) initRows(rows);
     $: if(mounted) initTasks(tasks);
@@ -199,9 +202,8 @@
     $: columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
 
     function getColumns(from: number, count: number, dur: number, width: number) {
-
         if(!isFinite(count))
-            throw new Error('column count is not a finite number');
+            throw new Error(`column count is not a finite number [${count}]`);
         if(width <= 0)
             throw new Error('column width is not a positive number');
 
@@ -695,7 +697,7 @@
         <div class="sg-timeline-body" bind:this={mainContainer} use:scrollable class:zooming="{zooming}" on:wheel="{onwheel}"
          bind:clientHeight="{$visibleHeight}" bind:clientWidth="{$visibleWidth}">
             <div class="content" style="width:{$_width}px">
-                <Columns columns={columns} {columnStrokeColor} {columnStrokeWidth}/>
+                <Columns columns={columns} {columnStrokeColor} {columnStrokeWidth} {columnUnit} {columnOffset} {highlightWeekends} {highlightColor}/>
                 <div class="sg-rows" bind:this={rowContainer} style="height:{rowContainerHeight}px;">
                     <div style="transform: translateY({paddingTop}px);">
                         {#each visibleRows as row (row.model.id)}
