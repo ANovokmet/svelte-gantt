@@ -10,7 +10,7 @@
     import TableRow from './TableRow.svelte';
     import { rowStore, taskStore } from "../../core/store";
     import type { TableHeader } from './tableHeader';
-    import type { SvelteRow } from 'src/core/row';
+    import type { SvelteRow } from '../../core/row';
 
     export let tableWidth;
     export let paddingTop;
