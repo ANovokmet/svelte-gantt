@@ -1,5 +1,5 @@
-import { SvelteRow } from './row';
-import { ColumnService } from './column';
+import type { SvelteRow } from './row';
+import type { ColumnService } from './column';
 
 export interface TaskModel {
     id: number; // | string;

@@ -1,5 +1,5 @@
 import type { SvelteRow } from '../row';
-import { Writable, get } from 'svelte/store';
+import { type Writable, get } from 'svelte/store';
 import type { EntityStore } from '../store';
 
 export type DropHandler = (event: MouseEvent) => any;

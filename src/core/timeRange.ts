@@ -1,4 +1,4 @@
-import { ColumnService } from "./column";
+import type { ColumnService } from "./column";
 
 export interface TimeRangeModel {
     id: number; // | string;
