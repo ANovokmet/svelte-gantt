@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SvelteRow } from 'src/core/row';
+    import type { SvelteRow } from '../core/row';
     import { getContext } from 'svelte';
     export let row: SvelteRow;
     const { rowHeight } = getContext('options');

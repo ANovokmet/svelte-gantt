@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { beforeUpdate, afterUpdate, getContext, onMount, onDestroy, tick } from "svelte";
+    import { getContext } from "svelte";
 
-    import { setCursor } from "src/utils/domUtils";
+    import { setCursor } from "../utils/domUtils";
     import { taskStore, rowStore } from '../core/store';
     import { Draggable } from "../core/drag";
-    import { reflectTask } from "src/core/task";
+    import { reflectTask } from "../core/task";
 
     export let model;
     export let height;
