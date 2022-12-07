@@ -26,6 +26,13 @@
     background: rgb(69, 112, 150);
 }
 
+.sg-task-selected {
+    outline: 2px solid rgba(3, 169, 244, 0.5);
+    outline-offset: 3px;
+    z-index: 1;
+    background: rgb(69, 112, 150);
+}
+
 .sg-task.selected:hover {
     background: rgb(60, 98, 131);
 }

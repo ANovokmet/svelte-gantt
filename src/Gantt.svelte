@@ -9,14 +9,13 @@
     let scrollables = [];
     let mounted = false;
 
-    import { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache } from './core/store';
-    import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
+    import { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache} from './core/store';
+    import { Task, SelectionManager, Row, TimeRange, TimeRangeHeader, Milestone } from './entities';
     import { Columns, ColumnHeader } from './column';
     import { Resizer } from './ui';
 
     import { GanttUtils, getPositionByDate } from './utils/utils';
-    import { getRelativePos, debounce, throttle } from './utils/domUtils';
-    import { SelectionManager } from './utils/selectionManager';
+    import { getRelativePos, debounce, throttle, isLeftClick } from './utils/domUtils';
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask } from './core/task';
@@ -290,12 +289,15 @@
         mounted = true;
     });
 
-    onDelegatedEvent('click', 'data-task-id', (event, data, target) => {
+    onDelegatedEvent('mousedown', 'data-task-id', (event, data, target) => {
         const taskId = +data;
-        if (event.ctrlKey) {
-            selectionManager.toggleSelection(taskId);
-        } else {
-            selectionManager.selectSingle(taskId);
+        if(isLeftClick(event) && !target.classList.contains("sg-task-reflected")){
+            if (event.ctrlKey) {
+                selectionManager.toggleSelection(taskId, target);
+            } else {
+                selectionManager.selectSingle(taskId, target);
+            }
+            selectionManager.dispatchTaskEvent(taskId, event)
         }
         api['tasks'].raise.select($taskStore.entities[taskId]);
     });
@@ -305,7 +307,7 @@
     });
 
     onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
-        unselectTasks();
+        selectionManager.unSelectTasks();
         if($selectedRow == +data){
             $selectedRow = null;
             return
@@ -317,10 +319,10 @@
         $hoveredRow = null;
     });
 
-
     onDestroy(() => {
         offDelegatedEvent('click', 'data-task-id');
         offDelegatedEvent('click', 'data-row-id');
+        offDelegatedEvent('mousedown', 'data-task-id');
     });
 
     let __scrollTop = 0;
@@ -535,12 +537,12 @@
     export function selectTask(id) {
         const task = $taskStore.entities[id];
         if (task) {
-            selectionManager.selectSingle(task);
+            selectionManager.selectSingle(task, document.querySelector(`data-task-id='${id}'`));
         }
     }
 
     export function unselectTasks() {
-        selectionManager.clearSelection();
+        selectionManager.unSelectTasks();
     }
 
     export function scrollToRow(id, scrollBehavior = 'auto') {
@@ -675,7 +677,7 @@
     $: if($dimensionsChanged) tickWithoutCSSTransition();
 </script>
 
-<div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:click={onEvent} on:mouseover={onEvent} on:mouseleave={onEvent}>
+<div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:mousedown|stopPropagation={onEvent} on:click|stopPropagation={onEvent} on:mouseover={onEvent} on:mouseleave={onEvent}>
     {#each ganttTableModules as module}
     <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} tableWidth={tableWidth} {...$$restProps} on:init="{onModuleInit}" {visibleRows} />
 
@@ -698,6 +700,7 @@
          bind:clientHeight="{$visibleHeight}" bind:clientWidth="{$visibleWidth}">
             <div class="content" style="width:{$_width}px">
                 <Columns columns={columns} {columnStrokeColor} {columnStrokeWidth} {columnUnit} {columnOffset} {highlightWeekends} {highlightColor}/>
+
                 <div class="sg-rows" bind:this={rowContainer} style="height:{rowContainerHeight}px;">
                     <div style="transform: translateY({paddingTop}px);">
                         {#each visibleRows as row (row.model.id)}
@@ -705,6 +708,7 @@
                         {/each}
                     </div>
                 </div>
+                
                 <div class="sg-foreground">
                     {#each $allTimeRanges as timeRange (timeRange.model.id)}
                     <TimeRange {...timeRange} />

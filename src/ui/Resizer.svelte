@@ -32,7 +32,7 @@
     $: dragOptions.container = container;
 
     function resizer(node) {
-        return new Draggable(node, dragOptions);
+        return new Draggable(node, dragOptions, 'resizer');
     }
 </script>
 

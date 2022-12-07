@@ -83,7 +83,7 @@
             getX: () => _position.x,
             getY: () => 0,
             getWidth: () => _position.width
-        });
+        }, 'timerange');
 
         return { destroy: () => draggable.destroy() };
     }
