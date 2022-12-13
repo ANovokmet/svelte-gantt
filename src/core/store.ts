@@ -1,7 +1,7 @@
-import { writable, Readable, derived } from 'svelte/store';
-import { SvelteTask } from './task';
-import { SvelteRow } from './row';
-import { SvelteTimeRange } from './timeRange';
+import { writable, type Readable, derived } from 'svelte/store';
+import type { SvelteTask } from './task';
+import type { SvelteRow } from './row';
+import type { SvelteTimeRange } from './timeRange';
 
 interface EntityState<T> {
     ids: (string | number)[],

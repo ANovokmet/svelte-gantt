@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { SvelteRow } from "src/core/row";
+    import type { SvelteRow } from '../../core/row';
 
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
     export let row: SvelteRow;
     

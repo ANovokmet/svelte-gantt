@@ -3,7 +3,7 @@
 
     import TableTreeCell from './TableTreeCell.svelte';
     import type { TableHeader } from './tableHeader';
-    import type { SvelteRow } from "src/core/row";
+    import type { SvelteRow } from '../../core/row';
 
     export let headers: TableHeader[] = null;
     export let row: SvelteRow = null;
