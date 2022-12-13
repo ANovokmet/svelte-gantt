@@ -6,8 +6,8 @@
 
 import _svelteGantt from './Gantt.svelte';
 
-import { SvelteGanttComponent, SvelteGanttOptions } from './gantt';
-import { ComponentCreator } from './core/svelte';
+import type { SvelteGanttComponent, SvelteGanttOptions } from './gantt';
+import type { ComponentCreator } from './core/svelte';
 import { SvelteGanttTable } from './modules/table';
 import { SvelteGanttDependencies } from './modules/dependencies';
 import { SvelteGanttExternal } from './modules/external/external';
