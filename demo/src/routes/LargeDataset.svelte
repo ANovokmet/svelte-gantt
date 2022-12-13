@@ -78,7 +78,6 @@
                 id: i,
                 label: 'Row #' + i,
                 age: (Math.random() * 80) | 0,
-                enableDragging: true,
                 imageSrc: 'Content/joe.jpg',
                 classes: rand_bool ? ['row-disabled'] : undefined,
                 enableDragging: !rand_bool,
