@@ -1,6 +1,77 @@
+<script lang="ts" context="module">
+import { getRelativePos } from '../utils/domUtils';
+import type { offsetMousePostion } from '../utils/domUtils';
+
+export let draggableTasks: object = {};
+export let currentSelection: Map<number,HTMLElement> = new Map();
+
+export class SelectionManager {
+
+    selectSingle(taskId, node) {
+        if (!currentSelection.has(taskId)) {
+            this.unSelectTasks()
+            currentSelection.set(taskId, node);
+        }
+    }
+
+    toggleSelection(taskId, node) {
+        currentSelection.set(taskId, node);
+    }
+
+    unSelectTasks() {
+        for (const [taskId, node] of currentSelection.entries()) {
+            node.classList.remove('sg-task-selected');
+            currentSelection.delete(taskId);
+        }
+    }
+
+    dispatchTaskEvent(taskId, event) {
+        const x = draggableTasks[taskId].settings.getX();
+        const y = draggableTasks[taskId].settings.getY();
+        const width = draggableTasks[taskId].settings.getWidth();
+
+        draggableTasks[taskId].mouseStartPosX = getRelativePos(draggableTasks[taskId].settings.container, event).x - x;
+        draggableTasks[taskId].mouseStartPosY = getRelativePos(draggableTasks[taskId].settings.container, event).y - y;
+
+        if(draggableTasks[taskId].dragAllowed && draggableTasks[taskId].mouseStartPosX < draggableTasks[taskId].settings.resizeHandleWidth) {
+            draggableTasks[taskId].direction = 'left';
+            draggableTasks[taskId].resizing = true;
+        }
+
+        if(draggableTasks[taskId].dragAllowed && draggableTasks[taskId].mouseStartPosX > width - draggableTasks[taskId].settings.resizeHandleWidth) {
+            draggableTasks[taskId].direction = 'right';
+            draggableTasks[taskId].resizing = true;
+        }
+
+        draggableTasks[taskId].onmousedown(event);
+
+        for (const [selId, node] of currentSelection.entries()) {
+            node.classList.add('sg-task-selected');
+            if (selId !== taskId) {
+                draggableTasks[selId].direction = draggableTasks[taskId].direction;
+                draggableTasks[selId].resizing = draggableTasks[taskId].resizing; //prvent resizing and draggin at the same time
+                
+                draggableTasks[selId].offsetPos.x = (draggableTasks[selId].settings.getX() - x);
+                draggableTasks[selId].offsetPos.y = (draggableTasks[selId].settings.getY() - y);
+                draggableTasks[selId].offsetWidth =  draggableTasks[selId].settings.getWidth() - width 
+
+                const offsetMousePosition: offsetMousePostion = {
+                clientX: event.clientX + draggableTasks[selId].offsetPos.x, 
+                clientY: event.clientY + draggableTasks[selId].offsetPos.y,
+                isOffsetMouseEvent: true //fake left click on all items in selection
+                } 
+
+                draggableTasks[selId].onmousedown(offsetMousePosition);
+            }
+        }
+    }
+}
+
+</script>
+
 <script lang="ts">
     import { getContext } from "svelte";
-
+    
     import { setCursor } from "../utils/domUtils";
     import { taskStore, rowStore } from '../core/store';
     import { Draggable } from "../core/drag";
@@ -28,18 +99,17 @@
     function updatePosition(x, y, width) {
         if(!_dragging && !_resizing) {
             _position.x = x;
-            _position.y = y;//row.y + 6;
+            _position.y = y;
             _position.width = width;
             // should NOT animate on resize/update of columns
         }
     }
-
-    const { dimensionsChanged } = getContext('dimensions');
+    
     const { rowContainer } = getContext('gantt');
     const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } = getContext('options');
-    const { dndManager, api, utils, selectionManager, columnService } = getContext('services');
+    const { dndManager, api, utils, columnService } = getContext('services');
 
-    function drag(node) {
+    function drag(node) {      
         const ondrop = (event) => {
             let rowChangeValid = true;
             //row switching
@@ -135,41 +205,43 @@
                 (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
             }
         };
-
-        const draggable = new Draggable(node, {
-            onDown: (event) => {
-                if (event.dragging) {
-                    setCursor("move");
-                }
-                if (event.resizing) {
-                    setCursor("e-resize");
-                }
-            },
-            onMouseUp: () => {
-                setCursor("default");
-            },
-            onResize: (event) => {
-                (_position.x = event.x), (_position.width = event.width), (_resizing = true);
-            },
-            onDrag: (event) => {
-                (_position.x = event.x), (_position.y = event.y), (_dragging = true);
-            },
-            dragAllowed: () => {
-                return row.model.enableDragging && model.enableDragging;
-            },
-            resizeAllowed: () => {
-                return row.model.enableDragging && model.enableDragging;
-            },
-            onDrop: ondrop,
-            container: rowContainer,
-            resizeHandleWidth, 
-            getX: () => _position.x,
-            getY: () => _position.y,
-            getWidth: () => _position.width
-        });
-        return {
-            destroy: () => draggable.destroy()
-        };
+        
+        if (!reflected) { // reflected tasks must not be resized or dragged
+            draggableTasks[model.id] = new Draggable(node, {
+                onDown: (event) => {
+                    if (event.dragging) {
+                        setCursor("move");
+                    }
+                    if (event.resizing) {
+                        setCursor("e-resize");
+                    }
+                },
+                onMouseUp: () => {
+                    setCursor("default");
+                },
+                onResize: (event) => {
+                    (_position.x = event.x), (_position.width = event.width), (_resizing = true);
+                },
+                onDrag: (event) => {
+                    (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+                },
+                dragAllowed: () => {
+                    return row.model.enableDragging && model.enableDragging;
+                },
+                resizeAllowed: () => {
+                    return row.model.enableDragging && model.enableDragging;
+                },
+                onDrop: ondrop,
+                container: rowContainer,
+                resizeHandleWidth, 
+                getX: () => _position.x,
+                getY: () => _position.y,
+                getWidth: () => _position.width,
+            })
+            return {
+                destroy: () => delete draggableTasks[model.id]
+            };
+        }
     }
 
     function taskElement(node, model) {
@@ -183,10 +255,6 @@
             onTaskButtonClick(model);
         }
     }
-    
-    let selection = selectionManager.selection;
-    let selected = false;
-    $: selected = $selection.indexOf(model.id) !== -1;
 
     let row;
     $: row = $rowStore.entities[model.resourceId];
@@ -209,6 +277,7 @@
 
     .sg-task {
         position: absolute;
+        border-radius: 2px;
 
         white-space: nowrap;
         /* overflow: hidden; */
@@ -278,12 +347,6 @@
         z-index: 1;
     }
 
-    .sg-task.selected {
-        outline: 2px solid rgba(3, 169, 244, 0.5);
-        outline-offset: 3px;
-        z-index: 1;
-    }
-
     .sg-task-reflected {
         opacity: 0.5;
     }
@@ -312,9 +375,8 @@
   use:drag
   use:taskElement={model}
   class="sg-task {model.classes}"
-  style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
+  style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);" 
   class:moving={_dragging || _resizing}
-  class:selected
   class:animating
   class:sg-task-reflected={reflected}
   class:dragging-enabled={row.model.enableDragging}
