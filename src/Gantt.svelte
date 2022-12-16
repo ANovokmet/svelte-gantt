@@ -25,7 +25,7 @@
     import { DragDropManager } from './core/drag';
     import { findByPosition, findByDate } from './core/column';
     import { onEvent, onDelegatedEvent, offDelegatedEvent } from './core/events';
-    import { NoopSvelteGanttDateAdapter, getDuration } from './utils/date';
+    import { NoopSvelteGanttDateAdapter, getDuration, getAllPeriods } from './utils/date';
     import type { SvelteGanttDateAdapter } from './utils/date';
 
     function assertSet(values) {
@@ -184,22 +184,37 @@
         }
     }
 
-    function add(a: number | Date, b: number | Date) {
-        if(a instanceof Date) {
-            a = a.valueOf();
-        }
-        if(b instanceof Date) {
-            b = b.valueOf();
-        }
-        return a + b;
-    }
-
     const columnWidth = writable(getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0);
     $: $columnWidth = getPositionByDate($_from + columnDuration, $_from, $_to, $_width) | 0;
     let columnCount = Math.ceil($_width / $columnWidth);
     $: columnCount = Math.ceil($_width / $columnWidth);
-    let columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
-    $: columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
+    // let columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
+    // $: columns = getColumns($_from, columnCount, columnDuration, $columnWidth);
+
+    let columns = getColumnsV2($_from, $_to, columnUnit, columnOffset, $_width);
+    $: columns = getColumnsV2($_from, $_to, columnUnit, columnOffset, $_width);
+
+    function getColumnsV2(from:number | Date, to:number | Date, unit:string, offset:number, width:number){
+        if(from instanceof Date) from = from.valueOf();
+        if(to instanceof Date) to = to.valueOf();
+
+        let cols            = [];
+        const periods       = getAllPeriods(from.valueOf(), to.valueOf(), unit, offset);
+        let left            = 0;
+        let distance_point  = 0;
+        periods.forEach(function(period){
+            left = distance_point;
+            distance_point = getPositionByDate(period.to, $_from, $_to, $_width)
+            cols.push({
+                width:distance_point - left,
+                from:period.from,
+                to:period.to,
+                left:left,
+                duration:period.duration
+            })
+        })
+        return cols;
+    }
 
     function getColumns(from: number, count: number, dur: number, width: number) {
         if(!isFinite(count))
