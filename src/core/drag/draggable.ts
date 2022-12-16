@@ -1,5 +1,6 @@
 import { isLeftClick, addEventListenerOnce, getRelativePos } from '../../utils/domUtils';
 import { MIN_DRAG_Y, MIN_DRAG_X } from '../constants';
+import type { offsetMousePostion } from '../../utils/domUtils'
 
 export interface DraggableSettings {
     onDown?(event?: DownDropEvent): void; 
@@ -14,10 +15,11 @@ export interface DraggableSettings {
     getX?: (event?: MouseEvent) => number;
     getY?: (event?: MouseEvent) => number;
     getWidth?: () => number;
+    modelId?: number;
 }
 
 export interface DownDropEvent {
-    mouseEvent: MouseEvent;
+    mouseEvent: MouseEvent | offsetMousePostion;
     x: number;
     y: number;
     width: number;
@@ -26,15 +28,17 @@ export interface DownDropEvent {
 }
 
 export interface DragEvent {
-    mouseEvent: MouseEvent;
     x: number;
     y: number;
 }
 
 export interface ResizeEvent {
-    mouseEvent: MouseEvent;
     x: number;
     width: number;
+}
+
+export interface offsetPos {
+    x: number | null, y: number | null
 }
 
 /**
@@ -55,11 +59,20 @@ export class Draggable {
 
     settings: DraggableSettings;
     node: HTMLElement;
+
+    offsetPos: offsetPos = {x: null, y: null};
+    offsetWidth: number = null;
     
-    constructor(node: HTMLElement, settings: DraggableSettings) {
+    constructor(node: HTMLElement, settings: DraggableSettings, type?: string) {
         this.settings = settings;
         this.node = node;
-        node.addEventListener('mousedown', this.onmousedown, false);
+        
+        //EventListeners for resizer + timeranges only, selectionsmanager calls the task dragable instance directly
+        switch(type) {
+            case 'resizer':
+            case 'timerange':
+                node.addEventListener('mousedown', this.onmousedown, false);
+        }
     }
 
     get dragAllowed() {
@@ -78,38 +91,41 @@ export class Draggable {
         }
     }
 
-    onmousedown = (event: MouseEvent) => {
-        if(!isLeftClick(event)){
+    onmousedown = (event) => {
+        if(!isLeftClick(event) && !event.isOffsetMouseEvent){
             return;
         }
 
-        event.stopPropagation();
-        event.preventDefault();
+        if (!event.isOffsetMouseEvent) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
         
         const canDrag = this.dragAllowed;
         const canResize = this.resizeAllowed;
         if(canDrag || canResize){
-            const x = this.settings.getX(event);
-            const y = this.settings.getY(event);
+            const x = this.settings.getX();
+            const y = this.settings.getY();
             const width = this.settings.getWidth();
 
             this.initialX = event.clientX;
             this.initialY = event.clientY;
 
+            this.mouseStartRight = x + width;
 
             this.mouseStartPosX = getRelativePos(this.settings.container, event).x - x;
             this.mouseStartPosY = getRelativePos(this.settings.container, event).y - y;
-            this.mouseStartRight = x + width;
 
-
-            if(canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
-                this.direction = 'left';
-                this.resizing = true;
-            }
-            
-            if(canResize && this.mouseStartPosX > width - this.settings.resizeHandleWidth) {
-                this.direction = 'right';
-                this.resizing = true;
+            if (!event.isOffsetMouseEvent) {
+                if(canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
+                    this.direction = 'left';
+                    this.resizing = true;
+                }
+                
+                if(canResize && this.mouseStartPosX > width - this.settings.resizeHandleWidth) {
+                    this.direction = 'right';
+                    this.resizing = true;
+                }
             }
             
             if(canDrag && !this.resizing) {
@@ -123,7 +139,7 @@ export class Draggable {
                     width,
                     y,
                     resizing: this.resizing,
-                    dragging: this.dragging
+                    dragging: this.dragging,
                 });
             }
 
@@ -133,8 +149,11 @@ export class Draggable {
     }
     
     onmousemove = (event: MouseEvent) => {
-        if(!this.resizeTriggered){
-            if(Math.abs(event.clientX - this.initialX) > MIN_DRAG_X || Math.abs(event.clientY - this.initialY) > MIN_DRAG_Y){
+        const offsetEvent = {clientX: this.offsetPos.x + event.clientX, clientY: this.offsetPos.y + event.clientY}
+
+         if(!this.resizeTriggered){
+            if(Math.abs(offsetEvent.clientX - this.initialX) > MIN_DRAG_X 
+            || Math.abs(offsetEvent.clientY - this.initialY) > MIN_DRAG_Y){
                 this.resizeTriggered = true;
             }else{
                 return;
@@ -142,15 +161,16 @@ export class Draggable {
         }
 
         event.preventDefault();
+
         if(this.resizing) {
-            const mousePos = getRelativePos(this.settings.container, event);
-            const x = this.settings.getX(event);
+            const mousePos = getRelativePos(this.settings.container, offsetEvent);
+            const x = this.settings.getX();
             const width = this.settings.getWidth();
 
             let resultX: number;
             let resultWidth: number;
 
-            if(this.direction === 'left') { //resize ulijevo
+            if(this.direction === 'left') { //resize left
                 if(mousePos.x > x + width) {
                     this.direction = 'right';
                     resultX = this.mouseStartRight;
@@ -162,21 +182,20 @@ export class Draggable {
                     resultWidth = this.mouseStartRight - mousePos.x;
                 }
             }
-            else if(this.direction === 'right') {//resize desno
+            else if(this.direction === 'right') {//resize right
                 if(mousePos.x <= x) {
                     this.direction = 'left';
                     resultX = mousePos.x;
-                    resultWidth = x - mousePos.x;
+                    resultWidth = x - mousePos.x + this.offsetWidth;
                     this.mouseStartRight = x;
                 }
                 else {
                     resultX = x;
-                    resultWidth = mousePos.x - x;
+                    resultWidth = mousePos.x - x + this.offsetWidth;
                 }
             }
             
             this.settings.onResize && this.settings.onResize({
-                mouseEvent: event,
                 x: resultX,
                 width: resultWidth
             });
@@ -184,9 +203,9 @@ export class Draggable {
 
         // mouseup
         if(this.dragging && this.settings.onDrag) {
-            const mousePos = getRelativePos(this.settings.container, event);
+            const mousePos = getRelativePos(this.settings.container, offsetEvent);
             this.settings.onDrag({
-                mouseEvent: event,
+
                 x: mousePos.x - this.mouseStartPosX,
                 y: mousePos.y - this.mouseStartPosY
             });
@@ -194,23 +213,26 @@ export class Draggable {
     }
 
     onmouseup = (event: MouseEvent) => {
-        const x = this.settings.getX(event);
-        const y = this.settings.getY(event);
+        const offsetEvent = {clientX: this.offsetPos.x + event.clientX, clientY: this.offsetPos.y + event.clientY}
+        const x = this.settings.getX();
+        const y = this.settings.getY();
         const width = this.settings.getWidth();
-        
+
         this.settings.onMouseUp && this.settings.onMouseUp();
 
         if(this.resizeTriggered && this.settings.onDrop){
             this.settings.onDrop({
-                mouseEvent: event,
-                x, 
-                y,
-                width,
-                dragging: this.dragging,
-                resizing: this.resizing
-            });
-        }
+                    mouseEvent: offsetEvent,
+                    x, 
+                    y,
+                    width,
+                    dragging: this.dragging,
+                    resizing: this.resizing
+                });
+            }
 
+        this.offsetPos = {x: null, y: null};
+        this.offsetWidth = null;
         this.dragging = false;
         this.resizing = false;
         this.direction = null;
