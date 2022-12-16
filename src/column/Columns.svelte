@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext } from "svelte";
-
+    import Column from './Column.svelte';
 
     /**
      * Container component for columns rendered as gantt body background
@@ -82,10 +82,11 @@
     }
 </script>
 
-<div class="sg-columns" style="background-image:{backgroundImage};">
-	<!-- {#each columns as column}
-	<Column left={column.left} width={column.width} />
-	{/each} -->
+<!-- <div class="sg-columns" style="background-image:{backgroundImage};"> -->
+<div class="sg-columns">
+	{#each columns as column}
+	    <Column left={column.left} width={column.width} />
+	{/each}
 </div>
 
 {#if columnUnit == 'day' && columnOffset == 1 && highlightWeekends}

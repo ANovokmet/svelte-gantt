@@ -4,7 +4,8 @@
     const dispatch = createEventDispatcher();
 
     import type { SvelteGanttDateAdapter } from '../utils/date';
-    import { startOf, getDuration } from '../utils/date';
+    import { startOf, getDuration, getAllPeriods} from '../utils/date';
+    import { getPositionByDate} from '../utils/utils';
 
     const { from, to, width } = getContext('dimensions');
     const { dateAdapter }: { dateAdapter: SvelteGanttDateAdapter } = getContext('options');
@@ -13,7 +14,7 @@
     export let baseWidth;
     export let baseDuration;
 
-    export let columnWidth;
+    let columnWidth;
     $: {
         header.duration = getDuration(header.unit, header.offset);
         const duration = header.duration;
@@ -21,7 +22,7 @@
         columnWidth = baseWidth * ratio;
     }
 
-    export let columnCount;
+    let columnCount;
     $: {
         columnCount = Math.ceil($width / columnWidth);
         if(!isFinite(columnCount)){
@@ -33,39 +34,22 @@
     let _headers = [];
     $: {
         const headers = [];
-        let headerTime = startOf($from, header.unit);
-        
-        // /!\ Temporary : Corrects labels of headers when unit == month
-        if(header.unit == 'month' || header.unit == 'year'){
-            defineCorrections(header.unit, headerTime, columnCount, header?.offset || 1)
-            .then((res) => {
-                let array_corrections = res;
-                for(let i = 0; i < columnCount; i++){
-                    headers.push({
-                        width: Math.min(columnWidth, $width), 
-                        label: dateAdapter.format(headerTime, header.format),
-                        from: headerTime,
-                        to: headerTime + header.duration,
-                        unit: header.unit
-                    });
-                    const correction_temp = (24 * 60 * 60 * 1000 * array_corrections[i]);    
-                    headerTime += header.duration + correction_temp
-                }
-                _headers = headers;
+        const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit, 1);
+        let old_width = 0;
+        periods.forEach(function(period){
+            let header_width = getPositionByDate(period.to, $from.valueOf(), $to.valueOf(), $width)
+            
+            headers.push({
+                width:Math.min(header_width - old_width, $width),
+                label:dateAdapter.format(period.from, header.format),
+                from:period.from,
+                to:period.to,
+                unit:header.unit
             })
-        }else{
-            for(let i = 0; i < columnCount; i++){
-                headers.push({
-                    width: Math.min(columnWidth, $width), 
-                    label: dateAdapter.format(headerTime, header.format),
-                    from: headerTime,
-                    to: headerTime + header.duration,
-                    unit: header.unit
-                });
-                headerTime += header.duration; 
-            }
-            _headers = headers;
-        }
+
+            old_width = header_width;
+        })
+        _headers = headers;
     }
 
 
