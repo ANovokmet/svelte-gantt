@@ -11,7 +11,8 @@
         "demo:start": "sirv docs --dev -s",
         "demo:dev": "run-p demo:start demo:autobuild",
         "docs": "run-p docs:*",
-        "validate": "svelte-check"
+        "validate": "svelte-check",
+        "demokit:dev":"npm --prefix demo-sveltekit run dev"
     },
     "repository": {
         "type": "git",
