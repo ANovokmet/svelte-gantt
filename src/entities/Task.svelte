@@ -328,7 +328,7 @@
       class:moving={_dragging || _resizing}
       class:animating
       class:sg-task-reflected={reflected}
-      class:dragging-enabled={row.model.enableDragging}
+      class:dragging-enabled={row.model.enableDragging && model.enableDragging}
       >
       {#if model.amountDone}
       <div class="sg-task-background" style="width:{model.amountDone}%" />
