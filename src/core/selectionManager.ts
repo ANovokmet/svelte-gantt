@@ -8,10 +8,6 @@ export let currentSelection: Map<number,HTMLElement> = new Map();
 export class SelectionManager {
 
     selectSingle(taskId, node) {
-        if(node && node.getBoundingClientRect().x == 0 && node.getBoundingClientRect().width == 0){
-            node = <HTMLElement> document.querySelector('[data-task-id="'+node.dataset.taskId+'"]')
-        }
-
         if (!currentSelection.has(taskId)) {
             this.unSelectTasks()
             currentSelection.set(taskId, node);
@@ -19,10 +15,6 @@ export class SelectionManager {
     }
 
     toggleSelection(taskId, node) {
-        if(node && node.getBoundingClientRect().x == 0 && node.getBoundingClientRect().width == 0){
-            node = <HTMLElement> document.querySelector('[data-task-id="'+node.dataset.taskId+'"]')
-        }
-
         currentSelection.set(taskId, node);
     }
 
@@ -34,20 +26,12 @@ export class SelectionManager {
     }
 
     dispatchTaskEvent(taskId, event) {
-        console.log('draggableTasks',draggableTasks);
-        console.log('taskId',taskId);
         const x = draggableTasks[taskId].settings.getX();
         const y = draggableTasks[taskId].settings.getY();
         const width = draggableTasks[taskId].settings.getWidth();
-
-        // const rows_rect = document.querySelector('.sg-rows').getBoundingClientRect();
-        // const click_left_position_inside_rows = event.clientX - rows_rect.x;        // Valeur de x par rapport à 0/0 sur les rows
-        // const click_left_position_inside_task = click_left_position_inside_rows - x; // Valeur de x par rapport à 0/0 s ur la task
-        // const click_top_position_inside_rows = event.clientY - rows_rect.y;         // Valeur de y par rapport à 0/0 sur les rows
-        // const click_top_position_inside_task = click_top_position_inside_rows - y;  // Valeur de y par rapport à 0/0 s ur la task
-
-        draggableTasks[taskId].mouseStartPosX = getRelativePos(document.querySelector('.sg-rows'), event).x - x;
-        draggableTasks[taskId].mouseStartPosY = getRelativePos(document.querySelector('.sg-rows'), event).y - y;
+        
+        draggableTasks[taskId].mouseStartPosX = getRelativePos(draggableTasks[taskId].settings.container, event).x - x;
+        draggableTasks[taskId].mouseStartPosY = getRelativePos(draggableTasks[taskId].settings.container, event).y - y;
 
         if(draggableTasks[taskId].dragAllowed && draggableTasks[taskId].mouseStartPosX < draggableTasks[taskId].settings.resizeHandleWidth) {
             draggableTasks[taskId].direction = 'left';
