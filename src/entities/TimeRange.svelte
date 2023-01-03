@@ -13,7 +13,9 @@
     };
 </script>
 <div class="sg-time-range {model.classes ? (Array.isArray(model.classes) ? model.classes.join(' ') : model.classes) : ''}" class:moving="{resizing}" style="width:{_position.width}px;left:{_position.x}px">
-    <div class="sg-time-range-label">{model.label}</div>
+    {#if model.label}
+        <div class="sg-time-range-label">{model.label}</div>
+    {/if}
 </div>
 <style>
     .sg-time-range {
