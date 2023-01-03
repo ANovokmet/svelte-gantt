@@ -306,8 +306,7 @@ function getNextDate(date, unit, offset){
 // Départ de l'intervalle - Fin de l'intervalle - Unité des colonnes - Espacement des colonnes
 export function getAllPeriods(from:number, to:number, unit:string, offset:number=1){
     let units = ["y", "year", "month", "week", "d", "day", "h", "hour", "m", "minute", "s", "second"];
-
-    if(units.includes(unit)){
+    if(units.indexOf(unit) !== -1){
         let all_periods         = [];
         let tmsWorkOld          = 0;
         let interval_duration   = 0;

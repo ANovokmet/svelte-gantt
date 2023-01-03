@@ -103,6 +103,7 @@ export class Draggable {
         
         const canDrag = this.dragAllowed;
         const canResize = this.resizeAllowed;
+
         if(canDrag || canResize){
             const x = this.settings.getX();
             const y = this.settings.getY();
@@ -121,13 +122,13 @@ export class Draggable {
                     this.direction = 'left';
                     this.resizing = true;
                 }
-                
                 if(canResize && this.mouseStartPosX > width - this.settings.resizeHandleWidth) {
                     this.direction = 'right';
                     this.resizing = true;
                 }
+
             }
-            
+
             if(canDrag && !this.resizing) {
                 this.dragging = true;
             }
@@ -204,8 +205,8 @@ export class Draggable {
         // mouseup
         if(this.dragging && this.settings.onDrag) {
             const mousePos = getRelativePos(this.settings.container, offsetEvent);
-            this.settings.onDrag({
 
+            this.settings.onDrag({
                 x: mousePos.x - this.mouseStartPosX,
                 y: mousePos.y - this.mouseStartPosY
             });

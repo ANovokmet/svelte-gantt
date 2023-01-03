@@ -1,0 +1,119 @@
+*{
+    font-family: 'Lato', sans-serif;
+}
+
+.sg-gantt {
+    font-family: 'Lato', sans-serif;
+    font-size: 10px;
+    color: #656565;
+}
+
+
+.selected {
+    color: white;
+    font-weight: 700;
+}
+
+
+/* --------------------------- */
+/* ------- Task colors ------- */
+/* --------------------------- */
+.sg-task.blue {
+    background: rgb(116, 191, 255);
+}
+
+.sg-task.blue:hover {
+    background: rgb(98, 161, 216);
+}
+
+.sg-task.blue.selected {
+    background: rgb(69, 112, 150);
+}
+
+.sg-task-selected {
+    outline: 2px solid rgba(3, 169, 244, 0.5);
+    outline-offset: 3px;
+    z-index: 1;
+    background: rgb(69, 112, 150);
+}
+
+.sg-task.selected:hover {
+    background: rgb(60, 98, 131);
+}
+
+.sg-task.green {
+    background-color: rgb(188, 235, 194);
+}
+
+.sg-task.green:hover {
+    background-color: rgb(143, 197, 150);
+}
+
+.sg-task.green.selected {
+    background: rgb(121, 150, 125);
+}
+
+.sg-task.green.selected:hover {
+    background: rgb(100, 126, 103);
+}
+
+.sg-task.orange {
+    background-color: rgb(254, 172, 49)
+}
+
+.sg-task.orange:hover {
+    background-color: rgb(238, 161, 45)
+}
+
+.sg-task.orange.selected {
+    background-color: rgb(219, 149, 45)
+}
+
+.sg-task.orange.selected:hover {
+    background-color: rgb(199, 135, 38)
+}
+
+.context-menu {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.row-disabled {
+    background: repeating-linear-gradient(45deg, rgba(55, 55, 55, 0.1), rgba(55, 55, 55, 0.1) 10px, transparent 10px, transparent 20px);
+}
+
+.sg-table-row.row-group .sg-table-body-cell {
+    background-color: #fbfbfb;
+}
+
+.sg-external-indicator {
+    position: absolute;
+    background: #eee;
+    padding: 0.5em 1em;
+    font-size: 12px;
+    pointer-events: none;
+    background-color: rgb(116, 191, 255);
+    color: white;
+    font-family: 'Lato', sans-serif;
+    z-index: 10;
+}
+
+.sg-popup {
+    padding: 0.5rem;
+    background: #fff;
+    border: #ccc 1px solid;
+    z-index: 10;
+    transform: translateX(-50%);
+}
+
+.sg-popup-title {
+    text-align: center;
+}
+
+.sg-popup-item {
+    display: flex;
+}
+
+.sg-popup-item-label {
+    font-weight: 300;
+    flex: 30% 1 1;
+}
