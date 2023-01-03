@@ -10,7 +10,7 @@ interface EntityState<T> {
 }
 
 interface EntityType {
-    model: { id: number | string}
+    model: { id: number | string},
 }
 
 export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
@@ -24,6 +24,7 @@ export interface EntityStore<T extends EntityType> extends Readable<EntityState<
     deleteAll(ids: (number | string)[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
+    entities?:any;
 }
 
 function createEntityStore<T extends EntityType>(): EntityStore<T> {

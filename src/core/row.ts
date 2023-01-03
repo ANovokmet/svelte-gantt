@@ -28,6 +28,7 @@ export interface SvelteRow {
     allParents?: SvelteRow[];
     expanded?: boolean;
     childLevel?: number;
+    entities?:any;
 }
 
 export class RowFactory {
