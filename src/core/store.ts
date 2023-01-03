@@ -1,4 +1,5 @@
-import { writable, type Readable, derived } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
+import type { Readable } from 'svelte/store';
 import type { SvelteTask } from './task';
 import type { SvelteRow } from './row';
 import type { SvelteTimeRange } from './timeRange';
@@ -9,7 +10,7 @@ interface EntityState<T> {
 }
 
 interface EntityType {
-    model: { id: number }
+    model: { id: number | string}
 }
 
 export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {

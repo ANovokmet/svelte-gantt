@@ -103,9 +103,12 @@ export class Draggable {
         
         const canDrag = this.dragAllowed;
         const canResize = this.resizeAllowed;
+
         if(canDrag || canResize){
             const x = this.settings.getX();
             const y = this.settings.getY();
+            // const x = this.settings.getX(event);
+            // const y = this.settings.getY(event);
             const width = this.settings.getWidth();
 
             this.initialX = event.clientX;
@@ -116,18 +119,34 @@ export class Draggable {
             this.mouseStartPosX = getRelativePos(this.settings.container, event).x - x;
             this.mouseStartPosY = getRelativePos(this.settings.container, event).y - y;
 
+            // this.mouseStartPosX = getRelativePos(document.querySelector('.sg-rows'), event).x - x;
+            // this.mouseStartPosY = getRelativePos(document.querySelector('.sg-rows'), event).y - y;
+
+            // const left_resizer_limit_right = x + this.settings.resizeHandleWidth;
+            // const right_resizer_limit_left = x + width - this.settings.resizeHandleWidth;
+
+            // const rows_rect = document.querySelector('.sg-rows').getBoundingClientRect();
+            // const click_left_position_inside_rows = event.clientX - rows_rect.x;        // Valeur de x par rapport à 0/0 sur les rows
+            // const click_left_position_inside_task = click_left_position_inside_rows - x; // Valeur de x par rapport à 0/0 s ur la task
+            // const click_top_position_inside_rows = event.clientY - rows_rect.y;         // Valeur de y par rapport à 0/0 sur les rows
+            // const click_top_position_inside_task = click_top_position_inside_rows - y;  // Valeur de y par rapport à 0/0 s ur la task
+
+
+            // this.mouseStartPosX = click_left_position_inside_task;
+            // this.mouseStartPosY = click_top_position_inside_task;
+
             if (!event.isOffsetMouseEvent) {
                 if(canResize && this.mouseStartPosX < this.settings.resizeHandleWidth) {
                     this.direction = 'left';
                     this.resizing = true;
                 }
-                
                 if(canResize && this.mouseStartPosX > width - this.settings.resizeHandleWidth) {
                     this.direction = 'right';
                     this.resizing = true;
                 }
+
             }
-            
+
             if(canDrag && !this.resizing) {
                 this.dragging = true;
             }
@@ -164,6 +183,7 @@ export class Draggable {
 
         if(this.resizing) {
             const mousePos = getRelativePos(this.settings.container, offsetEvent);
+            // const mousePos = getRelativePos(document.querySelector('.sg-rows'), offsetEvent);
             const x = this.settings.getX();
             const width = this.settings.getWidth();
 
@@ -204,8 +224,25 @@ export class Draggable {
         // mouseup
         if(this.dragging && this.settings.onDrag) {
             const mousePos = getRelativePos(this.settings.container, offsetEvent);
-            this.settings.onDrag({
 
+            // const click_left_position_inside_rows = event.clientX - rows_rect.x;        // Valeur de x par rapport à 0/0 sur les rows
+            // const click_left_position_inside_task = click_left_position_inside_rows - x; // Valeur de x par rapport à 0/0 s ur la task
+            // const click_top_position_inside_rows = event.clientY - rows_rect.y;         // Valeur de y par rapport à 0/0 sur les rows
+            // const click_top_position_inside_task = click_top_position_inside_rows - y;  // Valeur de y par rapport à 0/0 s ur la task
+            // this.mouseStartPosX = click_left_position_inside_task;
+            // this.mouseStartPosY = click_top_position_inside_task;
+            // const rows_rect = document.querySelector('.sg-rows').getBoundingClientRect();
+
+            // const x = this.settings.getX();
+            // const y = this.settings.getY();
+            // const node_to_pass = <HTMLElement> document.querySelector('[data-task-id="'+this.node.dataset.taskId+'"]');
+            // const mousePos = getRelativePos(document.querySelector('.sg-rows'), offsetEvent); // Doit contenir nouvelles valeurs x/y par rapport à 0/0 sur task
+
+            // const new_mousePos = {x:null, y:null}
+            // new_mousePos.x = event.clientX - rows_rect.x - x;
+            // new_mousePos.y = event.clientY - rows_rect.y - y;
+
+            this.settings.onDrag({
                 x: mousePos.x - this.mouseStartPosX,
                 y: mousePos.y - this.mouseStartPosY
             });
