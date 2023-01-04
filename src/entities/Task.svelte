@@ -28,7 +28,6 @@
     
         $: updatePosition(left, top, width);
         function updatePosition(x, y, width) {
-            console.log('UPDATE POSITION', x, y, width);
             if(!_dragging && !_resizing) {
                 _position.x = x;
                 _position.y = y;
@@ -42,14 +41,6 @@
         const { dndManager, api, utils, columnService } = getContext('services');
     
         function drag(node) {  
-            console.log('rowContainer', rowContainer);
-            console.log('NODE DRAG', node, node.getBoundingClientRect());
-
-            if(node && node.getBoundingClientRect().x == 0 && node.getBoundingClientRect().width == 0){
-                node = <HTMLElement> document.querySelector('[data-task-id="'+node.dataset.taskId+'"]')
-                console.log('NODE AFTER', node, node.getBoundingClientRect())
-            }
-
             const ondrop = (event) => {
                 let rowChangeValid = true;
                 //row switching
@@ -148,6 +139,16 @@
                     (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
                 }
             };
+
+            const ondrag = (event) => {
+                (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+                api.tasks.raise.move(model);
+            };
+
+            const onmouseup = () => {
+                setCursor("default");
+                api.tasks.raise.moveEnd(model);
+            }
             
             if (!reflected) { // reflected tasks must not be resized or dragged
                 draggableTasks[model.id] = new Draggable(node, {
@@ -160,15 +161,17 @@
                             setCursor("e-resize");
                         }
                     },
-                    onMouseUp: () => {
-                        setCursor("default");
-                    },
+                    // onMouseUp: () => {
+                    //     setCursor("default");
+                    // },
+                    onMouseUp:onmouseup,
                     onResize: (event) => {
                         (_position.x = event.x), (_position.width = event.width), (_resizing = true);
                     },
-                    onDrag: (event) => {
-                        (_position.x = event.x), (_position.y = event.y), (_dragging = true);
-                    },
+                    // onDrag: (event) => {
+                    //     (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+                    // },
+                    onDrag:ondrag,
                     dragAllowed: () => {
                         return row.model.enableDragging && model.enableDragging;
                     },
