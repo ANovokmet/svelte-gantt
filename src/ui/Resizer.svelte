@@ -6,9 +6,9 @@
     import { Draggable } from '../core/drag';
     import { setCursor } from '../utils/domUtils';
 
-    export let x = 240;
+    export let x;
     export let container;
-
+    
     let dragging = false;
     const dragOptions = {
         onDrag: (event) => {
