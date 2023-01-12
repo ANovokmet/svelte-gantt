@@ -1,5 +1,5 @@
 <script>
-    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from '../../../dist';
     import { onMount, getContext } from 'svelte';
     import { time } from '../utils';
     import moment from 'moment';
@@ -108,8 +108,12 @@
             let popup;
             function onHover() {
                 console.log('[task] hover', task);
+                if(popup) {
+                    popup.remove();
+                }
                 popup = createPopup(task, node);
             }
+            
 
             function onLeave() {
                 console.log('[task] hover', task);
@@ -120,7 +124,6 @@
 
             node.addEventListener('mouseenter', onHover);
             node.addEventListener('mouseleave', onLeave);
-
             return {
                 destroy() {
                     console.log('[task] destroy');
@@ -163,7 +166,7 @@
         div.style.position = 'absolute';
         div.style.top = `${rect.bottom}px`;
         div.style.left = `${rect.left + rect.width / 2}px`;
-        document.body.appendChild(div);
+        document.body.insertAdjacentElement("afterend", div)
         return div;
     }
 

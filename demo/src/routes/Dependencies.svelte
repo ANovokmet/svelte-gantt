@@ -1,5 +1,5 @@
 <script>
-    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from '../../../dist';
     import { onMount } from 'svelte';
     import { time } from '../utils';
     import moment from 'moment';
@@ -116,11 +116,11 @@
         tasks: data.tasks,
         dependencies: data.dependencies,
         timeRanges,
-        columnOffset: 15,
+        columnOffset: 1,
         magnetOffset: 15,
         rowHeight: 52,
         rowPadding: 6,
-        headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
+        headers: [{ unit: 'day', format: 'MMMM Do', sticky: true }, { unit: 'hour', format: 'H:mm', sticky: true }],
         fitWidth: true,
         minWidth: 800,
         from: currentStart,

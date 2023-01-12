@@ -1,14 +1,15 @@
 <script>
-    import { SvelteGantt, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+    import { SvelteGantt, SvelteGanttTable, MomentSvelteGanttDateAdapter } from '../../../dist';
     import { onMount } from 'svelte';
     import { time } from '../utils';
     import moment from 'moment';
     import GanttOptions from '../components/GanttOptions.svelte';
     
-    const currentStart = time('06:00');
-    const currentEnd = time('18:00');
+    const currentStart = moment().startOf('month').subtract(14, 'days') 
+    const currentEnd = moment().startOf('isoWeek').add(24, 'months')
+
     let generation = 0;
-    let rowCount = 100;
+    let rowCount = 100000;
     const colors = ['blue', 'green', 'orange']
 
     const timeRanges = [
@@ -17,14 +18,14 @@
             from: time('10:00'),
             to: time('12:00'),
             classes: null,
-            label: 'Lunch'
+            label: 'test1'
         },
         {
             id: 1,
             from: time('15:00'),
             to: time('17:00'),
             classes: null,
-            label: 'Dinner'
+            label: 'test2'
         }
     ];
 
@@ -35,13 +36,18 @@
         rows: data.rows,
         tasks: data.tasks,
         timeRanges,
-        columnOffset: 15,
+        columnOffset: 1,
+        columnUnit: 'day',
+        highlightedDurations: {
+            unit: 'day',
+            fractions: [0,4]
+        },
         magnetOffset: 15,
-        rowHeight: 52,
+        rowHeight: 20,
         rowPadding: 6,
-        headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
+        headers: [{ unit: 'year', format: 'YYYY', sticky:true }, { unit: 'month', format: 'MM', sticky:true }, { unit: 'week', format: 'WW', sticky:true }, { unit: 'day', format: 'DD', sticky:true }],
         fitWidth: true,
-        minWidth: 800,
+        minWidth: 17000,
         from: currentStart,
         to: currentEnd,
         tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
@@ -71,13 +77,14 @@
         const ids = [...Array(rowCount).keys()];
         shuffle(ids);
 
-        for (let i = 0; i < rowCount; i++) {
+        for (let i = 1; i < rowCount; i++) {
             let rand_bool = Math.random() < 0.2;
 
             rows.push({
                 id: i,
                 label: 'Row #' + i,
                 age: (Math.random() * 80) | 0,
+                enableDragging: true,
                 imageSrc: 'Content/joe.jpg',
                 classes: rand_bool ? ['row-disabled'] : undefined,
                 enableDragging: !rand_bool,
@@ -86,19 +93,20 @@
 
             rand_bool = Math.random() > 0.5;
 
-            const rand_h = (Math.random() * 10) | 0
-            const rand_d = (Math.random() * 5) | 0 + 1
-
+            for (let y = 0; y < 20; y++) {
+            const rand_h = (Math.random() * 5) | 1
+            const rand_d = (Math.random() * 10) | 0 + 2
             tasks.push({
-                type: 'task',
-                id: ids[i],
+                type: 'test',
+                id: ids[i] * ids[i] * y +rand_h,
                 resourceId: i,
-                label: 'Task #' + ids[i],
-                from: time(`${7 + rand_h}:00`),
-                to: time(`${7 + rand_h + rand_d}:00`),
+                label: 'Test #' + ids[i]+y+rand_h,
+                from: moment().startOf('isoWeek').add(rand_h + (y*y), 'days'),
+                to: moment().startOf('isoWeek').add(rand_h + rand_d + (y*y), 'days'),
                 classes: colors[(Math.random() * colors.length) | 0],
                 generation
             });
+            }
         }
 
         generation += 1;

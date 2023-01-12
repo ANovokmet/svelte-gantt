@@ -1,12 +1,12 @@
 <script>
-    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+    import { SvelteGantt, SvelteGanttDependencies, SvelteGanttExternal, SvelteGanttTable, MomentSvelteGanttDateAdapter } from '../../../dist';
     import { onMount, getContext } from 'svelte';
     import { time } from '../utils';
     import moment from 'moment';
     import GanttOptions from '../components/GanttOptions.svelte';
 
-    const currentStart = time('06:00');
-    const currentEnd = time('18:00');
+    const currentStart = moment().startOf('month').subtract(14, 'days') 
+    const currentEnd = moment().startOf('isoWeek').add(1, 'months')
 
     const colors = ['blue', 'green', 'orange']
 
@@ -76,10 +76,10 @@
         }],
         tasks: [{
             "id": 1,
-            "resourceId": 11,
+            "resourceId": 10,
             "label": "LPCVD",
-            "from": time("9:00"),
-            "to": time("11:00"),
+            "from": moment().startOf('day').subtract(1, 'days') ,
+            "to": moment().startOf('day').subtract(0, 'days') ,
             "classes": "orange"
         }, {
             "id": 2,
@@ -94,7 +94,7 @@
             "label": "PET-CT",
             "from": time("13:30"),
             "to": time("15:00"),
-            "classes": "orange"
+            "classes": "orange",
         }, {
             "id": 4,
             "resourceId": 14,
@@ -154,8 +154,13 @@
         tasks: data.tasks,
         dependencies: data.dependencies,
         timeRanges,
-        columnOffset: 15,
-        magnetOffset: 15,
+        columnOffset: 1,
+        columnUnit: 'week',
+        highlightedDurations: {
+            unit: 'day',
+            fractions: [0,4]
+        },
+        magnetOffset: 1,
         rowHeight: 52,
         rowPadding: 6,
         headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],

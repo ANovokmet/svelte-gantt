@@ -32,8 +32,8 @@
         "vue-gantt",
         "drag-n-drop"
     ],
-    "types": "types/index.d.ts",
-    "main": "index.js",
+    "types": "index.d.ts",
+    "main": "./dist/index.js",
     "peerDependencies": {
         "moment": "^2.22.2"
     },
