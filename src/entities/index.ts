@@ -1,5 +1,5 @@
 import Task from './Task.svelte';
-import { SelectionManager } from './../core/selectionManager';
+import { SelectionManager } from './Task.svelte';
 import Row from './Row.svelte';
 import Milestone from './Milestone.svelte';
 import TimeRange from './TimeRange.svelte';
