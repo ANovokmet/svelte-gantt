@@ -1,81 +1,109 @@
 <script lang="ts" context="module">
-import { getRelativePos } from '../utils/domUtils';
-import type { offsetMousePostion } from '../utils/domUtils';
+import { addEventListenerOnce } from '../utils/domUtils';
+import { Draggable } from "../core/drag";
+import type { offsetData, DraggableSettings } from "../core/drag";
+import { taskStore, rowStore } from '../core/store';
+import { reflectTask } from "../core/task";
+import { get } from 'svelte/store'
 
-export let draggableTasks: object = {};
-export let currentSelection: Map<number,HTMLElement> = new Map();
+export interface selectedItem {
+    HTMLElement: HTMLElement;
+    offsetData: offsetData;
+    draggable: Draggable;
+}
+
+export const tasksSettings: Map<number, DraggableSettings> = new Map();
+export const currentSelection: Map<number, selectedItem> = new Map();
+
+const oldReflections = [];
+const newTasksAndReflections = [];
 
 export class SelectionManager {
-
     selectSingle(taskId, node) {
         if (!currentSelection.has(taskId)) {
-            this.unSelectTasks()
-            currentSelection.set(taskId, node);
+            this.unSelectTasks();
+            this.toggleSelection(taskId, node)
         }
     }
 
     toggleSelection(taskId, node) {
-        currentSelection.set(taskId, node);
+        currentSelection.set(taskId, {HTMLElement: node, offsetData: undefined, draggable: undefined});
     }
 
     unSelectTasks() {
-        for (const [taskId, node] of currentSelection.entries()) {
-            node.classList.remove('sg-task-selected');
-            currentSelection.delete(taskId);
+        for (const [, selectedItems] of currentSelection.entries()) {
+            selectedItems.HTMLElement.classList.remove('sg-task-selected');
         }
+        currentSelection.clear();
     }
 
-    dispatchTaskEvent(taskId, event) {
-        const x = draggableTasks[taskId].settings.getX();
-        const y = draggableTasks[taskId].settings.getY();
-        const width = draggableTasks[taskId].settings.getWidth();
+    dispatchSelectionEvent(taskId, event) {
+        const x = tasksSettings.get(taskId).getX();
+        const y = tasksSettings.get(taskId).getY();
+        const width = tasksSettings.get(taskId).getWidth();
 
-        draggableTasks[taskId].mouseStartPosX = getRelativePos(draggableTasks[taskId].settings.container, event).x - x;
-        draggableTasks[taskId].mouseStartPosY = getRelativePos(draggableTasks[taskId].settings.container, event).y - y;
-
-        if(draggableTasks[taskId].dragAllowed && draggableTasks[taskId].mouseStartPosX < draggableTasks[taskId].settings.resizeHandleWidth) {
-            draggableTasks[taskId].direction = 'left';
-            draggableTasks[taskId].resizing = true;
-        }
-
-        if(draggableTasks[taskId].dragAllowed && draggableTasks[taskId].mouseStartPosX > width - draggableTasks[taskId].settings.resizeHandleWidth) {
-            draggableTasks[taskId].direction = 'right';
-            draggableTasks[taskId].resizing = true;
-        }
-
-        draggableTasks[taskId].onmousedown(event);
-
-        for (const [selId, node] of currentSelection.entries()) {
-            node.classList.add('sg-task-selected');
-            if (selId !== taskId) {
-                draggableTasks[selId].direction = draggableTasks[taskId].direction;
-                draggableTasks[selId].resizing = draggableTasks[taskId].resizing; //prvent resizing and draggin at the same time
-                
-                draggableTasks[selId].offsetPos.x = (draggableTasks[selId].settings.getX() - x);
-                draggableTasks[selId].offsetPos.y = (draggableTasks[selId].settings.getY() - y);
-                draggableTasks[selId].offsetWidth =  draggableTasks[selId].settings.getWidth() - width 
-
-                const offsetMousePosition: offsetMousePostion = {
-                clientX: event.clientX + draggableTasks[selId].offsetPos.x, 
-                clientY: event.clientY + draggableTasks[selId].offsetPos.y,
-                isOffsetMouseEvent: true //fake left click on all items in selection
-                } 
-
-                draggableTasks[selId].onmousedown(offsetMousePosition);
+        for (const [selId, selectedItem] of currentSelection.entries()) {
+            selectedItem.HTMLElement.classList.add('sg-task-selected');
+            if (selId !== taskId) {     
+                selectedItem.offsetData = {
+                    offsetPos: {
+                        x: tasksSettings.get(selId).getX() - x,
+                        y: tasksSettings.get(selId).getY() - y
+                    },
+                    offsetWidth: tasksSettings.get(selId).getWidth() - width,
+                }
+            } else {
+                selectedItem.offsetData = {
+                    offsetPos: {
+                        x: null,
+                        y: null
+                    },
+                    offsetWidth: null,
+                }
             }
         }
+        this.dragOrResizeTriggered(event)
     }
+    
+    dragOrResizeTriggered = (event) =>{
+        for (let [selId, selectedItem] of currentSelection.entries()) {
+            const draggable = new Draggable(selectedItem.HTMLElement, tasksSettings.get(selId), selectedItem.offsetData);
+            draggable.onmousedown(event);
+            currentSelection.set(selId, {...selectedItem, draggable: draggable });
+        }
+
+        window.addEventListener('mousemove', this.selectionDragOrResizing, false);
+        addEventListenerOnce(window, 'mouseup', this.selectionDropped);
+    }
+
+    selectionDragOrResizing = (event) => {
+        for (let [, selectedItem] of currentSelection.entries()) {
+            const { draggable } = selectedItem
+            draggable.onmousemove(event);
+        }
+    }
+
+    selectionDropped = (event) => {
+        window.removeEventListener('mousemove', this.selectionDragOrResizing, false)
+        for (const [, selectedItem] of currentSelection.entries()) {
+            const { draggable } = selectedItem;
+            draggable.onmouseup(event);
+        }
+
+        taskStore.deleteAll(oldReflections);
+        taskStore.upsertAll(newTasksAndReflections);
+
+        newTasksAndReflections.length = 0;
+        oldReflections.length = 0;
+    };
 }
 
 </script>
 
 <script lang="ts">
-    import { getContext } from "svelte";
-    
+    import { getContext } from 'svelte';
     import { setCursor } from "../utils/domUtils";
-    import { taskStore, rowStore } from '../core/store';
-    import { Draggable } from "../core/drag";
-    import { reflectTask } from "../core/task";
+    import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt'
 
     export let model;
     export let height;
@@ -85,7 +113,6 @@ export class SelectionManager {
     export let reflected = false;
 
     let animating = true;
-
     let _dragging = false;
     let _resizing = false;
 
@@ -105,11 +132,11 @@ export class SelectionManager {
         }
     }
     
-    const { rowContainer } = getContext('gantt');
-    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } = getContext('options');
-    const { dndManager, api, utils, columnService } = getContext('services');
+    const { rowContainer } : GanttContext = getContext('gantt');
+    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } : GanttContextOptions = getContext('options');
+    const { dndManager, api, utils, columnService } : GanttContextServices = getContext('services');
 
-    function drag(node) {      
+    function drag(node) {
         const ondrop = (event) => {
             let rowChangeValid = true;
             //row switching
@@ -155,8 +182,7 @@ export class SelectionManager {
                 if(changed) {
                     api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
                 }
-
-                taskStore.update(newTask);
+                newTasksAndReflections.push(newTask);
 
                 if(changed) {
                     api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
@@ -164,7 +190,7 @@ export class SelectionManager {
 
                 // update shadow tasks
                 if(newTask.reflections) {
-                    taskStore.deleteAll(newTask.reflections);
+                    oldReflections.push(...newTask.reflections)
                 }
 
                 const reflectedTasks = [];
@@ -193,7 +219,7 @@ export class SelectionManager {
                 }
 
                 if(reflectedTasks.length > 0) {
-                    taskStore.upsertAll(reflectedTasks);
+                    newTasksAndReflections.push(...reflectedTasks);
                 }
 
                 if(!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
@@ -205,9 +231,9 @@ export class SelectionManager {
                 (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
             }
         };
-        
+
         if (!reflected) { // reflected tasks must not be resized or dragged
-            draggableTasks[model.id] = new Draggable(node, {
+            tasksSettings.set(model.id, {
                 onDown: (event) => {
                     if (event.dragging) {
                         setCursor("move");
@@ -225,21 +251,22 @@ export class SelectionManager {
                 onDrag: (event) => {
                     (_position.x = event.x), (_position.y = event.y), (_dragging = true);
                 },
+                onDrop: ondrop,
                 dragAllowed: () => {
-                    return row.model.enableDragging && model.enableDragging;
+                    return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                 },
                 resizeAllowed: () => {
-                    return row.model.enableDragging && model.enableDragging;
+                    return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                 },
-                onDrop: ondrop,
                 container: rowContainer,
                 resizeHandleWidth, 
                 getX: () => _position.x,
                 getY: () => _position.y,
                 getWidth: () => _position.width,
+                modelId: model.id
             })
             return {
-                destroy: () => delete draggableTasks[model.id]
+                destroy: () => tasksSettings.delete(model.id)
             };
         }
     }
@@ -255,9 +282,6 @@ export class SelectionManager {
             onTaskButtonClick(model);
         }
     }
-
-    let row;
-    $: row = $rowStore.entities[model.resourceId];
 </script>
 
 <style>
@@ -306,6 +330,7 @@ export class SelectionManager {
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        user-select: none;
     }
 
     .sg-task:not(.moving) {
@@ -379,7 +404,7 @@ export class SelectionManager {
   class:moving={_dragging || _resizing}
   class:animating
   class:sg-task-reflected={reflected}
-  class:dragging-enabled={row.model.enableDragging}
+  class:dragging-enabled={$rowStore.entities[model.resourceId].model.enableDragging && model.enableDragging}
   >
   {#if model.amountDone}
   <div class="sg-task-background" style="width:{model.amountDone}%" />
@@ -392,6 +417,7 @@ export class SelectionManager {
     {:else}{model.label}{/if}
     <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
     {#if model.showButton}
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
       <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
         {@html model.buttonHtml}
       </span>
@@ -399,6 +425,7 @@ export class SelectionManager {
   </div>
 
   {#if model.labelBottom}
+    <!-- svelte-ignore a11y-label-has-associated-control -->
     <label class="sg-label-bottom">{model.labelBottom}</label>
   {/if}
 </div>
