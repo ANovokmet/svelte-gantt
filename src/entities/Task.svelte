@@ -92,6 +92,7 @@
     
             taskStore.deleteAll(oldReflections);
             taskStore.upsertAll(newTasksAndReflections);
+            console.log('%cTASK SVELTE UPDATE', 'background:black; color:white;')
     
             newTasksAndReflections.length = 0;
             oldReflections.length = 0;
@@ -245,6 +246,7 @@
             if (!reflected) { // reflected tasks must not be resized or dragged
                 tasksSettings.set(model.id, {
                     onDown: (event) => {
+                        console.log('EVENT ON DOWN DRAGGABLE TASK', event);
                         if (event.dragging) {
                             setCursor("move");
                         }
@@ -252,18 +254,24 @@
                             setCursor("e-resize");
                         }
                     },
-                    onMouseUp: onmouseup,
+                    // onMouseUp: () => {
+                    //     setCursor("default");
+                    // },
+                    onMouseUp:onmouseup,
                     onResize: (event) => {
                         (_position.x = event.x), (_position.width = event.width), (_resizing = true);
                     },
-                    onDrag: ondrag,
-                    onDrop: ondrop,
+                    // onDrag: (event) => {
+                    //     (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+                    // },
+                    onDrag:ondrag,
                     dragAllowed: () => {
                         return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                     },
                     resizeAllowed: () => {
                         return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                     },
+                    onDrop: ondrop,
                     container: rowContainer,
                     resizeHandleWidth, 
                     getX: () => _position.x,
