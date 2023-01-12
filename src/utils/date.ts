@@ -250,9 +250,7 @@ function addWeeks(date:Date, offset=1){
     const day = d.getDay();
     const diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
     d.setDate(diff);
-    d.setHours(0);	
-    d.setMinutes(0); 
-    d.setSeconds(0);
+    d.setHours(0,0,0);	
     d.setDate(d.getDate() + (7 * offset));
     return d;
 }
@@ -260,19 +258,15 @@ function addWeeks(date:Date, offset=1){
 function addMonths(date:Date, offset=1){
     date.setMonth(date.getMonth() + offset)
     date.setDate(1)
-    date.setHours(0);	
-    date.setMinutes(0); 
-    date.setSeconds(0);
+    date.setHours(0,0,0);	
     return date;
 }
 
 function addYears(date:Date, offset=1){
     date.setFullYear(date.getFullYear() + offset)
-    date.setMonth(1)
-    date.setDate(0);
-    date.setHours(0);	
-    date.setMinutes(0); 
-    date.setSeconds(0);
+    date.setMonth(0)
+    date.setDate(1);
+    date.setHours(0,0,0);	
     return date;
 }
 
@@ -302,41 +296,84 @@ function getNextDate(date, unit, offset){
     }
 }
 
+function isUnitFraction(localDate: Date, highlightedDurations): boolean {
+    // const localDate = new Date(timestamp * 1000);
+    let timeInUnit: number;
 
-// Départ de l'intervalle - Fin de l'intervalle - Unité des colonnes - Espacement des colonnes
-export function getAllPeriods(from:number, to:number, unit:string, offset:number=1){
+    switch (highlightedDurations.unit) {
+        case 'm':
+        case 'minute':
+            timeInUnit = localDate.getMinutes();
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'h':
+        case 'hour':
+            timeInUnit = localDate.getHours();
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'd':
+        case 'day':
+            timeInUnit = localDate.getDay();
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'week':
+            getWeekNumber(localDate);
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'dayinMonth':
+            timeInUnit = localDate.getDate();
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'month':
+            timeInUnit = localDate.getMonth();
+            return highlightedDurations.fractions.includes(timeInUnit);
+        case 'y':
+        case 'year':
+            timeInUnit = localDate.getFullYear();
+            return highlightedDurations.fractions.includes(timeInUnit);
+      default:
+        throw new Error(`Invalid unit: ${highlightedDurations.unit}`);
+    }
+  }
+
+// Interval start - Interval end - Column unit - Column spacing
+export function getAllPeriods(from:number, to:number, unit:string, offset:number=1, highlightedDurations?){
     let units = ["y", "year", "month", "week", "d", "day", "h", "hour", "m", "minute", "s", "second"];
 
     if(units.includes(unit)){
         let all_periods         = [];
         let tmsWorkOld          = 0;
         let interval_duration   = 0;
-        let start               = new Date(from); // Commence à hh:mm:ss
+        let start               = new Date(from); // Starts at hh:mm:ss
         let dateWork            = new Date(from);
-        let nextDate            = getNextDate(dateWork, unit, offset)
+        let nextDate            = getNextDate(dateWork, unit, offset);
         let tmsWork             = nextDate.getTime();
         const firstDuration     = nextDate.getTime() - from;
-        all_periods[0]          = {start:start, end:nextDate, from:start.getTime(), to:nextDate.getTime(), duration:firstDuration}
+        all_periods[0]          = {start:start,end:nextDate,
+                                   from:startOf(from, unit),
+                                   to:nextDate.getTime(),
+                                   duration:firstDuration,
+                                   //check whether duration is highlighted
+                                   ...(highlightedDurations && isUnitFraction(start, highlightedDurations) && {'isHighlighted' : true})
+                                }
 
         if(tmsWork < to){
             while(tmsWork < to){
                 tmsWorkOld = tmsWork;
                 nextDate = getNextDate(new Date(tmsWork), unit, offset)
                 interval_duration = nextDate.getTime() - tmsWork;
-                all_periods.push({from:tmsWork, to:nextDate.getTime(), duration:interval_duration});
+
+                all_periods.push({
+                    from:tmsWork, 
+                    to:nextDate.getTime(), 
+                    duration:interval_duration,
+                    //check whether duration is highlighted
+                    ...(highlightedDurations && isUnitFraction(new Date(tmsWork), highlightedDurations) && {'isHighlighted' : true})
+                });
                 tmsWork = nextDate.getTime()
             }
             const last_day_duration = to - tmsWorkOld;
             all_periods[all_periods.length -1].to = to;
             all_periods[all_periods.length -1].duration = last_day_duration;
-        }else{
-            all_periods[0].to = to;
-            all_periods[0].duration = to - from;
+        //ToDo: there could be another option for hours, minutes, seconds based on pure math like in getPeriodDuration to optimise performance
         }
-        
         return all_periods; 
     }
-
     throw new Error(`Unknown unit: ${unit}`);
 }
 
