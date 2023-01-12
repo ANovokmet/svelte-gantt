@@ -1,6 +1,8 @@
 export class GanttApi {
     listeners: any[];
     listenersMap: { [key: string]: any; };
+    tasks?: any;
+    timeranges?: any;
 
     constructor() {
         this.listeners = [];
