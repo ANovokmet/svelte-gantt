@@ -1,4 +1,5 @@
-import { writable, type Readable, derived } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
+import type { Readable } from 'svelte/store';
 import type { SvelteTask } from './task';
 import type { SvelteRow } from './row';
 import type { SvelteTimeRange } from './timeRange';
@@ -9,7 +10,8 @@ interface EntityState<T> {
 }
 
 interface EntityType {
-    model: { id: number }
+    model: { id: string | number },
+    hidden?: boolean
 }
 
 export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
@@ -48,15 +50,16 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
         }),
         deleteAll: (ids: (number | string)[]) => update(state => {
             const entities = { ...state.entities };
-            const idState = {};
-
-            ids.forEach(id => {
-                delete entities[id];
-                idState[id] = true;
-            });
-
+            const idSet = new Set(ids);
+        
+            for (let i = 0; i < state.ids.length; i++) {
+                if (idSet.has(state.ids[i])) {
+                    delete entities[state.ids[i]];
+                }
+            }
+        
             return {
-                ids: state.ids.filter(i => !idState[i]),
+                ids: state.ids.filter(i => !idSet.has(i)),
                 entities
             };
         }),
@@ -82,13 +85,13 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
             const entities = { ...state.entities };
             const ids = [...state.ids];
 
-            items.forEach(item => {
-                if (!entities[item.model.id]) {
-                    ids.push(item.model.id);
+            for (let i = 0; i < items.length; i++) {
+                if (!ids.includes(items[i].model.id)) {
+                    ids.push(items[i].model.id);
                 }
-                entities[item.model.id] = item;
-            });
-
+                entities[items[i].model.id] = items[i];
+            }
+            
             return {
                 ids,
                 entities
@@ -98,9 +101,9 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
             const ids = [];
             const entities = {};
 
-            for (const entity of items) {
-                ids.push(entity.model.id);
-                entities[entity.model.id] = entity;
+            for (let i = 0; i < items.length; i++) {
+                ids.push(items[i].model.id);
+                entities[items[i].model.id] = items[i];
             }
 
             set({ ids, entities });
@@ -118,28 +121,35 @@ export const allRows = all(rowStore);
 export const allTimeRanges = all(timeRangeStore);
 
 export const rowTaskCache = derived(allTasks, $allTasks => {
-    return $allTasks.reduce((cache, task) => {
-        if (!cache[task.model.resourceId])
+    const cache = {};
+    for (let i = 0; i < $allTasks.length; i++) {
+        const task = $allTasks[i];
+        if (!cache[task.model.resourceId]) {
             cache[task.model.resourceId] = [];
-        cache[task.model.resourceId].push(task.model.id);
-        return cache;
-    }, {});
+        }
+    cache[task.model.resourceId].push(task.model.id);
+    }
+    return cache;
 });
 
-
 export function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]> {
-    return derived(store, ({ ids, entities }) => ids.map(id => entities[id]));
+    return derived(store, ({ ids, entities }) => {
+        const results = [];
+        for (let i = 0; i < ids.length; i++) {
+            results.push(entities[ids[i]]);
+        }
+        return results;
+    });
 }
 
 export function where<T extends EntityType>(store: EntityStore<T>, filterFn: (value: T) => any): Readable<T[]> {
     return derived(store, ({ ids, entities }) => {
-        const result = [];
-        for(const id of ids) {
-            const entity = entities[id];
-            if(filterFn(entity)) {
-                result.push(entity);
+        const results = [];
+        for (let i = 0; i < ids.length; i++) {
+            if (filterFn(entities[ids[i]])) {
+                results.push(entities[ids[i]]);
             }
         }
-        return result;
+        return results;
     });
 }
