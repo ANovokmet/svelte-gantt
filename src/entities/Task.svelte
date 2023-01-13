@@ -92,7 +92,7 @@
     
             taskStore.deleteAll(oldReflections);
             taskStore.upsertAll(newTasksAndReflections);
-            console.log('DRAGGABLE TASKS UPDATED', event);
+            console.log('%cTASK SVELTE UPDATE', 'background:black; color:white;')
     
             newTasksAndReflections.length = 0;
             oldReflections.length = 0;
@@ -232,17 +232,15 @@
                     (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
                 }
             };
-
+    
             const ondrag = (event) => {
                 (_position.x = event.x), (_position.y = event.y), (_dragging = true);
                 api.tasks.raise.move(model);
             };
-
             const onmouseup = () => {
                 setCursor("default");
                 api.tasks.raise.moveEnd(model);
             }
-    
             if (!reflected) { // reflected tasks must not be resized or dragged
                 tasksSettings.set(model.id, {
                     onDown: (event) => {
@@ -271,6 +269,7 @@
                     resizeAllowed: () => {
                         return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                     },
+                    onDrop: ondrop,
                     container: rowContainer,
                     resizeHandleWidth, 
                     getX: () => _position.x,
@@ -289,7 +288,6 @@
                 node = <HTMLElement> document.querySelector('[data-task-id="'+node.dataset.taskId+'"]')
                 console.log('NODE AFTER', node, node.getBoundingClientRect())
             }
-            
             if(taskElementHook) {
                 return taskElementHook(node, model);
             }
@@ -356,7 +354,7 @@
         }
     
         .sg-task.moving {
-            z-index: 1;
+            z-index: 10000;
             opacity: 0.5;
         }
     
@@ -447,4 +445,3 @@
         <label class="sg-label-bottom">{model.labelBottom}</label>
       {/if}
     </div>
-    
