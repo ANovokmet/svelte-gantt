@@ -334,8 +334,7 @@ function isUnitFraction(localDate: Date, highlightedDurations): boolean {
 // Interval start - Interval end - Column unit - Column spacing
 export function getAllPeriods(from:number, to:number, unit:string, offset:number=1, highlightedDurations?){
     let units = ["y", "year", "month", "week", "d", "day", "h", "hour", "m", "minute", "s", "second"];
-
-    if(units.includes(unit)){
+    if(units.indexOf(unit) !== -1){
         let all_periods         = [];
         let tmsWorkOld          = 0;
         let interval_duration   = 0;

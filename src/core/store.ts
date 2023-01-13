@@ -25,6 +25,7 @@ export interface EntityStore<T extends EntityType> extends Readable<EntityState<
     deleteAll(ids: (number | string)[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
+    entities?:any;
 }
 
 function createEntityStore<T extends EntityType>(): EntityStore<T> {
@@ -86,7 +87,7 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
             const ids = [...state.ids];
 
             for (let i = 0; i < items.length; i++) {
-                if (!ids.includes(items[i].model.id)) {
+                if (ids.indexOf(items[i].model.id) === -1) {
                     ids.push(items[i].model.id);
                 }
                 entities[items[i].model.id] = items[i];
