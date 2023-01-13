@@ -12,7 +12,7 @@ export interface DraggableSettings {
     onResize?(event?: ResizeEvent): void;
     onDrag?(event?: DragEvent): void;
     onMouseUp?(): void;
-    onDrop(event?: DownDropEvent | number[]): void; 
+    onDrop?(event?: DownDropEvent | number[]): void; 
     dragAllowed: (() => boolean) | boolean;
     resizeAllowed: (() => boolean) | boolean;
     container: any; 
