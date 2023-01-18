@@ -16,7 +16,7 @@
         "rollup": "^2.36.1",
         "rollup-plugin-node-resolve": "^5.2.0",
         "rollup-plugin-svelte": "^7.1.0",
-        "svelte": "^3.46.4",
+        "svelte": "^3.49.0",
         "svelte-check": "^1.0.0",
         "svelte-gantt": "file:../dist",
         "svelte-preprocess": "^4.9.8",
