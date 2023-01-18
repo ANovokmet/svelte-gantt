@@ -1,12 +1,110 @@
+<script lang="ts" context="module">
+    import { addEventListenerOnce } from '../utils/domUtils';
+    import { Draggable } from "../core/drag";
+    import type { offsetData, DraggableSettings } from "../core/drag";
+    import { taskStore, rowStore } from '../core/store';
+    import { reflectTask } from "../core/task";
+    import { get } from 'svelte/store'
+    
+    export interface selectedItem {
+        HTMLElement: HTMLElement;
+        offsetData: offsetData;
+        draggable: Draggable;
+    }
+    
+    export const tasksSettings: Map<number, DraggableSettings> = new Map();
+    export const currentSelection: Map<number, selectedItem> = new Map();
+    
+    const oldReflections = [];
+    const newTasksAndReflections = [];
+    
+    export class SelectionManager {
+        selectSingle(taskId, node) {
+            if (!currentSelection.has(taskId)) {
+                this.unSelectTasks();
+                this.toggleSelection(taskId, node)
+            }
+        }
+    
+        toggleSelection(taskId, node) {
+            currentSelection.set(taskId, {HTMLElement: node, offsetData: undefined, draggable: undefined});
+        }
+    
+        unSelectTasks() {
+            for (const [, selectedItems] of currentSelection.entries()) {
+                selectedItems.HTMLElement.classList.remove('sg-task-selected');
+            }
+            currentSelection.clear();
+        }
+    
+        dispatchSelectionEvent(taskId, event) {
+            const x = tasksSettings.get(taskId).getX();
+            const y = tasksSettings.get(taskId).getY();
+            const width = tasksSettings.get(taskId).getWidth();
+    
+            for (const [selId, selectedItem] of currentSelection.entries()) {
+                selectedItem.HTMLElement.classList.add('sg-task-selected');
+                if (selId !== taskId) {     
+                    selectedItem.offsetData = {
+                        offsetPos: {
+                            x: tasksSettings.get(selId).getX() - x,
+                            y: tasksSettings.get(selId).getY() - y
+                        },
+                        offsetWidth: tasksSettings.get(selId).getWidth() - width,
+                    }
+                } else {
+                    selectedItem.offsetData = {
+                        offsetPos: {
+                            x: null,
+                            y: null
+                        },
+                        offsetWidth: null,
+                    }
+                }
+            }
+            this.dragOrResizeTriggered(event)
+        }
+        
+        dragOrResizeTriggered = (event) =>{
+            for (let [selId, selectedItem] of currentSelection.entries()) {
+                const draggable = new Draggable(selectedItem.HTMLElement, tasksSettings.get(selId), selectedItem.offsetData);
+                draggable.onmousedown(event);
+                currentSelection.set(selId, {...selectedItem, draggable: draggable });
+            }
+    
+            window.addEventListener('mousemove', this.selectionDragOrResizing, false);
+            addEventListenerOnce(window, 'mouseup', this.selectionDropped);
+        }
+    
+        selectionDragOrResizing = (event) => {
+            for (let [, selectedItem] of currentSelection.entries()) {
+                const { draggable } = selectedItem
+                draggable.onmousemove(event);
+            }
+        }
+    
+        selectionDropped = (event) => {
+            window.removeEventListener('mousemove', this.selectionDragOrResizing, false)
+            for (const [, selectedItem] of currentSelection.entries()) {
+                const { draggable } = selectedItem;
+                draggable.onmouseup(event);
+            }
+    
+            taskStore.deleteAll(oldReflections);
+            taskStore.upsertAll(newTasksAndReflections);
+            console.log('%cTASK SVELTE UPDATE', 'background:black; color:white;')
+    
+            newTasksAndReflections.length = 0;
+            oldReflections.length = 0;
+        };
+    }
+    
+    </script>
     
     <script lang="ts">
-        import { getContext } from "svelte";
-        
+        import { getContext } from 'svelte';
         import { setCursor } from "../utils/domUtils";
-        import { taskStore, rowStore } from '../core/store';
-        import { Draggable } from "../core/drag";
-        import { reflectTask } from "../core/task";
-        import {draggableTasks} from "../core/selectionManager";
+        import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt'
     
         export let model;
         export let height;
@@ -16,7 +114,6 @@
         export let reflected = false;
     
         let animating = true;
-    
         let _dragging = false;
         let _resizing = false;
     
@@ -36,11 +133,11 @@
             }
         }
         
-        const { rowContainer } = getContext('gantt');
-        const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } = getContext('options');
-        const { dndManager, api, utils, columnService } = getContext('services');
+        const { rowContainer } : GanttContext = getContext('gantt');
+        const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook } : GanttContextOptions = getContext('options');
+        const { dndManager, api, utils, columnService } : GanttContextServices = getContext('services');
     
-        function drag(node) {  
+        function drag(node) {
             const ondrop = (event) => {
                 let rowChangeValid = true;
                 //row switching
@@ -86,9 +183,7 @@
                     if(changed) {
                         api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
                     }
-                    
-                    console.log('%cTASK SVELTE UPDATE', 'background:grey; color:white;')
-                    taskStore.update(newTask);
+                    newTasksAndReflections.push(newTask);
     
                     if(changed) {
                         api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
@@ -96,8 +191,7 @@
     
                     // update shadow tasks
                     if(newTask.reflections) {
-                        console.log('%cTASK SVELTE UPDATE', 'background:black; color:white;')
-                        taskStore.deleteAll(newTask.reflections);
+                        oldReflections.push(...newTask.reflections)
                     }
     
                     const reflectedTasks = [];
@@ -126,8 +220,7 @@
                     }
     
                     if(reflectedTasks.length > 0) {
-                        console.log('%cTASK SVELTE UPSERT ALL', 'background:purple; color:white;')
-                        taskStore.upsertAll(reflectedTasks);
+                        newTasksAndReflections.push(...reflectedTasks);
                     }
     
                     if(!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
@@ -139,19 +232,17 @@
                     (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
                 }
             };
-
+    
             const ondrag = (event) => {
                 (_position.x = event.x), (_position.y = event.y), (_dragging = true);
                 api.tasks.raise.move(model);
             };
-
             const onmouseup = () => {
                 setCursor("default");
                 api.tasks.raise.moveEnd(model);
             }
-            
             if (!reflected) { // reflected tasks must not be resized or dragged
-                draggableTasks[model.id] = new Draggable(node, {
+                tasksSettings.set(model.id, {
                     onDown: (event) => {
                         console.log('EVENT ON DOWN DRAGGABLE TASK', event);
                         if (event.dragging) {
@@ -173,10 +264,10 @@
                     // },
                     onDrag:ondrag,
                     dragAllowed: () => {
-                        return row.model.enableDragging && model.enableDragging;
+                        return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                     },
                     resizeAllowed: () => {
-                        return row.model.enableDragging && model.enableDragging;
+                        return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
                     },
                     onDrop: ondrop,
                     container: rowContainer,
@@ -184,9 +275,10 @@
                     getX: () => _position.x,
                     getY: () => _position.y,
                     getWidth: () => _position.width,
+                    modelId: model.id
                 })
                 return {
-                    destroy: () => {console.log('DESTROYING'); delete draggableTasks[model.id];}
+                    destroy: () => tasksSettings.delete(model.id)
                 };
             }
         }
@@ -196,7 +288,6 @@
                 node = <HTMLElement> document.querySelector('[data-task-id="'+node.dataset.taskId+'"]')
                 console.log('NODE AFTER', node, node.getBoundingClientRect())
             }
-
             if(taskElementHook) {
                 return taskElementHook(node, model);
             }
@@ -207,9 +298,6 @@
                 onTaskButtonClick(model);
             }
         }
-    
-        let row;
-        $: row = $rowStore.entities[model.resourceId];
     </script>
     
     <style>
@@ -258,6 +346,7 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
+            user-select: none;
         }
     
         .sg-task:not(.moving) {
@@ -331,7 +420,7 @@
       class:moving={_dragging || _resizing}
       class:animating
       class:sg-task-reflected={reflected}
-      class:dragging-enabled={row.model.enableDragging && model.enableDragging}
+      class:dragging-enabled={$rowStore.entities[model.resourceId].model.enableDragging && model.enableDragging}
       >
       {#if model.amountDone}
       <div class="sg-task-background" style="width:{model.amountDone}%" />
@@ -344,6 +433,7 @@
         {:else}{model.label}{/if}
         <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
         {#if model.showButton}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
           <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
             {@html model.buttonHtml}
           </span>
@@ -351,7 +441,7 @@
       </div>
     
       {#if model.labelBottom}
+        <!-- svelte-ignore a11y-label-has-associated-control -->
         <label class="sg-label-bottom">{model.labelBottom}</label>
       {/if}
     </div>
-    

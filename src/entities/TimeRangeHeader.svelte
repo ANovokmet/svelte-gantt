@@ -1,20 +1,12 @@
 <script lang="ts">
     import { beforeUpdate, getContext } from 'svelte';
-
+    import type { GanttContext, GanttContextServices, GanttContextOptions } from '../gantt'
     import { Draggable } from '../core/drag';
     import { timeRangeStore } from '../core/store';
 
-    const { rowContainer } = getContext('gantt');
-    const { utils, columnService } = getContext('services');
-    const { resizeHandleWidth } = getContext('options');
-    const {
-        from,
-        to,
-        width: ganttWidth,
-        visibleWidth
-    } = getContext('dimensions');
-
-    const { api } = getContext('services');
+    const { rowContainer } : GanttContext = getContext('gantt');
+    const { api, utils, columnService } : GanttContextServices = getContext('services');
+    const { resizeHandleWidth } : GanttContextOptions = getContext('options');
 
     export let model;
     export let width;
@@ -83,7 +75,7 @@
             getX: () => _position.x,
             getY: () => 0,
             getWidth: () => _position.width
-        }, 'timerange');
+        });
 
         return { destroy: () => draggable.destroy() };
     }

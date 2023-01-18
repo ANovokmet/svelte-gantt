@@ -1,19 +1,16 @@
 import { get } from '../utils/utils';
 
-interface Column {
+export interface Column {
     from: any;
+    to: any;
     left: number;
     width: number;
+    bgHighlightColor?: boolean;
 
     /**
      * Duration in milliseconds
      */
     duration: number;
-}
-
-interface TimeResolution {
-    unit: string;
-    offset: number;
 }
 
 export function findByPosition(columns: Column[], x: number) {

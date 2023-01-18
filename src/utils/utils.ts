@@ -7,8 +7,9 @@ export class GanttUtils {
     magnetDuration: number;
 
     /** because gantt width is not always correct */
-    totalColumnDuration: number;
-    totalColumnWidth: number;
+     /**BlueFox 09.01.23: couldn't reproduce the above so I removed the code
+    //totalColumnDuration: number;
+    //totalColumnWidth: number;
 
     constructor() {
     }
@@ -18,11 +19,11 @@ export class GanttUtils {
      * @param {*} date 
      */
     getPositionByDate (date: number) {
-        return getPositionByDate(date, this.from, this.from + this.totalColumnDuration, this.totalColumnWidth); 
+        return getPositionByDate(date, this.from, this.to, this.width); 
     }
 
     getDateByPosition (x) {
-        return getDateByPosition(x, this.from, this.from + this.totalColumnDuration, this.totalColumnWidth);
+        return getDateByPosition(x, this.from, this.to, this.width);
     }
 
     roundTo (date: number) {

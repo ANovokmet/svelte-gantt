@@ -8,6 +8,9 @@ import type { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
 import type { GanttUtils } from './utils/utils';
 import type { DependencyModel } from './modules/dependencies';
 import type { TableHeader } from './modules/table/tableHeader';
+import type { SvelteGanttDateAdapter } from './utils/date';
+import type { Writable } from 'svelte/store';
+import { SelectionManager } from './entities';
 
 interface Header { 
     unit:string; 
@@ -16,13 +19,59 @@ interface Header {
     sticky?: boolean;
 }
 
+export interface GanttContextDimensions {
+    from: Writable<Date>, 
+    to: Writable<Date>, 
+    width: Writable<number>,
+    dateAdapter: SvelteGanttDateAdapter
+    visibleWidth: Writable<number>,
+    visibleHeight: Writable<number>,
+    headerHeight: Writable<number>,
+}
+
+export interface GanttContext {
+    scrollables: any[];
+    hoveredRow: Writable<number>;
+    selectedRow: Writable<number>;
+    rowContainer: HTMLElement;
+    mainContainer: HTMLElement;
+    mainHeaderContainer: HTMLElement;
+}
+
+export interface GanttContextServices {
+    utils: GanttUtils;
+    api: GanttApi;
+    dndManager: DragDropManager;
+    selectionManager: SelectionManager;
+    columnService: ColumnService;
+}
+
+export interface GanttContextOptions {
+    dateAdapter: SvelteGanttDateAdapter;
+    taskElementHook?: TaskElementHook;
+    taskContent?: TaskContentTemplate;
+    rowPadding: Writable<number>;
+    rowHeight: Writable<number>;
+    resizeHandleWidth: number;
+    reflectOnParentRows: boolean;
+    reflectOnChildRows: boolean;
+    onTaskButtonClick?: TaskButtonClickHandler;
+}
+
 interface Zoom {
 	headers: Header[];
 	minWidth: number;
 	fitWidth: boolean;
 }
+
+interface highlightedDurations {
+    unit: string;
+    fractions: number[];
+}
+
 type TaskButtonClickHandler = (task: SvelteTask) => void;
 type TaskContentTemplate = (task: SvelteTask) => string;
+type TaskElementHook = (task: SvelteTask, element: HTMLElement) => void;
 
 export interface SvelteGanttOptions {
     /**
@@ -57,6 +106,14 @@ export interface SvelteGanttOptions {
 	columnUnit?: string;
 	/** duration width of column */
 	columnOffset?: number;
+    /** width of strokes seperating the columns in ganttbody */
+    columnStrokeWidth?: number;
+    /** color of strokes seperating the columns in ganttbody */
+    columnStrokeColor?: string;
+    /** object including a unit and fractions of that unit that should be highlighted eg. {unit: 'days', fractions: [0,6]} -> will highlight weekends.
+     *  highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
+     */
+    highlightedDurations?: highlightedDurations;
 	/** 
 	 * list of headers used for main gantt area
 	 *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
