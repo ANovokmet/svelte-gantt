@@ -90,8 +90,8 @@
                 draggable.onmouseup(event);
             }
     
-            taskStore.deleteAll(oldReflections);
-            taskStore.upsertAll(newTasksAndReflections);
+            if (oldReflections.length) taskStore.deleteAll(oldReflections);
+            if (newTasksAndReflections.length) taskStore.upsertAll(newTasksAndReflections);
             console.log('%cTASK SVELTE UPDATE', 'background:black; color:white;')
     
             newTasksAndReflections.length = 0;
