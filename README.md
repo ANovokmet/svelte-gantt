@@ -1,4 +1,4 @@
-# svelte-gantt
+# Fork from ANovokmet/svelte-gantt/
 
 A **lightweight** and **fast** interactive gantt chart/resource booking component made with [Svelte](https://svelte.technology/). Compatible with any JS library or framework. ZERO dependencies.
 
