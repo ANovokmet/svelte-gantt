@@ -301,7 +301,7 @@ npm install
 npm run demo:dev
 ```
 
-Navigate to [localhost:5000](http://localhost:5000/svelte-gantt). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+Navigate to [localhost:8080](http://localhost:8080/svelte-gantt). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
 
 ## Build the package
 
