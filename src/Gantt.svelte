@@ -9,8 +9,8 @@
     let scrollables = [];
     let mounted = false;
 
-    import { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache } from './core/store';
-    import { Task, SelectionManager, Row, TimeRange, TimeRangeHeader } from './entities';
+    import { createDataStore } from './core/store';
+    import { Task, Row, TimeRange, TimeRangeHeader } from './entities';
     import { Columns, ColumnHeader } from './column';
     import { Resizer } from './ui';
 
@@ -22,9 +22,10 @@
     import { RowFactory } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager } from './core/drag';
+    import { SelectionManager } from './core/selectionManager';
     import { findByPosition, findByDate } from './core/column';
     import type { Column } from './core/column';
-    import { onEvent, onDelegatedEvent, offDelegatedEvent } from './core/events';
+    import { createDelegatedEventDispatcher } from './core/events';
     import { NoopSvelteGanttDateAdapter, getDuration, getAllPeriods } from './utils/date';
     import type { SvelteGanttDateAdapter } from './utils/date';
 
@@ -136,6 +137,12 @@
     const _width = derived([visibleWidth, _minWidth, _fitWidth], ([visible, min, stretch]) => {
         return stretch && visible > min ? visible : min;
     });
+
+    const dataStore = createDataStore();
+    setContext('dataStore', dataStore);
+    const {
+        rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache
+    } = dataStore;
     
     export const columnService = {
         getColumnByDate(date: number) {
@@ -270,6 +277,8 @@
 
         mounted = true;
     });
+
+    const { onDelegatedEvent, offDelegatedEvent, onEvent } = createDelegatedEventDispatcher();
 
     onDelegatedEvent('mousedown', 'data-task-id', (event, data, target) => {
         const taskId = +data;
@@ -447,7 +456,7 @@
     }
 
     export const api = new GanttApi();
-    const selectionManager = new SelectionManager();
+    const selectionManager = new SelectionManager(taskStore);
 
     export const taskFactory = new TaskFactory(columnService);
     $: {
@@ -513,7 +522,7 @@
     export function selectTask(id) {
         const task = $taskStore.entities[id];
         if (task) {
-            selectionManager.selectSingle(task, document.querySelector(`data-task-id='${id}'`));
+            selectionManager.selectSingle(id, ganttElement.querySelector(`data-task-id='${id}'`)); // TODO:: fix
         }
     }
 
@@ -652,7 +661,13 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-<div class="sg-gantt {classes}" class:sg-disable-transition={!disableTransition} bind:this={ganttElement} on:mousedown|stopPropagation={onEvent} on:click|stopPropagation={onEvent} on:mouseover={onEvent} on:mouseleave={onEvent}>
+<div class="sg-gantt {classes}"
+    class:sg-disable-transition={!disableTransition}
+    bind:this={ganttElement}
+    on:mousedown|stopPropagation={onEvent}
+    on:click|stopPropagation={onEvent}
+    on:mouseover={onEvent}
+    on:mouseleave={onEvent}>
     {#each ganttTableModules as module}
     <svelte:component this={module} {rowContainerHeight} {paddingTop} {paddingBottom} {tableWidth} {...$$restProps} on:init="{onModuleInit}" {visibleRows} />
 

@@ -1,0 +1,25 @@
+{
+    "name": "svelte-gantt-demo",
+    "description": "Svelte-Gantt Demo",
+    "version": "1.0.0",
+    "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
+    "scripts": {
+        "build": "rollup -c",
+        "autobuild": "rollup -c -w"
+    },
+    "dependencies": {
+        "moment": "^2.22.2",
+        "svelte-routing": "^1.6.0"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^17.0.0",
+        "rollup": "^2.36.1",
+        "rollup-plugin-node-resolve": "^5.2.0",
+        "rollup-plugin-svelte": "^7.1.0",
+        "svelte": "^3.46.4",
+        "svelte-check": "^1.0.0",
+        "svelte-gantt": "file:../dist",
+        "svelte-preprocess": "^4.9.8",
+        "tslib": "^2.0.0"
+    }
+}

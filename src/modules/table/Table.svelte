@@ -8,7 +8,7 @@
     const dispatch = createEventDispatcher();
 
     import TableRow from './TableRow.svelte';
-    import { rowStore, taskStore } from "../../core/store";
+    import type { GanttDataStore } from "../../core/store";
     import type { TableHeader } from './tableHeader';
     import type { SvelteRow } from '../../core/row';
 
@@ -25,12 +25,13 @@
 
     const { from, to, width, visibleWidth, headerHeight } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
+    const { rowStore, taskStore } = getContext('dataStore') as GanttDataStore;
+    const { scrollables } = getContext('gantt');
 
     onMount(() => {
         dispatch('init', { module: this });
     });
 
-    const { scrollables } = getContext('gantt');
     let headerContainer;
     function scrollListener(node) {
         scrollables.push({ node, orientation: "vertical" });

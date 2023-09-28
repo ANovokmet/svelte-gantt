@@ -25,7 +25,7 @@ export interface EntityStore<T extends EntityType> extends Readable<EntityState<
     deleteAll(ids: (number | string)[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
-    entities?:any;
+    entities?: any;
 }
 
 function createEntityStore<T extends EntityType>(): EntityStore<T> {
@@ -52,13 +52,13 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
         deleteAll: (ids: (number | string)[]) => update(state => {
             const entities = { ...state.entities };
             const idSet = new Set(ids);
-        
+
             for (let i = 0; i < state.ids.length; i++) {
                 if (idSet.has(state.ids[i])) {
                     delete entities[state.ids[i]];
                 }
             }
-        
+
             return {
                 ids: state.ids.filter(i => !idSet.has(i)),
                 entities
@@ -92,7 +92,7 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
                 }
                 entities[items[i].model.id] = items[i];
             }
-            
+
             return {
                 ids,
                 entities
@@ -112,26 +112,6 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
         refresh: () => update(store => ({ ...store }))
     };
 }
-
-export const taskStore = createEntityStore<SvelteTask>();
-export const rowStore = createEntityStore<SvelteRow>();
-export const timeRangeStore = createEntityStore<SvelteTimeRange>();
-
-export const allTasks = all(taskStore);
-export const allRows = all(rowStore);
-export const allTimeRanges = all(timeRangeStore);
-
-export const rowTaskCache = derived(allTasks, $allTasks => {
-    const cache = {};
-    for (let i = 0; i < $allTasks.length; i++) {
-        const task = $allTasks[i];
-        if (!cache[task.model.resourceId]) {
-            cache[task.model.resourceId] = [];
-        }
-    cache[task.model.resourceId].push(task.model.id);
-    }
-    return cache;
-});
 
 export function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]> {
     return derived(store, ({ ids, entities }) => {
@@ -154,3 +134,37 @@ export function where<T extends EntityType>(store: EntityStore<T>, filterFn: (va
         return results;
     });
 }
+
+export function createDataStore() {
+    const taskStore = createEntityStore<SvelteTask>();
+    const rowStore = createEntityStore<SvelteRow>();
+    const timeRangeStore = createEntityStore<SvelteTimeRange>();
+
+    const allTasks = all(taskStore);
+    const allRows = all(rowStore);
+    const allTimeRanges = all(timeRangeStore);
+
+    const rowTaskCache = derived(allTasks, $allTasks => {
+        const cache = {};
+        for (let i = 0; i < $allTasks.length; i++) {
+            const task = $allTasks[i];
+            if (!cache[task.model.resourceId]) {
+                cache[task.model.resourceId] = [];
+            }
+            cache[task.model.resourceId].push(task.model.id);
+        }
+        return cache;
+    });
+
+    return {
+        taskStore,
+        rowStore,
+        timeRangeStore,
+        allTasks,
+        allRows,
+        allTimeRanges,
+        rowTaskCache
+    };
+}
+
+export type GanttDataStore = ReturnType<typeof createDataStore>;

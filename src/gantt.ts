@@ -10,18 +10,18 @@ import type { DependencyModel } from './modules/dependencies';
 import type { TableHeader } from './modules/table/tableHeader';
 import type { SvelteGanttDateAdapter } from './utils/date';
 import type { Writable } from 'svelte/store';
-import { SelectionManager } from './entities';
+import { SelectionManager } from './core/selectionManager';
 
-interface Header { 
-    unit:string; 
-    format:string; 
+interface Header {
+    unit: string;
+    format: string;
     offset?: number;
     sticky?: boolean;
 }
 
 export interface GanttContextDimensions {
-    from: Writable<Date>, 
-    to: Writable<Date>, 
+    from: Writable<Date>,
+    to: Writable<Date>,
     width: Writable<number>,
     dateAdapter: SvelteGanttDateAdapter
     visibleWidth: Writable<number>,
@@ -59,9 +59,9 @@ export interface GanttContextOptions {
 }
 
 interface Zoom {
-	headers: Header[];
-	minWidth: number;
-	fitWidth: boolean;
+    headers: Header[];
+    minWidth: number;
+    fitWidth: boolean;
 }
 
 interface highlightedDurations {
@@ -90,22 +90,22 @@ export interface SvelteGanttOptions {
      * Dependencies that display in the gantt, used with the SvelteGanttDependencies module
      */
     dependencies?: DependencyModel[];
-	/** datetime timeline starts on, date */
-	from?: number;
-	/** datetime timeline ends on, date */
-	to?: number;
-	/** Minimum width of main gantt area in px */
-	minWidth?: number;
-	/** should timeline stretch width to fit */
-	fitWidth?: boolean;
-	/** minimum unit of time task date values will round to */
-	magnetUnit?: string;
-	/** amount of units task date values will round to */
-	magnetOffset?: number;
-	/** duration unit of columns */
-	columnUnit?: string;
-	/** duration width of column */
-	columnOffset?: number;
+    /** datetime timeline starts on, date */
+    from?: number;
+    /** datetime timeline ends on, date */
+    to?: number;
+    /** Minimum width of main gantt area in px */
+    minWidth?: number;
+    /** should timeline stretch width to fit */
+    fitWidth?: boolean;
+    /** minimum unit of time task date values will round to */
+    magnetUnit?: string;
+    /** amount of units task date values will round to */
+    magnetOffset?: number;
+    /** duration unit of columns */
+    columnUnit?: string;
+    /** duration width of column */
+    columnOffset?: number;
     /** width of strokes seperating the columns in ganttbody */
     columnStrokeWidth?: number;
     /** color of strokes seperating the columns in ganttbody */
@@ -114,20 +114,20 @@ export interface SvelteGanttOptions {
      *  highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
      */
     highlightedDurations?: highlightedDurations;
-	/** 
-	 * list of headers used for main gantt area
-	 *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-	 *  - format: datetime format used for header cell label 
-	 **/
+    /** 
+     * list of headers used for main gantt area
+     *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+     *  - format: datetime format used for header cell label 
+     **/
     headers?: Header[];
     /**
      * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
      */
-	zoomLevels?: Zoom[];
-	/** height of a single row in px */
-	rowHeight?: number;
-	rowPadding?: number;
-	/** modules used in gantt */
+    zoomLevels?: Zoom[];
+    /** height of a single row in px */
+    rowHeight?: number;
+    rowPadding?: number;
+    /** modules used in gantt */
     ganttTableModules?: any[];
     ganttBodyModules?: any[];
     /**
@@ -138,14 +138,14 @@ export interface SvelteGanttOptions {
      * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. 
      */
     reflectOnChildRows?: boolean;
-	/** sets top level gantt class which can be used for styling */
-	classes?: string | string[];
-	/** width of handle for resizing task */
-	resizeHandleWidth?: number;
-	/** handler of button clicks */
-	onTaskButtonClick?: TaskButtonClickHandler; // e.g. (task) => {debugger},
-	/** task content factory function */
-	taskContent?: TaskContentTemplate; // e.g. (task) => '<div>Custom task content</div>'
+    /** sets top level gantt class which can be used for styling */
+    classes?: string | string[];
+    /** width of handle for resizing task */
+    resizeHandleWidth?: number;
+    /** handler of button clicks */
+    onTaskButtonClick?: TaskButtonClickHandler; // e.g. (task) => {debugger},
+    /** task content factory function */
+    taskContent?: TaskContentTemplate; // e.g. (task) => '<div>Custom task content</div>'
     /** task element hook */
     taskElementHook?: (node: HTMLElement, task: SvelteTask) => { update?(task), destroy?() }
     /**
@@ -161,11 +161,11 @@ export interface SvelteGanttOptions {
 export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
     api: GanttApi;
     utils: GanttUtils;
-	columnService: ColumnService;
-	dndManager: DragDropManager;
-	taskFactory: TaskFactory;
-	rowFactory: RowFactory;
-	timeRangeFactory: TimeRangeFactory;
+    columnService: ColumnService;
+    dndManager: DragDropManager;
+    taskFactory: TaskFactory;
+    rowFactory: RowFactory;
+    timeRangeFactory: TimeRangeFactory;
 
     refreshTasks();
     refreshTimeRanges();

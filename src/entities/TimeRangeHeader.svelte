@@ -2,11 +2,12 @@
     import { beforeUpdate, getContext } from 'svelte';
     import type { GanttContext, GanttContextServices, GanttContextOptions } from '../gantt'
     import { Draggable } from '../core/drag';
-    import { timeRangeStore } from '../core/store';
+    import type { GanttDataStore } from '../core/store';
 
     const { rowContainer } : GanttContext = getContext('gantt');
     const { api, utils, columnService } : GanttContextServices = getContext('services');
     const { resizeHandleWidth } : GanttContextOptions = getContext('options');
+    const { timeRangeStore } = getContext('dataStore') as GanttDataStore;
 
     export let model;
     export let width;

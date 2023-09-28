@@ -20,5 +20,7 @@ export {
     SvelteGanttTable,
     SvelteGanttDependencies,
     SvelteGanttExternal,
-    MomentSvelteGanttDateAdapter
+    MomentSvelteGanttDateAdapter,
+    SvelteGanttComponent, 
+    SvelteGanttOptions
 };

@@ -1,17 +1,17 @@
 <script lang="ts">
     import { beforeUpdate, onMount, getContext } from 'svelte';
-
-    let milestoneElement;
-
     import { Draggable } from '../core/drag';
-    import { rowStore, taskStore } from '../core/store';
-    const { rowPadding } = getContext('options');
-    const { selectionManager, api, rowContainer, dndManager, columnService, utils } = getContext('services');
+    import type { GanttDataStore } from '../core/store';
+
+    const { rowPadding } = getContext('options') as any;
+    const { selectionManager, api, rowContainer, dndManager, columnService, utils } = getContext('services') as any;
+    const { taskStore, rowStore } = getContext('dataStore') as GanttDataStore;
 
     export let left;
     export let top;
     export let model;
     export let height = 20;
+    let milestoneElement;
 
     const selection = selectionManager.selection;
 
