@@ -27,7 +27,6 @@ promise = promise.then(() => rollup.rollup({
     // external: Object.keys(pkg.dependencies),
     plugins: [
         svelte({
-            dev: false,
             // css: css => {
             //     css.write(`${outputDir}/css/svelteGantt.css`);
             // },
