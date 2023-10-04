@@ -69,7 +69,7 @@
                 });
             },
             dragAllowed: false,
-            resizeAllowed: true,
+            resizeAllowed: () => isResizable(),
             onDrop: ondrop, 
             container: rowContainer, 
             resizeHandleWidth,
@@ -81,13 +81,30 @@
         return { destroy: () => draggable.destroy() };
     }
 
-    function setClass(node){
-        if(!model.classes) return;
-        node.classList.add(model.classes);
+    function isResizable() {
+        return model.resizable !== undefined ? model.resizable : true;
+    }
+
+    function normalizeClassAttr(classes) {
+        if (!classes) {
+            return '';
+        }
+        if (typeof classes === 'string') {
+            return classes;
+        }
+        if (Array.isArray(classes)) {
+            return classes.join(' ');
+        }
+        return '';
+    }
+
+    let classes;
+    $: {
+        classes = normalizeClassAttr(model.classes);
     }
 </script>
 
-<div class="sg-time-range-control" style="width:{_position.width}px;left:{_position.x}px" use:setClass>
+<div class="sg-time-range-control {classes}" style="width:{_position.width}px;left:{_position.x}px" class:sg-time-range-disabled={!isResizable()}>
     <div class="sg-time-range-handle-left" use:drag></div>
     <div class="sg-time-range-handle-right" use:drag></div>
 </div>
@@ -104,6 +121,10 @@
     .sg-time-range-handle-right {
         position: absolute;
         right: 0;
+    }
+
+    .sg-time-range-disabled {
+        display: none;
     }
 
     .sg-time-range-handle-left::before, .sg-time-range-handle-right::before {
