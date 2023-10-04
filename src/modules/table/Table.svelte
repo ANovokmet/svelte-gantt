@@ -35,14 +35,16 @@
     let headerContainer;
     function scrollListener(node) {
         scrollables.push({ node, orientation: "vertical" });
-        
-        node.addEventListener("scroll", event => {
+
+        function onScroll(event) {
             headerContainer.scrollLeft = node.scrollLeft;
-        });
+        }
+        
+        node.addEventListener('scroll', onScroll);
 
         return {
             destroy() {
-                node.removeEventListener("scroll");
+                node.removeEventListener('scroll', onScroll);
             }
         };
     }
