@@ -4,8 +4,8 @@
     const dispatch = createEventDispatcher();
 
     import type { SvelteGanttDateAdapter } from '../utils/date';
-    import { getAllPeriods} from '../utils/date';
-    import { getPositionByDate} from '../utils/utils';
+    import { getAllPeriods } from '../utils/date';
+    import { getPositionByDate } from '../utils/utils';
 
     const { from, to, width } : GanttContextDimensions = getContext('dimensions');
     const { dateAdapter }: { dateAdapter: SvelteGanttDateAdapter } = getContext('options');
@@ -24,8 +24,8 @@
             } else {
                 const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit);
                 let distance_point = 0;
-                let left           = 0;
-                header.columns  = periods.map(period => {
+            let left = 0;
+            header.columns = periods.map(period => {
                     left = distance_point;
                     distance_point = getPositionByDate(period.to, $from.valueOf(), $to.valueOf(), $width);
                     return {
@@ -38,12 +38,20 @@
                 });
             }
     }
+
+    function onHeaderClick(_header) {
+        dispatch('dateSelected', { from: _header.from, to: _header.to, unit: header.unit });
+    }
 </script>
 
 <div class="column-header-row">
     {#each header.columns as _header}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="column-header-cell" class:sticky={header.sticky} style="left:{_header.left}px;width:{_header.width}px" on:click="{() => dispatch('dateSelected', { from: _header.from, to: _header.to, unit: header.unit })}">
+        <div class="column-header-cell"
+            role="button" tabindex="0"
+            class:sticky={header.sticky}
+            style="left:{_header.left}px;width:{_header.width}px"
+            on:click="{() => onHeaderClick(_header)}">
             <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
         </div>
     {/each}

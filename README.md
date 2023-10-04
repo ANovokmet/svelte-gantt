@@ -197,6 +197,7 @@ Renders a block of time spanning all the rows:
 - `to` {`number`} Datetime timeRange ends on.
 - `classes` {`String`|`Array`} Custom CSS classes.
 - `label` {`String`} Display label.
+- `resizable` {`Boolean`} Should the time range be resizable.
 
 ## Methods
 
@@ -283,6 +284,23 @@ new SvelteGanttExternal(
         }
     }
 );
+```
+
+# Usage with svelte
+
+To use svelte components import from `svelte-gantt/svelte`:
+
+```js
+<script>
+    import { SvelteGantt, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt/svelte';
+
+    let options = {
+        //
+    };
+</script>
+<div class="container">
+    <SvelteGantt {...options}></SvelteGantt>
+</div>
 ```
 
 # Development build

@@ -331,11 +331,18 @@ function isUnitFraction(localDate: Date, highlightedDurations): boolean {
     }
   }
 
-// Interval start - Interval end - Column unit - Column spacing
-export function getAllPeriods(from:number, to:number, unit:string, offset:number=1, highlightedDurations?){
-    let units = ["y", "year", "month", "week", "d", "day", "h", "hour", "m", "minute", "s", "second"];
-    if(units.indexOf(unit) !== -1){
-        let all_periods         = [];
+let units = ["y", "year", "month", "week", "d", "day", "h", "hour", "m", "minute", "s", "second"];
+/**
+ * 
+ * @param from Interval start
+ * @param to Interval end
+ * @param unit Column unit
+ * @param offset Column spacing
+ * @param highlightedDurations 
+ * @returns 
+ */
+export function getAllPeriods(from: number, to: number, unit: string, offset: number = 1, highlightedDurations?){
+    if(units.indexOf(unit) !== -1) {
         let tmsWorkOld          = 0;
         let interval_duration   = 0;
         let start               = new Date(from); // Starts at hh:mm:ss
@@ -343,16 +350,20 @@ export function getAllPeriods(from:number, to:number, unit:string, offset:number
         let nextDate            = getNextDate(dateWork, unit, offset);
         let tmsWork             = nextDate.getTime();
         const firstDuration     = nextDate.getTime() - from;
-        all_periods[0]          = {start:start,end:nextDate,
-                                   from:startOf(from, unit),
-                                   to:nextDate.getTime(),
-                                   duration:firstDuration,
-                                   //check whether duration is highlighted
-                                   ...(highlightedDurations && isUnitFraction(start, highlightedDurations) && {'isHighlighted' : true})
-                                }
+        let all_periods: any[]  = [{
+            start: start,
+            end: nextDate,
+            from: from, 
+            // from: startOf(from, unit), // incorrect if not circled down to the unit eg. 6:30
+            // TODO: think about offsetting the whole row, so for example if timeline starts at 6:30, the headers still show times for 6:00, 7:00 etc, and not 6:30, 7:30...
+            to: nextDate.getTime(),
+            duration: firstDuration,
+            // check whether duration is highlighted
+            ...(highlightedDurations && isUnitFraction(start, highlightedDurations) && { isHighlighted: true })
+        }];
 
-        if(tmsWork < to){
-            while(tmsWork < to){
+        if(tmsWork < to) {
+            while(tmsWork < to) {
                 tmsWorkOld = tmsWork;
                 nextDate = getNextDate(new Date(tmsWork), unit, offset)
                 interval_duration = nextDate.getTime() - tmsWork;
@@ -362,22 +373,24 @@ export function getAllPeriods(from:number, to:number, unit:string, offset:number
                     to:nextDate.getTime(), 
                     duration:interval_duration,
                     //check whether duration is highlighted
-                    ...(highlightedDurations && isUnitFraction(new Date(tmsWork), highlightedDurations) && {'isHighlighted' : true})
+                    ...(highlightedDurations && isUnitFraction(new Date(tmsWork), highlightedDurations) && { isHighlighted: true })
                 });
                 tmsWork = nextDate.getTime()
             }
             const last_day_duration = to - tmsWorkOld;
             all_periods[all_periods.length -1].to = to;
             all_periods[all_periods.length -1].duration = last_day_duration;
-        //ToDo: there could be another option for hours, minutes, seconds based on pure math like in getPeriodDuration to optimise performance
+            // ToDo: there could be another option for hours, minutes, seconds based on pure math like in getPeriodDuration to optimise performance
         }
         return all_periods; 
     }
     throw new Error(`Unknown unit: ${unit}`);
 }
 
-// Return duration 
-export function getPeriodDuration(from:number, to:number, unit: string, offset:number): number {
+/**
+ * Return duration
+ */
+export function getPeriodDuration(from: number, to: number, unit: string, offset:number): number {
     switch (unit) {
         case 'y':
         case 'year':

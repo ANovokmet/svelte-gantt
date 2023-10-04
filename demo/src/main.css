@@ -22,7 +22,3 @@ button:hover, input[type=button]:hover {
 button:active, input[type=button]:active{
     background-color: #9d4548;
 }
-
-.time-range-lunch {
-    border-left: 1px solid black;
-}
