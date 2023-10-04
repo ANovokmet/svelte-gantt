@@ -3,7 +3,6 @@
     import {showOptions, setView, moveView} from './../stores/store';
 </script>
 
-
 <header class="header">
     <div class="header-title">
         <a href="https://github.com/ANovokmet/svelte-gantt">Svelte-gantt</a>

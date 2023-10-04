@@ -10,5 +10,5 @@
 </style>
 
 <div class="container">
-    home
+    This is the main page of the demo app.
 </div>

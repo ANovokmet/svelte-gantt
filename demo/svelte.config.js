@@ -22,6 +22,7 @@ const config = {
 		},
 		alias:{
 			'$dist': path.resolve('../dist'),
+			'svelte-gantt': path.resolve('../dist'),
 		}
 	}
 };

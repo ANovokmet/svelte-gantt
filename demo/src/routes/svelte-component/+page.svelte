@@ -1,5 +1,5 @@
 <script>
-    import { SvelteGantt, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt';
+    import { SvelteGantt, SvelteGanttTable, MomentSvelteGanttDateAdapter } from 'svelte-gantt/svelte';
     import { onMount } from 'svelte';
     import { time } from '../../utils';
     import moment from 'moment';
@@ -15,9 +15,8 @@
             id: 0,
             from: time('10:00'),
             to: time('12:00'),
-            classes: 'time-range-lunch',
-            label: 'Lunch',
-            resizable: false,
+            classes: null,
+            label: 'Lunch'
         },
         {
             id: 1,
@@ -28,7 +27,50 @@
         }
     ];
 
-    const data = generate();
+    const data = {
+        rows: [{
+            id: 1,
+            label: "Preparation and Planning"
+        }, {
+            id: 2,
+            label: "Development"
+        }, {
+            id: 3,
+            label: "Implementation"
+        }, {
+            id: 4,
+            label: "Training"
+        }],
+        tasks: [{
+            id: 1,
+            resourceId: 1,
+            label: "Svelte-gantt",
+            from: time("7:00"),
+            to: time("9:00"),
+            classes: "orange"
+        }, {
+            id: 2,
+            resourceId: 2,
+            label: "As a",
+            from: time("9:00"),
+            to: time("11:00"),
+            classes: "blue"
+        }, {
+            id: 3,
+            resourceId: 3,
+            label: "Pure svelte",
+            from: time("11:00"),
+            to: time("13:00"),
+            classes: "green"
+        }, {
+            id: 4,
+            resourceId: 4,
+            label: "component",
+            from: time("13:00"),
+            to: time("15:00"),
+            classes: "orange"
+        }]
+    };
 
     $options = {
         dateAdapter: new MomentSvelteGanttDateAdapter(moment),
@@ -51,18 +93,9 @@
 
     $: {
         console.log('options changed', $options);
-        if (gantt) {
-            gantt.$set($options);
-        }
     }
 
-    /**
-     * @type {import('$dist').SvelteGanttComponent}
-     */
     let gantt;
-    onMount(() => {
-        window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: $options });
-    });
 
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -118,7 +151,6 @@
     function onChangeOptions(event) {
         const opts = event.detail;
         Object.assign($options, opts);
-        gantt.$set($options);
     }
 </script>
 
@@ -136,6 +168,8 @@
 </style>
 
 <div class="container">
-    <div id="example-gantt"></div>
+    <div id="example-gantt">
+        <SvelteGantt bind:this={gantt}  {...$options}></SvelteGantt>
+    </div>
     <GanttOptions options={$options} on:change={onChangeOptions}/>
 </div>

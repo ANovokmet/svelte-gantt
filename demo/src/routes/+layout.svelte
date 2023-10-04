@@ -1,5 +1,6 @@
 <script>
-    import '../gantt-default.css'; 
+    import '../gantt-default.css';
+    import '../main.css';
     import { showOptions, options } from './../stores/store';
     import GanttViewNavigation from '../components/GanttViewNavigation.svelte';
 
@@ -19,12 +20,15 @@
             <a href="https://github.com/ANovokmet/svelte-gantt">Svelte-gantt</a>
         </div>
         <div class="header-controls">
-            <a href="/large-dataset"><button type="button">LargeDataset</button></a>
-            <a href="/dependencies"><button type="button">Dependencies</button></a>
-            <a href="/tree"><button type="button">Tree</button></a>
-            <a href="/external"><button type="button">External</button></a>
-            <a href="/events"><button type="button">Events</button></a>
-            <a href="/multiple-charts"><button type="button">Multiple gantt</button></a>
+            <div class="header-controls__row">
+                <a href="/large-dataset"><button type="button">LargeDataset</button></a>
+                <a href="/dependencies"><button type="button">Dependencies</button></a>
+                <a href="/tree"><button type="button">Tree</button></a>
+                <a href="/external"><button type="button">External</button></a>
+                <a href="/events"><button type="button">Events</button></a>
+                <a href="/multiple-charts"><button type="button">Multiple gantt</button></a>
+                <a href="/svelte-component"><button type="button">Usage as svelte component</button></a>
+            </div>
     
             <GanttViewNavigation options={$options} on:updateOptions={onUpdateOptions} />
     
@@ -40,26 +44,6 @@
         flex-direction: column;
         overflow: auto;
         height: 100%;
-    }
-
-    button, input[type=button]{
-        border: transparent;
-        font-size: 14px;
-        font-weight: 300;
-        padding: 6px 12px;
-        background: #cc595e;
-        color: #ffffff;
-        cursor: pointer;
-        transition: background 0.2s;
-        outline: none;
-    }
-    
-    button:hover, input[type=button]:hover {
-        background-color: #b14d51;
-    }
-    
-    button:active, input[type=button]:active{
-        background-color: #9d4548;
     }
     
     .header {
@@ -99,6 +83,7 @@
     .header-controls {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
     }
     
     .header button, .header input[type=button] {

@@ -1,15 +1,19 @@
-const fs = require('fs');
-const del = require('del');
-const rollup = require('rollup');
-const resolve = require('rollup-plugin-node-resolve');
-const commonjs = require('rollup-plugin-commonjs');
-const pkg = require('../package.json');
-const sveltePreprocess = require('svelte-preprocess');
+import fs from 'fs';
+import del from 'del';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const svelte = require('rollup-plugin-svelte');
-const uglify = require('rollup-plugin-uglify');
-const typescript = require('rollup-plugin-typescript2');
-const postcss = require('rollup-plugin-postcss');
+import { rollup as _rollup } from 'rollup';
+import svelte from 'rollup-plugin-svelte';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import uglify from 'rollup-plugin-uglify';
+import typescript from '@rollup/plugin-typescript';
+import postcss from 'rollup-plugin-postcss';
+import sveltePreprocess from 'svelte-preprocess';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json')));
 
 let promise = Promise.resolve();
 
@@ -22,7 +26,7 @@ if (!fs.existsSync(outputDir)){
     promise = promise.then(() => del([`${outputDir}/*`]));
 }
 
-promise = promise.then(() => rollup.rollup({
+promise = promise.then(() => _rollup({
     input: './src/index.ts',
     // external: Object.keys(pkg.dependencies),
     plugins: [
@@ -31,17 +35,17 @@ promise = promise.then(() => rollup.rollup({
             //     css.write(`${outputDir}/css/svelteGantt.css`);
             // },
             emitCss: true,
-            preprocess: sveltePreprocess()
+            preprocess: sveltePreprocess(),
         }),
         postcss(),
-        resolve(),
+        resolve({
+            browser: true,
+            // dedupe: ['svelte', 'svelte/internal'],
+        }),
         commonjs(),
-        typescript({ 
-            useTsconfigDeclarationDir: true,
-            tsconfigOverride: { 
-                compilerOptions: {
-                    declarationDir: `${outputDir}/types`,  
-                } 
+        typescript({
+            compilerOptions: {
+                declarationDir: `${outputDir}/types`,  
             }
         }),
     ],
@@ -49,13 +53,15 @@ promise = promise.then(() => rollup.rollup({
 
 // Compile source code into a distributable format
 ['es', 'iife'].forEach(format => { // /*, 'cjs', 'umd'*/
-    promise.then(bundle => bundle.write({
-		file: `${outputDir}/${format === 'es' ? 'index' : `index.${format}`}.js`,
-        sourcemap: true,
-		format,
-        extend: format === 'iife',
-		name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
-	}));
+    promise.then(bundle => {
+        return bundle.write({
+            file: `${outputDir}/${format === 'es' ? 'index' : `index.${format}`}.js`,
+            sourcemap: true,
+            format,
+            extend: format === 'iife',
+            name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
+        });
+    });
 });
 
 // Copy package.json and LICENSE.txt
@@ -64,7 +70,19 @@ promise = promise.then(() => {
 	delete pkg.devDependencies;
 	delete pkg.scripts;
     delete pkg.eslintConfig;
-    
+
+    pkg.peerDependencies.svelte = '^4.0.0';
+    pkg.exports = {
+        '.': {
+            types: './types/index.d.ts',
+			default: './index.js'
+        },
+        './svelte': {
+            types: './svelte/index.d.ts',
+            svelte: './svelte/index.js',
+        }
+    };
+
     fs.writeFileSync(`${outputDir}/package.json`, JSON.stringify(pkg, null, '  '), { encoding: 'utf-8', flag: 'w' });
     fs.writeFileSync(`${outputDir}/LICENSE.txt`, fs.readFileSync('./LICENSE.txt', 'utf-8'), { encoding: 'utf-8', flag: 'w' });
     fs.writeFileSync(`${outputDir}/README.md`, fs.readFileSync('./README.md', 'utf-8'), { encoding: 'utf-8', flag: 'w' });

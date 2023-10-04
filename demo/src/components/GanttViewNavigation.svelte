@@ -57,26 +57,8 @@
 </script>
 
 <style>
-    button, input[type=button] {
-        border: transparent;
-        font-size: 14px;
-        font-weight: 300;
-        padding: 6px 12px;
-        background: #cc595e;
-        color: #ffffff;
-        cursor: pointer;
-        transition: background 0.2s;
-        outline: none;
-
+    input[type=button] {
         margin-right: 4px;
-    }
-    
-    input[type=button]:hover {
-        background-color: #b14d51;
-    }
-    
-    input[type=button]:active {
-        background-color: #9d4548;
     }
 </style>
 

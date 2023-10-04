@@ -1,3 +1,28 @@
-html {
-    background: yellow;
+html, body{
+    margin:0;
+    height: 100%;
+}
+
+button, input[type=button]{
+    border: transparent;
+    font-size: 14px;
+    font-weight: 300;
+    padding: 6px 12px;
+    background: #cc595e;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+}
+
+button:hover, input[type=button]:hover {
+    background-color: #b14d51;
+}
+
+button:active, input[type=button]:active{
+    background-color: #9d4548;
+}
+
+.time-range-lunch {
+    border-left: 1px solid black;
 }
