@@ -55,20 +55,20 @@
             arrowPath = ``;
         } else if (!isFromRowHidden && !isToRowHidden) {
             path = `M${startX} ${startY}`;
-                if (startX + MIN_LEN >= endX && startY != endY) {
-                    path += `L ${startX + MIN_LEN} ${startY} 
-                                L ${startX + MIN_LEN} ${startY + height / 2}
-                                L ${endX - MIN_LEN} ${startY + height / 2}
-                                L ${endX - MIN_LEN} ${endY}
-                                L ${endX - 2} ${endY}`;
-                } else {
-                    path += `L ${startX + width / 2} ${startY} 
-                                L ${startX + width / 2} ${endY}
-                                L ${endX - 2} ${endY}`;
-                }
-                arrowPath = `M${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 - ARROW_SIZE} 
-                                L${toTask.left} ${toTask.top + toTask.height / 2} 
-                                L${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 + ARROW_SIZE} Z`;
+            if (startX + MIN_LEN >= endX && startY != endY) {
+                path += `L ${startX + MIN_LEN} ${startY} 
+                            L ${startX + MIN_LEN} ${startY + height / 2}
+                            L ${endX - MIN_LEN} ${startY + height / 2}
+                            L ${endX - MIN_LEN} ${endY}
+                            L ${endX - 2} ${endY}`;
+            } else {
+                path += `L ${startX + width / 2} ${startY} 
+                            L ${startX + width / 2} ${endY}
+                            L ${endX - 2} ${endY}`;
+            }
+            arrowPath = `M${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 - ARROW_SIZE} 
+                            L${toTask.left} ${toTask.top + toTask.height / 2} 
+                            L${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 + ARROW_SIZE} Z`;
         }
     }
 </script>

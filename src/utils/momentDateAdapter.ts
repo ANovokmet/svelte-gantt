@@ -4,7 +4,7 @@ import { SvelteGanttDateAdapter } from './date';
  * Date adapter that uses MomentJS
  */
 export class MomentSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
-    moment: any;
+    moment;
 
     constructor(moment) {
         this.moment = moment;

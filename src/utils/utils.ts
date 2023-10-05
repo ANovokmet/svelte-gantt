@@ -1,4 +1,4 @@
-import { SvelteGanttDateAdapter } from "./date";
+import { SvelteGanttDateAdapter } from './date';
 
 export class GanttUtils {
     from: number;
@@ -11,7 +11,7 @@ export class GanttUtils {
     dateAdapter: SvelteGanttDateAdapter;
 
     /** because gantt width is not always correct */
-     /**BlueFox 09.01.23: couldn't reproduce the above so I removed the code
+    /**BlueFox 09.01.23: couldn't reproduce the above so I removed the code
     //totalColumnDuration: number;
     //totalColumnWidth: number;
 
@@ -44,18 +44,18 @@ export class GanttUtils {
 
 export function getPositionByDate (date: number, from: number, to: number, width: number) {
     if (!date) {
-      return undefined
+        return undefined
     }
 
-    let durationTo = date - from;
-    let durationToEnd = to - from;
+    const durationTo = date - from;
+    const durationToEnd = to - from;
 
     return durationTo / durationToEnd * width;
 }
 
 export function getDateByPosition (x: number, from: number, to: number, width: number) {
-    let durationTo = (x / width) * (to - from);
-    let dateAtPosition = from + durationTo;
+    const durationTo = (x / width) * (to - from);
+    const dateAtPosition = from + durationTo;
     return dateAtPosition; 
 }
 
@@ -65,7 +65,7 @@ export function getIndicesOnly<T, C = number|Date> (input: T[], value: C, compar
     let lo = -1;
     let hi = input.length;
     while (hi - lo > 1) {
-        let mid = Math.floor((lo + hi) / 2);
+        const mid = Math.floor((lo + hi) / 2);
         if (strict ? comparer(input[mid]) < value : comparer(input[mid]) <= value) {
             lo = mid;
         } else {
@@ -79,7 +79,7 @@ export function getIndicesOnly<T, C = number|Date> (input: T[], value: C, compar
 }
   
 export function get<T, C = number|Date> (input: T[], value: C, comparer: {(T: T): C}, strict?: boolean) {
-    let res = getIndicesOnly(input, value, comparer, strict);
+    const res = getIndicesOnly(input, value, comparer, strict);
     return [input[res[0]], input[res[1]]];
 }
   

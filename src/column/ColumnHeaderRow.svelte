@@ -17,26 +17,30 @@
 
     $: {
         if (header.unit === ganttBodyUnit) {
-                header.columns = ganttBodyColumns.map(column => ({
-                    ...column,
-                    label: dateAdapter.format(column.from, header.format),
-                }));
-            } else {
-                const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit);
-                let distance_point = 0;
+            header.columns = ganttBodyColumns.map(column => ({
+                ...column,
+                label: dateAdapter.format(column.from, header.format),
+            }));
+        } else {
+            const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit);
+            let distance_point = 0;
             let left = 0;
+
+            const first = periods[0];
+            console.log(first.duration, first.to - first.from);
+            console.log('periods', periods);
             header.columns = periods.map(period => {
-                    left = distance_point;
-                    distance_point = getPositionByDate(period.to, $from.valueOf(), $to.valueOf(), $width);
-                    return {
-                        width: Math.min(distance_point - left, $width),
-                        label: dateAdapter.format(period.from, header.format),
-                        from: period.from,
-                        to: period.to,
-                        left: left,
-                    }
-                });
-            }
+                left = distance_point;
+                distance_point = getPositionByDate(period.to, $from.valueOf(), $to.valueOf(), $width);
+                return {
+                    width: Math.min(distance_point - left, $width),
+                    label: dateAdapter.format(period.from, header.format),
+                    from: period.from,
+                    to: period.to,
+                    left: left,
+                }
+            });
+        }
     }
 
     function onHeaderClick(_header) {

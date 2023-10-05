@@ -1,7 +1,7 @@
-import { getRelativePos } from "../../utils/domUtils";
-import { Draggable } from "../../core/drag";
-import type { SvelteRow } from "../../core/row";
-import type { SvelteGanttComponent } from "../../gantt";
+import { getRelativePos } from '../../utils/dom';
+import { Draggable } from '../../core/drag';
+import type { SvelteRow } from '../../core/row';
+import type { SvelteGanttComponent } from '../../gantt';
 
 interface DragOptions {
     /** SvelteGantt this is binded to */

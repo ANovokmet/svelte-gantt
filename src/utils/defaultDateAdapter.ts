@@ -1,4 +1,4 @@
-import { SvelteGanttDateAdapter } from "./date";
+import { SvelteGanttDateAdapter } from './date';
 
 export class DefaultSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
     format(date: number, format: string): string {
@@ -29,34 +29,42 @@ export class DefaultSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
                 return `Q${Math.floor(d.getMonth() / 3 + 1)}`;
             case 'YYYY[Q]Q':
                 return `${d.getFullYear()}Q${Math.floor(d.getMonth() / 3 + 1)}`;
-            case 'MM':
-                // var month = d.toLocaleString('default', { month: 'long' });
-                var month = String(d.getMonth() + 1);
+            case 'MM': {
+                // const month = d.toLocaleString('default', { month: 'long' });
+                let month = String(d.getMonth() + 1);
                 if (month.length == 1) month = `0${month}`;
                 return `${month}`;
-            case 'MMMM':
-                var month = d.toLocaleString('default', { month: 'long' });
+            }
+            case 'MMMM': {
+                const month = d.toLocaleString('default', { month: 'long' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)}`;
-            case 'MMMM - YYYY':
-                var month = d.toLocaleString('default', { month: 'long' });
+            }
+            case 'MMMM - YYYY': {
+                const month = d.toLocaleString('default', { month: 'long' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)}-${d.getFullYear()}`;
-            case 'MMMM YYYY':
-                var month = d.toLocaleString('default', { month: 'long' });
+            }
+            case 'MMMM YYYY': {
+                const month = d.toLocaleString('default', { month: 'long' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)} ${d.getFullYear()}`;
-            case 'MMM':
-                var month = d.toLocaleString('default', { month: 'short' });
+            }
+            case 'MMM': {
+                const month = d.toLocaleString('default', { month: 'short' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)}`;
-            case 'MMM - YYYY':
-                var month = d.toLocaleString('default', { month: 'short' });
+            }
+            case 'MMM - YYYY': {
+                const month = d.toLocaleString('default', { month: 'short' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)} - ${d.getFullYear()}`;
-            case 'MMM YYYY':
-                var month = d.toLocaleString('default', { month: 'short' });
+            }
+            case 'MMM YYYY': {
+                const month = d.toLocaleString('default', { month: 'short' });
                 return `${month.charAt(0).toUpperCase()}${month.substring(1)} ${d.getFullYear()}`;
+            }
             case 'W':
                 return `${getWeekNumber(d)}`;
-            case 'WW':
+            case 'WW': {
                 const weeknumber = getWeekNumber(d);
                 return `${weeknumber.toString().length == 1 ? '0' : ''}${weeknumber}`;
+            }
             default:
                 console.warn(`Date Format '${format}' is not supported, use another date adapter.`);
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -70,7 +78,7 @@ export class DefaultSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
      */
     roundTo(date: number, unit: string, offset: number): number {
         const magnetDuration = getPeriodDuration(unit, offset);
-        let value = Math.round(date / magnetDuration) * magnetDuration; // 
+        const value = Math.round(date / magnetDuration) * magnetDuration; // 
         return value;
     }
 }

@@ -35,18 +35,22 @@
         rows: data.rows,
         tasks: data.tasks,
         timeRanges,
-        columnOffset: 15,
-        magnetOffset: 15,
         rowHeight: 52,
         rowPadding: 6,
-        headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
+        // headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
         fitWidth: true,
-        minWidth: 800,
-        from: time('06:00'),
-        to: time('18:00'),
+        minWidth: 2000,
+        from: moment().startOf('week'),
+        to: moment().endOf('week'),
         tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
         tableWidth: 240,
-        ganttTableModules: [SvelteGanttTable]
+        ganttTableModules: [SvelteGanttTable],
+
+        columnUnit: 'day',
+        columnOffset: 1,
+        magnetUnit: 'day',
+        magnetOffset: 1,                    
+        headers: [{ unit: 'day', format: 'MMMM YYYY', offset: 7 }, { unit: 'day', format: ' DD ddd' }],
     }
 
     $: {
@@ -62,6 +66,41 @@
     let gantt;
     onMount(() => {
         window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: $options });
+
+        gantt.api.tasks.on.changed(([ev]) => {
+            // ev.task.model=> from: 1665964800000, to: 1666224000000
+            // Cast do date:
+            //  new Date(ev.task.model.from).toISOString()    => '2022-10-17T00:00:00.000Z'
+            //  new Date(ev.task.model.from).toDateString()  => 'Sun Oct 16 2022' (timestamp here is '21:00:00 GMT-0300'
+            // I've lost the timezone here
+
+            // And look whats happening with model.to
+            // Cast do date:
+            //  new Date(ev.task.model.to).toISOString()    => '2022-10-20T00:00:00.000Z'
+            //  new Date(ev.task.model.from).toDateString()  => 'Wed Oct 19 2022' (timestamp here is '21:00:00 GMT-0300'
+
+            console.log(ev);
+
+            if (ev) {
+                let from = new Date(ev.task.model.from);
+                let to = new Date(ev.task.model.to);
+
+                console.log(from, to);
+
+                // Have to force things here
+                // i.setHours(0, 0, 0);
+                // f.setHours(23, 23, 59);
+                // f.setDate(f.getDate() - 1);
+
+                let data_to_server = {
+                    id: ev.task.model.id,
+                    from: from.toISOString(),
+                    to: to.toISOString(),
+                };
+
+                console.log(data_to_server);
+            }
+        });
     });
 
     function shuffle(array) {
@@ -120,6 +159,22 @@
         Object.assign($options, opts);
         gantt.$set($options);
     }
+
+    const a = time('6:00');
+    const b = time('6:30');
+    let curr = a;
+
+    function toggle() {
+        if (curr === a) {
+            curr = b;
+        } else {
+            curr = a;
+        }
+
+        gantt.$set({
+            from: curr
+        });
+    }
 </script>
 
 <style>
@@ -136,6 +191,7 @@
 </style>
 
 <div class="container">
+    <button on:click={toggle}>toggle</button>
     <div id="example-gantt"></div>
     <GanttOptions options={$options} on:change={onChangeOptions}/>
 </div>

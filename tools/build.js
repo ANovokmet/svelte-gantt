@@ -7,7 +7,7 @@ import { rollup as _rollup } from 'rollup';
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import uglify from 'rollup-plugin-uglify';
+// import uglify from 'rollup-plugin-uglify';
 import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import sveltePreprocess from 'svelte-preprocess';
@@ -66,16 +66,16 @@ promise = promise.then(() => _rollup({
 
 // Copy package.json and LICENSE.txt
 promise = promise.then(() => {
-	delete pkg.private;
-	delete pkg.devDependencies;
-	delete pkg.scripts;
+    delete pkg.private;
+    delete pkg.devDependencies;
+    delete pkg.scripts;
     delete pkg.eslintConfig;
 
     pkg.peerDependencies.svelte = '^4.0.0';
     pkg.exports = {
         '.': {
             types: './types/index.d.ts',
-			default: './index.js'
+            default: './index.js'
         },
         './svelte': {
             types: './svelte/index.d.ts',

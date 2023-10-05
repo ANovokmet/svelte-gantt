@@ -4,10 +4,10 @@ export interface SvelteGanttDateAdapter {
 }
 
 export function startOf(date: number, unit: string): number {
-    let d = new Date(date);
-    let y = d.getFullYear();
-    let m = d.getMonth();
-    let dt = d.getDate();
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const dt = d.getDate();
 
     switch (unit) {
         case 'y':
@@ -27,10 +27,11 @@ export function startOf(date: number, unit: string): number {
         case 'm':
         case 'minute':
         case 's':
-        case 'second':
-            let unitMs = getDuration(unit);
+        case 'second': {
+            const unitMs = getDuration(unit);
             const value = Math.floor(date / unitMs) * unitMs;
             return value;
+        }
         default:
             throw new Error(`Unknown unit: ${unit}`);
     }
@@ -199,7 +200,7 @@ function getNextDate(date, unit, offset){
     }
 }
 
-let units = ['y', 'year', 'month', 'week', 'd', 'day', 'h', 'hour', 'm', 'minute', 's', 'second'];
+const units = ['y', 'year', 'month', 'week', 'd', "day", 'h', 'hour', 'm', 'minute', 's', 'second'];
 /**
  * 
  * @param from Interval start
@@ -209,25 +210,25 @@ let units = ['y', 'year', 'month', 'week', 'd', 'day', 'h', 'hour', 'm', 'minute
  * @param highlightedDurations 
  * @returns 
  */
-export function getAllPeriods(from: number, to: number, unit: string, offset: number = 1, highlightedDurations?){
+export function getAllPeriods(from: number, to: number, unit: string, offset: number = 1, highlightedDurations?) {
     if(units.indexOf(unit) !== -1) {
         let tmsWorkOld          = 0;
         let interval_duration   = 0;
-        let start               = new Date(from); // Starts at hh:mm:ss
-        let dateWork            = new Date(from);
+        const start             = new Date(from); // Starts at hh:mm:ss
+        const dateWork          = new Date(from);
         let nextDate            = getNextDate(dateWork, unit, offset);
         let tmsWork             = nextDate.getTime();
         const firstDuration     = nextDate.getTime() - from;
-        let all_periods: any[]  = [{
-            start: start,
-            end: nextDate,
+        const all_periods  = [{
+            // start: start,
+            // end: nextDate,
             from: from, 
             // from: startOf(from, unit), // incorrect if not circled down to the unit eg. 6:30
             // TODO: think about offsetting the whole row, so for example if timeline starts at 6:30, the headers still show times for 6:00, 7:00 etc, and not 6:30, 7:30...
             to: nextDate.getTime(),
             duration: firstDuration,
             // check whether duration is highlighted
-            ...(highlightedDurations && isUnitFraction(start, highlightedDurations) && { isHighlighted: true })
+            isHighlighted: highlightedDurations && isUnitFraction(start, highlightedDurations)
         }];
 
         if(tmsWork < to) {
@@ -237,17 +238,17 @@ export function getAllPeriods(from: number, to: number, unit: string, offset: nu
                 interval_duration = nextDate.getTime() - tmsWork;
 
                 all_periods.push({
-                    from:tmsWork, 
-                    to:nextDate.getTime(), 
-                    duration:interval_duration,
+                    from: tmsWork, 
+                    to: nextDate.getTime(), 
+                    duration: interval_duration,
                     //check whether duration is highlighted
-                    ...(highlightedDurations && isUnitFraction(new Date(tmsWork), highlightedDurations) && { isHighlighted: true })
+                    isHighlighted: highlightedDurations && isUnitFraction(new Date(tmsWork), highlightedDurations)
                 });
                 tmsWork = nextDate.getTime()
             }
             const last_day_duration = to - tmsWorkOld;
-            all_periods[all_periods.length -1].to = to;
-            all_periods[all_periods.length -1].duration = last_day_duration;
+            all_periods[all_periods.length - 1].to = to;
+            all_periods[all_periods.length - 1].duration = last_day_duration;
             // ToDo: there could be another option for hours, minutes, seconds based on pure math like in getPeriodDuration to optimise performance
         }
         return all_periods; 

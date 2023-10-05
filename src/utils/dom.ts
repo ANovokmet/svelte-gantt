@@ -31,7 +31,7 @@ export function getRelativePos(node: HTMLElement, event: MouseEvent | offsetMous
  * @param removeOptions 
  */
 export function addEventListenerOnce(target: HTMLElement | Window, type: string, listener, addOptions?, removeOptions?) {
-    target.addEventListener(type, function fn(event) {
+    target.addEventListener(type, function fn() {
         target.removeEventListener(type, fn, removeOptions);
         listener.apply(this, arguments, addOptions);
     });
@@ -46,7 +46,7 @@ export function setCursor(cursor: string, node: HTMLElement = document.body) {
     node.style.cursor = cursor;
 }
 
-export function sortFn(prop: (element: any) => any) {
+export function sortFn(prop: (element) => number | string) {
     return function (a, b) {
         if (prop(a) < prop(b)) {
             return -1;
@@ -57,6 +57,7 @@ export function sortFn(prop: (element: any) => any) {
     }
 }
 
+/* eslint-disable */
 export function debounce(func, wait, immediate) {
     let timeout;
     return function () {
@@ -76,7 +77,6 @@ export function throttle(func, limit) {
     let wait = false;
     return function () {
         if (!wait) {
-
             func.apply(null, arguments);
             wait = true;
             setTimeout(function () {

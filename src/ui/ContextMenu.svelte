@@ -1,12 +1,10 @@
 <script>
-    import { onMount } from 'svelte';
-
     export let top;
     export let left;
     export let actions = [];
     export let onactionend = null;
 
-    function position(point) {
+    export function position(point) {
         top = point.y, left = point.x;
     }
 
@@ -14,10 +12,6 @@
         event.stopPropagation();
         action.action();
         if(onactionend) onactionend();
-    }
-
-    export function isTarget(event) {
-        return contextMenu === event.target;
     }
 </script>
 
