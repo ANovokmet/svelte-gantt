@@ -41,9 +41,13 @@
                 path += `L ${endX + 1.5 - width / 2} ${endY}`;
             }
             path += `m -2 -2 a 2 2 0 1 1 0 4 a 2 2 0 1 1 0 -4`;
-            arrowPath = `M${toTask.left - ARROW_SIZE}  ${toTask.top + toTask.height / 2 - ARROW_SIZE} 
+            arrowPath = `M${toTask.left - ARROW_SIZE}  ${
+                toTask.top + toTask.height / 2 - ARROW_SIZE
+            } 
                             L${toTask.left} ${toTask.top + toTask.height / 2} 
-                            L${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 + ARROW_SIZE} Z`;
+                            L${toTask.left - ARROW_SIZE} ${
+                                toTask.top + toTask.height / 2 + ARROW_SIZE
+                            } Z`;
         } else if (isToRowHidden) {
             path = `M${startX} ${startY}`;
             if (startX + MIN_LEN >= endX && startY != endY) {
@@ -66,19 +70,35 @@
                             L ${startX + width / 2} ${endY}
                             L ${endX - 2} ${endY}`;
             }
-            arrowPath = `M${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 - ARROW_SIZE} 
+            arrowPath = `M${toTask.left - ARROW_SIZE} ${
+                toTask.top + toTask.height / 2 - ARROW_SIZE
+            } 
                             L${toTask.left} ${toTask.top + toTask.height / 2} 
-                            L${toTask.left - ARROW_SIZE} ${toTask.top + toTask.height / 2 + ARROW_SIZE} Z`;
+                            L${toTask.left - ARROW_SIZE} ${
+                                toTask.top + toTask.height / 2 + ARROW_SIZE
+                            } Z`;
         }
     }
 </script>
 
-{#if (!isFromRowHidden && !isToRowHidden) || (isFromRowHidden !== isToRowHidden)}
-    <div class="sg-dependency" style="left:0;top:0" data-dependency-id="{id}">
-            <svg class="arrow" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" height="100%" width="100%">
-                <path class="select-area" d="{path}" {stroke} stroke-width="{strokeWidth}" fill="transparent" />
-                        <path d="{arrowPath}" fill="{stroke}" />
-            </svg>
+{#if (!isFromRowHidden && !isToRowHidden) || isFromRowHidden !== isToRowHidden}
+    <div class="sg-dependency" style="left:0;top:0" data-dependency-id={id}>
+        <svg
+            class="arrow"
+            xmlns="http://www.w3.org/2000/svg"
+            shape-rendering="crispEdges"
+            height="100%"
+            width="100%"
+        >
+            <path
+                class="select-area"
+                d={path}
+                {stroke}
+                stroke-width={strokeWidth}
+                fill="transparent"
+            />
+            <path d={arrowPath} fill={stroke} />
+        </svg>
     </div>
 {/if}
 

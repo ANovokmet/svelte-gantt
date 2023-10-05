@@ -10,9 +10,7 @@
     export let stroke = 'red';
     export let strokeWidth = 2;
 
-    onMount(() => {
-
-    });
+    onMount(() => {});
 
     let height;
     $: height = endY - startY;
@@ -22,37 +20,42 @@
 
     let path;
     $: {
-        if (startX == NaN || startX == undefined)
-            path = 'M0 0';
+        if (startX == NaN || startX == undefined) path = 'M0 0';
 
         let result;
         if (startX + minLen >= endX && startY != endY) {
             result = `L ${startX + minLen} ${startY} 
                         L ${startX + minLen} ${startY + height / 2}
                         L ${endX - minLen} ${startY + height / 2}
-                        L ${endX - minLen} ${endY} `
-        }
-        else {
+                        L ${endX - minLen} ${endY} `;
+        } else {
             result = `L ${startX + width / 2} ${startY} 
-                        L ${startX + width / 2} ${endY}`
+                        L ${startX + width / 2} ${endY}`;
         }
 
         // -2 so the line doesn't stick out of the arrowhead
-        path = `M${startX} ${startY}` + result + `L ${endX - 2} ${endY}`
+        path = `M${startX} ${startY}` + result + `L ${endX - 2} ${endY}`;
     }
 
     let arrowPath;
     $: {
-        if (endX == NaN || endX == undefined)
-            arrowPath = 'M0 0';
+        if (endX == NaN || endX == undefined) arrowPath = 'M0 0';
 
-        arrowPath = `M${endX - arrowSize} ${endY - arrowSize} L${endX} ${endY} L${endX - arrowSize} ${endY + arrowSize} Z`
+        arrowPath = `M${endX - arrowSize} ${endY - arrowSize} L${endX} ${endY} L${
+            endX - arrowSize
+        } ${endY + arrowSize} Z`;
     }
 </script>
 
-<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" class="arrow" height="100%" width="100%">
-    <path d="{path}" {stroke} stroke-width="{strokeWidth}" fill="transparent" class="select-area" />
-    <path d="{arrowPath}" fill="{stroke}" />
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    shape-rendering="crispEdges"
+    class="arrow"
+    height="100%"
+    width="100%"
+>
+    <path d={path} {stroke} stroke-width={strokeWidth} fill="transparent" class="select-area" />
+    <path d={arrowPath} fill={stroke} />
 </svg>
 
 <style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { normalizeClassAttr } from 'src/utils/dom';
+
     export let model;
     export let left;
     export let width;
@@ -7,16 +9,28 @@
     const _position = {
         width,
         x: left
-    }
-    $: {
-        _position.x = left, _position.width = width;
     };
+    $: {
+        _position.x = left;
+        _position.width = width;
+    }
+
+    let classes;
+    $: {
+        classes = normalizeClassAttr(model.classes);
+    }
 </script>
-<div class="sg-time-range {model.classes ? (Array.isArray(model.classes) ? model.classes.join(' ') : model.classes) : ''}" class:moving="{resizing}" style="width:{_position.width}px;left:{_position.x}px">
+
+<div
+    class="sg-time-range {classes}"
+    class:moving={resizing}
+    style="width:{_position.width}px;left:{_position.x}px"
+>
     {#if model.label}
         <div class="sg-time-range-label">{model.label}</div>
     {/if}
 </div>
+
 <style>
     .sg-time-range {
         height: 100%;
@@ -25,7 +39,13 @@
         flex-direction: column;
         align-items: center;
 
-        background-image: linear-gradient(-45deg, rgba(0, 0, 0, 0) 46%, #e03218 49%, #e03218 51%, rgba(0, 0, 0, 0) 55%);
+        background-image: linear-gradient(
+            -45deg,
+            rgba(0, 0, 0, 0) 46%,
+            #e03218 49%,
+            #e03218 51%,
+            rgba(0, 0, 0, 0) 55%
+        );
         background-size: 6px 6px !important;
         color: red;
         font-weight: 400;

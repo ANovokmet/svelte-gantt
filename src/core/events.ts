@@ -3,8 +3,7 @@ export function createDelegatedEventDispatcher() {
 
     return {
         onDelegatedEvent(type, attr, callback) {
-            if (!callbacks[type])
-                callbacks[type] = {};
+            if (!callbacks[type]) callbacks[type] = {};
             callbacks[type][attr] = callback;
         },
 
@@ -31,13 +30,13 @@ export function createDelegatedEventDispatcher() {
                 cbs['empty'](e, null, element);
             }
         }
-    }
+    };
 }
 
 function matches(cbs, element) {
     let data;
     for (let attr in cbs) {
-        if (data = element.getAttribute(attr)) {
+        if ((data = element.getAttribute(attr))) {
             return { attr, data };
         }
     }

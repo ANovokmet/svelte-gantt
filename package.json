@@ -17,7 +17,7 @@
         "package": "node tools/build && npm run build-package",
         "build-package": "svelte-package -i src -o dist/svelte",
         "lint": "eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
+        "format": "prettier --plugin-search-dir . --write . --plugin prettier-plugin-svelte"
     },
     "repository": {
         "type": "git",

@@ -5,19 +5,19 @@
     export let onactionend = null;
 
     export function position(point) {
-        top = point.y, left = point.x;
+        (top = point.y), (left = point.x);
     }
 
     function execute(event, action) {
         event.stopPropagation();
         action.action();
-        if(onactionend) onactionend();
+        if (onactionend) onactionend();
     }
 </script>
 
-<div class="sg-context-menu" style="top:{top}px;left:{left}px">    
+<div class="sg-context-menu" style="top:{top}px;left:{left}px">
     {#each actions as action}
-        <div class="context-option" on:click="{event => execute(event, action)}">{action.label}</div>
+        <div class="context-option" on:click={event => execute(event, action)}>{action.label}</div>
     {/each}
 </div>
 

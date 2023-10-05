@@ -23,15 +23,15 @@ export default {
             //     css.write('docs/dist/svelteGantt.css');
             // },
             emitCss: true,
-            preprocess: sveltePreprocess(),
+            preprocess: sveltePreprocess()
         }),
         postcss(),
-        resolve({ 
-            browser: true,
+        resolve({
+            browser: true
             // exportConditions: ['svelte']
         }),
         commonjs(),
         typescript(),
         production && uglify()
-    ],
-}
+    ]
+};

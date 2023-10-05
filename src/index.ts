@@ -7,7 +7,10 @@ import { SvelteGanttDependencies } from './modules/dependencies';
 import { SvelteGanttExternal } from './modules/external/external';
 import { MomentSvelteGanttDateAdapter } from './utils/momentDateAdapter';
 
-const SvelteGantt = _svelteGantt as unknown as ComponentCreator<SvelteGanttComponent, SvelteGanttOptions>;
+const SvelteGantt = _svelteGantt as unknown as ComponentCreator<
+    SvelteGanttComponent,
+    SvelteGanttOptions
+>;
 
 export {
     SvelteGantt,
@@ -17,7 +20,4 @@ export {
     MomentSvelteGanttDateAdapter
 };
 
-export type {
-    SvelteGanttComponent, 
-    SvelteGanttOptions
-};
+export type { SvelteGanttComponent, SvelteGanttOptions };

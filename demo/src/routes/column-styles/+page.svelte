@@ -8,15 +8,16 @@
 
     let generation = 0;
     let rowCount = 100;
-    const colors = ['blue', 'green', 'orange'];
+    const colors = ['blue', 'green', 'orange']
 
     const timeRanges = [
         {
             id: 0,
             from: time('10:00'),
             to: time('12:00'),
-            classes: null,
-            label: 'Lunch'
+            classes: 'time-range-lunch',
+            label: 'Lunch',
+            resizable: false,
         },
         {
             id: 1,
@@ -27,45 +28,51 @@
         }
     ];
 
+    const data = generate();
+
     $options = {
         dateAdapter: new MomentSvelteGanttDateAdapter(moment),
+        rows: data.rows,
+        tasks: data.tasks,
         timeRanges,
         columnOffset: 15,
         magnetOffset: 15,
         rowHeight: 52,
         rowPadding: 6,
-        headers: [{ unit: 'day', format: 'MMMM Do' }, { unit: 'hour', format: 'H:mm' }],
+        headers: [
+            { unit: 'day', format: 'MMMM Do' },
+            { unit: 'hour', format: 'H:mm' }
+        ],
         fitWidth: true,
         minWidth: 800,
         from: time('06:00'),
         to: time('18:00'),
         tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
         tableWidth: 240,
-        ganttTableModules: [SvelteGanttTable]
+        ganttTableModules: [SvelteGanttTable],
+        columnStrokeColor: '#ff0000',
+        columnStrokeWidth: 1,
+        useCanvasColumns: false,
+        highlightedDurations: {
+            unit: 'h',
+            fractions: [7, 9, 11]
+        },
+        highlightColor: '#6eb859'
     }
-
-    const data1 = generate();
-    const data2 = generate();
 
     $: {
         console.log('options changed', $options);
-        gantt1 && gantt1.$set($options);
-        gantt2 && gantt2.$set($options);
+        if (gantt) {
+            gantt.$set($options);
+        }
     }
 
-    /** @type {import('svelte-gantt').SvelteGanttComponent} */
-    let gantt1;
-    /** @type {import('svelte-gantt').SvelteGanttComponent} */
-    let gantt2;
+    /**
+     * @type {import('svelte-gantt').SvelteGanttComponent}
+     */
+    let gantt;
     onMount(() => {
-        window.gantt1 = gantt1 = new SvelteGantt({
-            target: document.getElementById('example-gantt-1'),
-            props: { ...$options, ...data1 }
-        });
-        window.gantt2 = gantt2 = new SvelteGantt({
-            target: document.getElementById('example-gantt-2'),
-            props: { ...$options, ...data2 }
-        });
+        window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: $options });
     });
 
     function shuffle(array) {
@@ -121,31 +128,25 @@
 
     function onChangeOptions(event) {
         const opts = event.detail;
-        Object.assign(options, opts);
-        gantt1.$set(options);
-        gantt2.$set(options);
+        Object.assign($options, opts);
+        gantt.$set($options);
     }
 </script>
 
 <style>
-    #example-gantt-1, #example-gantt-2 {
+    #example-gantt {
         flex-grow: 1;
         overflow: auto;
     }
 
     .container {
         display: flex;
-        flex-direction: column;
         overflow: auto;
         flex: 1;
     }
 </style>
 
-<svelte:head>
-    <title>Multiple charts - svelte-gantt</title> 
-</svelte:head>
 <div class="container">
-    <div id="example-gantt-1"></div>
-    <div id="example-gantt-2"></div>
-    <GanttOptions options={options} on:change={onChangeOptions}/>
+    <div id="example-gantt"></div>
+    <GanttOptions options={$options} on:change={onChangeOptions}/>
 </div>

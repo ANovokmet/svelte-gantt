@@ -4,10 +4,4 @@ import Milestone from './Milestone.svelte';
 import TimeRange from './TimeRange.svelte';
 import TimeRangeHeader from './TimeRangeHeader.svelte';
 
-export {
-    Task,
-    Row,
-    Milestone,
-    TimeRange,
-    TimeRangeHeader
-};
+export { Task, Row, Milestone, TimeRange, TimeRangeHeader };

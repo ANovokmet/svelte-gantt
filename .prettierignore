@@ -11,6 +11,7 @@ node_modules
 /demo
 /examples
 /dist
+/docs
 
 # Ignore files for PNPM, NPM and YARN
 pnpm-lock.yaml

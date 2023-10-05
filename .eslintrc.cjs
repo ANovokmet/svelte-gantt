@@ -4,12 +4,14 @@ module.exports = {
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:svelte/recommended',
+        'prettier'
     ],
     rules: {
-        indent: ['warn', 4, { 'SwitchCase': 1 }],
+        indent: ['warn', 4, { SwitchCase: 1 }],
         quotes: ['warn', 'single'],
         'prefer-rest-params': 'off',
-        'svelte/valid-compile': 'off'
+        'svelte/valid-compile': 'off',
+        'svelte/no-at-html-tags': 'off'
     },
     parser: '@typescript-eslint/parser',
     plugins: ['@typescript-eslint'],

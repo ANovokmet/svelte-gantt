@@ -4,20 +4,19 @@ import type { EntityStore } from '../store';
 
 export type DropHandler = (event: MouseEvent) => any;
 
-export class DragDropManager
-{
-    handlerMap: {[key:string]: DropHandler} = {};
+export class DragDropManager {
+    handlerMap: { [key: string]: DropHandler } = {};
 
     constructor(rowStore: EntityStore<SvelteRow>) {
-        this.register('row', (event) => {
+        this.register('row', event => {
             let elements = document.elementsFromPoint(event.clientX, event.clientY);
-            let rowElement = elements.find((element) => !!element.getAttribute('data-row-id'));
-            if(rowElement !== undefined) {
+            let rowElement = elements.find(element => !!element.getAttribute('data-row-id'));
+            if (rowElement !== undefined) {
                 const rowId = rowElement.getAttribute('data-row-id');
                 const { entities } = get(rowStore);
                 const targetRow = entities[rowId];
 
-                if(targetRow.model.enableDragging){
+                if (targetRow.model.enableDragging) {
                     return targetRow;
                 }
             }
@@ -32,7 +31,7 @@ export class DragDropManager
     getTarget(target: string, event: MouseEvent): SvelteRow {
         var handler = this.handlerMap[target];
 
-        if(handler){
+        if (handler) {
             return handler(event);
         }
     }

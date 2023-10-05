@@ -1,8 +1,8 @@
 <script lang="ts">
     import { getContext } from 'svelte';
     import { get } from 'svelte/store';
-    import { reflectTask } from "../core/task";
-    import { setCursor } from "../utils/dom";
+    import { reflectTask } from '../core/task';
+    import { setCursor } from '../utils/dom';
     import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt';
     import type { GanttDataStore } from '../core/store';
 
@@ -20,23 +20,32 @@
     let _position = {
         x: left,
         y: top,
-        width: width,
-    }
+        width: width
+    };
 
     $: updatePosition(left, top, width);
     function updatePosition(x, y, width) {
-        if(!_dragging && !_resizing) {
+        if (!_dragging && !_resizing) {
             _position.x = x;
             _position.y = y;
             _position.width = width;
             // should NOT animate on resize/update of columns
         }
     }
-    
+
     const { taskStore, rowStore } = getContext('dataStore') as GanttDataStore;
     const { rowContainer }: GanttContext = getContext('gantt');
-    const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows, taskElementHook }: GanttContextOptions = getContext('options');
-    const { dndManager, api, utils, columnService, selectionManager }: GanttContextServices = getContext('services');
+    const {
+        taskContent,
+        resizeHandleWidth,
+        rowPadding,
+        onTaskButtonClick,
+        reflectOnParentRows,
+        reflectOnChildRows,
+        taskElementHook
+    }: GanttContextOptions = getContext('options');
+    const { dndManager, api, utils, columnService, selectionManager }: GanttContextServices =
+        getContext('services');
 
     let selectedTasks = selectionManager.selectedTasks;
 
@@ -46,7 +55,7 @@
             //row switching
             const sourceRow = $rowStore.entities[model.resourceId];
             if (event.dragging) {
-                const targetRow = dndManager.getTarget("row", event.mouseEvent);
+                const targetRow = dndManager.getTarget('row', event.mouseEvent);
                 if (targetRow) {
                     model.resourceId = targetRow.model.id;
                     api.tasks.raise.switchRow(this, targetRow, sourceRow);
@@ -62,8 +71,12 @@
             if (rowChangeValid) {
                 const prevFrom = model.from;
                 const prevTo = model.to;
-                const newFrom = model.from = utils.roundTo(columnService.getDateByPosition(event.x));
-                const newTo = model.to = utils.roundTo(columnService.getDateByPosition(event.x + event.width));
+                const newFrom = (model.from = utils.roundTo(
+                    columnService.getDateByPosition(event.x)
+                ));
+                const newTo = (model.to = utils.roundTo(
+                    columnService.getDateByPosition(event.x + event.width)
+                ));
                 const newLeft = columnService.getPositionByDate(newFrom) | 0;
                 const newRight = columnService.getPositionByDate(newTo) | 0;
 
@@ -71,7 +84,7 @@
                 const left = newLeft;
                 const width = newRight - newLeft;
                 const top = $rowPadding + targetRow.y;
-                
+
                 updatePosition(left, top, width);
 
                 const newTask = {
@@ -80,27 +93,29 @@
                     width: width,
                     top: top,
                     model
-                }
+                };
 
-                const changed = prevFrom != newFrom || prevTo != newTo || (sourceRow && sourceRow.model.id !== targetRow.model.id);
-                if(changed) {
+                const changed =
+                    prevFrom != newFrom ||
+                    prevTo != newTo ||
+                    (sourceRow && sourceRow.model.id !== targetRow.model.id);
+                if (changed) {
                     api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
                 }
                 selectionManager.newTasksAndReflections.push(newTask);
 
-                if(changed) {
+                if (changed) {
                     api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
                 }
 
                 // update shadow tasks
-                if(newTask.reflections) {
-                    selectionManager.oldReflections.push(...newTask.reflections)
+                if (newTask.reflections) {
+                    selectionManager.oldReflections.push(...newTask.reflections);
                 }
 
                 const reflectedTasks = [];
-                if(reflectOnChildRows && targetRow.allChildren) {
-                    if(!newTask.reflections)
-                        newTask.reflections = [];
+                if (reflectOnChildRows && targetRow.allChildren) {
+                    if (!newTask.reflections) newTask.reflections = [];
 
                     const opts = { rowPadding: $rowPadding };
                     targetRow.allChildren.forEach(r => {
@@ -110,9 +125,8 @@
                     });
                 }
 
-                if(reflectOnParentRows && targetRow.allParents.length > 0) {
-                    if(!newTask.reflections)
-                        newTask.reflections = [];
+                if (reflectOnParentRows && targetRow.allParents.length > 0) {
+                    if (!newTask.reflections) newTask.reflections = [];
 
                     const opts = { rowPadding: $rowPadding };
                     targetRow.allParents.forEach(r => {
@@ -122,50 +136,56 @@
                     });
                 }
 
-                if(reflectedTasks.length > 0) {
+                if (reflectedTasks.length > 0) {
                     selectionManager.newTasksAndReflections.push(...reflectedTasks);
                 }
 
-                if(!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
+                if (!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
                     newTask.reflections = null;
                 }
-            }
-            else {
+            } else {
                 // reset position
                 (_position.x = task.left), (_position.width = task.width), (_position.y = task.top);
             }
-        };
+        }
 
-        if (!reflected) { // reflected tasks must not be resized or dragged
+        if (!reflected) {
+            // reflected tasks must not be resized or dragged
             selectionManager.taskSettings.set(model.id, {
-                onDown: (event) => {
+                onDown: event => {
                     if (event.dragging) {
-                        setCursor("move");
+                        setCursor('move');
                     }
                     if (event.resizing) {
-                        setCursor("e-resize");
+                        setCursor('e-resize');
                     }
                 },
                 onMouseUp: () => {
-                    setCursor("default");
+                    setCursor('default');
                     api.tasks.raise.moveEnd(model);
                 },
-                onResize: (event) => {
+                onResize: event => {
                     (_position.x = event.x), (_position.width = event.width), (_resizing = true);
                 },
-                onDrag: (event) => {
+                onDrag: event => {
                     (_position.x = event.x), (_position.y = event.y), (_dragging = true);
                     api.tasks.raise.move(model);
                 },
                 dragAllowed: () => {
-                    return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
+                    return (
+                        get(rowStore).entities[model.resourceId].model.enableDragging &&
+                        model.enableDragging
+                    );
                 },
                 resizeAllowed: () => {
-                    return get(rowStore).entities[model.resourceId].model.enableDragging && model.enableDragging;
+                    return (
+                        get(rowStore).entities[model.resourceId].model.enableDragging &&
+                        model.enableDragging
+                    );
                 },
                 onDrop: onDrop,
                 container: rowContainer,
-                resizeHandleWidth, 
+                resizeHandleWidth,
                 getX: () => _position.x,
                 getY: () => _position.y,
                 getWidth: () => _position.width,
@@ -179,7 +199,7 @@
     }
 
     function taskElement(node, model) {
-        if(taskElementHook) {
+        if (taskElementHook) {
             return taskElementHook(node, model);
         }
     }
@@ -190,7 +210,47 @@
         }
     }
 </script>
-    
+
+<div
+    data-task-id={model.id}
+    on:dblclick={() => api.tasks.raise.dblclicked(model)}
+    use:drag
+    use:taskElement={model}
+    class="sg-task {model.classes}"
+    style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
+    class:moving={_dragging || _resizing}
+    class:animating
+    class:sg-task-reflected={reflected}
+    class:sg-task-selected={$selectedTasks[model.id]}
+    class:dragging-enabled={$rowStore.entities[model.resourceId].model.enableDragging &&
+        model.enableDragging}
+>
+    {#if model.amountDone}
+        <div class="sg-task-background" style="width:{model.amountDone}%" />
+    {/if}
+    <div class="sg-task-content">
+        {#if model.html}
+            {@html model.html}
+        {:else if taskContent}
+            {@html taskContent(model)}
+        {:else}
+            {model.label}
+        {/if}
+        <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
+        {#if model.showButton}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
+                {@html model.buttonHtml}
+            </span>
+        {/if}
+    </div>
+
+    {#if model.labelBottom}
+        <!-- svelte-ignore a11y-label-has-associated-control -->
+        <label class="sg-label-bottom">{model.labelBottom}</label>
+    {/if}
+</div>
+
 <style>
     .sg-label-bottom {
         position: absolute;
@@ -213,7 +273,9 @@
         white-space: nowrap;
         /* overflow: hidden; */
 
-        transition: background-color 0.2s, opacity 0.2s;
+        transition:
+            background-color 0.2s,
+            opacity 0.2s;
         pointer-events: all;
     }
 
@@ -241,7 +303,10 @@
     }
 
     .sg-task:not(.moving) {
-        transition: transform 0.2s, background-color 0.2s, width 0.2s;
+        transition:
+            transform 0.2s,
+            background-color 0.2s,
+            width 0.2s;
     }
 
     .sg-task.moving {
@@ -249,8 +314,8 @@
         opacity: 0.5;
     }
 
-    .sg-task.dragging-enabled:hover::before{
-        content: "";
+    .sg-task.dragging-enabled:hover::before {
+        content: '';
         width: 4px;
         height: 50%;
         top: 25%;
@@ -264,8 +329,8 @@
         z-index: 1;
     }
 
-    .sg-task.dragging-enabled:hover::after{
-        content: "";
+    .sg-task.dragging-enabled:hover::after {
+        content: '';
         width: 4px;
         height: 50%;
         top: 25%;
@@ -300,42 +365,3 @@
         background: rgb(69, 112, 150);
     }
 </style>
-    
-<div
-    data-task-id="{model.id}"  
-    on:dblclick={() => {api.tasks.raise.dblclicked(model)}} 
-    use:drag
-    use:taskElement={model}
-    class="sg-task {model.classes}"
-    style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);" 
-    class:moving={_dragging || _resizing}
-    class:animating
-    class:sg-task-reflected={reflected}
-    class:sg-task-selected={$selectedTasks[model.id]}
-    class:dragging-enabled={$rowStore.entities[model.resourceId].model.enableDragging && model.enableDragging}
-    >
-    {#if model.amountDone}
-    <div class="sg-task-background" style="width:{model.amountDone}%" />
-    {/if}
-    <div class="sg-task-content">
-    {#if model.html}
-        {@html model.html}
-    {:else if taskContent}
-        {@html taskContent(model)}
-    {:else}
-        {model.label}
-    {/if}
-    <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
-    {#if model.showButton}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
-        {@html model.buttonHtml}
-        </span>
-    {/if}
-    </div>
-
-    {#if model.labelBottom}
-    <!-- svelte-ignore a11y-label-has-associated-control -->
-    <label class="sg-label-bottom">{model.labelBottom}</label>
-    {/if}
-</div>

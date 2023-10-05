@@ -17,9 +17,13 @@ export class DefaultSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
             case 'dd/MM/yyyy':
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             case 'dd/MM/yyyy hh:mm':
-                return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`;
+                return `${d.getDate()}/${
+                    d.getMonth() + 1
+                }/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`;
             case 'dd/MM/yyyy hh:mm:ss':
-                return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+                return `${d.getDate()}/${
+                    d.getMonth() + 1
+                }/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
             // VPY More formats supported 10/12/2021
             case 'YYYY':
                 return `${d.getFullYear()}`;
@@ -73,12 +77,12 @@ export class DefaultSvelteGanttDateAdapter implements SvelteGanttDateAdapter {
 
     /**
      * Rounds the date down to the nearest unit
-     * 
+     *
      * Note: This does not consider the timezone, rounds only to the UTC time, which makes it incorrect to round to day start or half hour time zones
      */
     roundTo(date: number, unit: string, offset: number): number {
         const magnetDuration = getPeriodDuration(unit, offset);
-        const value = Math.round(date / magnetDuration) * magnetDuration; // 
+        const value = Math.round(date / magnetDuration) * magnetDuration; //
         return value;
     }
 }
@@ -100,7 +104,7 @@ function getWeekNumber(d: Date) {
     // Get first day of year
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     // Calculate full weeks to nearest Thursday
-    const weekNo = Math.ceil((((d.valueOf() - yearStart.valueOf()) / 86400000) + 1) / 7);
+    const weekNo = Math.ceil(((d.valueOf() - yearStart.valueOf()) / 86400000 + 1) / 7);
     // Return array of year and week number
     return weekNo;
 }
@@ -113,7 +117,7 @@ function getPeriodDuration(unit: string, offset: number): number {
         case 'y':
         case 'year':
             // 2 cases 31622400000 (366) - 31536000000 (365)
-            return offset * 31536000000; // Incorrect since there is years with 366 days 
+            return offset * 31536000000; // Incorrect since there is years with 366 days
         case 'month':
             // 4 cases : 28 - 29 - 30 - 31
             return offset * 30 * 24 * 60 * 60 * 1000; // incorrect since months are of different durations

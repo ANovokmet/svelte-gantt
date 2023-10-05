@@ -1,7 +1,7 @@
 /**
  * Typings for Svelte components.
- * 
- * Store typings were taken from 'svelte' npm package. 
+ *
+ * Store typings were taken from 'svelte' npm package.
  */
 
 export interface ComponentOptions<T> {
@@ -21,13 +21,13 @@ export interface Component<T = Record<string, any>> {
 }
 
 export interface ComponentCreator<C extends Component<T>, T = Record<string, any>> {
-    new(options: ComponentOptions<T>): C;
+    new (options: ComponentOptions<T>): C;
 }
 
 /**
  * Avoid installing svelte in projects
  */
-declare module "svelte/store" {
+declare module 'svelte/store' {
     interface Writable<T> extends Readable<T> {
         /**
          * Set value and inform subscribers.
@@ -40,7 +40,7 @@ declare module "svelte/store" {
          */
         update(updater: (state: T) => T): void;
     }
-    
+
     interface Readable<T> {
         /**
          * Subscribe on value changes.

@@ -8,7 +8,7 @@
     const dispatch = createEventDispatcher();
 
     import TableRow from './TableRow.svelte';
-    import type { GanttDataStore } from "../../core/store";
+    import type { GanttDataStore } from '../../core/store';
     import type { TableHeader } from './tableHeader';
     import type { SvelteRow } from '../../core/row';
 
@@ -34,12 +34,12 @@
 
     let headerContainer;
     function scrollListener(node) {
-        scrollables.push({ node, orientation: "vertical" });
+        scrollables.push({ node, orientation: 'vertical' });
 
         function onScroll(event) {
             headerContainer.scrollLeft = node.scrollLeft;
         }
-        
+
         node.addEventListener('scroll', onScroll);
 
         return {
@@ -48,7 +48,7 @@
             }
         };
     }
-    
+
     let scrollWidth;
     $: {
         let sum = 0;
@@ -61,16 +61,14 @@
     function onRowExpanded(event) {
         const row = event.detail.row;
         row.expanded = true;
-        if(row.children)
-            show(row.children);
+        if (row.children) show(row.children);
         updateYPositions();
     }
 
     function onRowCollapsed(event) {
         const row = event.detail.row;
         row.expanded = false;
-        if(row.children)
-            hide(row.children);
+        if (row.children) hide(row.children);
         updateYPositions();
     }
 
@@ -78,9 +76,9 @@
         let y = 0;
         $rowStore.ids.forEach(id => {
             const row = $rowStore.entities[id];
-            if(!row.hidden) {
+            if (!row.hidden) {
                 $rowStore.entities[id].y = y;
-                y+= $rowHeight;
+                y += $rowHeight;
             }
         });
 
@@ -93,16 +91,14 @@
 
     function hide(children) {
         children.forEach(row => {
-            if(row.children)
-                hide(row.children);
+            if (row.children) hide(row.children);
             row.hidden = true;
         });
     }
 
     function show(children, hidden = false) {
         children.forEach(row => {
-            if(row.children)
-                show(row.children, !row.expanded);
+            if (row.children) show(row.children, !row.expanded);
             row.hidden = hidden;
         });
     }
@@ -111,7 +107,7 @@
     let bottomScrollbarVisible;
     $: {
         bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth;
-    } 
+    }
 </script>
 
 <div class="sg-table sg-view" style="width:{tableWidth}px;">
@@ -123,15 +119,19 @@
         {/each}
     </div>
 
-    <div class="sg-table-body" class:bottom-scrollbar-visible="{bottomScrollbarVisible}">
+    <div class="sg-table-body" class:bottom-scrollbar-visible={bottomScrollbarVisible}>
         <div class="sg-table-scroller" use:scrollListener>
-            <div class="sg-table-rows" style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"> 
+            <div
+                class="sg-table-rows"
+                style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
+            >
                 {#each visibleRows as row}
                     <TableRow
-                        row={row}
+                        {row}
                         headers={tableHeaders}
                         on:rowExpanded={onRowExpanded}
-                        on:rowCollapsed={onRowCollapsed}/>
+                        on:rowCollapsed={onRowCollapsed}
+                    />
                 {/each}
             </div>
         </div>
@@ -152,7 +152,7 @@
 
     .sg-table-scroller {
         width: 100%;
-        border-bottom: 1px solid #efefef; 
+        border-bottom: 1px solid #efefef;
         overflow-y: hidden;
     }
 
@@ -165,7 +165,6 @@
     }
 
     .sg-table-rows {
-        
     }
 
     .sg-table-body {
@@ -180,18 +179,18 @@
         font-weight: 400;
     }
 
-    :global(.sg-table-cell){
+    :global(.sg-table-cell) {
         white-space: nowrap;
         overflow: hidden;
-        
+
         display: flex;
         align-items: center;
         flex-shrink: 0;
 
-        padding: 0 .5em;
+        padding: 0 0.5em;
         height: 100%;
     }
-    
+
     :global(.sg-table-cell:last-child) {
         flex-grow: 1;
     }

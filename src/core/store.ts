@@ -5,13 +5,13 @@ import type { SvelteRow } from './row';
 import type { SvelteTimeRange } from './timeRange';
 
 interface EntityState<T> {
-    ids: (string | number)[],
-    entities: { [key: string]: T }
+    ids: (string | number)[];
+    entities: { [key: string]: T };
 }
 
 interface EntityType {
-    model: { id: string | number },
-    hidden?: boolean
+    model: { id: string | number };
+    hidden?: boolean;
 }
 
 export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
@@ -35,69 +35,75 @@ function createEntityStore<T extends EntityType>(): EntityStore<T> {
         set,
         _update: update,
         subscribe,
-        add: (item: T) => update(({ ids, entities }) => ({
-            ids: [...ids, item.model.id],
-            entities: {
-                ...entities,
-                [item.model.id]: item
-            }
-        })),
-        delete: (id: number | string) => update(state => {
-            const { [id]: _, ...entities } = state.entities;
-            return {
-                ids: state.ids.filter(i => i !== id),
-                entities
-            };
-        }),
-        deleteAll: (ids: (number | string)[]) => update(state => {
-            const entities = { ...state.entities };
-            const idSet = new Set(ids);
-
-            for (let i = 0; i < state.ids.length; i++) {
-                if (idSet.has(state.ids[i])) {
-                    delete entities[state.ids[i]];
-                }
-            }
-
-            return {
-                ids: state.ids.filter(i => !idSet.has(i)),
-                entities
-            };
-        }),
-        update: (item: T) => update(({ ids, entities }) => ({
-            ids,
-            entities: {
-                ...entities,
-                [item.model.id]: item
-            }
-        })),
-        upsert: (item: T) => update(({ ids, entities }) => {
-            const hasIndex = ids.indexOf(item.model.id) !== -1;
-
-            return {
-                ids: hasIndex ? ids : [...ids, item.model.id],
+        add: (item: T) =>
+            update(({ ids, entities }) => ({
+                ids: [...ids, item.model.id],
                 entities: {
                     ...entities,
                     [item.model.id]: item
                 }
-            }
-        }),
-        upsertAll: (items: T[]) => update(state => {
-            const entities = { ...state.entities };
-            const ids = [...state.ids];
+            })),
+        delete: (id: number | string) =>
+            update(state => {
+                const { [id]: _, ...entities } = state.entities;
+                return {
+                    ids: state.ids.filter(i => i !== id),
+                    entities
+                };
+            }),
+        deleteAll: (ids: (number | string)[]) =>
+            update(state => {
+                const entities = { ...state.entities };
+                const idSet = new Set(ids);
 
-            for (let i = 0; i < items.length; i++) {
-                if (ids.indexOf(items[i].model.id) === -1) {
-                    ids.push(items[i].model.id);
+                for (let i = 0; i < state.ids.length; i++) {
+                    if (idSet.has(state.ids[i])) {
+                        delete entities[state.ids[i]];
+                    }
                 }
-                entities[items[i].model.id] = items[i];
-            }
 
-            return {
+                return {
+                    ids: state.ids.filter(i => !idSet.has(i)),
+                    entities
+                };
+            }),
+        update: (item: T) =>
+            update(({ ids, entities }) => ({
                 ids,
-                entities
-            };
-        }),
+                entities: {
+                    ...entities,
+                    [item.model.id]: item
+                }
+            })),
+        upsert: (item: T) =>
+            update(({ ids, entities }) => {
+                const hasIndex = ids.indexOf(item.model.id) !== -1;
+
+                return {
+                    ids: hasIndex ? ids : [...ids, item.model.id],
+                    entities: {
+                        ...entities,
+                        [item.model.id]: item
+                    }
+                };
+            }),
+        upsertAll: (items: T[]) =>
+            update(state => {
+                const entities = { ...state.entities };
+                const ids = [...state.ids];
+
+                for (let i = 0; i < items.length; i++) {
+                    if (ids.indexOf(items[i].model.id) === -1) {
+                        ids.push(items[i].model.id);
+                    }
+                    entities[items[i].model.id] = items[i];
+                }
+
+                return {
+                    ids,
+                    entities
+                };
+            }),
         addAll: (items: T[]) => {
             const ids = [];
             const entities = {};
@@ -123,7 +129,10 @@ export function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]> 
     });
 }
 
-export function where<T extends EntityType>(store: EntityStore<T>, filterFn: (value: T) => any): Readable<T[]> {
+export function where<T extends EntityType>(
+    store: EntityStore<T>,
+    filterFn: (value: T) => any
+): Readable<T[]> {
     return derived(store, ({ ids, entities }) => {
         const results = [];
         for (let i = 0; i < ids.length; i++) {

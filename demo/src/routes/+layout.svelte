@@ -28,6 +28,7 @@
                 <a href="/events"><button type="button">Events</button></a>
                 <a href="/multiple-charts"><button type="button">Multiple gantt</button></a>
                 <a href="/svelte-component"><button type="button">Usage as svelte component</button></a>
+                <a href="/column-styles"><button type="button">Column styles</button></a>
             </div>
     
             <GanttViewNavigation options={$options} on:updateOptions={onUpdateOptions} />

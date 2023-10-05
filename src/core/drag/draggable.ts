@@ -3,7 +3,7 @@ import { MIN_DRAG_Y, MIN_DRAG_X } from '../constants';
 import type { offsetMousePostion } from '../../utils/dom';
 
 export interface OffsetData {
-    offsetPos: { x: number | null, y: number | null };
+    offsetPos: { x: number | null; y: number | null };
     offsetWidth: number;
 }
 
@@ -43,7 +43,8 @@ export interface ResizeEvent {
 }
 
 export interface offsetPos {
-    x: number | null, y: number | null
+    x: number | null;
+    y: number | null;
 }
 
 export type directions = 'left' | 'right' | undefined;
@@ -84,7 +85,7 @@ export class Draggable {
     }
 
     get dragAllowed() {
-        if (typeof (this.settings.dragAllowed) === 'function') {
+        if (typeof this.settings.dragAllowed === 'function') {
             return this.settings.dragAllowed();
         } else {
             return this.settings.dragAllowed;
@@ -92,15 +93,18 @@ export class Draggable {
     }
 
     get resizeAllowed() {
-        if (typeof (this.settings.resizeAllowed) === 'function') {
+        if (typeof this.settings.resizeAllowed === 'function') {
             return this.settings.resizeAllowed();
         } else {
             return this.settings.resizeAllowed;
         }
     }
 
-    onmousedown = (event) => {
-        const offsetEvent = { clientX: this.offsetPos.x + event.clientX, clientY: this.offsetPos.y + event.clientY }
+    onmousedown = event => {
+        const offsetEvent = {
+            clientX: this.offsetPos.x + event.clientX,
+            clientY: this.offsetPos.y + event.clientY
+        };
 
         if (!isLeftClick(event) && !this.settings.modelId) {
             return;
@@ -132,7 +136,10 @@ export class Draggable {
                 this.resizing = true;
             }
 
-            if (canResize && this.mouseStartPosX >= width - this.offsetWidth - this.settings.resizeHandleWidth) {
+            if (
+                canResize &&
+                this.mouseStartPosX >= width - this.offsetWidth - this.settings.resizeHandleWidth
+            ) {
                 this.direction = 'right';
                 this.resizing = true;
             }
@@ -148,7 +155,7 @@ export class Draggable {
                     width,
                     y,
                     resizing: this.resizing,
-                    dragging: this.dragging,
+                    dragging: this.dragging
                 });
             }
 
@@ -157,14 +164,19 @@ export class Draggable {
                 addEventListenerOnce(window, 'mouseup', this.onmouseup);
             }
         }
-    }
+    };
 
     onmousemove = (event: MouseEvent) => {
-        const offsetEvent = { clientX: this.offsetPos.x + event.clientX, clientY: this.offsetPos.y + event.clientY }
+        const offsetEvent = {
+            clientX: this.offsetPos.x + event.clientX,
+            clientY: this.offsetPos.y + event.clientY
+        };
 
         if (!this.resizeTriggered) {
-            if (Math.abs(offsetEvent.clientX - this.initialX) > MIN_DRAG_X
-                || Math.abs(offsetEvent.clientY - this.initialY) > MIN_DRAG_Y) {
+            if (
+                Math.abs(offsetEvent.clientX - this.initialX) > MIN_DRAG_X ||
+                Math.abs(offsetEvent.clientY - this.initialY) > MIN_DRAG_Y
+            ) {
                 this.resizeTriggered = true;
             } else {
                 return;
@@ -174,7 +186,6 @@ export class Draggable {
         event.preventDefault();
 
         if (this.resizing) {
-
             const mousePos = getRelativePos(this.settings.container, offsetEvent);
             const x = this.settings.getX();
             const width = this.settings.getWidth();
@@ -182,16 +193,16 @@ export class Draggable {
             let resultX: number;
             let resultWidth: number;
 
-            if (this.direction === 'left') { //resize left
+            if (this.direction === 'left') {
+                //resize left
                 if (this.overRezisedOffset === 'left') {
                     mousePos.x += this.offsetWidth;
                 }
 
-                if ((this.mouseStartRight - mousePos.x) <= 0) {
-
+                if (this.mouseStartRight - mousePos.x <= 0) {
                     this.direction = 'right';
                     if (this.overRezisedOffset !== 'left') {
-                        this.overRezisedOffset = 'right'
+                        this.overRezisedOffset = 'right';
                     } else {
                         this.overRezisedOffset = undefined;
                     }
@@ -199,22 +210,21 @@ export class Draggable {
                     resultX = this.mouseStartRight;
                     resultWidth = this.mouseStartRight - mousePos.x;
                     this.mouseStartRight = this.mouseStartRight + width;
-                }
-                else {
+                } else {
                     resultX = mousePos.x;
                     resultWidth = this.mouseStartRight - mousePos.x;
                 }
-            }
-            else if (this.direction === 'right') {//resize right
+            } else if (this.direction === 'right') {
+                //resize right
                 if (this.overRezisedOffset === 'right') {
-                    mousePos.x -= this.offsetWidth
+                    mousePos.x -= this.offsetWidth;
                 }
 
-                if ((mousePos.x - x + this.offsetWidth) <= 0) {
+                if (mousePos.x - x + this.offsetWidth <= 0) {
                     this.direction = 'left';
 
                     if (this.overRezisedOffset !== 'right') {
-                        this.overRezisedOffset = 'left'
+                        this.overRezisedOffset = 'left';
                     } else {
                         this.overRezisedOffset = undefined;
                     }
@@ -222,17 +232,17 @@ export class Draggable {
                     resultX = mousePos.x + this.offsetWidth;
                     resultWidth = mousePos.x - x + this.offsetWidth;
                     this.mouseStartRight = x;
-                }
-                else {
+                } else {
                     resultX = x;
                     resultWidth = mousePos.x - x + this.offsetWidth;
                 }
             }
 
-            this.settings.onResize && this.settings.onResize({
-                x: resultX,
-                width: resultWidth
-            });
+            this.settings.onResize &&
+                this.settings.onResize({
+                    x: resultX,
+                    width: resultWidth
+                });
         }
 
         // mouseup
@@ -244,10 +254,13 @@ export class Draggable {
                 y: mousePos.y - this.mouseStartPosY
             });
         }
-    }
+    };
 
     onmouseup = (event: MouseEvent) => {
-        const offsetEvent = { clientX: this.offsetPos.x + event.clientX, clientY: this.offsetPos.y + event.clientY }
+        const offsetEvent = {
+            clientX: this.offsetPos.x + event.clientX,
+            clientY: this.offsetPos.y + event.clientY
+        };
 
         const x = this.settings.getX();
         const y = this.settings.getY();
@@ -282,8 +295,9 @@ export class Draggable {
         this.offsetWidth = null;
         this.overRezisedOffset = undefined;
 
-        if (!this.settings.modelId) window.removeEventListener('mousemove', this.onmousemove, false);
-    }
+        if (!this.settings.modelId)
+            window.removeEventListener('mousemove', this.onmousemove, false);
+    };
 
     destroy() {
         this.node.removeEventListener('mousedown', this.onmousedown, false);

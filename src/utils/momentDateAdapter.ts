@@ -25,8 +25,8 @@ const aliases = {
     hour: 'hours',
     minute: 'minutes',
     second: 'seconds',
-    millisecond: 'milliseconds',
-}
+    millisecond: 'milliseconds'
+};
 
 // TODO: write tests for this
 function roundMoment(m, precision, key, direction = 'round') {
@@ -54,13 +54,13 @@ function roundMoment(m, precision, key, direction = 'round') {
     let rounded = false;
     let subRatio = 1;
     let maxValue;
-    
-    for (const k in methods){
+
+    for (const k in methods) {
         if (k === key) {
             value = m.get(key);
             maxValue = methods[k];
             rounded = true;
-        } else if(rounded) {
+        } else if (rounded) {
             subRatio *= methods[k];
             value += m.get(k) / subRatio;
             m.set(k, 0);

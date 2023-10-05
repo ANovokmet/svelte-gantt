@@ -1,5 +1,6 @@
 export interface offsetMousePostion {
-    clientX: number | null, clientY: number | null;
+    clientX: number | null;
+    clientY: number | null;
     isOffsetMouseEvent?: boolean;
 }
 
@@ -9,28 +10,34 @@ export function isLeftClick(event) {
 
 /**
  * Gets mouse position within an element
- * @param node 
- * @param event 
+ * @param node
+ * @param event
  */
-export function getRelativePos(node: HTMLElement, event: MouseEvent | offsetMousePostion ) {
+export function getRelativePos(node: HTMLElement, event: MouseEvent | offsetMousePostion) {
     const rect = node.getBoundingClientRect();
     const x = event.clientX - rect.left; //x position within the element.
-    const y = event.clientY - rect.top;  //y position within the element.
+    const y = event.clientY - rect.top; //y position within the element.
     return {
         x: x,
         y: y
-    }
+    };
 }
 
 /**
  * Adds an event listener that triggers once.
- * @param target 
- * @param type 
- * @param listener 
- * @param addOptions 
- * @param removeOptions 
+ * @param target
+ * @param type
+ * @param listener
+ * @param addOptions
+ * @param removeOptions
  */
-export function addEventListenerOnce(target: HTMLElement | Window, type: string, listener, addOptions?, removeOptions?) {
+export function addEventListenerOnce(
+    target: HTMLElement | Window,
+    type: string,
+    listener,
+    addOptions?,
+    removeOptions?
+) {
     target.addEventListener(type, function fn() {
         target.removeEventListener(type, fn, removeOptions);
         listener.apply(this, arguments, addOptions);
@@ -39,8 +46,8 @@ export function addEventListenerOnce(target: HTMLElement | Window, type: string,
 
 /**
  * Sets the cursor on an element. Globally by default.
- * @param cursor 
- * @param node 
+ * @param cursor
+ * @param node
  */
 export function setCursor(cursor: string, node: HTMLElement = document.body) {
     node.style.cursor = cursor;
@@ -54,14 +61,28 @@ export function sortFn(prop: (element) => number | string) {
             return 1;
         }
         return 0;
+    };
+}
+
+export function normalizeClassAttr(classes: Array<string> | string) {
+    if (!classes) {
+        return '';
     }
+    if (typeof classes === 'string') {
+        return classes;
+    }
+    if (Array.isArray(classes)) {
+        return classes.join(' ');
+    }
+    return '';
 }
 
 /* eslint-disable */
 export function debounce(func, wait, immediate) {
     let timeout;
     return function () {
-        const context = this, args = arguments;
+        const context = this,
+            args = arguments;
         const later = function () {
             timeout = null;
             if (!immediate) func.apply(context, args);
@@ -71,7 +92,7 @@ export function debounce(func, wait, immediate) {
         timeout = setTimeout(later, wait);
         if (callNow) func.apply(context, args);
     };
-};
+}
 
 export function throttle(func, limit) {
     let wait = false;
@@ -83,5 +104,5 @@ export function throttle(func, limit) {
                 wait = false;
             }, limit);
         }
-    }
+    };
 }

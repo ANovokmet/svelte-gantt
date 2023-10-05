@@ -1,6 +1,6 @@
 import type { ColumnService } from './core/column';
 import type { GanttApi } from './core/api';
-import type { Component } from "./core/svelte";
+import type { Component } from './core/svelte';
 import type { DragDropManager } from './core/drag';
 import type { RowModel, RowFactory, SvelteRow } from './core/row';
 import type { TaskModel, TaskFactory, SvelteTask } from './core/task';
@@ -20,17 +20,17 @@ interface Header {
 }
 
 export interface GanttContextDimensions {
-    from: Writable<Date>,
-    to: Writable<Date>,
-    width: Writable<number>,
-    dateAdapter: SvelteGanttDateAdapter
-    visibleWidth: Writable<number>,
-    visibleHeight: Writable<number>,
-    headerHeight: Writable<number>,
+    from: Writable<Date>;
+    to: Writable<Date>;
+    width: Writable<number>;
+    dateAdapter: SvelteGanttDateAdapter;
+    visibleWidth: Writable<number>;
+    visibleHeight: Writable<number>;
+    headerHeight: Writable<number>;
 }
 
 export interface GanttContext {
-    scrollables: any[];
+    scrollables: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
     hoveredRow: Writable<number>;
     selectedRow: Writable<number>;
     rowContainer: HTMLElement;
@@ -114,10 +114,10 @@ export interface SvelteGanttOptions {
      *  highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
      */
     highlightedDurations?: highlightedDurations;
-    /** 
+    /**
      * list of headers used for main gantt area
      *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-     *  - format: datetime format used for header cell label 
+     *  - format: datetime format used for header cell label
      **/
     headers?: Header[];
     /**
@@ -128,14 +128,14 @@ export interface SvelteGanttOptions {
     rowHeight?: number;
     rowPadding?: number;
     /** modules used in gantt */
-    ganttTableModules?: any[];
-    ganttBodyModules?: any[];
+    ganttTableModules?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+    ganttBodyModules?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
     /**
-     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree. 
+     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree.
      */
     reflectOnParentRows?: boolean;
     /**
-     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. 
+     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
      */
     reflectOnChildRows?: boolean;
     /** sets top level gantt class which can be used for styling */
@@ -147,7 +147,7 @@ export interface SvelteGanttOptions {
     /** task content factory function */
     taskContent?: TaskContentTemplate; // e.g. (task) => '<div>Custom task content</div>'
     /** task element hook */
-    taskElementHook?: (node: HTMLElement, task: SvelteTask) => { update?(task), destroy?() }
+    taskElementHook?: (node: HTMLElement, task: SvelteTask) => { update?(task); destroy?() };
     /**
      * Width of table, used with SvelteGanttTable module
      */
