@@ -2,7 +2,7 @@
     import { getContext } from 'svelte';
     import { get } from 'svelte/store';
     import { reflectTask } from "../core/task";
-    import { setCursor } from "../utils/domUtils";
+    import { setCursor } from "../utils/dom";
     import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt';
     import type { GanttDataStore } from '../core/store';
 

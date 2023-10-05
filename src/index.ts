@@ -5,7 +5,7 @@ import type { ComponentCreator } from './core/svelte';
 import { SvelteGanttTable } from './modules/table';
 import { SvelteGanttDependencies } from './modules/dependencies';
 import { SvelteGanttExternal } from './modules/external/external';
-import { MomentSvelteGanttDateAdapter } from './utils/date';
+import { MomentSvelteGanttDateAdapter } from './utils/momentDateAdapter';
 
 const SvelteGantt = _svelteGantt as unknown as ComponentCreator<SvelteGanttComponent, SvelteGanttOptions>;
 

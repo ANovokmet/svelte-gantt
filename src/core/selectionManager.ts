@@ -1,5 +1,5 @@
 
-import { addEventListenerOnce } from '../utils/domUtils';
+import { addEventListenerOnce } from '../utils/dom';
 import type { EntityStore } from '../core/store';
 import type { OffsetData, DraggableSettings } from "../core/drag";
 import { Draggable } from "../core/drag";

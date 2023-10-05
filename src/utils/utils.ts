@@ -1,3 +1,5 @@
+import { SvelteGanttDateAdapter } from "./date";
+
 export class GanttUtils {
     from: number;
     to: number;
@@ -5,6 +7,8 @@ export class GanttUtils {
     magnetOffset: number;
     magnetUnit: string;
     magnetDuration: number;
+    
+    dateAdapter: SvelteGanttDateAdapter;
 
     /** because gantt width is not always correct */
      /**BlueFox 09.01.23: couldn't reproduce the above so I removed the code
@@ -27,8 +31,14 @@ export class GanttUtils {
     }
 
     roundTo (date: number) {
-        let value = Math.round(date / this.magnetDuration) * this.magnetDuration;
-        return value;
+        if (this.dateAdapter) {
+            return this.dateAdapter.roundTo(date, this.magnetUnit, this.magnetOffset);
+        }
+        // this does not consider the timezone, rounds only to the UTC time
+        // let value = Math.round((date - 7200000) / this.magnetDuration) * this.magnetDuration; 
+        // cases where rounding to day or timezone offset is not rounded, this won't work
+
+        return null;
     }
 }
 

@@ -4,7 +4,7 @@
     const dispatch = createEventDispatcher();
 
     import { Draggable } from '../core/drag';
-    import { setCursor } from '../utils/domUtils';
+    import { setCursor } from '../utils/dom';
 
     export let x;
     export let container;

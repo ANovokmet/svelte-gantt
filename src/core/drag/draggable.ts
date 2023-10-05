@@ -1,6 +1,6 @@
-import { isLeftClick, addEventListenerOnce, getRelativePos } from '../../utils/domUtils';
+import { isLeftClick, addEventListenerOnce, getRelativePos } from '../../utils/dom';
 import { MIN_DRAG_Y, MIN_DRAG_X } from '../constants';
-import type { offsetMousePostion } from '../../utils/domUtils';
+import type { offsetMousePostion } from '../../utils/dom';
 
 export interface OffsetData {
     offsetPos: { x: number | null, y: number | null };

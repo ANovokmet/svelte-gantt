@@ -58,14 +58,14 @@ export function sortFn(prop: (element: any) => any) {
 }
 
 export function debounce(func, wait, immediate) {
-    var timeout;
+    let timeout;
     return function () {
-        var context = this, args = arguments;
-        var later = function () {
+        const context = this, args = arguments;
+        const later = function () {
             timeout = null;
             if (!immediate) func.apply(context, args);
         };
-        var callNow = immediate && !timeout;
+        const callNow = immediate && !timeout;
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
         if (callNow) func.apply(context, args);
@@ -73,7 +73,7 @@ export function debounce(func, wait, immediate) {
 };
 
 export function throttle(func, limit) {
-    var wait = false;
+    let wait = false;
     return function () {
         if (!wait) {
 

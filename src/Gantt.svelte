@@ -15,7 +15,7 @@
     import { Resizer } from './ui';
 
     import { GanttUtils, getPositionByDate } from './utils/utils';
-    import { getRelativePos, debounce, throttle, isLeftClick } from './utils/domUtils';
+    import { getRelativePos, debounce, throttle, isLeftClick } from './utils/dom';
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask } from './core/task';
@@ -26,7 +26,8 @@
     import { findByPosition, findByDate } from './core/column';
     import type { Column } from './core/column';
     import { createDelegatedEventDispatcher } from './core/events';
-    import { NoopSvelteGanttDateAdapter, getDuration, getAllPeriods } from './utils/date';
+    import { getDuration, getAllPeriods } from './utils/date';
+    import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
     import type { SvelteGanttDateAdapter } from './utils/date';
 
     function assertSet(values) {
@@ -99,7 +100,7 @@
     export let resizeHandleWidth = 10;
     export let onTaskButtonClick = null;
 
-    export let dateAdapter: SvelteGanttDateAdapter = new NoopSvelteGanttDateAdapter();
+    export let dateAdapter: SvelteGanttDateAdapter = new DefaultSvelteGanttDateAdapter();
 
     export let magnetUnit = 'minute';
     export let magnetOffset = 15;
@@ -173,7 +174,7 @@
             return date;
         },
         /**
-         * 
+         * TODO: remove, currently unused
          * @param {number} date - Date
          * @returns {number} rounded date passed as parameter
          */
@@ -478,6 +479,7 @@
         utils.magnetOffset = magnetOffset;
         utils.magnetUnit = magnetUnit;
         utils.magnetDuration = magnetDuration;
+        utils.dateAdapter = dateAdapter;
         //utils.to = columns[columns.length - 1].to;
         //utils.width = columns.length * columns[columns.length - 1].width;
     }
