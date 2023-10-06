@@ -7,11 +7,8 @@
     "scripts": {
         "build": "rollup -c",
         "autobuild": "rollup -c -w",
-        "dev": "run-p start autobuild",
-        "demo:autobuild": "cd demo && npm run autobuild",
-        "demo:start": "sirv docs --dev -s",
-        "demo:dev": "run-p demo:start demo:autobuild",
-        "docs": "run-p docs:*",
+        "demo:dev": "cd demo && npm run dev",
+        "dev": "run-p autobuild demo:dev",
         "validate": "svelte-check",
         "demokit:dev": "npm --prefix demo-sveltekit run dev",
         "package": "node tools/build && npm run build-package",

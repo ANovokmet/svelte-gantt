@@ -3,7 +3,7 @@
     import type { GanttContext, GanttContextServices, GanttContextOptions } from '../gantt';
     import { Draggable } from '../core/drag';
     import type { GanttDataStore } from '../core/store';
-    import { normalizeClassAttr } from 'src/utils/dom';
+    import { normalizeClassAttr } from '../utils/dom';
 
     const { rowContainer }: GanttContext = getContext('gantt');
     const { api, utils, columnService }: GanttContextServices = getContext('services');

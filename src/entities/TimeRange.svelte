@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { normalizeClassAttr } from 'src/utils/dom';
+    import { normalizeClassAttr } from '../utils/dom';
 
     export let model;
     export let left;

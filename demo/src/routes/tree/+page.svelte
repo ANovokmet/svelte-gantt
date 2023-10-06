@@ -237,6 +237,9 @@
     }
 </style>
 
+<svelte:head>
+    <title>Tree view - svelte-gantt</title> 
+</svelte:head>
 <div class="container">
     <div id="example-gantt"></div>
     <GanttOptions options={options} on:change={onChangeOptions}/>

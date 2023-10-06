@@ -167,6 +167,9 @@
     }
 </style>
 
+<svelte:head>
+    <title>Usage as svelte - svelte-gantt</title> 
+</svelte:head>
 <div class="container">
     <div id="example-gantt">
         <SvelteGantt bind:this={gantt}  {...$options}></SvelteGantt>

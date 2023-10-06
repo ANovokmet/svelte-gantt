@@ -138,6 +138,7 @@
     export let highlightedDurations: HighlightedDurations;
     export let highlightColor = '#6eb859';
 
+    /** Allows working with the actual DOM node */
     export let taskElementHook = null;
 
     const visibleWidth = writable<number>(null);

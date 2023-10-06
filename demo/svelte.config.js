@@ -10,15 +10,14 @@ const config = {
 		adapter: adapter({
 			// default options are shown. On some platforms
 			// these options are set automatically — see below
-			pages: 'build',
-			assets: 'build',
-			fallback: 'app.html',
+			pages: process.env.NODE_ENV === 'production' ? '../docs' : 'build',
+			fallback: '404.html',
 			precompress: false,
 			strict: true
 		}),
 		paths: {
 			relative: true,
-			base: process.env.NODE_ENV === "production1" ? "/svelte-gantt" : "",
+			base: process.env.NODE_ENV === 'production' ? '/svelte-gantt' : '',
 		},
 		alias:{
 			'$dist': path.resolve('../dist'),

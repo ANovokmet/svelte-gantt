@@ -1,8 +1,10 @@
+type DelegatedCallback = (e: MouseEvent, data: string, target: Element) => void;
+
 export function createDelegatedEventDispatcher() {
-    const callbacks = {};
+    const callbacks: { [type: string]: { [attr: string]: DelegatedCallback } } = {};
 
     return {
-        onDelegatedEvent(type, attr, callback) {
+        onDelegatedEvent(type, attr, callback: DelegatedCallback) {
             if (!callbacks[type]) callbacks[type] = {};
             callbacks[type][attr] = callback;
         },
@@ -11,13 +13,13 @@ export function createDelegatedEventDispatcher() {
             delete callbacks[type][attr];
         },
 
-        onEvent(e) {
-            let { type, target } = e;
+        onEvent(e: MouseEvent) {
+            const { type, target } = e;
             const cbs = callbacks[type];
             if (!cbs) return;
 
             let match;
-            let element = target;
+            let element = target as Element;
             while (element && element != e.currentTarget) {
                 if ((match = matches(cbs, element))) {
                     break;
@@ -35,7 +37,7 @@ export function createDelegatedEventDispatcher() {
 
 function matches(cbs, element) {
     let data;
-    for (let attr in cbs) {
+    for (const attr in cbs) {
         if ((data = element.getAttribute(attr))) {
             return { attr, data };
         }

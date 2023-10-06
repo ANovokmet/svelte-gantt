@@ -238,6 +238,9 @@
     }
 </style>
 
+<svelte:head>
+    <title>Gantt events - svelte-gantt</title> 
+</svelte:head>
 <div class="container">
     <div id="example-gantt-events"></div>
     <GanttOptions options={options} on:change={onChangeOptions}/>

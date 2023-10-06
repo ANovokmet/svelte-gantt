@@ -3,6 +3,7 @@
     import '../main.css';
     import { showOptions, options } from './../stores/store';
     import GanttViewNavigation from '../components/GanttViewNavigation.svelte';
+    import { base } from '$app/paths';
 
     function onUpdateOptions(event) {
         const opts = event.detail;
@@ -21,14 +22,14 @@
         </div>
         <div class="header-controls">
             <div class="header-controls__row">
-                <a href="/large-dataset"><button type="button">LargeDataset</button></a>
-                <a href="/dependencies"><button type="button">Dependencies</button></a>
-                <a href="/tree"><button type="button">Tree</button></a>
-                <a href="/external"><button type="button">External</button></a>
-                <a href="/events"><button type="button">Events</button></a>
-                <a href="/multiple-charts"><button type="button">Multiple gantt</button></a>
-                <a href="/svelte-component"><button type="button">Usage as svelte component</button></a>
-                <a href="/column-styles"><button type="button">Column styles</button></a>
+                <a href="{base}/large-dataset"><button type="button">LargeDataset</button></a>
+                <a href="{base}/dependencies"><button type="button">Dependencies</button></a>
+                <a href="{base}/tree"><button type="button">Tree</button></a>
+                <a href="{base}/external"><button type="button">External</button></a>
+                <a href="{base}/events"><button type="button">Events</button></a>
+                <a href="{base}/multiple-charts"><button type="button">Multiple gantt</button></a>
+                <a href="{base}/svelte-component"><button type="button">Usage as svelte component</button></a>
+                <a href="{base}/column-styles"><button type="button">Column styles</button></a>
             </div>
     
             <GanttViewNavigation options={$options} on:updateOptions={onUpdateOptions} />

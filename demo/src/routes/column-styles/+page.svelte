@@ -5,6 +5,7 @@
     import moment from 'moment';
     import GanttOptions from '../../components/GanttOptions.svelte';
     import { options } from '../../stores/store';
+    import { base } from '$app/paths';
 
     let generation = 0;
     let rowCount = 100;
@@ -47,7 +48,7 @@
         minWidth: 800,
         from: time('06:00'),
         to: time('18:00'),
-        tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'tree' }],
+        tableHeaders: [{ title: 'Label', property: 'label', width: 140, type: 'resourceInfo' }],
         tableWidth: 240,
         ganttTableModules: [SvelteGanttTable],
         columnStrokeColor: '#ff0000',
@@ -98,7 +99,7 @@
                 id: i,
                 label: 'Row #' + i,
                 age: (Math.random() * 80) | 0,
-                imageSrc: 'Content/joe.jpg',
+                imageSrc: `${base}/joe.jpg`,
                 classes: rand_bool ? ['row-disabled'] : undefined,
                 enableDragging: !rand_bool,
                 generation
@@ -146,6 +147,9 @@
     }
 </style>
 
+<svelte:head>
+    <title>Column styles - svelte-gantt</title> 
+</svelte:head>
 <div class="container">
     <div id="example-gantt"></div>
     <GanttOptions options={$options} on:change={onChangeOptions}/>

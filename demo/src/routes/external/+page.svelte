@@ -211,6 +211,9 @@
     }
 </style>
 
+<svelte:head>
+    <title>External draggable - svelte-gantt</title> 
+</svelte:head>
 <div class="container">
     <div id="example-gantt"></div>
     <div id="new-task">Drag to gantt</div>
