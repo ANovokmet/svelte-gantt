@@ -1,6 +1,9 @@
 import { Column } from 'src/core/column';
 
-export function createBackground(columns: Column[], opts: { columnStrokeWidth, columnStrokeColor }) {
+export function createBackground(
+    columns: Column[],
+    opts: { columnStrokeWidth; columnStrokeColor }
+) {
     const canvas = document.createElement('canvas');
     canvas.width = (columns.length - 1) * columns[0].width;
     canvas.height = 20;
@@ -13,7 +16,7 @@ export function createBackground(columns: Column[], opts: { columnStrokeWidth, c
     ctx.lineCap = 'square';
     ctx.strokeStyle = opts.columnStrokeColor;
     ctx.translate(0.5, 0.5);
-    columns.forEach((column) => {
+    columns.forEach(column => {
         lineAt(ctx, column.left);
     });
     const dataURL = canvas.toDataURL();
@@ -27,12 +30,12 @@ function lineAt(ctx, x) {
     ctx.stroke();
 }
 
-export function createWeekEndsHighlight(columns, opts: { from, highlightColor }) {
+export function createWeekEndsHighlight(columns, opts: { from; highlightColor }) {
     const start_gantt = new Date(opts.from);
     const dayStart = start_gantt.getDay();
-    const startIndex = (dayStart == 0 ? 7 : 7 - dayStart);
+    const startIndex = dayStart == 0 ? 7 : 7 - dayStart;
     const canvas = document.createElement('canvas');
-    canvas.width = (columns.length) * columns[0].width;
+    canvas.width = columns.length * columns[0].width;
     canvas.height = 20;
     const ctx = canvas.getContext('2d');
     ctx.shadowColor = 'rgba(128,128,128,0.5)';
@@ -41,12 +44,12 @@ export function createWeekEndsHighlight(columns, opts: { from, highlightColor })
     ctx.shadowBlur = 0.5;
     ctx.lineWidth = columns[0].width;
     ctx.lineCap = 'square';
-    ctx.strokeStyle = opts.highlightColor; 
+    ctx.strokeStyle = opts.highlightColor;
     ctx.translate(0.5, 0.5);
-    
+
     columns.forEach((column, index) => {
-        if(index == startIndex) lineAt(ctx, column.left-columns[0].width/2);
-        if(index == startIndex + 1) lineAt(ctx, column.left-columns[0].width/2);
+        if (index == startIndex) lineAt(ctx, column.left - columns[0].width / 2);
+        if (index == startIndex + 1) lineAt(ctx, column.left - columns[0].width / 2);
     });
     const dataURL = canvas.toDataURL();
     return `url("${dataURL}")`;

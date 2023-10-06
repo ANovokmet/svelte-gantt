@@ -13,10 +13,10 @@
 
     let backgroundImage;
     $: {
-        console.log(columns);
         // TODO: background repeats and so do columns so passing every element is not needed, but line alignment issues occur on later rows
         // TODO: I used to make column widths and positions whole numbers, now they contain decimals again, check if this is because of that
-        backgroundImage = createBackground(columns, { // columns.slice(0,5)
+        backgroundImage = createBackground(columns, {
+            // columns.slice(0,5)
             columnStrokeColor,
             columnStrokeWidth
         });

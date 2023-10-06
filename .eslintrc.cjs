@@ -11,7 +11,15 @@ module.exports = {
         quotes: ['warn', 'single'],
         'prefer-rest-params': 'off',
         'svelte/valid-compile': 'off',
-        'svelte/no-at-html-tags': 'off'
+        'svelte/no-at-html-tags': 'off',
+        '@typescript-eslint/no-unused-vars': [
+            'error',
+            {
+                argsIgnorePattern: '_',
+                varsIgnorePattern: '_',
+                caughtErrorsIgnorePattern: '_'
+            }
+        ]
     },
     parser: '@typescript-eslint/parser',
     plugins: ['@typescript-eslint'],
@@ -31,6 +39,12 @@ module.exports = {
             parser: 'svelte-eslint-parser',
             parserOptions: {
                 parser: '@typescript-eslint/parser'
+            }
+        },
+        {
+            files: ['src/**/*'],
+            rules: {
+                'no-console': ['error', { allow: ['warn', 'error'] }]
             }
         }
     ]

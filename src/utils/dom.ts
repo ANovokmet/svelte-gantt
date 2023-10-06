@@ -78,7 +78,7 @@ export function normalizeClassAttr(classes: Array<string> | string) {
 }
 
 /* eslint-disable */
-export function debounce(func, wait, immediate) {
+export function debounce<F extends (...args) => void>(func: F, wait: number, immediate = false) {
     let timeout;
     return function () {
         const context = this,
@@ -91,10 +91,10 @@ export function debounce(func, wait, immediate) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
         if (callNow) func.apply(context, args);
-    };
+    } as F;
 }
 
-export function throttle(func, limit) {
+export function throttle<F extends (...args) => void>(func: F, limit: number): F {
     let wait = false;
     return function () {
         if (!wait) {
@@ -104,5 +104,5 @@ export function throttle(func, limit) {
                 wait = false;
             }, limit);
         }
-    };
+    } as F;
 }

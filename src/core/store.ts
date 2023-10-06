@@ -14,21 +14,27 @@ interface EntityType {
     hidden?: boolean;
 }
 
-export interface EntityStore<T extends EntityType> extends Readable<EntityState<T>> {
+export type EntityKey = string | number;
+
+export interface EntityStore<T extends EntityType, K extends EntityKey = EntityKey>
+    extends Readable<EntityState<T>> {
     _update(updater: (value: EntityState<T>) => EntityState<T>): void;
     add(entity: T): void;
     addAll(entities: T[]): void;
     update(entity: T): void;
     upsert(entity: T): void;
     upsertAll(entities: T[]): void;
-    delete(id: number | string): void;
-    deleteAll(ids: (number | string)[]): void;
+    delete(id: K): void;
+    deleteAll(ids: K[]): void;
     refresh(): void;
     set(value: EntityState<T>): void;
-    entities?: any;
+    entities?: Record<K, T>;
 }
 
-function createEntityStore<T extends EntityType>(): EntityStore<T> {
+function createEntityStore<T extends EntityType, K extends EntityKey = EntityKey>(): EntityStore<
+    T,
+    K
+> {
     const { subscribe, set, update } = writable<EntityState<T>>({ ids: [], entities: {} });
 
     return {
@@ -131,7 +137,7 @@ export function all<T extends EntityType>(store: EntityStore<T>): Readable<T[]> 
 
 export function where<T extends EntityType>(
     store: EntityStore<T>,
-    filterFn: (value: T) => any
+    filterFn: (value: T) => boolean
 ): Readable<T[]> {
     return derived(store, ({ ids, entities }) => {
         const results = [];
@@ -165,6 +171,8 @@ export function createDataStore() {
         return cache;
     });
 
+    const draggingTaskCache = writable<{ [id: string]: boolean }>({});
+
     return {
         taskStore,
         rowStore,
@@ -172,7 +180,8 @@ export function createDataStore() {
         allTasks,
         allRows,
         allTimeRanges,
-        rowTaskCache
+        rowTaskCache,
+        draggingTaskCache
     };
 }
 

@@ -3,9 +3,9 @@ import type { ColumnService } from './column';
 
 export interface TaskModel {
     id: number; // | string;
-    resourceId: number; // | string
-    from: any; // date
-    to: any; // date
+    resourceId: number | string; // | string
+    from: number; // date
+    to: number; // date
 
     amountDone?: number;
     classes?: string | string[];
@@ -15,6 +15,7 @@ export interface TaskModel {
     buttonClasses?: string | string[];
     buttonHtml?: string;
     enableDragging?: boolean;
+    labelBottom?: string;
 }
 
 export interface SvelteTask {
@@ -92,7 +93,7 @@ export class TaskFactory {
     }
 }
 
-function overlap(one: SvelteTask, other: SvelteTask) {
+export function overlap(one: SvelteTask, other: SvelteTask) {
     return !(one.left + one.width <= other.left || one.left >= other.left + other.width);
 }
 

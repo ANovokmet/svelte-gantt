@@ -69,8 +69,8 @@ interface highlightedDurations {
     fractions: number[];
 }
 
-type TaskButtonClickHandler = (task: SvelteTask) => void;
-type TaskContentTemplate = (task: SvelteTask) => string;
+type TaskButtonClickHandler = (task: TaskModel, event?: MouseEvent) => void;
+type TaskContentTemplate = (task: TaskModel) => string;
 type TaskElementHook = (task: SvelteTask, element: HTMLElement) => void;
 
 export interface SvelteGanttOptions {

@@ -1,16 +1,16 @@
 <script lang="ts">
     import { getContext } from 'svelte';
     import { get } from 'svelte/store';
-    import { reflectTask } from '../core/task';
-    import { setCursor } from '../utils/dom';
+    import { TaskModel, reflectTask } from '../core/task';
+    import { setCursor, throttle } from '../utils/dom';
     import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt';
     import type { GanttDataStore } from '../core/store';
 
-    export let model;
-    export let height;
-    export let left;
-    export let top;
-    export let width;
+    export let model: TaskModel;
+    export let height: number;
+    export let left: number;
+    export let top: number;
+    export let width: number;
     export let reflected = false;
 
     let animating = true;
@@ -33,8 +33,8 @@
         }
     }
 
-    const { taskStore, rowStore } = getContext('dataStore') as GanttDataStore;
-    const { rowContainer }: GanttContext = getContext('gantt');
+    const { taskStore, rowStore, draggingTaskCache } = getContext('dataStore') as GanttDataStore;
+    const { rowContainer, mainContainer }: GanttContext = getContext('gantt');
     const {
         taskContent,
         resizeHandleWidth,
@@ -49,7 +49,46 @@
 
     let selectedTasks = selectionManager.selectedTasks;
 
-    function drag(node) {
+    /** How much pixels near the bounds user has to drag to start scrolling */
+    const DRAGGING_TO_SCROLL_TRESHOLD = 40;
+    /** How much pixels does the view scroll when dragging */
+    const DRAGGING_TO_SCROLL_DELTA = 40;
+    /** Bounds of the main gantt area, changes only on window resize */
+    let mainContainerRect: DOMRect;
+    function outOfBounds(event: MouseEvent, rect: DOMRect) {
+        return {
+            left: event.clientX - rect.left < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
+            top: event.clientY - rect.top < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
+            right: event.clientX - rect.left > rect.width - DRAGGING_TO_SCROLL_TRESHOLD,
+            bottom: event.clientY - rect.top > rect.height - DRAGGING_TO_SCROLL_TRESHOLD
+        };
+    }
+
+    const scrollIfOutOfBounds = throttle((event: MouseEvent) => {
+        // throttle the following
+        const bounds = outOfBounds(event, mainContainerRect);
+        if (bounds.left || bounds.right) {
+            // scroll left
+            mainContainer.scrollTo({
+                left:
+                    mainContainer.scrollLeft +
+                    (bounds.left ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
+                behavior: 'smooth'
+            });
+        }
+
+        if (bounds.top || bounds.bottom) {
+            // scroll top
+            mainContainer.scrollTo({
+                top:
+                    mainContainer.scrollTop +
+                    (bounds.top ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
+                behavior: 'smooth'
+            });
+        }
+    }, 250);
+
+    function drag(node: HTMLElement) {
         function onDrop(event) {
             let rowChangeValid = true;
             //row switching
@@ -67,6 +106,7 @@
             _dragging = _resizing = false;
 
             const task = $taskStore.entities[model.id];
+            delete $draggingTaskCache[model.id];
 
             if (rowChangeValid) {
                 const prevFrom = model.from;
@@ -153,23 +193,31 @@
             // reflected tasks must not be resized or dragged
             selectionManager.taskSettings.set(model.id, {
                 onDown: event => {
+                    mainContainerRect = mainContainer.getBoundingClientRect();
                     if (event.dragging) {
                         setCursor('move');
                     }
                     if (event.resizing) {
                         setCursor('e-resize');
                     }
+                    $draggingTaskCache[model.id] = true;
                 },
                 onMouseUp: () => {
                     setCursor('default');
                     api.tasks.raise.moveEnd(model);
                 },
                 onResize: event => {
-                    (_position.x = event.x), (_position.width = event.width), (_resizing = true);
+                    _position.x = event.x;
+                    _position.width = event.width;
+                    _resizing = true;
+                    scrollIfOutOfBounds(event.event);
                 },
                 onDrag: event => {
-                    (_position.x = event.x), (_position.y = event.y), (_dragging = true);
+                    _position.x = event.x;
+                    _position.y = event.y;
+                    _dragging = true;
                     api.tasks.raise.move(model);
+                    scrollIfOutOfBounds(event.event);
                 },
                 dragAllowed: () => {
                     return (
@@ -204,9 +252,9 @@
         }
     }
 
-    export function onclick(event) {
+    function onClick(event: MouseEvent) {
         if (onTaskButtonClick) {
-            onTaskButtonClick(model);
+            onTaskButtonClick(model, event);
         }
     }
 </script>
@@ -239,7 +287,7 @@
         <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
         {#if model.showButton}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <span class="sg-task-button {model.buttonClasses}" on:click={onclick}>
+            <span class="sg-task-button {model.buttonClasses}" on:click={onClick}>
                 {@html model.buttonHtml}
             </span>
         {/if}

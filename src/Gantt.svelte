@@ -127,7 +127,7 @@
     export let reflectOnParentRows = true;
     export let reflectOnChildRows = false;
 
-    /** 
+    /**
      * Render columns in a canvas, results in a better performance.
      * Set to false if advanced CSS styling is needed.
      **/
@@ -149,8 +149,16 @@
 
     const dataStore = createDataStore();
     setContext('dataStore', dataStore);
-    const { rowStore, taskStore, timeRangeStore, allTasks, allRows, allTimeRanges, rowTaskCache } =
-        dataStore;
+    const {
+        rowStore,
+        taskStore,
+        timeRangeStore,
+        allTasks,
+        allRows,
+        allTimeRanges,
+        rowTaskCache,
+        draggingTaskCache
+    } = dataStore;
 
     export const columnService = {
         getColumnByDate(date: number) {
@@ -663,15 +671,26 @@
     let visibleTasks: SvelteTask[];
     $: {
         const tasks = [];
+        const rendered: { [id: string]: boolean } = {};
         for (let i = 0; i < visibleRows.length; i++) {
             const row = visibleRows[i];
             if ($rowTaskCache[row.model.id]) {
                 for (let j = 0; j < $rowTaskCache[row.model.id].length; j++) {
                     const id = $rowTaskCache[row.model.id][j];
                     tasks.push($taskStore.entities[id]);
+                    rendered[id] = true;
                 }
             }
         }
+
+        // render all tasks being dragged if not already
+        for (const id in $draggingTaskCache) {
+            if (!rendered[id]) {
+                tasks.push($taskStore.entities[id]);
+                rendered[id] = true;
+            }
+        }
+
         visibleTasks = tasks;
     }
 </script>

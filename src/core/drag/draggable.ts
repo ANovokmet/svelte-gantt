@@ -15,8 +15,8 @@ export interface DraggableSettings {
     onDrop?(event?: DownDropEvent | number[]): void;
     dragAllowed: (() => boolean) | boolean;
     resizeAllowed: (() => boolean) | boolean;
-    container: any;
-    resizeHandleWidth?: any;
+    container: HTMLElement;
+    resizeHandleWidth?: number;
     getX?: (event?: MouseEvent) => number;
     getY?: (event?: MouseEvent) => number;
     getWidth?: () => number;
@@ -35,11 +35,13 @@ export interface DownDropEvent {
 export interface DragEvent {
     x: number;
     y: number;
+    event?: MouseEvent;
 }
 
 export interface ResizeEvent {
     x: number;
     width: number;
+    event?: MouseEvent;
 }
 
 export interface offsetPos {
@@ -238,11 +240,13 @@ export class Draggable {
                 }
             }
 
-            this.settings.onResize &&
+            if (this.settings.onResize) {
                 this.settings.onResize({
                     x: resultX,
-                    width: resultWidth
+                    width: resultWidth,
+                    event
                 });
+            }
         }
 
         // mouseup
@@ -251,7 +255,8 @@ export class Draggable {
 
             this.settings.onDrag({
                 x: mousePos.x - this.mouseStartPosX,
-                y: mousePos.y - this.mouseStartPosY
+                y: mousePos.y - this.mouseStartPosY,
+                event
             });
         }
     };
