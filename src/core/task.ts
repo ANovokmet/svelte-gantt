@@ -16,6 +16,7 @@ export interface TaskModel {
     buttonHtml?: string;
     enableDragging?: boolean;
     labelBottom?: string;
+    type?: 'milestone' | 'task';
 }
 
 export interface SvelteTask {

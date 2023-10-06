@@ -1,8 +1,7 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import { get } from 'svelte/store';
     import { TaskModel, reflectTask } from '../core/task';
-    import { setCursor, throttle } from '../utils/dom';
+    import { normalizeClassAttr, setCursor, throttle } from '../utils/dom';
     import type { GanttContext, GanttContextOptions, GanttContextServices } from '../gantt';
     import type { GanttDataStore } from '../core/store';
 
@@ -88,7 +87,7 @@
         }
     }, 250);
 
-    function drag(node: HTMLElement) {
+    function drag(_: HTMLElement) {
         function onDrop(event) {
             let rowChangeValid = true;
             //row switching
@@ -221,13 +220,14 @@
                 },
                 dragAllowed: () => {
                     return (
-                        get(rowStore).entities[model.resourceId].model.enableDragging &&
+                        $rowStore.entities[model.resourceId].model.enableDragging &&
                         model.enableDragging
                     );
                 },
                 resizeAllowed: () => {
                     return (
-                        get(rowStore).entities[model.resourceId].model.enableDragging &&
+                        model.type !== 'milestone' &&
+                        $rowStore.entities[model.resourceId].model.enableDragging &&
                         model.enableDragging
                     );
                 },
@@ -257,22 +257,34 @@
             onTaskButtonClick(model, event);
         }
     }
+
+    let classes;
+    $: {
+        classes = normalizeClassAttr(model.classes);
+    }
+
+    let resizeEnabled: boolean;
+    $: {
+        resizeEnabled = model.type !== 'milestone' && $rowStore.entities[model.resourceId].model.enableDragging && model.enableDragging;
+    }
 </script>
 
 <div
     data-task-id={model.id}
-    on:dblclick={() => api.tasks.raise.dblclicked(model)}
     use:drag
     use:taskElement={model}
-    class="sg-task {model.classes}"
+    class="sg-task {classes}"
+    class:sg-milestone={model.type === 'milestone'}
     style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
     class:moving={_dragging || _resizing}
     class:animating
     class:sg-task-reflected={reflected}
     class:sg-task-selected={$selectedTasks[model.id]}
-    class:dragging-enabled={$rowStore.entities[model.resourceId].model.enableDragging &&
-        model.enableDragging}
+    class:resize-enabled={resizeEnabled}
 >
+    {#if model.type === 'milestone'}
+        <div class="sg-milestone__diamond"></div>
+    {/if}
     {#if model.amountDone}
         <div class="sg-task-background" style="width:{model.amountDone}%" />
     {/if}
@@ -327,10 +339,6 @@
         pointer-events: all;
     }
 
-    :global(.sg-task) {
-        background: rgb(116, 191, 255);
-    }
-
     .sg-task-background {
         position: absolute;
         height: 100%;
@@ -362,7 +370,7 @@
         opacity: 0.5;
     }
 
-    .sg-task.dragging-enabled:hover::before {
+    .sg-task.resize-enabled:hover::before {
         content: '';
         width: 4px;
         height: 50%;
@@ -377,7 +385,7 @@
         z-index: 1;
     }
 
-    .sg-task.dragging-enabled:hover::after {
+    .sg-task.resize-enabled:hover::after {
         content: '';
         width: 4px;
         height: 50%;
@@ -411,5 +419,35 @@
 
     :global(.sg-task.selected) {
         background: rgb(69, 112, 150);
+    }
+
+    .sg-milestone {
+        /* height: 20px; */
+        width: 20px !important;
+        min-width: 40px;
+        margin-left: -20px;
+    }
+
+    .sg-task.sg-milestone {
+        background: transparent;
+    }
+
+    .sg-milestone .sg-milestone__diamond {
+        position: relative;
+    }
+
+    .sg-milestone .sg-milestone__diamond:before {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        content: ' ';
+        height: 28px;
+        width: 28px;
+        transform-origin: 0 0;
+        transform: rotate(45deg);
+    }
+
+    :global(.sg-milestone__diamond:before) {
+        background: rgb(116, 191, 255);
     }
 </style>

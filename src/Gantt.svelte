@@ -334,6 +334,11 @@
         $selectedRow = +data;
     });
 
+    onDelegatedEvent('dblclick', 'data-task-id', (event, data, target) => {
+        const taskId = +data;
+        api['tasks'].raise.dblclicked($taskStore.entities[taskId], event);
+    });
+
     onDelegatedEvent('mouseleave', 'empty', (event, data, target) => {
         $hoveredRow = null;
     });
@@ -342,6 +347,7 @@
         offDelegatedEvent('click', 'data-task-id');
         offDelegatedEvent('click', 'data-row-id');
         offDelegatedEvent('mousedown', 'data-task-id');
+        offDelegatedEvent('dblclick', 'data-task-id');
 
         selectionManager.unSelectTasks();
     });
@@ -703,6 +709,7 @@
     bind:this={ganttElement}
     on:mousedown|stopPropagation={onEvent}
     on:click|stopPropagation={onEvent}
+    on:dblclick={onEvent}
     on:mouseover={onEvent}
     on:mouseleave={onEvent}
 >
