@@ -118,7 +118,8 @@
                 from: time(`${7 + rand_h}:00`),
                 to: time(`${7 + rand_h + rand_d}:00`),
                 classes: colors[(Math.random() * colors.length) | 0],
-                generation
+                generation,
+                stickyLabel: true
             });
         }
 

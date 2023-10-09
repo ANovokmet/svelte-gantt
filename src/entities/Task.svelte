@@ -275,12 +275,13 @@
     use:taskElement={model}
     class="sg-task {classes}"
     class:sg-milestone={model.type === 'milestone'}
-    style="width:{_position.width}px; height:{height}px; transform: translate({_position.x}px, {_position.y}px);"
+    style="width:{_position.width}px; height:{height}px; left: {_position.x}px; top: {_position.y}px;"
     class:moving={_dragging || _resizing}
     class:animating
     class:sg-task-reflected={reflected}
     class:sg-task-selected={$selectedTasks[model.id]}
     class:resize-enabled={resizeEnabled}
+    class:sg-task--sticky={model.stickyLabel}
 >
     {#if model.type === 'milestone'}
         <div class="sg-milestone__diamond"></div>
@@ -299,7 +300,7 @@
         <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
         {#if model.showButton}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <span class="sg-task-button {model.buttonClasses}" on:click={onClick}>
+            <span class="sg-task-button {model.buttonClasses}" on:click={onClick} role="button" tabindex="0">
                 {@html model.buttonHtml}
             </span>
         {/if}
@@ -360,9 +361,24 @@
 
     .sg-task:not(.moving) {
         transition:
+            left 0.2s, top 0.2s,
             transform 0.2s,
             background-color 0.2s,
             width 0.2s;
+    }
+
+    .sg-task--sticky:not(.moving) {
+        transition:
+            left 0.2s, top 0.2s,
+            transform 0.2s,
+            background-color 0.2s,
+            width 0.2s;
+    }
+
+    .sg-task--sticky > .sg-task-content {
+        position: sticky;
+        left: 0;
+        max-width: 100px;
     }
 
     .sg-task.moving {

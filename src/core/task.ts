@@ -17,6 +17,7 @@ export interface TaskModel {
     enableDragging?: boolean;
     labelBottom?: string;
     type?: 'milestone' | 'task';
+    stickyLabel?: boolean;
 }
 
 export interface SvelteTask {
