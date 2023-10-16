@@ -1,11 +1,11 @@
 <script lang="ts">
     import { getContext } from 'svelte';
+    import type { GanttDataStore } from '../../core/store';
 
     import Dependency from './Dependency.svelte';
-    
-    import { taskStore } from '../../core/store';
 
     const { visibleHeight } = getContext('dimensions');
+    const { taskStore } = getContext('dataStore') as GanttDataStore;
 
     export let paddingTop;
     export let dependencies = [];
@@ -19,10 +19,11 @@
 
             const fromTask = map[dependency.fromId];
             const toTask = map[dependency.toId];
-            if(
-                fromTask && toTask 
-                && Math.min(fromTask.top, toTask.top) <= paddingTop + $visibleHeight 
-                && Math.max(fromTask.top, toTask.top) >= paddingTop
+            if (
+                fromTask &&
+                toTask &&
+                Math.min(fromTask.top, toTask.top) <= paddingTop + $visibleHeight &&
+                Math.max(fromTask.top, toTask.top) >= paddingTop
             ) {
                 result.push(dependency);
             }
@@ -33,7 +34,7 @@
 
 <div class="dependency-container">
     {#each visibleDependencies as dependency (dependency.id)}
-        <Dependency {...dependency}/>
+        <Dependency {...dependency} />
     {/each}
 </div>
 
@@ -42,7 +43,7 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        
+
         pointer-events: none;
         top: 0;
         float: left;

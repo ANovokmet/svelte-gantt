@@ -1,5 +1,5 @@
 import svelte from 'rollup-plugin-svelte';
-import resolve from 'rollup-plugin-node-resolve';
+import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import uglify from 'rollup-plugin-uglify';
 import sveltePreprocess from 'svelte-preprocess';
@@ -19,7 +19,6 @@ export default {
     },
     plugins: [
         svelte({
-            dev: !production,
             // css: css => {
             //     css.write('docs/dist/svelteGantt.css');
             // },
@@ -27,9 +26,12 @@ export default {
             preprocess: sveltePreprocess()
         }),
         postcss(),
-        resolve({ browser: true }),
+        resolve({
+            browser: true
+            // exportConditions: ['svelte']
+        }),
         commonjs(),
         typescript(),
         production && uglify()
-    ],
-}
+    ]
+};

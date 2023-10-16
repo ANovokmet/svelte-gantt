@@ -1,29 +1,23 @@
 <script>
-    import { onMount } from 'svelte';
-
     export let top;
     export let left;
     export let actions = [];
     export let onactionend = null;
 
-    function position(point) {
-        top = point.y, left = point.x;
+    export function position(point) {
+        (top = point.y), (left = point.x);
     }
 
     function execute(event, action) {
         event.stopPropagation();
         action.action();
-        if(onactionend) onactionend();
-    }
-
-    export function isTarget(event) {
-        return contextMenu === event.target;
+        if (onactionend) onactionend();
     }
 </script>
 
-<div class="sg-context-menu" style="top:{top}px;left:{left}px">    
+<div class="sg-context-menu" style="top:{top}px;left:{left}px">
     {#each actions as action}
-        <div class="context-option" on:click="{event => execute(event, action)}">{action.label}</div>
+        <div class="context-option" on:click={event => execute(event, action)}>{action.label}</div>
     {/each}
 </div>
 

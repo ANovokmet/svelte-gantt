@@ -87,3 +87,6 @@ to do.txt
 # npm published files
 dist/
 !docs/dist
+
+# svelte
+/.svelte-kit

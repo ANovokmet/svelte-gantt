@@ -1,4 +1,4 @@
-import type { ColumnService } from "./column";
+import type { ColumnService } from './column';
 
 export interface TimeRangeModel {
     id: number; // | string;
@@ -29,13 +29,13 @@ export class TimeRangeFactory {
         model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
 
         const left = this.columnService.getPositionByDate(model.from);
-        const right = this.columnService.getPositionByDate(model.to); 
+        const right = this.columnService.getPositionByDate(model.to);
 
         return {
             model,
             left: left,
-            width: right-left,
+            width: right - left,
             resizing: false
-        }
+        };
     }
 }

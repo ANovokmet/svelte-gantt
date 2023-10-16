@@ -1,6 +1,6 @@
 export class GanttApi {
     listeners: any[];
-    listenersMap: { [key: string]: any; };
+    listenersMap: { [key: string]: any };
     tasks?: any;
     timeranges?: any;
 
@@ -11,16 +11,16 @@ export class GanttApi {
 
     registerEvent(featureName, eventName) {
         if (!this[featureName]) {
-            this[featureName] = {}
+            this[featureName] = {};
         }
 
-        const feature = this[featureName]
+        const feature = this[featureName];
         if (!feature.on) {
-            feature.on = {}
-            feature.raise = {}
+            feature.on = {};
+            feature.raise = {};
         }
 
-        let eventId = 'on:' + featureName + ':' + eventName
+        let eventId = 'on:' + featureName + ':' + eventName;
 
         feature.raise[eventName] = (...params) => {
             //todo add svelte? event listeners, looping isnt effective unless rarely used
@@ -29,25 +29,24 @@ export class GanttApi {
                     listener.handler(params);
                 }
             });
-        }
+        };
 
         // Creating on event method featureName.oneventName
-        feature.on[eventName] = (handler) => {
-
+        feature.on[eventName] = handler => {
             // track our listener so we can turn off and on
             let listener = {
                 handler: handler,
                 eventId: eventId
-            }
+            };
             this.listenersMap[eventId] = listener;
-            this.listeners.push(listener)
+            this.listeners.push(listener);
 
             const removeListener = () => {
-                const index = this.listeners.indexOf(listener)
-                this.listeners.splice(index, 1)
-            }
+                const index = this.listeners.indexOf(listener);
+                this.listeners.splice(index, 1);
+            };
 
-            return removeListener
-        }
+            return removeListener;
+        };
     }
 }

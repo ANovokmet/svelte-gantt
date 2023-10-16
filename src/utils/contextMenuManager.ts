@@ -8,13 +8,13 @@ export class ContextMenuManager {
     }
 
     open(actions, position) {
-        if(this.current) {
+        if (this.current) {
             this.current.$destroy();
         }
-        
+
         const contextMenu = new ContextMenu({
             target: document.body,
-            props: { 
+            props: {
                 actions,
                 left: position.x,
                 top: position.y,
@@ -27,7 +27,7 @@ export class ContextMenuManager {
     }
 
     close() {
-        if(this.current) {
+        if (this.current) {
             this.current.$destroy();
             this.current = null;
         }

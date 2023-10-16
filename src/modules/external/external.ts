@@ -1,7 +1,7 @@
-import { getRelativePos } from "../../utils/domUtils";
-import { Draggable } from "../../core/drag";
-import type { SvelteRow } from "../../core/row";
-import type { SvelteGanttComponent } from "../../gantt";
+import { getRelativePos } from '../../utils/dom';
+import { Draggable } from '../../core/drag';
+import type { SvelteRow } from '../../core/row';
+import type { SvelteGanttComponent } from '../../gantt';
 
 interface DragOptions {
     /** SvelteGantt this is binded to */
@@ -28,11 +28,11 @@ const defaults = {
             background: '#eee',
             padding: '0.5em 1em',
             fontSize: '12px',
-            pointerEvents: 'none',
+            pointerEvents: 'none'
         });
         return element;
     }
-}
+};
 
 export class SvelteGanttExternal {
     draggable: Draggable;
@@ -72,8 +72,7 @@ export class SvelteGanttExternal {
             const date = gantt.utils.getDateByPosition(mousePos.x);
 
             this.options.onsuccess?.(targetRow, date, gantt);
-        }
-        else {
+        } else {
             this.options.onfail?.();
         }
 
