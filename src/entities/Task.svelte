@@ -190,7 +190,7 @@
 
         if (!reflected) {
             // reflected tasks must not be resized or dragged
-            selectionManager.taskSettings.set(model.id, {
+            selectionManager.taskSettings.set(model.id.toString(), {
                 onDown: event => {
                     mainContainerRect = mainContainer.getBoundingClientRect();
                     if (event.dragging) {
@@ -241,7 +241,7 @@
             });
 
             return {
-                destroy: () => selectionManager.taskSettings.delete(model.id)
+                destroy: () => selectionManager.taskSettings.delete(model.id.toString())
             };
         }
     }

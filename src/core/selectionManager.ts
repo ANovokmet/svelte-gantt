@@ -16,8 +16,8 @@ export class SelectionManager {
     oldReflections = [];
     newTasksAndReflections = [];
 
-    taskSettings = new Map<number, DraggableSettings>();
-    currentSelection = new Map<number, SelectedItem>();
+    taskSettings = new Map<string, DraggableSettings>();
+    currentSelection = new Map<string, SelectedItem>();
     selectedTasks = writable({});
 
     constructor(private taskStore: EntityStore<SvelteTask>) {}
