@@ -6,16 +6,93 @@
     import GanttOptions from '../../components/GanttOptions.svelte';
     import { options } from '../../stores/store';
 
-    let generation = 0;
-    let rowCount = 10;
-    const colors = ['blue', 'green', 'orange'];
-    const data = generate();
+    // const colors = ['blue', 'green', 'orange'];
+
+    let rows = [
+        {
+            id: 0,
+            label: 'Row #1'
+        },
+        {
+            id: 1,
+            label: 'Row #2'
+        },
+        {
+            id: 2,
+            label: 'Row #3'
+        },
+        {
+            id: 3,
+            label: 'Row #4'
+        },
+        {
+            id: 4,
+            label: 'Row #5'
+        },
+    ];
+
+    let tasks = [
+        {
+            type: 'task',
+            id: 0,
+            resourceId: 1,
+            label: 'Task #0',
+            from: time(`8:00`),
+            to: time(`12:00`),
+            classes: 'green'
+        },
+        {
+            type: 'task',
+            id: 1,
+            resourceId: 1,
+            label: 'Task #1',
+            from: time(`10:00`),
+            to: time(`14:00`),
+            classes: 'blue'
+        },
+        {
+            type: 'task',
+            id: 2,
+            resourceId: 2,
+            label: 'Task #2',
+            from: time(`12:00`),
+            to: time(`17:00`),
+            classes: 'blue'
+        },
+        {
+            type: 'task',
+            id: 3,
+            resourceId: 2,
+            label: 'Task #3',
+            from: time(`12:00`),
+            to: time(`17:00`),
+            classes: 'orange'
+        },
+        {
+            type: 'task',
+            id: 4,
+            resourceId: 2,
+            label: 'Task #3',
+            from: time(`7:00`),
+            to: time(`10:00`),
+            classes: 'orange'
+        },
+        {
+            type: 'task',
+            id: 5,
+            resourceId: 4,
+            label: 'Task #3',
+            from: time(`12:00`),
+            to: time(`17:00`),
+            classes: 'green'
+        },
+    ];
 
     $options = {
         layout: 'pack',
         dateAdapter: new MomentSvelteGanttDateAdapter(moment),
-        rows: data.rows,
-        tasks: data.tasks,
+        rows: rows,
+        tasks: tasks,
         columnOffset: 15,
         magnetOffset: 15,
         rowHeight: 52,
@@ -44,57 +121,6 @@
     onMount(() => {
         window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: $options });
     });
-
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
-        }
-    }
-
-    function generate() {
-        const rows = [];
-        const tasks = [];
-
-        const ids = [...Array(rowCount).keys()];
-        shuffle(ids);
-
-        for (let i = 0; i < rowCount; i++) {
-            let rand_bool = Math.random() < 0.2;
-
-            rows.push({
-                id: i,
-                label: 'Row #' + i,
-                age: (Math.random() * 80) | 0,
-                imageSrc: 'Content/joe.jpg',
-                classes: rand_bool ? ['row-disabled'] : undefined,
-                enableDragging: !rand_bool,
-                generation
-            });
-
-            rand_bool = Math.random() > 0.5;
-
-            const rand_h = (Math.random() * 10) | 0
-            const rand_d = (Math.random() * 5) | 0 + 1
-
-            tasks.push({
-                type: 'task',
-                id: ids[i],
-                resourceId: i,
-                label: 'Task #' + ids[i],
-                from: time(`${7 + rand_h}:00`),
-                to: time(`${7 + rand_h + rand_d}:00`),
-                classes: colors[(Math.random() * colors.length) | 0],
-                generation
-            });
-        }
-
-        generation += 1;
-
-        return { rows, tasks };
-    }
 
     function onChangeOptions(event) {
         const opts = event.detail;
