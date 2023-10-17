@@ -29,6 +29,12 @@ export interface SvelteTask {
 
     height: number;
     reflections?: string[];
+    
+    /* pack layout fields */
+    intersectsWith?: SvelteTask[];
+    numYSlots?: number;
+    yPos?: number;
+    topDelta?: number;
 }
 
 export class TaskFactory {

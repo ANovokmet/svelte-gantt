@@ -108,6 +108,9 @@ gantt.$set({
 -   `columnStrokeColor` {`string`} Color of column lines.
     -   eg. `'#efefef'`
 -   `columnStrokeWidth` {`number`} Width of column lines.
+-   `layout` {`'overlap'`, `'pack'`} The layout used to arrange tasks in a row.
+    - `'overlap'` Overlapping tasks display one over another (default).
+    - `'pack'` Overlapping tasks shrink and display one above another.
 
 ## Header
 
