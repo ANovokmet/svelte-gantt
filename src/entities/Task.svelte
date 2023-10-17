@@ -9,6 +9,7 @@
     export let height: number;
     export let left: number;
     export let top: number;
+    export let topDelta: number = 0;
     export let width: number;
     export let reflected = false;
 
@@ -18,11 +19,11 @@
 
     let _position = {
         x: left,
-        y: top,
+        y: top + topDelta,
         width: width
     };
 
-    $: updatePosition(left, top, width);
+    $: updatePosition(left, top + topDelta, width);
     function updatePosition(x, y, width) {
         if (!_dragging && !_resizing) {
             _position.x = x;
@@ -124,7 +125,7 @@
                 const width = newRight - newLeft;
                 const top = $rowPadding + targetRow.y;
 
-                updatePosition(left, top, width);
+                updatePosition(left, top + topDelta, width);
 
                 const newTask = {
                     ...task,
@@ -333,7 +334,7 @@
 
         white-space: nowrap;
         /* overflow: hidden; */
-
+        
         transition:
             background-color 0.2s,
             opacity 0.2s;
@@ -364,7 +365,8 @@
             left 0.2s, top 0.2s,
             transform 0.2s,
             background-color 0.2s,
-            width 0.2s;
+            width 0.2s, 
+            height 0.2s;
     }
 
     .sg-task--sticky:not(.moving) {
@@ -372,7 +374,8 @@
             left 0.2s, top 0.2s,
             transform 0.2s,
             background-color 0.2s,
-            width 0.2s;
+            width 0.2s, 
+            height 0.2s;
     }
 
     .sg-task--sticky > .sg-task-content {

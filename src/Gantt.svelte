@@ -29,6 +29,7 @@
     import { getDuration, getAllPeriods } from './utils/date';
     import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
     import type { SvelteGanttDateAdapter } from './utils/date';
+    import * as packLayout from './core/pack-layout';
 
     function assertSet(values) {
         for (const name in values) {
@@ -141,6 +142,9 @@
     /** Allows working with the actual DOM node */
     export let taskElementHook = null;
 
+    /** Controls how the tasks will render */
+    export let layout: 'overlap' | 'pack' = 'overlap';
+
     const visibleWidth = writable<number>(null);
     const visibleHeight = writable<number>(null);
     const headerHeight = writable<number>(null);
@@ -200,13 +204,13 @@
         }
     };
 
-    let disableTransition = true;
+    let disableTransition = false;
 
     async function tickWithoutCSSTransition() {
-        disableTransition = !disableTransition;
+        disableTransition = true;
         await tick();
         ganttElement.offsetHeight; // force a reflow
-        disableTransition = !!disableTransition;
+        disableTransition = false;
     }
 
     let columns: IColumn[];
@@ -700,13 +704,28 @@
 
         visibleTasks = tasks;
     }
+
+    $: {
+        if (layout === 'pack') {
+            for (const rowId of $rowStore.ids) {
+                // const row = $rowStore.entities[rowId];
+                const taskIds = $rowTaskCache[rowId];
+                if (taskIds) {
+                    const tasks = taskIds.map(taskId => $taskStore.entities[taskId]);
+                    packLayout.layout(tasks, { 
+                        rowContentHeight: rowHeight - rowPadding * 2
+                    });
+                }
+            }
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div
     class="sg-gantt {classes}"
-    class:sg-disable-transition={!disableTransition}
+    class:sg-disable-transition={disableTransition}
     bind:this={ganttElement}
     on:mousedown|stopPropagation={onEvent}
     on:click|stopPropagation={onEvent}

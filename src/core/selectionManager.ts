@@ -77,7 +77,7 @@ export class SelectionManager {
     }
 
     dragOrResizeTriggered = event => {
-        for (let [selId, selectedItem] of this.currentSelection.entries()) {
+        for (const [selId, selectedItem] of this.currentSelection.entries()) {
             const draggable = new Draggable(
                 selectedItem.HTMLElement,
                 this.taskSettings.get(selId),
@@ -92,7 +92,7 @@ export class SelectionManager {
     };
 
     selectionDragOrResizing = event => {
-        for (let [, selectedItem] of this.currentSelection.entries()) {
+        for (const [, selectedItem] of this.currentSelection.entries()) {
             const { draggable } = selectedItem;
             draggable.onmousemove(event);
         }
