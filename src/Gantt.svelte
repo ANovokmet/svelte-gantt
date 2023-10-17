@@ -657,6 +657,9 @@
 
     let filteredRows = [];
     $: filteredRows = $allRows.filter(row => !row.hidden);
+    
+    let rightScrollbarVisible: boolean;
+    $: rightScrollbarVisible = rowContainerHeight > $visibleHeight;
 
     let rowContainerHeight;
     $: rowContainerHeight = filteredRows.length * rowHeight;
@@ -749,7 +752,7 @@
     {/each}
 
     <div class="sg-timeline sg-view">
-        <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight={$headerHeight}>
+        <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight={$headerHeight} class:right-scrollbar-visible="{rightScrollbarVisible}">
             <div class="sg-header-scroller" use:horizontalScrollListener>
                 <div class="header-container" style="width:{$_width}px">
                     <ColumnHeader
@@ -833,10 +836,11 @@
         margin-left: 5px;
     }
 
-    /* This class should take into account varying widths of the scroll bar
-    .right-scrollbar-visible {
+    /* This class should take into account varying widths of the scroll bar */
+    :global(.right-scrollbar-visible) { 
+        /* set this value to your scrollbar width */
         padding-right: 17px;
-    } */
+    } 
 
     .sg-timeline {
         flex: 1 1 0%;
