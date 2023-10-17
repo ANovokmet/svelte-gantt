@@ -275,8 +275,8 @@
         onTaskButtonClick
     });
 
-    const hoveredRow = writable<number>(null);
-    const selectedRow = writable<number>(null);
+    const hoveredRow = writable<number | string>(null);
+    const selectedRow = writable<number | string>(null);
 
     const ganttContext = {
         scrollables,
@@ -310,7 +310,7 @@
     const { onDelegatedEvent, offDelegatedEvent, onEvent } = createDelegatedEventDispatcher();
 
     onDelegatedEvent('mousedown', 'data-task-id', (event, data, target) => {
-        const taskId = +data;
+        const taskId = data;
         if (isLeftClick(event) && !target.classList.contains('sg-task-reflected')) {
             if (event.ctrlKey) {
                 selectionManager.toggleSelection(taskId, target);
@@ -323,20 +323,20 @@
     });
 
     onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
-        $hoveredRow = +data;
+        $hoveredRow = data;
     });
 
     onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
         selectionManager.unSelectTasks();
-        if ($selectedRow == +data) {
+        if ($selectedRow == data) {
             $selectedRow = null;
             return;
         }
-        $selectedRow = +data;
+        $selectedRow = data;
     });
 
     onDelegatedEvent('dblclick', 'data-task-id', (event, data, target) => {
-        const taskId = +data;
+        const taskId = data;
         api['tasks'].raise.dblclicked($taskStore.entities[taskId], event);
     });
 
