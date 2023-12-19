@@ -7,7 +7,7 @@ export interface TimeRangeModel {
 
     classes?: string | string[];
     label?: string;
-    enableResizing?: boolean;
+    resizable?: boolean;
 }
 
 export interface SvelteTimeRange {
@@ -26,7 +26,7 @@ export class TimeRangeFactory {
 
     create(model: TimeRangeModel): SvelteTimeRange {
         // enable dragging
-        model.enableResizing = model.enableResizing === undefined ? true : model.enableResizing;
+        model.resizable = model.resizable === undefined ? true : model.resizable;
 
         const left = this.columnService.getPositionByDate(model.from);
         const right = this.columnService.getPositionByDate(model.to);

@@ -25,7 +25,8 @@ const Tree = () => {
             from: time('10:00'),
             to: time('12:00'),
             classes: null,
-            label: 'Lunch'
+            label: 'Lunch',
+            resizable: false
         },
         {
             id: 1,
