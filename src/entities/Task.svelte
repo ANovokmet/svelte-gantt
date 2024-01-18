@@ -91,6 +91,13 @@
     function drag(_: HTMLElement) {
         function onDrop(event) {
             let rowChangeValid = true;
+            const previousState = {
+                id: model.id,
+                resourceId: model.resourceId,
+                from: model.from,
+                to: model.to,
+            };
+
             //row switching
             const sourceRow = $rowStore.entities[model.resourceId];
             if (event.dragging) {
@@ -140,12 +147,12 @@
                     prevTo != newTo ||
                     (sourceRow && sourceRow.model.id !== targetRow.model.id);
                 if (changed) {
-                    api.tasks.raise.change({ task: newTask, sourceRow, targetRow });
+                    api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState });
                 }
                 selectionManager.newTasksAndReflections.push(newTask);
 
                 if (changed) {
-                    api.tasks.raise.changed({ task: newTask, sourceRow, targetRow });
+                    api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState });
                 }
 
                 // update shadow tasks
