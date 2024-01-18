@@ -630,6 +630,14 @@
         taskStore.upsertAll(tasks);
     }
 
+    export function removeTask(taskId) {
+        taskStore.delete(taskId);
+    }
+
+    export function removeTasks(taskIds) {
+        taskStore.deleteAll(taskIds);
+    }
+
     export function updateRow(model) {
         const row = rowFactory.createRow(model, null);
         rowStore.upsert(row);
