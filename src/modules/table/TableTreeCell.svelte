@@ -8,7 +8,7 @@
     const dispatch = createEventDispatcher();
 
     function onExpandToggle() {
-        if (row.expanded) {
+        if (row.model.expanded || row.model.expanded == null) {
             dispatch('rowCollapsed', { row });
         } else {
             dispatch('rowExpanded', { row });
@@ -19,7 +19,7 @@
 <div class="sg-cell-inner" style="padding-left: {row.childLevel * 3}em">
     {#if row.children}
         <div class="sg-tree-expander" on:click={onExpandToggle}>
-            {#if row.expanded}
+            {#if row.model.expanded}
                 <i class="fas fa-angle-down"></i>
             {:else}
                 <i class="fas fa-angle-right"></i>

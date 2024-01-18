@@ -60,14 +60,14 @@
 
     function onRowExpanded(event) {
         const row = event.detail.row;
-        row.expanded = true;
+        row.model.expanded = true;
         if (row.children) show(row.children);
         updateYPositions();
     }
 
     function onRowCollapsed(event) {
         const row = event.detail.row;
-        row.expanded = false;
+        row.model.expanded = false;
         if (row.children) hide(row.children);
         updateYPositions();
     }
@@ -98,7 +98,7 @@
 
     function show(children, hidden = false) {
         children.forEach(row => {
-            if (row.children) show(row.children, !row.expanded);
+            if (row.children) show(row.children, !row.model.expanded);
             row.hidden = hidden;
         });
     }

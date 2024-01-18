@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from 'svelte';
+    import { createEventDispatcher, getContext } from 'svelte';
 
     import TableTreeCell from './TableTreeCell.svelte';
     import type { TableHeader } from './tableHeader';
@@ -17,17 +17,13 @@
     $: {
         treeIndentationStyle = row.parent ? `padding-left: ${row.childLevel * 3}em;` : '';
     }
-
-    onMount(() => {
-        if (row.model.expanded == false) dispatch('rowCollapsed', { row });
-    });
 </script>
 
 <div
     data-row-id={row.model.id}
     style="height:{$rowHeight}px"
     class="sg-table-row {row.model.classes || ''}"
-    class:sg-row-expanded={row.expanded}
+    class:sg-row-expanded={row.model.expanded}
     class:sg-hover={$hoveredRow == row.model.id}
     class:sg-selected={$selectedRow == row.model.id}
 >

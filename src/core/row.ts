@@ -26,7 +26,6 @@ export interface SvelteRow {
     allChildren?: SvelteRow[];
     parent?: SvelteRow;
     allParents?: SvelteRow[];
-    expanded?: boolean;
     childLevel?: number;
     entities?: any;
 }
@@ -53,7 +52,6 @@ export class RowFactory {
             model: row,
             y,
             height,
-            expanded: true
         };
     }
 
@@ -86,6 +84,9 @@ export class RowFactory {
             row.childLevel = level;
             row.parent = parent;
             row.allParents = parents;
+            if (parent) {
+                row.hidden = !(parent.model.expanded || parent.model.expanded == null);
+            }
 
             ctx.y += row.height;
 
@@ -95,7 +96,7 @@ export class RowFactory {
                     ctx,
                     row,
                     level + 1,
-                    parents
+                    parents,
                 );
                 row.children = nextLevel.rows;
                 row.allChildren = nextLevel.allRows;

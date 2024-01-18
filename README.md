@@ -165,7 +165,7 @@ Rows are defined as a list of objects. Rows can be rendered as a collapsible tre
 -   `label` {`String`} Label of row, could be any other property, can be displayed with SvelteGanttTable.
 -   `headerHtml` {`String`} Html content of table row header, displayed in SvelteGanttTable.
 -   `children` {`Array`} List of children row objects, these can have their own children.
--   `expanded` {`Boolean`} {`optional`} Property of the row, if false, row will be closed on first load
+-   `expanded` {`Boolean`} {`optional`} Used when tree view is enabled, controls the expanded state.
 
 ## Task
 

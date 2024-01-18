@@ -22,7 +22,7 @@
                 label: dateAdapter.format(column.from, header.format)
             }));
         } else {
-            const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit);
+            const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit, header.offset);
             let distance_point = 0;
             let left = 0;
 

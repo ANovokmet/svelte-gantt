@@ -4,23 +4,27 @@ export function createBackground(
     columns: Column[],
     opts: { columnStrokeWidth; columnStrokeColor }
 ) {
-    const canvas = document.createElement('canvas');
-    canvas.width = (columns.length - 1) * columns[0].width;
-    canvas.height = 20;
-    const ctx = canvas.getContext('2d');
-    ctx.shadowColor = 'rgba(128,128,128,0.5)';
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowBlur = 0.5;
-    ctx.lineWidth = opts.columnStrokeWidth;
-    ctx.lineCap = 'square';
-    ctx.strokeStyle = opts.columnStrokeColor;
-    ctx.translate(0.5, 0.5);
-    columns.forEach(column => {
-        lineAt(ctx, column.left);
-    });
-    const dataURL = canvas.toDataURL();
-    return `url("${dataURL}")`;
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = (columns.length - 1) * columns[0].width;
+        canvas.height = 20;
+        const ctx = canvas.getContext('2d');
+        ctx.shadowColor = 'rgba(128,128,128,0.5)';
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0.5;
+        ctx.lineWidth = opts.columnStrokeWidth;
+        ctx.lineCap = 'square';
+        ctx.strokeStyle = opts.columnStrokeColor;
+        ctx.translate(0.5, 0.5);
+        columns.forEach(column => {
+            lineAt(ctx, column.left);
+        });
+        const dataURL = canvas.toDataURL();
+        return `url("${dataURL}")`;
+    } catch (e) {
+        console.error('[canvas] Render error', e);
+    }
 }
 
 function lineAt(ctx, x) {
