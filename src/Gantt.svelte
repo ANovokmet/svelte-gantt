@@ -449,11 +449,16 @@
     }
 
     async function initTasks(taskData) {
-        await tick();
+        // because otherwise we need to use tick() which will update other things
+        taskFactory.rowEntities = $rowStore.entities;
 
         const tasks = [];
         const opts = { rowPadding: $_rowPadding };
+        const draggingTasks = {};
         taskData.forEach(t => {
+            if ($draggingTaskCache[t.id]) {
+                draggingTasks[t.id] = true;
+            }
             const task = taskFactory.createTask(t);
             const row = $rowStore.entities[task.model.resourceId];
             task.reflections = [];
@@ -476,6 +481,7 @@
 
             tasks.push(task);
         });
+        $draggingTaskCache = draggingTasks;
         taskStore.addAll(tasks);
     }
 
@@ -704,7 +710,7 @@
                 }
             }
         }
-
+        
         // render all tasks being dragged if not already
         for (const id in $draggingTaskCache) {
             if (!rendered[id]) {
