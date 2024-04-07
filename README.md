@@ -320,7 +320,7 @@ Install the dependencies...
 ```bash
 cd svelte-gantt
 npm install
-node tools/build.js
+npm run package
 cd demo
 npm install
 cd ..
@@ -342,7 +342,8 @@ To build the package yourself:
 2.  Run the build:
 
 ```
-node tools/build
+npm install
+npm run package
 ```
 
 3.  The package is built in _./dist_
