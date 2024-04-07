@@ -320,6 +320,10 @@ Install the dependencies...
 ```bash
 cd svelte-gantt
 npm install
+node tools/build.js
+cd demo
+npm install
+cd ..
 ```
 
 ...then start [Rollup](https://rollupjs.org):
