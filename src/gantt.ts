@@ -9,7 +9,7 @@ import type { GanttUtils } from './utils/utils';
 import type { DependencyModel } from './modules/dependencies';
 import type { TableHeader } from './modules/table/tableHeader';
 import type { SvelteGanttDateAdapter } from './utils/date';
-import type { Writable } from 'svelte/store';
+import type { Writable, Readable } from 'svelte/store';
 import { SelectionManager } from './core/selectionManager';
 
 interface Header {
@@ -52,6 +52,7 @@ export interface GanttContextOptions {
     taskContent?: TaskContentTemplate;
     rowPadding: Writable<number>;
     rowHeight: Writable<number>;
+    layout: Readable<'overlap' | 'pack'>;
     resizeHandleWidth: number;
     reflectOnParentRows: boolean;
     reflectOnChildRows: boolean;

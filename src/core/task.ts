@@ -95,11 +95,13 @@ export class TaskFactory {
     }
 
     getHeight(model) {
-        return this.row(model.resourceId).height - 2 * this.rowPadding;
+        const row = this.row(model.resourceId);
+        return (row ? row.height : undefined) - 2 * this.rowPadding;
     }
 
     getPosY(model) {
-        return this.row(model.resourceId).y + this.rowPadding;
+        const row = this.row(model.resourceId);
+        return (row ? row.y : -1000) + this.rowPadding;
     }
 }
 

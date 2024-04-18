@@ -42,7 +42,8 @@
         onTaskButtonClick,
         reflectOnParentRows,
         reflectOnChildRows,
-        taskElementHook
+        taskElementHook,
+        layout,
     }: GanttContextOptions = getContext('options');
     const { dndManager, api, utils, columnService, selectionManager }: GanttContextServices =
         getContext('services');
@@ -275,6 +276,26 @@
     $: {
         resizeEnabled = model.type !== 'milestone' && $rowStore.entities[model.resourceId].model.enableResize && model.enableResize;
     }
+
+    let _height: number;
+    $: {
+        if (height !== undefined && $layout !== 'overlap') {
+            _height = height;
+        } else {
+            _height = $rowStore.entities[model.resourceId].height - 2 * $rowPadding;
+        }
+    }
+
+    let _top: number;
+    $: {
+        if (top !== undefined && $layout !== 'overlap') {
+            _top = _position.y;
+        } else if (_dragging || _resizing) {
+            _top = _position.y;
+        } else {
+            _top = $rowStore.entities[model.resourceId].y + $rowPadding;
+        }
+    }
 </script>
 
 <div
@@ -283,7 +304,7 @@
     use:taskElement={model}
     class="sg-task {classes}"
     class:sg-milestone={model.type === 'milestone'}
-    style="width:{_position.width}px; height:{height}px; left: {_position.x}px; top: {_position.y}px;"
+    style="width:{_position.width}px; height:{_height}px; left: {_position.x}px; top: {_top}px;"
     class:moving={_dragging || _resizing}
     class:animating
     class:sg-task-reflected={reflected}

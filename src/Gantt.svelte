@@ -18,7 +18,7 @@
     import { getRelativePos, isLeftClick } from './utils/dom';
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
-    import type { SvelteTask } from './core/task';
+    import type { SvelteTask, TaskModel } from './core/task';
     import { RowFactory } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager } from './core/drag';
@@ -40,7 +40,7 @@
     }
 
     export let rows;
-    export let tasks = [];
+    export let tasks: TaskModel[] = [];
     export let timeRanges = [];
 
     assertSet({ rows });
@@ -144,6 +144,8 @@
 
     /** Controls how the tasks will render */
     export let layout: 'overlap' | 'pack' = 'overlap';
+    const _layout = writable(layout);
+    $: $_layout = layout;
 
     const visibleWidth = writable<number>(null);
     const visibleHeight = writable<number>(null);
@@ -273,6 +275,7 @@
         taskContent,
         rowPadding: _rowPadding,
         rowHeight: _rowHeight,
+        layout: _layout,
         resizeHandleWidth: resizeHandleWidth,
         reflectOnParentRows,
         reflectOnChildRows,
@@ -448,39 +451,41 @@
         rowStore.addAll(rows);
     }
 
-    async function initTasks(taskData) {
+    async function initTasks(taskData: TaskModel[]) {
         // because otherwise we need to use tick() which will update other things
         taskFactory.rowEntities = $rowStore.entities;
 
         const tasks = [];
         const opts = { rowPadding: $_rowPadding };
         const draggingTasks = {};
-        taskData.forEach(t => {
+        for (const t of taskData) {
             if ($draggingTaskCache[t.id]) {
                 draggingTasks[t.id] = true;
             }
             const task = taskFactory.createTask(t);
-            const row = $rowStore.entities[task.model.resourceId];
             task.reflections = [];
 
-            if (reflectOnChildRows && row.allChildren) {
-                row.allChildren.forEach(r => {
-                    const reflectedTask = reflectTask(task, r, opts);
-                    task.reflections.push(reflectedTask.model.id);
-                    tasks.push(reflectedTask);
-                });
-            }
+            const row = $rowStore.entities[task.model.resourceId];
+            if (row) {
+                if (reflectOnChildRows && row.allChildren) {
+                    row.allChildren.forEach(r => {
+                        const reflectedTask = reflectTask(task, r, opts);
+                        task.reflections.push(reflectedTask.model.id);
+                        tasks.push(reflectedTask);
+                    });
+                }
 
-            if (reflectOnParentRows && row.allParents.length > 0) {
-                row.allParents.forEach(r => {
-                    const reflectedTask = reflectTask(task, r, opts);
-                    task.reflections.push(reflectedTask.model.id);
-                    tasks.push(reflectedTask);
-                });
+                if (reflectOnParentRows && row.allParents.length > 0) {
+                    row.allParents.forEach(r => {
+                        const reflectedTask = reflectTask(task, r, opts);
+                        task.reflections.push(reflectedTask.model.id);
+                        tasks.push(reflectedTask);
+                    });
+                }
             }
 
             tasks.push(task);
-        });
+        }
         $draggingTaskCache = draggingTasks;
         taskStore.addAll(tasks);
     }
