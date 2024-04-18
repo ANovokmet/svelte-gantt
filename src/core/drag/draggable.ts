@@ -121,8 +121,8 @@ export class Draggable {
         const canResize = this.resizeAllowed;
 
         if (canDrag || canResize) {
-            const x = this.settings.getX();
-            const y = this.settings.getY();
+            const x = this.settings.getX(event);
+            const y = this.settings.getY(event);
             const width = this.settings.getWidth();
 
             this.initialX = offsetEvent.clientX;
@@ -189,7 +189,7 @@ export class Draggable {
 
         if (this.resizing) {
             const mousePos = getRelativePos(this.settings.container, offsetEvent);
-            const x = this.settings.getX();
+            const x = this.settings.getX(event);
             const width = this.settings.getWidth();
 
             let resultX: number;
@@ -267,8 +267,8 @@ export class Draggable {
             clientY: this.offsetPos.y + event.clientY
         };
 
-        const x = this.settings.getX();
-        const y = this.settings.getY();
+        const x = this.settings.getX(event);
+        const y = this.settings.getY(event);
         const width = this.settings.getWidth();
 
         this.settings.onMouseUp && this.settings.onMouseUp();
