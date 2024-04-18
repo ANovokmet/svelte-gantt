@@ -15,6 +15,7 @@ export interface TaskModel {
     buttonClasses?: string | string[];
     buttonHtml?: string;
     enableDragging?: boolean;
+    enableResize?: boolean;
     labelBottom?: string;
     type?: 'milestone' | 'task';
     stickyLabel?: boolean;
@@ -70,6 +71,7 @@ export class TaskFactory {
         model.buttonHtml = model.buttonHtml || '';
         // enable dragging of task
         model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
+        model.enableResize = model.enableResize === undefined ? true : model.enableResize;
 
         const left = this.columnService.getPositionByDate(model.from) | 0;
         const right = this.columnService.getPositionByDate(model.to) | 0;

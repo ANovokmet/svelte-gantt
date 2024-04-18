@@ -4,6 +4,7 @@ export interface RowModel {
     classes?: string | string[];
     contentHtml?: string;
     enableDragging?: boolean;
+    enableResize?: boolean;
     height: number;
     /** Child rows in expandable tree */
     children?: RowModel[];
@@ -45,6 +46,7 @@ export class RowFactory {
         row.contentHtml = row.contentHtml || undefined;
         // enable dragging of tasks to and from this row
         row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
+        row.enableResize = row.enableResize === undefined ? true : row.enableResize;
         // height of row element
         const height = row.height || this.rowHeight;
 

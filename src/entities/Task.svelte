@@ -235,8 +235,8 @@
                 resizeAllowed: () => {
                     return (
                         model.type !== 'milestone' &&
-                        $rowStore.entities[model.resourceId].model.enableDragging &&
-                        model.enableDragging
+                        $rowStore.entities[model.resourceId].model.enableResize &&
+                        model.enableResize
                     );
                 },
                 onDrop: onDrop,
@@ -273,7 +273,7 @@
 
     let resizeEnabled: boolean;
     $: {
-        resizeEnabled = model.type !== 'milestone' && $rowStore.entities[model.resourceId].model.enableDragging && model.enableDragging;
+        resizeEnabled = model.type !== 'milestone' && $rowStore.entities[model.resourceId].model.enableResize && model.enableResize;
     }
 </script>
 
