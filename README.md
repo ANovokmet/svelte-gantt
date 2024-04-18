@@ -330,7 +330,7 @@ npm install
 npm run demo:dev
 ```
 
-Navigate to [localhost:5173](http://localhost:5173/)](http://localhost:5173). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+Navigate to [localhost:5173](http://localhost:5173/). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
 
 ## Build the package
 
