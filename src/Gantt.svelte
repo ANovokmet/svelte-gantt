@@ -567,7 +567,7 @@
     export function selectTask(id) {
         const task = $taskStore.entities[id];
         if (task) {
-            selectionManager.selectSingle(id, ganttElement.querySelector(`data-task-id='${id}'`)); // TODO:: fix
+            selectionManager.selectSingle(id, ganttElement.querySelector(`[data-task-id='${id}']`)); // TODO:: fix
         }
     }
 
