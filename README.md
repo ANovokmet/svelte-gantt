@@ -320,26 +320,24 @@ Install the dependencies...
 ```bash
 cd svelte-gantt
 npm install
-npm run package
 cd demo
 npm install
-cd ..
 ```
 
-...then start [Rollup](https://rollupjs.org):
+...then in the project root (`cd ..`) start [Rollup](https://rollupjs.org):
 
 ```bash
 npm run demo:dev
 ```
 
-Navigate to [localhost:8080](http://localhost:8080/svelte-gantt). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+Navigate to [localhost:5173](http://localhost:5173/)](http://localhost:5173). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
 
 ## Build the package
 
 To build the package yourself:
 
 1.  Clone or download repository.
-2.  Run the build:
+2.  Run the package build:
 
 ```
 npm install
