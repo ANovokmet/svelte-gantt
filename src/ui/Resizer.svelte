@@ -3,7 +3,7 @@
 
     const dispatch = createEventDispatcher();
 
-    import { Draggable } from '../core/drag';
+    import { useDraggable } from '../core/drag';
     import { setCursor } from '../utils/dom';
 
     export let x;
@@ -32,7 +32,7 @@
     $: dragOptions.container = container;
 
     function resizer(node) {
-        const draggable = new Draggable(node, dragOptions, 'resizer');
+        const draggable = useDraggable(node, dragOptions, 'resizer');
 
         return { destroy: () => draggable.destroy() };
     }

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import type { GanttDataStore } from '../../core/store';
-    const { rowStore, taskStore } = getContext('dataStore') as GanttDataStore;
+    const { rowStore, taskStore } = getContext('dataStore');
 
     export let id;
     export let fromId;

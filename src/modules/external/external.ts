@@ -1,7 +1,7 @@
-import { getRelativePos } from '../../utils/dom';
-import { Draggable } from '../../core/drag';
+import { useDraggable } from '../../core/drag';
 import type { SvelteRow } from '../../core/row';
 import type { SvelteGanttComponent } from '../../gantt';
+import { getRelativePos } from '../../utils/dom';
 
 interface DragOptions {
     /** SvelteGantt this is binded to */
@@ -35,13 +35,13 @@ const defaults = {
 };
 
 export class SvelteGanttExternal {
-    draggable: Draggable;
+    draggable: { destroy(): void; };
     element: HTMLElement;
     public options: DragOptions;
 
     constructor(node: HTMLElement, options: DragOptions) {
         this.options = Object.assign({}, defaults, options);
-        this.draggable = new Draggable(node, {
+        this.draggable = useDraggable(node, {
             onDrag: this.onDrag.bind(this),
             dragAllowed: () => this.options.enabled,
             resizeAllowed: false,

@@ -1,11 +1,10 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import type { GanttDataStore } from '../../core/store';
 
     import Dependency from './Dependency.svelte';
 
     const { visibleHeight } = getContext('dimensions');
-    const { taskStore } = getContext('dataStore') as GanttDataStore;
+    const { taskStore } = getContext('dataStore');
 
     export let paddingTop;
     export let dependencies = [];

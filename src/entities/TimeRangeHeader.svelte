@@ -1,14 +1,12 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import type { GanttContext, GanttContextServices, GanttContextOptions } from '../gantt';
-    import { Draggable } from '../core/drag';
-    import type { GanttDataStore } from '../core/store';
+    import { useDraggable } from '../core/drag';
     import { normalizeClassAttr } from '../utils/dom';
 
-    const { rowContainer }: GanttContext = getContext('gantt');
-    const { api, utils, columnService }: GanttContextServices = getContext('services');
-    const { resizeHandleWidth }: GanttContextOptions = getContext('options');
-    const { timeRangeStore } = getContext('dataStore') as GanttDataStore;
+    const { rowContainer } = getContext('gantt');
+    const { api, utils, columnService } = getContext('services');
+    const { resizeHandleWidth } = getContext('options');
+    const { timeRangeStore } = getContext('dataStore');
 
     export let model;
     export let width;
@@ -50,7 +48,7 @@
             _position.width = state.width;
         }
 
-        const draggable = new Draggable(node, {
+        const draggable = useDraggable(node, {
             onDown: event => {
                 api.timeranges.raise.clicked({ model });
                 update({

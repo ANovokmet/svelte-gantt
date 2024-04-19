@@ -25,7 +25,7 @@
 
     const { from, to, width, visibleWidth, headerHeight } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
-    const { rowStore, taskStore } = getContext('dataStore') as GanttDataStore;
+    const { rowStore, taskStore } = getContext('dataStore');
     const { scrollables } = getContext('gantt');
 
     onMount(() => {

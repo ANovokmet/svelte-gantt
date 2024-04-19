@@ -1,14 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from 'svelte';
-    import type { GanttContextDimensions } from '../gantt';
     const dispatch = createEventDispatcher();
 
-    import type { SvelteGanttDateAdapter } from '../utils/date';
     import { getAllPeriods } from '../utils/date';
     import { getPositionByDate } from '../utils/utils';
 
-    const { from, to, width }: GanttContextDimensions = getContext('dimensions');
-    const { dateAdapter }: { dateAdapter: SvelteGanttDateAdapter } = getContext('options');
+    const { from, to, width } = getContext('dimensions');
+    const { dateAdapter } = getContext('options');
 
     export let header;
 
