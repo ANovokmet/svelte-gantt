@@ -310,6 +310,7 @@
         api.registerEvent('tasks', 'dblclicked');
         api.registerEvent('timeranges', 'clicked');
         api.registerEvent('timeranges', 'resized');
+        api.registerEvent('timeranges', 'changed');
 
         mounted = true;
     });

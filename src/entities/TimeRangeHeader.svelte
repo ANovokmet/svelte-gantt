@@ -38,6 +38,7 @@
                 model,
                 resizing: false
             });
+            api.timeranges.raise.changed({ model, left: event.x, width: event.width });
 
             window.removeEventListener('mousemove', onmousemove, false);
         };
