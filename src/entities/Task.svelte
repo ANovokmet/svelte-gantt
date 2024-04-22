@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { getContext, tick } from 'svelte';
-    import { TaskModel, reflectTask, SvelteTask } from '../core/task';
+    import { getContext } from 'svelte';
+    import { TaskModel, SvelteTask } from '../core/task';
     import { normalizeClassAttr, setCursor, throttle } from '../utils/dom';
     import { DownDropEvent, useDraggable } from '../core/drag';
 
@@ -42,8 +42,6 @@
         resizeHandleWidth,
         rowPadding,
         onTaskButtonClick,
-        reflectOnParentRows,
-        reflectOnChildRows,
         taskElementHook,
         layout
     } = getContext('options');
@@ -52,7 +50,7 @@
     const draggingContext = getContext('drag');
     let draggingActive = draggingContext.active;
 
-    let selectedTasks = selectionManager.selectedTasks;
+    let selectedTasks = selectionManager._selectedTasks;
 
     /** How much pixels near the bounds user has to drag to start scrolling */
     const DRAGGING_TO_SCROLL_TRESHOLD = 40;
@@ -179,48 +177,10 @@
             if (changed) {
                 api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState });
             }
-            selectionManager.newTasksAndReflections.push(newTask);
 
             if (changed) {
                 api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState });
             }
-
-            // update shadow tasks
-            if (newTask.reflections) {
-                selectionManager.oldReflections.push(...newTask.reflections);
-            }
-
-            const reflectedTasks = [];
-            if (reflectOnChildRows && targetRow.allChildren) {
-                if (!newTask.reflections) newTask.reflections = [];
-
-                const opts = { rowPadding: $rowPadding };
-                targetRow.allChildren.forEach(r => {
-                    const reflectedTask = reflectTask(newTask, r, opts);
-                    newTask.reflections.push(reflectedTask.model.id);
-                    reflectedTasks.push(reflectedTask);
-                });
-            }
-
-            if (reflectOnParentRows && targetRow.allParents.length > 0) {
-                if (!newTask.reflections) newTask.reflections = [];
-
-                const opts = { rowPadding: $rowPadding };
-                targetRow.allParents.forEach(r => {
-                    const reflectedTask = reflectTask(newTask, r, opts);
-                    newTask.reflections.push(reflectedTask.model.id);
-                    reflectedTasks.push(reflectedTask);
-                });
-            }
-
-            if (reflectedTasks.length > 0) {
-                selectionManager.newTasksAndReflections.push(...reflectedTasks);
-            }
-
-            if (!(targetRow.allParents.length > 0) && !targetRow.allChildren) {
-                newTask.reflections = null;
-            }
-
             taskStore.update(newTask);
         }
 

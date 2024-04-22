@@ -457,38 +457,48 @@
         taskFactory.rowEntities = $rowStore.entities;
 
         const tasks = [];
-        const opts = { rowPadding: $_rowPadding };
         const draggingTasks = {};
-        for (const t of taskData) {
-            if ($draggingTaskCache[t.id]) {
-                draggingTasks[t.id] = true;
+        for (const taskModel of taskData) {
+            if ($draggingTaskCache[taskModel.id]) {
+                draggingTasks[taskModel.id] = true;
             }
-            const task = taskFactory.createTask(t);
-            task.reflections = [];
-
-            const row = $rowStore.entities[task.model.resourceId];
-            if (row) {
-                if (reflectOnChildRows && row.allChildren) {
-                    row.allChildren.forEach(r => {
-                        const reflectedTask = reflectTask(task, r, opts);
-                        task.reflections.push(reflectedTask.model.id);
-                        tasks.push(reflectedTask);
-                    });
-                }
-
-                if (reflectOnParentRows && row.allParents.length > 0) {
-                    row.allParents.forEach(r => {
-                        const reflectedTask = reflectTask(task, r, opts);
-                        task.reflections.push(reflectedTask.model.id);
-                        tasks.push(reflectedTask);
-                    });
-                }
-            }
-
+            const task = taskFactory.createTask(taskModel);
             tasks.push(task);
         }
         $draggingTaskCache = draggingTasks;
         taskStore.addAll(tasks);
+    }
+
+    let _reflectedTasksCache: { [rowId: string]: SvelteTask[] } = {};
+    $: {
+        _reflectedTasksCache = {};
+        const opts = { rowPadding: $_rowPadding };
+        for (const task of $allTasks) {
+            const row = $rowStore.entities[task.model.resourceId];
+            if (!row) {
+                continue;
+            }
+
+            if (reflectOnChildRows && row.allChildren) {
+                row.allChildren.forEach(r => {
+                    const reflectedTask = reflectTask(task, r, opts);
+                    if (!_reflectedTasksCache[r.model.id]) {
+                        _reflectedTasksCache[r.model.id] = [];
+                    }
+                    _reflectedTasksCache[r.model.id].push(reflectedTask);
+                });
+            }
+
+            if (reflectOnParentRows && row.allParents) {
+                row.allParents.forEach(r => {
+                    const reflectedTask = reflectTask(task, r, opts);
+                    if (!_reflectedTasksCache[r.model.id]) {
+                        _reflectedTasksCache[r.model.id] = [];
+                    }
+                    _reflectedTasksCache[r.model.id].push(reflectedTask);
+                });
+            }
+        }
     }
 
     function initTimeRanges(timeRangeData) {
@@ -714,6 +724,10 @@
                     tasks.push($taskStore.entities[id]);
                     rendered[id] = true;
                 }
+            }
+
+            if (_reflectedTasksCache[row.model.id]) {
+                tasks.push(..._reflectedTasksCache[row.model.id]);
             }
         }
         

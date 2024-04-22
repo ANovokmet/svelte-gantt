@@ -28,7 +28,6 @@ export interface SvelteRow {
     parent?: SvelteRow;
     allParents?: SvelteRow[];
     childLevel?: number;
-    entities?: any;
 }
 
 export class RowFactory {
@@ -87,10 +86,13 @@ export class RowFactory {
             row.parent = parent;
             row.allParents = parents;
             if (parent) {
+                // when row is hidden, other rows (y-pos) move upward
                 row.hidden = !(parent.model.expanded || parent.model.expanded == null);
             }
 
-            ctx.y += row.height;
+            if (!row.hidden) {
+                ctx.y += row.height;
+            }
 
             if (rowModel.children) {
                 const nextLevel = this.createChildRows(
