@@ -76,8 +76,6 @@ gantt.$set({
 -   `to` {`Moment`} Datetime timeline ends on.
 -   `minWidth` {`Number`} Minimum width of gantt area in px.
 -   `fitWidth` {`Boolean`} Should timeline stretch width to fit.
--   `highlightWeekends` {`Boolean`} Should weekends be highlighted. (V1 Only works when columnUnit == 'day' && columnOffset == 1)
--   `highlightColor` {`String`} Highlight color (weekends only for now).
 -   `magnetUnit` {`String`} Minimum unit of time task date values will round to.
 -   `magnetOffset` {`Number`} Amount of units task date values will round to.
 -   `columnUnit` {`String`} Duration unit of columns.
