@@ -76,8 +76,8 @@ gantt.$set({
 -   `to` {`Moment`} Datetime timeline ends on.
 -   `minWidth` {`Number`} Minimum width of gantt area in px.
 -   `fitWidth` {`Boolean`} Should timeline stretch width to fit.
--   `highlightWeekends` {`Boolean`} Should weekends be highlighted. (V1 Only works when columnUnit == 'day' && columnOffset == 1)
--   `highlightColor` {`String`} Highlight color (weekends only for now).
+-   `highlightedDurations` {`Object`} Pattern for highlighting durations, see below.
+-   `highlightColor` {`String`} Highlight color (for use with `highlightedDurations`).
 -   `magnetUnit` {`String`} Minimum unit of time task date values will round to.
 -   `magnetOffset` {`Number`} Amount of units task date values will round to.
 -   `columnUnit` {`String`} Duration unit of columns.
@@ -207,6 +207,15 @@ Renders a block of time spanning all the rows:
 -   `classes` {`String`|`Array`} Custom CSS classes.
 -   `label` {`String`} Display label.
 -   `resizable` {`Boolean`} Should the time range be resizable.
+
+## Highlighted durations
+
+Highlight a repeating block of time spanning all rows:
+
+-   `unit` {`String`} Time unit of duration, e.g. `'day'`.
+-   `fractions` {`Array`} List of fractions that should be highlighted, e.g. `{unit: 'day', fractions: [0,6]}` will highlight weekends.
+
+Highlighting will only work correctly if `useCanvasColumns` is set to `false`, and if highlighted unit is the same or a constant fraction of the column unit eg. `day`, `hour`, `minute`.
 
 ## Methods
 
