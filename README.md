@@ -357,10 +357,6 @@ npm run package
 
 3.  The package is built in _./dist_
 
-# Issues
-
--   Transitions on task drop sometimes do not play - issue introduced in Svelte 3
-
 # TBD
 
 -   Context-menus (click on row, task or dependency)

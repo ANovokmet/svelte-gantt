@@ -712,10 +712,29 @@
     let visibleRows = [];
     $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
 
-    let visibleTasks: SvelteTask[];
+    let visibleTasks: SvelteTask[]; // try to keep the same order in the array as before
+    let previousOrder: {};
     $: {
-        const tasks = [];
+        const tasks: SvelteTask[] = [];
         const rendered: { [id: string]: boolean } = {};
+
+        const tasksOrdered: SvelteTask[] = [];
+        const order: { [id: PropertyKey]: number; } = {};
+        // because svelte detaches html elements when their order changes (even when keyed)
+        // this helps CSS transitions
+        let ordered = true;
+        let ordinal = 0;
+        function tryRestorePosition(task: SvelteTask) {
+            const id = task.model.id;
+            if (previousOrder[id] != null) {
+                tasksOrdered[previousOrder[id]] = task;
+            } else {
+                ordered = false;
+            }
+
+            order[id] = ordinal++;
+        }
+
         for (let i = 0; i < visibleRows.length; i++) {
             const row = visibleRows[i];
             if ($rowTaskCache[row.model.id]) {
@@ -723,11 +742,15 @@
                     const id = $rowTaskCache[row.model.id][j];
                     tasks.push($taskStore.entities[id]);
                     rendered[id] = true;
+                    tryRestorePosition($taskStore.entities[id]);
                 }
             }
 
             if (_reflectedTasksCache[row.model.id]) {
-                tasks.push(..._reflectedTasksCache[row.model.id]);
+                for (const task of _reflectedTasksCache[row.model.id]) {
+                    tasks.push(task);
+                    tryRestorePosition(task);
+                }
             }
         }
         
@@ -736,10 +759,16 @@
             if (!rendered[id]) {
                 tasks.push($taskStore.entities[id]);
                 rendered[id] = true;
+                tryRestorePosition($taskStore.entities[id]);
             }
         }
 
-        visibleTasks = tasks;
+        if (tasksOrdered.length !== tasks.length) {
+            ordered = false;
+        }
+
+        previousOrder = order;
+        visibleTasks = ordered ? tasksOrdered : tasks;
     }
 
     $: {
