@@ -16,6 +16,12 @@ export function getRelativePos(node: HTMLElement, event: Pick<MouseEvent, 'clien
         y: y
     };
 }
+export function getRelativePosition(node: HTMLElement, event: Pick<MouseEvent, 'clientX' | 'clientY'>) {
+    const rect = node.getBoundingClientRect();
+    const x = event.clientX - rect.left; //x position within the element.
+    const y = event.clientY - rect.top; //y position within the element.
+    return [x, y] as const;
+}
 
 /**
  * Adds an event listener that triggers once.

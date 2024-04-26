@@ -21,7 +21,7 @@
     import type { SvelteTask, TaskModel } from './core/task';
     import { RowFactory } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
-    import { DragDropManager, DragContextProvider } from './core/drag';
+    import { DragDropManager, DragContextProvider, DragContext } from './core/drag';
     import { SelectionManager } from './core/selectionManager';
     import { findByPosition, findByDate } from './core/column';
     import type { HighlightedDurations, Column as IColumn } from './core/column';
@@ -30,6 +30,7 @@
     import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
     import type { SvelteGanttDateAdapter } from './utils/date';
     import * as packLayout from './core/pack-layout';
+    import { MoveEvent, useCreateTask } from './modules/create-tasks';
 
     function assertSet(values) {
         for (const name in values) {
@@ -330,7 +331,7 @@
         api['tasks'].raise.select(task);
     });
 
-    onDelegatedEvent('mouseover', 'data-row-id', (event, data, target) => {
+    onDelegatedEvent('pointerover', 'data-row-id', (event, data, target) => {
         $hoveredRow = data;
     });
 
@@ -348,14 +349,14 @@
         api['tasks'].raise.dblclicked($taskStore.entities[taskId], event);
     });
 
-    onDelegatedEvent('mouseleave', 'empty', (event, data, target) => {
+    onDelegatedEvent('pointerleave', 'empty', (event, data, target) => {
         $hoveredRow = null;
     });
 
     onDestroy(() => {
         offDelegatedEvent('click', 'data-task-id');
         offDelegatedEvent('click', 'data-row-id');
-        offDelegatedEvent('mousedown', 'data-task-id');
+        offDelegatedEvent('pointerdown', 'data-task-id');
         offDelegatedEvent('dblclick', 'data-task-id');
 
         selectionManager.unSelectTasks();
@@ -785,21 +786,66 @@
             }
         }
     }
+
+    /** enable create task by dragging */
+    export let enableCreateTask = false;
+    export let onCreateTask = (e: { from: number; to: number; resourceId: string | number; }) => {
+        const id: any = `creating-task-${(Math.random() + 1).toString(36).substring(2, 7)}`;
+        return ({
+            id,
+            label: ' ',
+            ...e,
+        }) as TaskModel;
+    }
+    export let onCreatedTask = (task: SvelteTask) => {};
+
+    let _creatingTask: SvelteTask = null;
+    let draggingContext: { trigger: DragContext['trigger']; } = null;
+    function onCreateTaskMove({ from, to, x, width, y }: MoveEvent) {
+        if (!_creatingTask) {
+            // TODO:: incorrect for collapsible rows, if creating under one
+            const row = $allRows.find(row => row.y < y && y < row.y + row.height);
+            const resourceId = row.model.id;
+            _creatingTask = taskFactory.createTask(onCreateTask({
+                resourceId,
+                from,
+                to,
+            }));
+            taskStore.upsert(_creatingTask);
+            $draggingTaskCache[_creatingTask.model.id] = true;
+        }
+
+        draggingContext.trigger('move', _creatingTask.model.id, { x, width });
+    }
+
+    function onCreateTaskEnd({ from, to, x, width }: MoveEvent) {
+        _creatingTask.model.from = from;
+        _creatingTask.model.to = to;
+        _creatingTask.left = x;
+        _creatingTask.width = width;
+        draggingContext.trigger('move', _creatingTask.model.id, { x, width });
+        taskStore.upsert(_creatingTask);
+        delete $draggingTaskCache[_creatingTask.model.id];
+        onCreatedTask(_creatingTask);
+        _creatingTask = null;
+    }
+
+    const createTasks = useCreateTask();
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-<DragContextProvider>
+<DragContextProvider bind:this={draggingContext}>
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="sg-gantt {classes}"
         class:sg-disable-transition={disableTransition}
         bind:this={ganttElement}
-        on:mousedown|stopPropagation={onEvent}
+        on:pointerdown|stopPropagation={onEvent}
         on:click|stopPropagation={onEvent}
         on:dblclick={onEvent}
-        on:mouseover={onEvent}
-        on:mouseleave={onEvent}
+        on:pointerover={onEvent}
+        on:pointerleave={onEvent}
     >
         {#each ganttTableModules as module}
             <svelte:component
@@ -841,6 +887,7 @@
                 on:wheel={onwheel}
                 bind:clientHeight={$visibleHeight}
                 bind:clientWidth={$visibleWidth}
+                use:createTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd }}
             >
                 <div class="content" style="width:{$_width}px">
                     <Columns {columns} {columnStrokeColor} {columnStrokeWidth} {useCanvasColumns} />

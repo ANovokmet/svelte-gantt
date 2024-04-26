@@ -111,6 +111,9 @@ gantt.$set({
 -   `layout` {`'overlap'`, `'pack'`} The layout used to arrange tasks in a row.
     - `'overlap'` Overlapping tasks display one over another (default).
     - `'pack'` Overlapping tasks shrink and display one above another.
+-   `enableCreateTask` {`Boolean`} Enables creating new tasks by dragging.
+-   `onCreateTask` {`({ from: number; to: number; resourceId: string | number; }) => TaskModel`} This function provides the new task model when dragging to create task.
+-   `onCreatedTask` {`(task: SvelteTask) => void`} Called after task was created by dragging.
 
 ## Header
 

@@ -38,7 +38,7 @@ export interface ResizeEvent {
     event?: MouseEvent;
 }
 
-export type Directions = 'left' | 'right' | undefined;
+export type Direction = 'left' | 'right' | undefined;
 
 type MaybeAccessor<T> = T | (() => T);
 
@@ -58,7 +58,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
     let mouseStartPosY: number;
     let mouseStartRight: number;
 
-    let direction: Directions;
+    let direction: Direction;
     let dragging = false;
     let resizing = false;
 
@@ -69,9 +69,9 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
     const dragAllowed = getAccessor(options.dragAllowed);
     const resizeAllowed = getAccessor(options.resizeAllowed);
 
-    node.addEventListener('mousedown', onMousedown, { passive: true });
+    node.addEventListener('pointerdown', onMousedown, { passive: true });
 
-    function onMousedown(event: MouseEvent) {
+    function onMousedown(event: PointerEvent) {
         if (!isLeftClick(event)) {
             return;
         }
@@ -122,8 +122,8 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
             });
         }
 
-        window.addEventListener('mousemove', onMousemove, false);
-        addEventListenerOnce(window, 'mouseup', onMouseup);
+        window.addEventListener('pointermove', onMousemove, false);
+        addEventListenerOnce(window, 'pointerup', onMouseup);
     };
 
     function onMousemove(event: MouseEvent) {
@@ -222,14 +222,14 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
         initialY = null;
         resizeTriggered = false;
 
-        window.removeEventListener('mousemove', onMousemove, false);
+        window.removeEventListener('pointermove', onMousemove, false);
     };
 
     return {
         destroy() {
-            node.removeEventListener('mousedown', onMousedown, false);
-            node.removeEventListener('mousemove', onMousemove, false);
-            node.removeEventListener('mouseup', onMouseup, false);
+            node.removeEventListener('pointerdown', onMousedown, false);
+            node.removeEventListener('pointermove', onMousemove, false);
+            node.removeEventListener('pointerup', onMouseup, false);
         }
     };
 }

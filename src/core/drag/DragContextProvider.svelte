@@ -1,32 +1,8 @@
-<script context="module" lang="ts">
-    import { Readable } from 'svelte/store';
-    import { DownDropEvent } from './draggable';
-    import { SvelteTask } from '../task';
-
-    type Events = {
-        'move': { x?: number; y?: number; width?: number; };
-        'drop': DownDropEvent;
-    }
-
-    type Handlers = { [K in keyof Events]: (data: Events[K]) => void; };
-
-    export interface DragContext {
-        active: Readable<boolean>;
-        handlers: { 
-            [taskId: number]: Handlers
-        };
-        on(taskId: number, handlers: Handlers);
-        off(taskId: number);
-        trigger<K extends keyof Events>(name: K, taskId: number, data: Events[K]);
-        save(start: {x: number; y: number; width: number; }, tasks: SvelteTask[]);
-        dropAll(event: DownDropEvent): void;
-        moveAll(data: { x?: number; y?: number; width?: number; })
-    }
-</script>
-
 <script lang="ts">
     import { setContext } from 'svelte';
     import { writable } from 'svelte/store';
+    import { DragContext } from './DragContextProvider';
+    import { DownDropEvent } from './draggable';
 
     type Pos = {
         id: number;
@@ -96,7 +72,9 @@
         }
     };
 
+    export const trigger = context.trigger;
+
     setContext('drag', context);
 </script>
 
-<slot></slot>
+<slot {context}></slot>

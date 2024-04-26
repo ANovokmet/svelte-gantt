@@ -46,7 +46,6 @@
         layout
     } = getContext('options');
     const { dndManager, api, utils, columnService, selectionManager } = getContext('services');
-
     const draggingContext = getContext('drag');
     let draggingActive = draggingContext.active;
 
@@ -306,6 +305,11 @@
     $: {
         _moving = _dragging || _resizing || ($selectedTasks[model.id] && $draggingActive);
     }
+
+    let _animating: boolean;
+    $: {
+        _animating = animating && !$draggingTaskCache[model.id];
+    }
 </script>
 
 <div
@@ -316,12 +320,13 @@
     class:sg-milestone={model.type === 'milestone'}
     style="width:{_position.width}px; height:{_height}px; left: {_position.x}px; top: {_top}px;"
     class:moving={_moving}
-    class:animating
+    class:animating={_animating}
     class:sg-task-reflected={reflected}
     class:sg-task-selected={$selectedTasks[model.id]}
     class:resize-enabled={resizeEnabled}
     class:sg-task--sticky={model.stickyLabel}
     class:sg-ignore-click={_ignoreClick}
+    class:sg-task-instant={_position.width === 0}
 >
     {#if model.type === 'milestone'}
         <div class="sg-milestone__diamond"></div>
@@ -337,7 +342,6 @@
         {:else}
             {model.label}
         {/if}
-        <!-- <span class="debug">x:{_position.x} y:{_position.y}, x:{left} y:{top}</span> -->
         {#if model.showButton}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <span
@@ -382,6 +386,8 @@
             background-color 0.2s,
             opacity 0.2s;
         pointer-events: all;
+        /* disable mobile pan/zoom on drag */
+        touch-action: none;
     }
 
     .sg-task-background {
@@ -403,7 +409,7 @@
         user-select: none;
     }
 
-    .sg-task:not(.moving) {
+    .sg-task.animating:not(.moving) {
         transition:
             left 0.2s,
             top 0.2s,
@@ -466,6 +472,11 @@
 
     .sg-task-reflected {
         opacity: 0.5;
+    }
+
+    .sg-task-instant {
+        width: 2px !important;
+        margin-left: -1px;
     }
 
     .sg-task-background {

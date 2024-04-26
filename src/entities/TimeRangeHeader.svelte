@@ -40,7 +40,7 @@
             });
             api.timeranges.raise.changed({ model, left: event.x, width: event.width });
 
-            window.removeEventListener('mousemove', onmousemove, false);
+            window.removeEventListener('pointermove', onmousemove, false);
         };
 
         function update(state) {
