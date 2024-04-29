@@ -1,6 +1,6 @@
-import { ColumnService } from 'src/core/column';
-import { getRelativePos, getRelativePosition } from 'src/utils/dom';
-import { GanttUtils } from 'src/utils/utils';
+import { ColumnService } from '../core/column';
+import { getRelativePos, getRelativePosition } from '../utils/dom';
+import { GanttUtils } from '../utils/utils';
 import { getContext } from 'svelte';
 
 type Options = {
