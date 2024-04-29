@@ -356,7 +356,6 @@
     onDestroy(() => {
         offDelegatedEvent('click', 'data-task-id');
         offDelegatedEvent('click', 'data-row-id');
-        offDelegatedEvent('pointerdown', 'data-task-id');
         offDelegatedEvent('dblclick', 'data-task-id');
 
         selectionManager.unSelectTasks();
