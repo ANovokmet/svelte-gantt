@@ -1,0 +1,39 @@
+# External draggable
+
+Enables external DOM elements to be draggable to svelte-gantt. Useful for creating new tasks:
+
+```js
+new SvelteGanttExternal(
+    // external DOM element
+    document.getElementById('newTaskButton'),
+    // options
+    {
+        // reference to instance of svelte-gantt
+        gantt,
+        // if enabled
+        enabled: true,
+        // success callback
+        // row: row element was dropped on
+        // date: date element was dropped on
+        // gantt: instance of svelte-gantt
+        onsuccess: (row, date, gantt) => {
+            // here you can add a task to row, see './public/main.js'
+        },
+        // called when dragged outside main gantt area
+        onfail: () => {},
+        // factory function, creates HTMLElement that will follow the mouse
+        elementContent: () => {
+            const element = document.createElement('div');
+            element.innerHTML = 'New Task';
+            Object.assign(element.style, {
+                position: 'absolute',
+                background: '#eee',
+                padding: '0.5em 1em',
+                fontSize: '12px',
+                pointerEvents: 'none'
+            });
+            return element;
+        }
+    }
+);
+```

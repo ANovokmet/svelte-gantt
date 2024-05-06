@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply min-h-screen w-screen;
+}
+
+.js-focus-visible :focus:not([data-focus-visible-added]) {
+  @apply outline-none;
+}
+
+.js-focus-visible [data-focus-visible-added] {
+  @apply outline-none ring-2;
+  --tw-ring-color: var(--kd-color-focus);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * -----------------------------------------------------
+ * SCROLLBAR
+ * -----------------------------------------------------
+ */
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media screen and (min-width: 1280px) {
+  .scroll-contain {
+    overscroll-behavior: contain;
+  }
+}
+
+.scroll-contain-mobile {
+  overscroll-behavior: contain;
+}
+
+.scrollbar {
+  scrollbar-width: thin;
+  --kd-scrollbar-track-bg: rgb(var(--kd-color-border) / 0.3);
+  --kd-scrollbar-thumb-bg: rgb(var(--kd-color-border));
+}
+
+.dark .scrollbar {
+  --kd-scrollbar-track-bg: rgb(var(--kd-color-border) / 0.2);
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  .scrollbar {
+    scroll-behavior: smooth;
+  }
+}
+
+.scrollbar::-webkit-scrollbar {
+  @apply !h-1.5 !w-[5px] !bg-transparent;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  @apply !rounded;
+  background-color: var(--kd-scrollbar-track-bg) !important;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  @apply !rounded;
+  background-color: var(--kd-scrollbar-thumb-bg) !important;
+}
+
+/*
+ * -----------------------------------------------------
+ * BLUR
+ * -----------------------------------------------------
+ */
+
+.blur-bg {
+  @apply bg-body dark:bg-body backdrop-blur backdrop-filter;
+}
+
+@supports (backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0)) {
+  .blur-bg {
+    @apply bg-body/20 dark:bg-body/60;
+  }
+}
+
+.svg-responsive > svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * -----------------------------------------------------
+ * DOCS
+ * -----------------------------------------------------
+ */
+
+.kit-docs pre {
+  tab-size: 2;
+  -o-tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+.kit-docs p + .admonition,
+.kit-docs p + .steps {
+  margin-top: 2.5rem;
+}
+
+.kit-docs .steps + p {
+  margin-top: 4rem;
+}
+
+.kit-docs .admonition + .steps {
+  margin-top: 3.5rem;
+}
+
+.kit-docs .admonition + table {
+  margin-top: 4rem;
+}
+
+.kit-docs .code-fence .code pre {
+  margin: 0;
+}
+
+.kit-docs .code-fence.lang-bash pre span {
+  color: #fafafa !important;
+}
+
+.kit-docs .code-fence.lang-bash pre .line:not(:empty)::before {
+  content: '> ';
+  font-weight: bold;
+  color: var(--kd-terminal-line-pointer);
+}
+
+.kit-docs .step .description > code {
+  color: var(--kd-color-inverse);
+}
+
+.kit-docs .step .code-fence {
+  margin: 0;
+  padding: 0;
+}
+
+.kit-docs .code-fence + .code-fence {
+  margin-top: 0.5rem;
+}
+
+.kit-docs h1 + .steps,
+.kit-docs h2 + .steps,
+.kit-docs h3 + .steps {
+  margin-top: 2.5rem;
+}
+
+.kit-docs .header-anchor {
+  margin-left: -1.25em;
+  padding: 0 0.23em;
+  font-size: 0.9em;
+  opacity: 0;
+  border: 0;
+  background-color: none;
+}
+
+.kit-docs h1:focus,
+.kit-docs h2:focus,
+.kit-docs h3:focus,
+.kit-docs h4:focus,
+.kit-docs h5:focus,
+.kit-docs h6:focus {
+  outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .kit-docs h1:hover .header-anchor,
+  .kit-docs h2:hover .header-anchor,
+  .kit-docs h3:hover .header-anchor,
+  .kit-docs h4:hover .header-anchor,
+  .kit-docs h5:hover .header-anchor,
+  .kit-docs h6:hover .header-anchor {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .kit-docs h1:focus .header-anchor,
+  .kit-docs h2:focus .header-anchor,
+  .kit-docs h3:focus .header-anchor,
+  .kit-docs h4:focus .header-anchor,
+  .kit-docs h5:focus .header-anchor,
+  .kit-docs h6:focus .header-anchor {
+    opacity: 1;
+  }
+}
+
+.kit-docs .header-anchor:focus {
+  opacity: 1;
+}

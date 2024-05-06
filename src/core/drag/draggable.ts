@@ -186,7 +186,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
             const mousePos = getRelativePos(options.container, event);
 
             options.onDrag({
-                x: mousePos.x - mouseStartPosX,
+                x: mousePos.x - mouseStartPosX, // maybe this is the rounding error
                 y: mousePos.y - mouseStartPosY,
                 event
             });
@@ -199,7 +199,9 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
         const width = options.getWidth();
 
         options.onMouseUp && options.onMouseUp();
-
+        // there is an issue here maybe, we update task according to the mousemove event, but we ignore the mouseup event and use the previously commited x, y and width
+        // you know those issues when task gets rounded incorrectly on resize? could be the cause
+        // ....or not really, this issue results in task resizing when task is merely dragged
         if (resizeTriggered && options.onDrop) {
             options.onDrop({
                 mouseEvent: event,
