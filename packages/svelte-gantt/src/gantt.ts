@@ -27,6 +27,8 @@ export interface GanttContextDimensions {
     visibleWidth: Writable<number>;
     visibleHeight: Writable<number>;
     headerHeight: Writable<number>;
+    bottomScrollbarVisible: Writable<number>;
+    rightScrollbarVisible: Writable<number>;
 }
 
 export interface GanttContext {

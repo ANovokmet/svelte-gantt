@@ -23,7 +23,7 @@
     // width: width of column
     export let tableHeaders: TableHeader[] = [{ title: 'Name', property: 'label', width: 100 }];
 
-    const { from, to, width, visibleWidth, headerHeight } = getContext('dimensions');
+    const { headerHeight, bottomScrollbarVisible } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
     const { rowStore, taskStore } = getContext('dataStore');
     const { scrollables } = getContext('gantt');
@@ -102,12 +102,6 @@
             row.hidden = hidden;
         });
     }
-
-    // if gantt displays a bottom scrollbar and table does not, we need to pad out the table
-    let bottomScrollbarVisible;
-    $: {
-        bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth;
-    }
 </script>
 
 <div class="sg-table sg-view" style="width:{tableWidth}px;">
@@ -119,7 +113,7 @@
         {/each}
     </div>
 
-    <div class="sg-table-body" class:bottom-scrollbar-visible={bottomScrollbarVisible}>
+    <div class="sg-table-body" style={`padding-bottom: ${$bottomScrollbarVisible}px;`}>
         <div class="sg-table-scroller" use:scrollListener>
             <div
                 class="sg-table-rows"
@@ -139,11 +133,6 @@
 </div>
 
 <style>
-    /* This class should take into account varying widths of the scroll bar */
-    .bottom-scrollbar-visible {
-        padding-bottom: 17px;
-    }
-
     .sg-table {
         overflow-x: auto;
         display: flex;

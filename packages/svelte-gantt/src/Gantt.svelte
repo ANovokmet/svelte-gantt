@@ -263,13 +263,22 @@
         return cols;
     }
 
+    let offsetWidth: number;
+    let offsetHeight: number;
+    let bottomScrollbarVisible = writable(offsetHeight - $visibleHeight);
+    let rightScrollbarVisible = writable(offsetWidth - $visibleWidth);
+    $: $bottomScrollbarVisible = offsetHeight - $visibleHeight;
+    $: $rightScrollbarVisible = offsetWidth - $visibleWidth;
+
     setContext('dimensions', {
         from: _from,
         to: _to,
         width: _width,
         visibleWidth,
         visibleHeight,
-        headerHeight
+        headerHeight,
+        bottomScrollbarVisible,
+        rightScrollbarVisible,
     });
 
     setContext('options', {
@@ -689,9 +698,6 @@
 
     let filteredRows = [];
     $: filteredRows = $allRows.filter(row => !row.hidden);
-    
-    let rightScrollbarVisible: boolean;
-    $: rightScrollbarVisible = rowContainerHeight > $visibleHeight;
 
     let rowContainerHeight;
     $: rowContainerHeight = filteredRows.length * rowHeight;
@@ -864,7 +870,7 @@
         {/each}
 
         <div class="sg-timeline sg-view">
-            <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight={$headerHeight} class:right-scrollbar-visible="{rightScrollbarVisible}">
+            <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight={$headerHeight} style={`padding-right: ${$rightScrollbarVisible}px;`}>
                 <div class="sg-header-scroller" use:horizontalScrollListener>
                     <div class="header-container" style="width:{$_width}px">
                         <ColumnHeader
@@ -887,7 +893,9 @@
                 class:zooming
                 on:wheel={onwheel}
                 bind:clientHeight={$visibleHeight}
+                bind:offsetHeight={offsetHeight}
                 bind:clientWidth={$visibleWidth}
+                bind:offsetWidth={offsetWidth}
                 use:createTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd }}
             >
                 <div class="content" style="width:{$_width}px">
@@ -949,12 +957,6 @@
     :global(.sg-view:not(:first-child)) {
         margin-left: 5px;
     }
-
-    /* This class should take into account varying widths of the scroll bar */
-    :global(.right-scrollbar-visible) { 
-        /* set this value to your scrollbar width */
-        padding-right: 17px;
-    } 
 
     .sg-timeline {
         flex: 1 1 0%;
