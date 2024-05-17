@@ -14,8 +14,20 @@
         "package": "node tools/build && npm run build-package",
         "build-package": "svelte-package -i src -o dist/svelte",
         "lint": "eslint .",
-        "format": "prettier --plugin-search-dir . --write . --plugin prettier-plugin-svelte",
-        "dev:docs": "pnpm --filter docs-mdsvex run dev"
+        "format": "prettier --plugin-search-dir . --write . --plugin prettier-plugin-svelte"
+    },
+    "module": "./src/index.ts",
+    "exports": {
+        ".": {
+            "import": "./src/index.ts",
+            "default": "./src/index.ts",
+            "svelte": "./src/index.ts"
+        },
+        "./svelte": {
+            "import": "./src/index.ts",
+            "default": "./src/index.ts",
+            "svelte": "./src/index.ts"
+        }
     },
     "repository": {
         "type": "git",
@@ -36,8 +48,6 @@
         "vue-gantt",
         "drag-n-drop"
     ],
-    "types": "types/index.d.ts",
-    "main": "index.js",
     "peerDependencies": {
         "moment": "^2.22.2"
     },

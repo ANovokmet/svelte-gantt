@@ -9,6 +9,15 @@
 
 Renders a block of time spanning all the rows.
 
+| Name | Description | Type | Default |
+| - | - | - | -: |
+| `id`  | Unique id of time range. | `Number`\|`String` | undefined |
+|`from` | Datetime timeRange starts on.| `number`  | undefined |
+| `to`  | Datetime timeRange ends on. | `number` | undefined |
+| `classes`| Custom CSS classes. | `String`\|`Array` | undefined |
+| `label`  | Display label. | `String` | undefined |
+| `resizable` | Should the time range be resizable. | `Boolean` | false |
+
 ```js
 const options = {
     // ...
@@ -26,12 +35,21 @@ const options = {
                 classes: 'time-range-lunch',
                 label: 'Lunch',
                 resizable: false,
+            },
+            {
+                id: 3,
+                from: new Date('2024-02-01T11:00:00').valueOf(),
+                to: new Date('2024-02-01T12:00:00').valueOf(),
+                label: 'Custom class',
+                classes: 'gradient',
             }
     ]
 }
 ```
 
-<SvelteGantt from={time('8:00')} to={time('12:00')}
+<SvelteGantt from={time('8:00')} to={time('14:00')}
+    minWidth={400}
+    fitWidth={true}
     rows={[{id: 1}, {id: 2}]}
     timeRanges={[
         {
@@ -48,16 +66,22 @@ const options = {
             classes: 'time-range-lunch',
             label: 'Lunch',
             resizable: false,
+        },
+        {
+            id: 2,
+            from: time('12:00'),
+            to: time('13:00'),
+            label: 'Custom class',
+            classes: 'gradient',
         }
     ]}/>
 
-## Props
-
-| Name | Description | Type | Default |
-| - | - | - | -: |
-| `id`  | Unique id of time range. | `Number`\|`String` | undefined |
-|`from` | Datetime timeRange starts on.| `number`  | undefined |
-| `to`  | Datetime timeRange ends on. | `number` | undefined |
-| `classes`| Custom CSS classes. | `String`\|`Array` | undefined |
-| `label`  | Display label. | `String` | undefined |
-| `resizable` | Should the time range be resizable. | `Boolean` | false |
+<style lang="postcss">
+    :global(.sg-time-range.gradient) {
+        @apply bg-gradient-to-tr from-pink-500 to-violet-500 rounded-md;
+        background-size: unset !important;
+    }
+    :global(.sg-time-range.gradient:hover) {
+        @apply bg-gradient-to-tr from-pink-600 to-violet-600 rounded-md shadow-xl;
+    }
+</style>

@@ -9,10 +9,10 @@
 
 	export let search = false;
 
-  let navbar = true;
-  let showSidebar = true;
-  let showBottomNav = true;
-  let collapseNavbar = false;
+	let navbar = true;
+	let showSidebar = true;
+	let showBottomNav = true;
+	let collapseNavbar = false;
 </script>
 
 

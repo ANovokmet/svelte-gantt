@@ -1,6 +1,6 @@
 import { Readable } from 'svelte/store';
-import { DownDropEvent } from './draggable';
-import { SvelteTask } from '../task';
+import type { DownDropEvent } from './draggable';
+import type { SvelteTask } from '../task';
 
 export type Events = {
     'move': { x?: number; y?: number; width?: number; };

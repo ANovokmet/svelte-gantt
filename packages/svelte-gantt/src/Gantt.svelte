@@ -21,7 +21,8 @@
     import type { SvelteTask, TaskModel } from './core/task';
     import { RowFactory } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
-    import { DragDropManager, DragContextProvider, DragContext } from './core/drag';
+    import { DragDropManager, DragContextProvider } from './core/drag';
+    import type { DragContext } from './core/drag';
     import { SelectionManager } from './core/selectionManager';
     import { findByPosition, findByDate } from './core/column';
     import type { HighlightedDurations, Column as IColumn } from './core/column';
@@ -30,7 +31,8 @@
     import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
     import type { SvelteGanttDateAdapter } from './utils/date';
     import * as packLayout from './core/pack-layout';
-    import { MoveEvent, useCreateTask } from './modules/create-tasks';
+    import { useCreateTask } from './modules/create-tasks';
+    import type { MoveEvent } from './modules/create-tasks';
 
     function assertSet(values) {
         for (const name in values) {

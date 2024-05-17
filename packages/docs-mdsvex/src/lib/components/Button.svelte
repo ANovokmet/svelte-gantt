@@ -11,7 +11,7 @@
 
 	$: isButton = __as === 'button' && !$$restProps['href'];
 
-	$: buttonClass = `group transform-gpu text-base font-medium transition-transform hover:scale-105
+	$: buttonClass = `group transform-gpu text-base font-medium transition-all hover:scale-105
     ${type === 'raised' && 'flex items-center justify-center'}
     ${(isButton || type === 'raised') && 'rounded-md px-4 992:px-5 py-2'}
     ${type === 'raised'

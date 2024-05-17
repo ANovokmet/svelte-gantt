@@ -1,8 +1,8 @@
 <script lang="ts">
     import { setContext } from 'svelte';
     import { writable } from 'svelte/store';
-    import { DragContext } from './DragContextProvider';
-    import { DownDropEvent } from './draggable';
+    import type { DragContext } from './DragContextProvider';
+    import type { DownDropEvent } from './draggable';
 
     type Pos = {
         id: number;

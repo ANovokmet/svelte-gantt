@@ -1,8 +1,9 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import { TaskModel, SvelteTask } from '../core/task';
+    import type { TaskModel, SvelteTask } from '../core/task';
     import { normalizeClassAttr, setCursor, throttle } from '../utils/dom';
-    import { DownDropEvent, useDraggable } from '../core/drag';
+    import { useDraggable } from '../core/drag';
+    import type { DownDropEvent } from '../core/drag';
 
     export let model: TaskModel;
     export let height: number;

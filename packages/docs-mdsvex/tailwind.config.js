@@ -38,6 +38,10 @@ export default {
         elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)',
       },
       typography: kitDocsTypography,
+      backgroundImage: () => ({
+        'gradient-0': 'linear-gradient(0deg, var(--tw-gradient-stops))',
+        // You can add more custom classes here
+      })
     },
   },
   plugins: [typography, kitDocsVariants],
