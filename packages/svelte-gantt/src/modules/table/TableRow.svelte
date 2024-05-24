@@ -77,7 +77,8 @@
         position: relative;
 
         font-weight: 400;
-        font-size: 14px;
+        font-size: 14px;  
+        transition: height 0.2s;
     }
 
     .sg-table-cell {

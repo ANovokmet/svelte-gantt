@@ -1,3 +1,4 @@
+import { SvelteRow } from './row';
 import { SvelteTask } from './task';
 
 /**
@@ -9,17 +10,22 @@ import { SvelteTask } from './task';
  * 
  * TODO:: tests, optimization: update only rows that have changes, update only overlapping tasks
  */
-export function layout(tasks: SvelteTask[], params: { rowContentHeight: number }) {
+export function layout(tasks: SvelteTask[], row: SvelteRow, params: { contentHeight: number, rowPadding: number, expandRow?: boolean; }) {
     if (!tasks.length) {
         return;
     }
 
     if (tasks.length === 1) {
         const task = tasks[0];
+        task.top = row.y + params.rowPadding;
         task.yPos = 0;
         task.intersectsWith = [];
-        task.height = params.rowContentHeight;
+        task.height = params.contentHeight;
         task.topDelta = (task.yPos * task.height); // + rowPadding which is added by taskfactory;
+
+        if (params.expandRow) {
+            row.height = params.contentHeight + 2 * params.rowPadding;
+        }
     }
 
     tasks.sort(_byStartThenByLongestSortFn);
@@ -35,11 +41,23 @@ export function layout(tasks: SvelteTask[], params: { rowContentHeight: number }
     }
 
     for(const task of tasks) {
+        task.top = row.y + params.rowPadding;
         task.numYSlots = _getMaxIntersectsWithLength(task);
+
+        if (params.expandRow) {
+            row.height = task.numYSlots * params.contentHeight + 2 * params.rowPadding;
+        }
+
         for (let i = 0; i < task.numYSlots!; i++) {
             if(!task.intersectsWith!.some(intersect => intersect.yPos === i)) {
                 task.yPos = i;
-                task.height = (params.rowContentHeight / task.numYSlots!);
+
+                if (params.expandRow) {
+                    task.height = params.contentHeight;
+                } else {
+                    task.height = (params.contentHeight / task.numYSlots!);
+                }
+                
                 task.topDelta = (task.yPos * task.height); // + rowPadding which is added by taskfactory;
                 break;
             }

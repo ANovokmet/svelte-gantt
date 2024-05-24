@@ -298,7 +298,7 @@
         } else if (_dragging || _resizing || ($selectedTasks[model.id] && $draggingActive)) {
             _top = _position.y;
         } else {
-            _top = $rowStore.entities[model.resourceId].y + $rowPadding;
+            _top = $rowStore.entities[model.resourceId].y + $rowPadding + topDelta;
         }
     }
 

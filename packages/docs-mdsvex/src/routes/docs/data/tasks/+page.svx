@@ -6,7 +6,7 @@ title: Tasks
 
 Tasks are intervals of time that are assigned to a resource. They are defined as a list of objects:
 
-| Name | Description | Type | Default |
+| Name | Type | Description | Default |
 | - | - | - | -: |
 `id` | `Number`\|`String` | Id of task, every task needs to have a unique one. | undefined |
 `amountDone` | `Number` | Task completion in percent, indicated on task. | undefined |

@@ -93,6 +93,7 @@ Layout can be one of the following:
 
 - `'overlap'` Overlapping tasks display one over another (default).
 - `'pack'` Overlapping tasks shrink and display one above another.
+- `'expand'` Overlapping tasks display one above another and make the row expand.
 
 
 ### DateAdapter

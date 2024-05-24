@@ -146,7 +146,7 @@
     export let taskElementHook = null;
 
     /** Controls how the tasks will render */
-    export let layout: 'overlap' | 'pack' = 'overlap';
+    export let layout: 'overlap' | 'pack' | 'expand' = 'overlap';
     const _layout = writable(layout);
     $: $_layout = layout;
 
@@ -702,6 +702,8 @@
     $: {
         filteredRows = [];
         rowContainerHeight = 0;
+
+        rowsHeightChanged;
         const firstRow = $allRows[0];
         for (const row of $allRows) {
             if (!row.hidden) {
@@ -801,16 +803,27 @@
         visibleTasks = ordered ? tasksOrdered : tasks;
     }
 
+    let rowsHeightChanged = {};
+    /** apply other layouts */
     $: {
-        if (layout === 'pack') {
+        if (layout === 'pack' || layout === 'expand') {
+            let top = 0;
             for (const rowId of $rowStore.ids) {
                 const row = $rowStore.entities[rowId];
                 const taskIds = $rowTaskCache[rowId];
+                row.y = top;
+                const heightBefore = row.height;
                 if (taskIds) {
                     const tasks = taskIds.map(taskId => $taskStore.entities[taskId]);
-                    packLayout.layout(tasks, { 
-                        rowContentHeight: row.height - rowPadding * 2
+                    packLayout.layout(tasks, row, { 
+                        contentHeight: 52 - rowPadding * 2,
+                        rowPadding,
+                        expandRow: layout === 'expand'
                     });
+                }
+                top += row.height;
+                if (heightBefore != row.height) {
+                    rowsHeightChanged = {};
                 }
             }
         }
