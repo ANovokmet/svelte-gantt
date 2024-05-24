@@ -2,7 +2,6 @@
     import type { SvelteRow } from '../core/row';
     import { getContext } from 'svelte';
     export let row: SvelteRow;
-    const { rowHeight } = getContext('options');
     const { hoveredRow, selectedRow } = getContext('gantt');
 </script>
 
@@ -11,7 +10,7 @@
     data-row-id={row.model.id}
     class:sg-hover={$hoveredRow == row.model.id}
     class:sg-selected={$selectedRow == row.model.id}
-    style="height:{$rowHeight}px"
+    style="height:{row.height}px"
 >
     {#if row.model.contentHtml}
         {@html row.model.contentHtml}

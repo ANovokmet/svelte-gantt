@@ -14,7 +14,6 @@
 
     export let tableWidth;
     export let paddingTop;
-    export let paddingBottom;
     export let rowContainerHeight;
     export let visibleRows: SvelteRow[];
     // list of columns used in the table
@@ -117,7 +116,7 @@
         <div class="sg-table-scroller" use:scrollListener>
             <div
                 class="sg-table-rows"
-                style="padding-top:{paddingTop}px;padding-bottom:{paddingBottom}px;height:{rowContainerHeight}px;"
+                style="padding-top:{paddingTop}px;height:{rowContainerHeight}px;"
             >
                 {#each visibleRows as row}
                     <TableRow

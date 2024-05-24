@@ -20,8 +20,8 @@ const config = {
 			base: process.env.NODE_ENV === 'production' ? '/svelte-gantt' : '',
 		},
 		alias:{
-			'$dist': path.resolve('../dist'),
-			'svelte-gantt': path.resolve('../dist'),
+			'$dist': path.resolve('../svelte-gantt/dist'),
+			'svelte-gantt': path.resolve('../svelte-gantt/dist'),
 		}
 	}
 };

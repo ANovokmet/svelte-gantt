@@ -14,12 +14,12 @@
     import { Columns, ColumnHeader } from './column';
     import { Resizer } from './ui';
 
-    import { GanttUtils, getPositionByDate } from './utils/utils';
+    import { GanttUtils, getIndicesOnly, getPositionByDate } from './utils/utils';
     import { getRelativePos, isLeftClick } from './utils/dom';
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask, TaskModel } from './core/task';
-    import { RowFactory } from './core/row';
+    import { RowFactory, SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager, DragContextProvider } from './core/drag';
     import type { DragContext } from './core/drag';
@@ -696,26 +696,48 @@
         return null;
     }
 
-    let filteredRows = [];
-    $: filteredRows = $allRows.filter(row => !row.hidden);
+    let filteredRows: SvelteRow[] = [];
+    let rowsAreOfSameHeight = true;
+    let rowContainerHeight = 0;
+    $: {
+        filteredRows = [];
+        rowContainerHeight = 0;
+        const firstRow = $allRows[0];
+        for (const row of $allRows) {
+            if (!row.hidden) {
+                filteredRows.push(row);
 
-    let rowContainerHeight;
-    $: rowContainerHeight = filteredRows.length * rowHeight;
+                if (firstRow && firstRow.height !== row.height) {
+                    rowsAreOfSameHeight = false;
+                }
+
+                rowContainerHeight += row.height || rowHeight;
+            }
+        }
+    }
 
     let startIndex;
-    $: startIndex = Math.floor(__scrollTop / rowHeight);
+    $: {
+        if (rowsAreOfSameHeight) {
+            startIndex = Math.floor(__scrollTop / rowHeight);
+        } else {
+            startIndex = getIndicesOnly(filteredRows, __scrollTop, row => row.y)[0];
+        }
+    }
 
     let endIndex;
-    $: endIndex = Math.min(
-        startIndex + Math.ceil($visibleHeight / rowHeight),
-        filteredRows.length - 1
-    );
+    $: {
+        if (rowsAreOfSameHeight) {
+            endIndex = Math.min(startIndex + Math.ceil($visibleHeight / rowHeight), filteredRows.length - 1);
+        } else {
+            endIndex = getIndicesOnly(filteredRows, __scrollTop + $visibleHeight, row => row.y)[0];
+        }
+    }
 
     let paddingTop = 0;
-    $: paddingTop = startIndex * rowHeight;
-
-    let paddingBottom = 0;
-    $: paddingBottom = (filteredRows.length - endIndex - 1) * rowHeight;
+    $: {
+        paddingTop = filteredRows[startIndex] ? filteredRows[startIndex].y : 0;
+    }
 
     let visibleRows = [];
     $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
@@ -782,12 +804,12 @@
     $: {
         if (layout === 'pack') {
             for (const rowId of $rowStore.ids) {
-                // const row = $rowStore.entities[rowId];
+                const row = $rowStore.entities[rowId];
                 const taskIds = $rowTaskCache[rowId];
                 if (taskIds) {
                     const tasks = taskIds.map(taskId => $taskStore.entities[taskId]);
                     packLayout.layout(tasks, { 
-                        rowContentHeight: rowHeight - rowPadding * 2
+                        rowContentHeight: row.height - rowPadding * 2
                     });
                 }
             }
@@ -859,7 +881,6 @@
                 this={module}
                 {rowContainerHeight}
                 {paddingTop}
-                {paddingBottom}
                 {tableWidth}
                 {...$$restProps}
                 on:init={onModuleInit}
@@ -933,7 +954,6 @@
                         <svelte:component
                             this={module}
                             {paddingTop}
-                            {paddingBottom}
                             {visibleRows}
                             {...$$restProps}
                             on:init={onModuleInit}

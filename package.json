@@ -5,17 +5,10 @@
     "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
     "type": "module",
     "scripts": {
-        "build": "rollup -c",
-        "autobuild": "rollup -c -w",
-        "demo:dev": "cd demo && npm run dev",
-        "dev": "run-p autobuild demo:dev",
-        "validate": "svelte-check",
-        "demokit:dev": "npm --prefix demo-sveltekit run dev",
-        "package": "node tools/build && npm run build-package",
-        "build-package": "svelte-package -i src -o dist/svelte",
-        "lint": "eslint .",
-        "format": "prettier --plugin-search-dir . --write . --plugin prettier-plugin-svelte",
-        "dev:docs": "pnpm --filter docs-mdsvex run dev"
+        "dev:docs": "pnpm --filter docs-mdsvex run dev",
+        "dev:demo": "pnpm --filter demo run dev",
+        "dev:svelte-gantt": "pnpm --filter svelte-gantt run autobuild",
+        "playground": "run-p dev:demo dev:svelte-gantt"
     },
     "repository": {
         "type": "git",
@@ -70,5 +63,8 @@
     },
     "dependencies": {
         "sirv-cli": "^2.0.2"
-    }
+    },
+    "workspaces": [
+        "packages/*"
+    ]
 }

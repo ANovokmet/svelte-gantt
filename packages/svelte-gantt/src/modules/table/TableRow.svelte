@@ -8,7 +8,6 @@
     export let headers: TableHeader[] = null;
     export let row: SvelteRow = null;
 
-    const { rowHeight } = getContext('options');
     const { hoveredRow, selectedRow } = getContext('gantt');
 
     const dispatch = createEventDispatcher();
@@ -21,7 +20,7 @@
 
 <div
     data-row-id={row.model.id}
-    style="height:{$rowHeight}px"
+    style="height:{row.height}px"
     class="sg-table-row {row.model.classes || ''}"
     class:sg-row-expanded={row.model.expanded}
     class:sg-hover={$hoveredRow == row.model.id}

@@ -12,10 +12,10 @@
 		"paths": {
 			"$lib":["./src/lib"],
 			"$lib/*":["./src/lib/*"],
-			"$dist": ["../dist"],
-			"$dist/*": ["../dist/*"],
-			"svelte-gantt": ["../dist"],
-			"svelte-gantt/*": ["../dist/*"]
+			"$dist": ["../svelte-gantt/dist"],
+			"$dist/*": ["../svelte-gantt/dist/*"],
+			"svelte-gantt": ["../svelte-gantt/dist"],
+			"svelte-gantt/*": ["../svelte-gantt/dist/*"]
 		}
 	}
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias and https://kit.svelte.dev/docs/configuration#files
