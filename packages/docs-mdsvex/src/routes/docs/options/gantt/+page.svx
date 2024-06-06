@@ -1,3 +1,7 @@
+<script>
+    import TaskComponentExample from './TaskComponentExample.svelte';
+</script>
+
 # Gantt
 
 Pass options object as `props` to the SvelteGantt constructor. 
@@ -77,6 +81,10 @@ Task element hook function, it is a svelte action, eg.
     }; 
 }
 ```
+
+This enables you to add custom behaviour and look to tasks. For example, displaying a popup on hover, or rendering Angular components within the task.
+
+<TaskComponentExample />
 
 ### TaskContent
 

@@ -1,5 +1,5 @@
-import { SvelteRow } from './row';
-import { SvelteTask } from './task';
+import type { SvelteRow } from './row';
+import type { SvelteTask } from './task';
 
 /**
  * Layouts tasks in a 'pack' layout:

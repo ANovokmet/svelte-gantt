@@ -19,7 +19,8 @@
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask, TaskModel } from './core/task';
-    import { RowFactory, SvelteRow } from './core/row';
+    import { RowFactory } from './core/row';
+    import type { SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager, DragContextProvider } from './core/drag';
     import type { DragContext } from './core/drag';

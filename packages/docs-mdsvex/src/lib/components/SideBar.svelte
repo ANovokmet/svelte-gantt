@@ -45,27 +45,28 @@
 		<slot name="top" />
 
 		<ul class="mt-8 pb-28 992:pb-0">
-      <SideBarCategory title="Getting started">
-        <SideBarLink href="/docs/getting-started/installation" label="Installation" />
-        <SideBarLink href="/docs/getting-started/migrating" label="Migrating" />
-      </SideBarCategory>
-      <SideBarCategory title="Data">
-        <SideBarLink href="/docs/data/rows" label="Rows" />
-        <SideBarLink href="/docs/data/tasks" label="Tasks" />
-        <SideBarLink href="/docs/data/time-ranges" label="Time ranges" />
-      </SideBarCategory>
-      <SideBarCategory title="Options">
-        <SideBarLink href="/docs/options/gantt" label="Gantt" />
-        <SideBarLink href="/docs/options/columns" label="Columns" />
-        <SideBarLink href="/docs/options/headers" label="Headers" />
-        <SideBarLink href="/docs/options/zoom" label="Zoom" />
-      </SideBarCategory>
-      <SideBarCategory title="Modules">
-        <SideBarLink href="/docs/modules/dependencies" label="Dependencies" />
-        <SideBarLink href="/docs/modules/table" label="Table" />
-        <SideBarLink href="/docs/modules/external" label="External" />
-        <SideBarLink href="/docs/modules/create-tasks" label="Create tasks" />
-      </SideBarCategory>
+			<SideBarCategory title="Getting started">
+				<SideBarLink href="/docs/getting-started/installation" label="Installation" />
+				<SideBarLink href="/docs/getting-started/migrating" label="Migrating" />
+			</SideBarCategory>
+			<SideBarCategory title="Data">
+				<SideBarLink href="/docs/data/rows" label="Rows" />
+				<SideBarLink href="/docs/data/tasks" label="Tasks" />
+				<SideBarLink href="/docs/data/time-ranges" label="Time ranges" />
+			</SideBarCategory>
+			<SideBarCategory title="Options">
+				<SideBarLink href="/docs/options/gantt" label="Gantt" />
+				<SideBarLink href="/docs/options/columns" label="Columns" />
+				<SideBarLink href="/docs/options/headers" label="Headers" />
+				<SideBarLink href="/docs/options/zoom" label="Zoom" />
+				<SideBarLink href="/docs/options/layout" label="Layout" />
+			</SideBarCategory>
+			<SideBarCategory title="Modules">
+				<SideBarLink href="/docs/modules/dependencies" label="Dependencies" />
+				<SideBarLink href="/docs/modules/table" label="Table" />
+				<SideBarLink href="/docs/modules/external" label="External" />
+				<SideBarLink href="/docs/modules/create-tasks" label="Create tasks" />
+			</SideBarCategory>
 		</ul>
 
 		<slot name="bottom" />

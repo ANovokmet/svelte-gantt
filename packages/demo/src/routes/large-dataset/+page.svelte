@@ -90,7 +90,8 @@
                 imageSrc: 'Content/joe.jpg',
                 classes: rand_bool ? ['row-disabled'] : undefined,
                 enableDragging: !rand_bool,
-                generation
+                generation,
+                height: Math.random() < 0.5 ? 100 : 52,
             });
 
             rand_bool = Math.random() > 0.5;

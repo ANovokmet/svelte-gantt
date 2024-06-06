@@ -10,6 +10,10 @@ export function time(input) {
     return moment(input, 'HH:mm');
 }
 
+export function format(input, fmt) {
+    return moment(input).format(fmt);
+}
+
 export const defaultOptions = {
     dateAdapter: new MomentSvelteGanttDateAdapter(moment),
     rows: [],

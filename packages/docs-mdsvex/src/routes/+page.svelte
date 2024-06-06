@@ -31,7 +31,7 @@
 
 
 <main
-    class="w-full mx-auto pt-8 992:min-h-[calc(100vh-var(--kd--navbar-height))] min-h-[calc(100vh-var(--kd--navbar-height))] px-6"
+    class="w-full mx-auto pt-8 992:min-h-[calc(100vh-var(--kd--navbar-height))] min-h-[calc(100vh-var(--kd--navbar-height))] px-6 mb-20 overflow-hidden sm:mb-32 md:mb-40"
     style={`max-width: var(--kd-main-max-width, var(--kd-article-max-width));`}
 >
     <section class="hero text-center mb-24 mt-12">
@@ -40,33 +40,33 @@
         </h1>
     </section>
 
-    <div class="skew-3d-wrap my-12">
-        <div class="relative skew-3d --skew-3d shadow-2xl transition-all ease-linear" style={transform}>
-            <div class="skew-3d-inner">
-                <SvelteGantt from={time('8:00')} to={time('12:00')}
-                    ganttTableModules={[SvelteGanttTable]}
-                    rows={[
-                        { id: 1, label: "Jedd Balden" }, 
-                        { id: 2, label: "Rozele McFarland" }, 
-                        { id: 3, label: "Chrissy Bullard" }, 
-                        { id: 4, label: "Patience Leschelle" }, 
-                        { id: 5, label: "Rosette Henrie" }
-                    ]}
-                    tasks={[
-                        { id: 1, resourceId: 1, from: time('9:00'), to: time('10:00'), label: 'Work' },
-                        { id: 2, resourceId: 2, from: time('9:30'), to: time('10:30'), label: 'Work' }
-                    ]}
-                    timeRanges={[
-                        {
-                            id: 0,
-                            from: time('10:00'),
-                            to: time('11:00'),
-                            classes: 'time-range-lunch',
-                            label: 'Lunch',
-                            resizable: false,
-                        }
-                    ]}/>
-            </div>
+    <div class="my-12">
+        <div class="relative shadow-2xl transition-all ease-linear" style={transform}>
+            <SvelteGantt
+                from={time('8:00')} to={time('12:00')}
+                ganttTableModules={[SvelteGanttTable]}
+                rows={[
+                    { id: 1, label: "Jedd Balden" }, 
+                    { id: 2, label: "Rozele McFarland" }, 
+                    { id: 3, label: "Chrissy Bullard" }, 
+                    { id: 4, label: "Patience Leschelle" }, 
+                    { id: 5, label: "Rosette Henrie" }
+                ]}
+                tasks={[
+                    { id: 1, resourceId: 1, from: time('9:00'), to: time('10:00'), label: 'Work' },
+                    { id: 2, resourceId: 5, from: time('8:30'), to: time('10:30'), label: 'Work' }
+                ]}
+                timeRanges={[
+                    {
+                        id: 0,
+                        from: time('10:00'),
+                        to: time('11:00'),
+                        classes: 'time-range-lunch',
+                        label: 'Lunch',
+                        resizable: false,
+                    }
+                ]}
+            />
         </div>
     </div>
     <section class="hero text-center mb-24 mt-12 text-sm text-slate-700">
@@ -102,13 +102,13 @@
         transform: translate3d(0px, -15%, 0px) scale3d(1, 1, 1) rotateX(10deg) rotateY(0deg) rotateZ(0deg) skew(0deg);
         /* transform-style: preserve-3d; */
     }
-
+ 
     .skew-3d:hover {
-        will-change: transform;
-        transform: none !important;
+        /* will-change: transform;
+        transform: none !important; */
         /* scale: 1.2; */
         /* transform-style: preserve-3d; */
-    }
+    } 
 
     .skew-3d-inner {
         transform: perspective(1000px);
