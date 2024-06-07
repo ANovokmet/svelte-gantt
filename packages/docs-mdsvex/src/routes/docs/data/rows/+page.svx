@@ -13,16 +13,16 @@ Rows are defined as a list of objects. Rows can be rendered as a collapsible tre
 
 | Name | Type | Description | Default |
 | - | - | - | -: |
-`id` | `Number`\|`String` | Id of row, every row needs to have a unique one.
-`classes` | `String`\|`Array` | Custom CSS classes to apply to row.
-`contentHtml` | `String` | Html content of row, renders as background to a row.
-`enableDragging` | `Boolean` | enable dragging of tasks to and from this row.
-`enableResize` | `Boolean` | enable resize of tasks on this row.
-`label` | `String` | Label of row, could be any other property, can be displayed with SvelteGanttTable.
-`headerHtml` | `String` | Html content of table row header, displayed in SvelteGanttTable.
-`children` | `Array` | List of children row objects, these can have their own children.
-`expanded` | `Boolean` (`optional`) | Used when tree view is enabled, controls the expanded state.
-`height` | `Number` (`optional`) | The height of the row.
+`id` | `number &#124; string` | Id of row, every row needs to have a unique one. **(required)**
+`classes` | `string &#124; string[]` | Custom CSS classes to apply to row.
+`contentHtml` | `string` | Html content of row, renders as background to a row.
+`enableDragging` | `boolean` | enable dragging of tasks to and from this row. | `true`
+`enableResize` | `boolean` | enable resize of tasks on this row. | `true`
+`label` | `string` | Label of row, could be any other property, can be displayed with SvelteGanttTable.
+`headerHtml` | `string` | Html content of table row header, displayed in SvelteGanttTable.
+`children` | `object[]` | List of children row objects, these can have their own children.
+`expanded` | `boolean` | Used when tree view is enabled, controls the expanded state.
+`height` | `number` | The height of the row. | `52`
 
 
 <section class="my-12">
@@ -101,5 +101,9 @@ gantt.$set({
         content: url('data:image/svg+xml; utf8, <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>');
         width: 1rem;
         height: 1rem;
+    }
+
+    :global(.sg-gantt) {
+        @apply border;
     }
 </style>

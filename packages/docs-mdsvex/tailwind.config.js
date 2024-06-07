@@ -1,4 +1,5 @@
 import typography from '@tailwindcss/typography';
+import colors from 'tailwindcss/colors';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -8,17 +9,17 @@ export default {
 		preflight: false
 	},
 	theme: {
-		// fontFamily: {
-		// 	sans: ['var(--kd-font-family-sans)'],
-		// 	mono: ['var(--kd-font-family-mono)']
-		// },
+		fontFamily: {
+			// sans: ['var(--kd-font-family-sans)'],
+			mono: ['monospace'],
+		},
 		extend: {
 			spacing: {
 				'8xl': '90rem',
 			},
 			colors: {
 				brand: {
-					DEFAULT: 'rgb(var(--kd-color-brand) / <alpha-value>)'
+					DEFAULT: colors.violet[600],
 				},
 				focus: {
 					DEFAULT: 'rgb(var(--kd-color-focus) / <alpha-value>)'
@@ -117,7 +118,7 @@ function kitDocsTypography(theme) {
 				a: {
 					fontWeight: theme('fontWeight.normal'),
 					textDecoration: 'none',
-					borderBottom: `1px solid rgb(var(--kd-color-brand))`
+					borderBottom: `1px solid ${colors.violet[600]}`
 				},
 				'a:hover': {
 					borderBottomWidth: '2px'
@@ -134,8 +135,18 @@ function kitDocsTypography(theme) {
 					fontWeight: 'inherit'
 				},
 				code: {
-					fontWeight: theme('fontWeight.semibold'),
-					fontVariantLigatures: 'none'
+					fontWeight: 500,
+					fontVariantLigatures: 'none',
+					backgroundColor: colors.slate[100],
+					color: colors.slate[700],
+					borderRadius: '4px',
+					padding: '3px 6px',
+				},
+				'code::before': {
+					content: '',
+				},
+				'code::after': {
+					content: '',
 				},
 				pre: {
 					backgroundColor: 'var(--kd-code-fence-bg)',

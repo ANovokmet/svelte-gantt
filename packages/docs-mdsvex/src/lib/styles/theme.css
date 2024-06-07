@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-	@apply min-h-screen w-screen;
+	@apply h-screen w-screen;
 
 	font-family: "Inter", sans-serif;
 }
@@ -159,7 +159,7 @@ body {
 }
 
 .kit-docs .header-anchor {
-	margin-left: -1.25em;
+	margin-left: 0.25em;
 	padding: 0 0.23em;
 	font-size: 0.9em;
 	opacity: 0;

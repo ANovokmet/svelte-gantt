@@ -15,6 +15,7 @@ const config = {
 				[
 					rehypeAutolinkHeadings,
 					{
+						behavior: 'append',
 						properties: { class: 'header-anchor', ariaHidden: true },
 						headingProperties: { tabIndex: -1 },
 						content: { type: 'text', value: '#' }

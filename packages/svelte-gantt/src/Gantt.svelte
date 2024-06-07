@@ -1031,7 +1031,7 @@
     }
 
     .sg-header-scroller {
-        border-right: 1px solid #efefef;
+        /* border-right: 1px solid #efefef; // replace with element, or conditionally draw this border */
         overflow: hidden;
         position: relative;
     }

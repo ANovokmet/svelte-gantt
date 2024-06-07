@@ -82,13 +82,21 @@
     }
 
     .sg-table-cell {
-        border-left: 1px solid #eee;
+        border-right: 1px solid #eee;
+    }
+
+    .sg-table-cell:last-child {
+        border-right: 0;
     }
 
     .sg-table-body-cell {
         border-bottom: #efefef 1px solid;
         background-color: #fff;
         font-weight: bold;
+    }
+
+    .sg-table-row:last-child > .sg-table-body-cell {
+        border-bottom: 0;
     }
 
     .sg-resource-image {

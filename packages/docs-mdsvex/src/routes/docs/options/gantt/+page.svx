@@ -33,34 +33,34 @@ gantt.$set({
 | `dependencies` | `Array` | Dependencies that display in the gantt, used with the SvelteGanttDependencies module, see below. | undefined |
 | `from` | `Moment` | Datetime timeline starts on. | undefined |
 | `to` | `Moment` | Datetime timeline ends on. | undefined |
-| `minWidth` | `Number` | Minimum width of gantt area in px. | undefined |
-| `fitWidth` | `Boolean` | Should timeline stretch width to fit. | undefined |
+| `minWidth` | `number` | Minimum width of gantt area in px. | undefined |
+| `fitWidth` | `boolean` | Should timeline stretch width to fit. | undefined |
 | `highlightedDurations` | `Object` | Pattern for [highlighting durations](/docs/options/columns#highlighted-durations). | undefined |
-| `highlightColor` | `String` | Highlight color (for use with `highlightedDurations`). | undefined |
-| `magnetUnit` | `String` | Minimum unit of time task date values will round to. | 'minute' |
-| `magnetOffset` | `Number` | Amount of units task date values will round to. | 15 |
-| `columnUnit` | `String` | Duration unit of [columns](/docs/options/columns). | 'minute' |
-| `columnOffset` | `Number` | Duration width of [columns](/docs/options/columns). | 15 |
+| `highlightColor` | `string` | Highlight color (for use with `highlightedDurations`). | undefined |
+| `magnetUnit` | `string` | Minimum unit of time task date values will round to. | 'minute' |
+| `magnetOffset` | `number` | Amount of units task date values will round to. | 15 |
+| `columnUnit` | `string` | Duration unit of [columns](/docs/options/columns). | 'minute' |
+| `columnOffset` | `number` | Duration width of [columns](/docs/options/columns). | 15 |
 | `headers` | `Array` | List of headers used for main gantt area. | undefined |
 | `dateAdapter` | `Object` | [Date adapter](#dateadapter) | undefined |
 | `zoomLevels` | `Array` | List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll. | undefined |
-| `rowHeight` | `Number` | Height of a single row in px. | undefined |
-| `rowPadding` | `Number` | Padding of a single row in px. | undefined |
+| `rowHeight` | `number` | Height of a single row in px. | undefined |
+| `rowPadding` | `number` | Padding of a single row in px. | undefined |
 | `ganttTableModules` | `Array` | Modules used in gantt table area. eg. `[SvelteGanttTable]` | undefined |
 | `ganttBodyModules` | `Array` | Modules used in gantt body area. eg. `[SvelteGanttDependencies]` | undefined |
-| `reflectOnParentRows` | `Boolean` | When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree. | undefined |
-| `reflectOnChildRows` | `Boolean` | When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. | undefined |
-| `classes` | `String`\|`Array` | Custom CSS classes to apply to gantt. | undefined |
-| `resizeHandleWidth` | `Number` | Width of handle for resizing tasks, in px. | undefined |
+| `reflectOnParentRows` | `boolean` | When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree. | undefined |
+| `reflectOnChildRows` | `boolean` | When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. | undefined |
+| `classes` | `string`\|`Array` | Custom CSS classes to apply to gantt. | undefined |
+| `resizeHandleWidth` | `number` | Width of handle for resizing tasks, in px. | undefined |
 | `onTaskButtonClick` | `(task: Task) => void` | Callback for task button clicks. | undefined |
 | `taskContent` | `(task: Task) => string` | Task content factory function. | undefined |
 | `taskElementHook` | `Function` | [Task element hook](#taskelementhook) | undefined |
-| `tableWidth` | `Number` | Width of table, used with SvelteGanttTable module. | undefined |
+| `tableWidth` | `number` | Width of table, used with SvelteGanttTable module. | undefined |
 | `tableHeaders` | `Array` | Headers of table, used with SvelteGanttTable module. | undefined |
 | `columnStrokeColor` | `string` | Color of column lines. eg. `'#efefef'` | undefined |
 | `columnStrokeWidth` | `number` | Width of column lines. | undefined |
 | `layout` | `'overlap'`, `'pack'` | The [layout](#layout) used to arrange tasks in a row. | undefined |
-| `enableCreateTask` | `Boolean` | Enables creating new tasks by dragging. | undefined |
+| `enableCreateTask` | `boolean` | Enables creating new tasks by dragging. | undefined |
 | `onCreateTask` | `({ from: number; to: number; resourceId: string number; }) => TaskModel` | This function provides the new task model when dragging to create task. | undefined |
 | `onCreatedTask` | `(task: SvelteTask) => void` | Called after task was created by dragging. | undefined |
 
@@ -114,14 +114,14 @@ A date adapter is an object of interface `{ format(date: number, format: string)
 |Name||Type|Description|
 | - | - | - | -: |
 |`selectTask(id)` ||| Selects task by id.
-||`id` | `Number`\|`String` | Id of task
+||`id` | `number`\|`string` | Id of task
 |`unselectTasks()` ||| Unselects tasks.
 |`scrollToTask(id, scrollBehavior)` |||  Scrolls the view to a task.
-||`id` | `Number`\|`String` | Id of task
-||`scrollBehaviour` | `String` | `auto` or `smooth`.
+||`id` | `number`\|`string` | Id of task
+||`scrollBehaviour` | `string` | `auto` or `smooth`.
 |`scrollToRow(id, scrollBehavior)`|||  Scrolls the view to a row.
-||`id` | `Number`\|`String` | Id of row
-||`scrollBehaviour` | `String` | `auto` or `smooth`.
+||`id` | `number`\|`string` | Id of row
+||`scrollBehaviour` | `string` | `auto` or `smooth`.
 |`updateTask(model)`|||  Updates or inserts task.
 ||`model` | `Task` | Task object
 |`updateTasks(models)`|||  Updates or inserts tasks.
@@ -131,11 +131,11 @@ A date adapter is an object of interface `{ format(date: number, format: string)
 |`updateRows(models)`|||  Updates or inserts rows.
 ||`models` | `Array<Row>` | Row objects
 |`getTask(id)`|||  Get task by id.
-||`id` | `Number`|`String` | Id of task
+||`id` | `number`|`string` | Id of task
 |`getRow(id)`|||  Get row by id.
-||`id` | `Number`|`String` | Id of row
+||`id` | `number`|`string` | Id of row
 |`getTasks(rowId)`|||  Get tasks by row id.
-||`rowId` | `Number`|`String` | Id of row
+||`rowId` | `number`|`string` | Id of row
 
 
 ## Events

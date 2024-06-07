@@ -11,12 +11,12 @@ Renders a block of time spanning all the rows.
 
 | Name | Description | Type | Default |
 | - | - | - | -: |
-| `id`  | Unique id of time range. | `Number`\|`String` | undefined |
+| `id`  | Unique id of time range. | `number`\|`string` | undefined |
 |`from` | Datetime timeRange starts on.| `number`  | undefined |
 | `to`  | Datetime timeRange ends on. | `number` | undefined |
-| `classes`| Custom CSS classes. | `String`\|`Array` | undefined |
-| `label`  | Display label. | `String` | undefined |
-| `resizable` | Should the time range be resizable. | `Boolean` | false |
+| `classes`| Custom CSS classes. | `string`\|`Array` | undefined |
+| `label`  | Display label. | `string` | undefined |
+| `resizable` | Should the time range be resizable. | `boolean` | false |
 
 ```js
 const options = {

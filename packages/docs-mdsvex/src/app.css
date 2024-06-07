@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.landing-page .nav-category {
+    display: none !important;
+}

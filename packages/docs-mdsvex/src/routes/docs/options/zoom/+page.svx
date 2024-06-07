@@ -4,6 +4,9 @@
 
 Represents a zoom level which cycle on ctrl+scroll.
 
--   `headers` (`Array`) See above.
--   `minWidth` (`Number`) See above.
--   `fitWidth` (`Boolean`) See above.
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`headers` | `Array` | See above.
+`minWidth` | `number` | See above.
+`fitWidth` | `boolean` | See above.

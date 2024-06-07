@@ -140,7 +140,7 @@
 
     .sg-table-scroller {
         width: 100%;
-        border-bottom: 1px solid #efefef;
+        /* border-bottom: 1px solid #efefef; // instead of padding-bottom use an element (with borders) */
         overflow-y: hidden;
     }
 

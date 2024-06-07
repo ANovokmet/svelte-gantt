@@ -6,16 +6,17 @@ title: Headers
 
 Represents a row of header cells that render over the gantt.
 
--   `unit` (`String`) Time unit used to display header cells.
-    -   eg. `'day'` will create a cell in the header for each day in the timeline.
--   `format` (`String`) Datetime format used to label header cells.
-    -   eg. `'DD.MM.YYYY'`, `'HH'`
--   `offset` (`Number`) Duration width of header cell.
--   `sticky` (`Boolean`) Use sticky positioning for header labels.
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`unit` | `string` | Time unit used to display header cells, eg. `'day'` will create a cell in the header for each day in the timeline.
+`format` | `string` | Datetime format used to label header cells, eg. `'DD.MM.YYYY'`, `'HH'`
+`offset` | `number` | Duration width of header cell.
+`sticky` | `boolean` | Use sticky positioning for header labels.
 
 ### Formatting
 
-By default `svelte-gantt` is only able to format a small set of date templates, eg. 'HH:mm'. For more you can use `MomentSvelteGanttDateAdapter` as `dateAdapter`:
+By default `svelte-gantt` is only able to format a small set of date templates, eg. `'HH:mm'`. For more you can use `MomentSvelteGanttDateAdapter` as `dateAdapter`:
 
 ```js
 import { MomentSvelteGanttDateAdapter } from 'svelte-gantt';

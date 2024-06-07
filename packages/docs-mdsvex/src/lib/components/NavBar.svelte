@@ -12,6 +12,8 @@
 	import NavLink from './NavLink.svelte';
 	import MenuIcon from '$lib/icons/MenuIcon.svelte';
 	import ArrowRightIcon from '$lib/icons/ArrowRightIcon.svelte';
+	import { meta } from '$lib/store';
+	import SvelteGanttLogo from '$lib/icons/SvelteGanttLogo.svelte';
 
 	export let search = false;
 
@@ -37,9 +39,13 @@
 
 <div class="w-full mx-auto max-w-7xl">
 	<!-- width 8xl when docs, h-18/h-32 -->
-	<div class="flex items-center py-4 mx-4 border-b lg:border-0 border-slate-900/10">
+	<div class="flex items-center py-4 mx-4 border-b lg:border-0 border-slate-900/10 h-20">
 		<div class="logo">
-			<Button href="/">svelte-gantt</Button>
+			<Button href="/">
+				<span class="flex items-center">
+					<SvelteGanttLogo class="inline-block size-6 mr-1" /> svelte-gantt
+				</span>
+			</Button>
 		</div>
 
 		<div class="flex-1"></div>
@@ -66,7 +72,7 @@
 		</div>
 	</div>
 
-	<div class="border-border lg:hidden flex w-full items-center p-4">
+	<div class="nav-category border-border lg:hidden flex w-full items-center p-4 h-12">
 		<button
 			id="main-sidebar-button"
 			type="button"
@@ -80,8 +86,8 @@
 		</button>
 
 		<ol class={`text-md text-soft flex items-center whitespace-nowrap leading-6 ${showSidebar ? 'mt-px ml-2.5' : 'mt-2'}`}>
-			<li class="flex items-center">Active category <ArrowRightIcon /></li>
-			<li class="truncate font-semibold text-slate-900 dark:text-slate-200">Active link title</li>
+			<li class="flex items-center">{$meta.category?.title} <ArrowRightIcon class="size-4 mx-1" /></li>
+			<li class="truncate font-semibold text-slate-900 dark:text-slate-200">{$meta.page?.label}</li>
 		</ol>
 	</div>
 </div>

@@ -1,7 +1,7 @@
 <script>
 	import { SvelteGantt, SvelteGanttDependencies, SvelteGanttTable } from 'svelte-gantt/svelte';
 	import { defaultOptions, time } from '$lib';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Button from '$lib/components/Button.svelte';
 	import FeatureCard from './FeatureCard.svelte';
 
@@ -13,7 +13,12 @@
 	});
 
 	onMount(() => {
+		document.body.classList.add('landing-page');
 		document.querySelectorAll('.loading').forEach((e) => expansionObserver.observe(e));
+	});
+
+	onDestroy(() => {
+		document.body.classList.remove('landing-page');
 	});
 </script>
 
@@ -106,6 +111,7 @@
 					<svelte:fragment slot="title">Layouts</svelte:fragment>
 					<svelte:fragment slot="subtitle">Display tasks overlapped or spaced apart.</svelte:fragment>
 				</FeatureCard>
+                <!-- TODO:: need more features? contact me -->
 			</div>
 		</div>
 	</section>
