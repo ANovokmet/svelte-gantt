@@ -2,6 +2,7 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import SideBarLink from './SideBarLink.svelte';
 	import SideBarCategory from './SideBarCategory.svelte';
+	import CloseIcon from '../icons/CloseIcon.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -17,24 +18,29 @@
 	export let style = '';
 </script>
 
-<aside id="main-sidebar" class="sidebar sidebar self-start fixed top-0 left-0 transform bg-body z-50 border-border border-r scrollbar -translate-x-full transform transition-transform duration-200 ease-out will-change-transform max-h-screen min-h-screen min-w-[var(--kd-sidebar-min-width)] max-w-[var(--kd-sidebar-max-width)] 992:translate-x-0 922:block 992:sticky 992:z-0 overflow-y-auto p-[var(--kd-sidebar-padding)] 992:top-[var(--kd--navbar-height)] 992:min-h-[calc(100vh-var(--kd--navbar-height))] 992:max-h-[calc(100vh-var(--kd--navbar-height))]" bind:this={sidebar} {style}>
-	<div class="992:hidden sticky top-0 left-0 flex items-center">
+<aside
+	id="main-sidebar"
+	class={`sidebar fixed top-0 left-0 transform bg-body z-50 border-border border-r scrollbar transform transition-transform duration-200 ease-out will-change-transform max-h-screen min-h-screen min-w-[var(--kd-sidebar-min-width)] max-w-[var(--kd-sidebar-max-width)] lg:translate-x-0 lg:block lg:sticky lg:z-0 overflow-y-auto p-[var(--kd-sidebar-padding)] 
+	
+	lg:min-h-[calc(100vh-var(--kd--navbar-height))] lg:max-h-[calc(100vh-var(--kd--navbar-height))]
+	${open ? 'translate-x-0' : '-translate-x-full'}`}
+	bind:this={sidebar}
+	{style}
+>
+	<div class="lg:hidden sticky top-0 left-0 flex items-center">
 		<div class="flex-1" />
-		<button
-			class={`text-soft hover:text-inverse p-4 -mx-6`}
-			on:pointerdown={() => dispatch('close')}
-		>
-			x
+		<button class={`text-soft hover:text-inverse p-4 -mx-6`} on:pointerdown={() => dispatch('close')}>
+			<CloseIcon />
 			<span class="sr-only">Close sidebar</span>
 		</button>
 	</div>
 
-	<nav class="992:px-1 scrollbar">
+	<nav class="lg:px-1 scrollbar">
 		{#if search}
 			<div class="pointer-events-none sticky top-0 z-0 -ml-0.5 min-h-[80px]">
-				<div class="992:h-6 bg-body" />
+				<div class="lg:h-6 bg-body" />
 				<div class="bg-body pointer-events-auto relative">
-					<div class="992:block hidden">
+					<div class="lg:block hidden">
 						<slot name="search" />
 					</div>
 				</div>
@@ -42,9 +48,7 @@
 			</div>
 		{/if}
 
-		<slot name="top" />
-
-		<ul class="mt-8 pb-28 992:pb-0">
+		<ul class="mt-8 pb-28 lg:pb-0">
 			<SideBarCategory title="Getting started">
 				<SideBarLink href="/docs/getting-started/installation" label="Installation" />
 				<SideBarLink href="/docs/getting-started/migrating" label="Migrating" />
@@ -68,7 +72,5 @@
 				<SideBarLink href="/docs/modules/create-tasks" label="Create tasks" />
 			</SideBarCategory>
 		</ul>
-
-		<slot name="bottom" />
 	</nav>
 </aside>

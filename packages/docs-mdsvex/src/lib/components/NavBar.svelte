@@ -10,6 +10,8 @@
 
 	// import ColorSchemeToggle from '$lib/components/base/ColorSchemeToggle.svelte';
 	import NavLink from './NavLink.svelte';
+	import MenuIcon from '$lib/icons/MenuIcon.svelte';
+	import ArrowRightIcon from '$lib/icons/ArrowRightIcon.svelte';
 
 	export let search = false;
 
@@ -28,29 +30,28 @@
 	function onSchemeToggle() {
 		theme = theme === 'dark' ? 'light' : 'dark';
 	}
+
+	export let isSidebarOpen = false;
+	let showSidebar = true;
 </script>
 
-<div
-	class="flex w-full flex-col items-center justify-center mx-auto max-w-[var(--kd-navbar-max-width)] p-[var(--kd-navbar-padding)] h-[var(--kd--navbar-height)]"
->
-	<div class={'flex w-full items-center'}>
-		<!-- <slot name="left" /> -->
+<div class="w-full mx-auto max-w-7xl">
+	<!-- width 8xl when docs, h-18/h-32 -->
+	<div class="flex items-center py-4 mx-4 border-b lg:border-0 border-slate-900/10">
 		<div class="logo">
 			<Button href="/">svelte-gantt</Button>
 		</div>
 
 		<div class="flex-1"></div>
 
-		<div class="992:flex 992:items-center hidden">
+		<div class="lg:flex items-center hidden">
 			<nav>
 				<ul class="flex items-center space-x-8">
 					<NavLink href={'/docs'} title="Documentation" />
 				</ul>
 			</nav>
 
-			<slot name="right" />
-
-			<div class="hidden 992:flex items-center ml-6">
+			<div class="hidden lg:flex items-center ml-6">
 				<IconButton href="https://github.com/ANovokmet/svelte-gantt">
 					<GithubIcon />
 				</IconButton>
@@ -65,5 +66,22 @@
 		</div>
 	</div>
 
-	<slot name="bottom" />
+	<div class="border-border lg:hidden flex w-full items-center p-4">
+		<button
+			id="main-sidebar-button"
+			type="button"
+			class="text-soft hover:text-inverse inline-flex justify-center rounded-md text-sm font-medium"
+			aria-controls="main-sidebar"
+			aria-expanded={isSidebarOpen ? 'true' : 'false'}
+			aria-haspopup="true"
+			on:click={() => dispatch('open')}
+		>
+			<MenuIcon />
+		</button>
+
+		<ol class={`text-md text-soft flex items-center whitespace-nowrap leading-6 ${showSidebar ? 'mt-px ml-2.5' : 'mt-2'}`}>
+			<li class="flex items-center">Active category <ArrowRightIcon /></li>
+			<li class="truncate font-semibold text-slate-900 dark:text-slate-200">Active link title</li>
+		</ol>
+	</div>
 </div>

@@ -1,6 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import { VitePluginWatchWorkspace } from './vite-plugin-watch-workspace'
+import { VitePluginWatchWorkspace } from './vite-plugin-watch-workspace';
 import * as path from 'path';
 export default defineConfig({
 	plugins: [
@@ -9,10 +9,10 @@ export default defineConfig({
 			currentPackage: __dirname,
 			format: 'esm',
 			fileTypes: ['svelte', 'ts', 'js'],
-			ignorePaths: ['node_modules', 'dist'],
+			ignorePaths: ['node_modules', 'dist']
 		}),
 		sveltekit()
-	],
+	]
 	// resolve: { preserveSymlinks: true },
 	// optimizeDeps: {
 	// 	include: ['svelte-gantt'],

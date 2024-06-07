@@ -1,8 +1,8 @@
 import adapter from '@sveltejs/adapter-auto';
-import { mdsvex } from "mdsvex";
+import { mdsvex } from 'mdsvex';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
-import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypeSlug from 'rehype-slug';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -11,13 +11,16 @@ const config = {
 		mdsvex({
 			remarkPlugins: [],
 			rehypePlugins: [
-				rehypeSlug, 
-				[rehypeAutolinkHeadings, { 
-					properties: { class: 'header-anchor', ariaHidden: true }, 
-					headingProperties: { tabIndex: -1 }, 
-					content: ({ type: 'text', value: '#' }) 
-				}]
-			],
+				rehypeSlug,
+				[
+					rehypeAutolinkHeadings,
+					{
+						properties: { class: 'header-anchor', ariaHidden: true },
+						headingProperties: { tabIndex: -1 },
+						content: { type: 'text', value: '#' }
+					}
+				]
+			]
 		}),
 		vitePreprocess()
 	],

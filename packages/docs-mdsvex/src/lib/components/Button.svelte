@@ -14,11 +14,7 @@
 	$: buttonClass = `group transform-gpu text-base font-medium transition-all hover:scale-105
     ${type === 'raised' && 'flex items-center justify-center'}
     ${(isButton || type === 'raised') && 'rounded-md px-4 992:px-5 py-2'}
-    ${type === 'raised'
-			? primary
-				? 'bg-inverse text-body hover:bg-inverse/90'
-				: 'bg-body border-2 border-inverse text-inverse'
-			: 'text-soft hover:text-inverse'}
+    ${type === 'raised' ? (primary ? 'bg-inverse text-body hover:bg-inverse/90' : 'bg-body border-2 border-inverse text-inverse') : 'text-soft hover:text-inverse'}
     ${__class}`;
 
 	$: contentClass = `inline-block transform transition-transform duration-100 group-hover:translate-x-0 ${arrow === 'left' && '-translate-x-3 '} ${arrow === 'right' && 'translate-x-2'}`;

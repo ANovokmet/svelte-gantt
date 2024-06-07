@@ -1,83 +1,83 @@
 :root,
 .prefers-light-scheme {
-  --kd-color-brand: 255 64 0;
-  --kd-color-focus: 79 70 229;
-  --kd-color-soft: 68 78 94;
-  --kd-color-body: 250 250 250;
-  --kd-color-elevate: 243 244 246;
-  --kd-color-inverse: 5 11 23;
-  --kd-color-border: 209 213 219;
+	--kd-color-brand: 255 64 0;
+	--kd-color-focus: 79 70 229;
+	--kd-color-soft: 68 78 94;
+	--kd-color-body: 250 250 250;
+	--kd-color-elevate: 243 244 246;
+	--kd-color-inverse: 5 11 23;
+	--kd-color-border: 209 213 219;
 }
 
 :root {
-  font-size: 16px;
-  scroll-padding-top: 6rem;
+	font-size: 16px;
+	scroll-padding-top: 6rem;
 
-  --kd-font-family-sans: Inter VF, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+	--kd-font-family-sans: Inter VF, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+		'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-  --kd-font-family-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation, Mono,
-    Fira Code VF, monospace;
+	--kd-font-family-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation, Mono,
+		Fira Code VF, monospace;
 
-  --kd-navbar-height: 4rem;
-  --kd-navbar-padding: 1rem 0.5rem;
-  --kd-navbar-max-width: 1440px;
-  --kd-navbar-border-bottom: 1px solid rgb(var(--kd-color-border));
-  --kd-breadcrumbs-height: 5rem;
+	--kd-navbar-height: 4rem;
+	--kd-navbar-padding: 1rem 0.5rem;
+	--kd-navbar-max-width: 1440px;
+	--kd-navbar-border-bottom: 1px solid rgb(var(--kd-color-border));
+	--kd-breadcrumbs-height: 5rem;
 
-  --kd-sidebar-min-width: 320px;
-  --kd-sidebar-max-width: screen;
-  --kd-sidebar-padding: 0 1.75rem 2rem;
-  --kd-sidebar-border-active: rgb(var(--kd-color-brand));
+	--kd-sidebar-min-width: 320px;
+	--kd-sidebar-max-width: screen;
+	--kd-sidebar-padding: 0 1.75rem 2rem;
+	--kd-sidebar-border-active: rgb(var(--kd-color-brand));
 
-  --kd-content-max-width: 1440px;
-  /* --kd-main-max-width: unset; */
-  --kd-article-max-width: 98ch;
+	--kd-content-max-width: 1440px;
+	/* --kd-main-max-width: unset; */
+	--kd-article-max-width: 98ch;
 
-  --kd-main-padding-x: 1rem;
+	--kd-main-padding-x: 1rem;
 }
 
 @media screen and (min-width: 992px) {
-  :root {
-    --kd-main-padding-x: 4rem;
-    --kd-breadcrumbs-height: 0px;
-    --kd-sidebar-min-width: 15rem;
-    --kd-sidebar-max-width: 17rem;
-    --kd-sidebar-padding: 0 0.5rem 2rem 1.5rem;
-  }
+	:root {
+		--kd-main-padding-x: 4rem;
+		--kd-breadcrumbs-height: 0px;
+		--kd-sidebar-min-width: 15rem;
+		--kd-sidebar-max-width: 17rem;
+		--kd-sidebar-padding: 0 0.5rem 2rem 1.5rem;
+	}
 }
 
 @media screen and (min-width: 1200px) {
-  :root {
-    --kd-navbar-padding: 1.25rem 1.25rem;
-  }
+	:root {
+		--kd-navbar-padding: 1.25rem 1.25rem;
+	}
 }
 
 @media screen and (min-width: 1460px) {
-  :root {
-    --kd-navbar-padding: 1.25rem 0;
-    --kd-sidebar-padding: 0 0.5rem 2rem 0.25rem;
-  }
+	:root {
+		--kd-navbar-padding: 1.25rem 0;
+		--kd-sidebar-padding: 0 0.5rem 2rem 0.25rem;
+	}
 }
 
 :root.dark,
 .prefers-dark-scheme {
-  color-scheme: dark;
-  --kd-color-brand: 255 83 26;
-  --kd-color-soft: 150 155 166;
-  --kd-color-inverse: 245 245 245;
-  --kd-color-border: 38 48 64;
-  --kd-color-elevate: 10 19 33;
-  --kd-color-body: 5 11 23;
-  --kd-color-focus: 129 140 248;
+	color-scheme: dark;
+	--kd-color-brand: 255 83 26;
+	--kd-color-soft: 150 155 166;
+	--kd-color-inverse: 245 245 245;
+	--kd-color-border: 38 48 64;
+	--kd-color-elevate: 10 19 33;
+	--kd-color-body: 5 11 23;
+	--kd-color-focus: 129 140 248;
 }
 
 .code-fence {
-  --kd-code-fence-bg: rgb(var(--kd-color-body));
-  --kd-code-fence-top-bar-bg: rgb(var(--kd-color-body) / 0.6);
-  --kd-code-copied-bg-color: rgb(var(--kd-color-brand) / 0.8);
-  --kd-terminal-line-pointer: rgb(var(--kd-color-brand));
-  --kd-code-highlight-border: rgb(var(--kd-color-brand));
-  --kd-code-highlight-color: rgb(var(--kd-color-brand) / 0.08);
+	--kd-code-fence-bg: rgb(var(--kd-color-body));
+	--kd-code-fence-top-bar-bg: rgb(var(--kd-color-body) / 0.6);
+	--kd-code-copied-bg-color: rgb(var(--kd-color-brand) / 0.8);
+	--kd-terminal-line-pointer: rgb(var(--kd-color-brand));
+	--kd-code-highlight-border: rgb(var(--kd-color-brand));
+	--kd-code-highlight-color: rgb(var(--kd-color-brand) / 0.08);
 }
