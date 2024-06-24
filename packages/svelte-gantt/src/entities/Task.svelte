@@ -9,7 +9,6 @@
     export let height: number;
     export let left: number;
     export let top: number;
-    export let topDelta: number = 0;
     export let width: number;
     export let reflected = false;
 
@@ -19,12 +18,12 @@
 
     let _position = {
         x: left,
-        y: top + topDelta,
+        y: top,
         width: width
     };
 
     $: {
-        updatePosition(left, top + topDelta, width);
+        updatePosition(left, top, width);
     }
 
     function updatePosition(x, y, width) {
@@ -48,7 +47,8 @@
     } = getContext('options');
     const { dndManager, api, utils, columnService, selectionManager } = getContext('services');
     const draggingContext = getContext('drag');
-    let draggingActive = draggingContext.active;
+    const draggingActive = draggingContext.active;
+    const draggingTasks = draggingContext.dragging;
 
     let selectedTasks = selectionManager._selectedTasks;
 
@@ -159,14 +159,15 @@
             const left = newLeft;
             const width = newRight - newLeft;
             const top = $rowPadding + targetRow.y;
+            // get value of top from the layout
 
-            updatePosition(left, top + topDelta, width);
+            updatePosition(left, task.top, width);
 
             const newTask = {
                 ...task,
                 left: left,
                 width: width,
-                top: top,
+                // top: top,
                 model
             };
 
@@ -204,10 +205,13 @@
                 );
             },
             onDown(event) {
+                const { mouseEvent } = event;
                 let draggingTasks: SvelteTask[] = [];
-                for (const [taskId, isSelected] of Object.entries($selectedTasks)) {
-                    if (isSelected && taskId !== model.id + '') {
-                        draggingTasks.push($taskStore.entities[taskId]);
+                if (mouseEvent.ctrlKey) {
+                    for (const [taskId, isSelected] of Object.entries($selectedTasks)) {
+                        if (isSelected && taskId !== String(model.id)) {
+                            draggingTasks.push($taskStore.entities[taskId]);
+                        }
                     }
                 }
 
@@ -225,6 +229,7 @@
             onMouseUp() {
                 setCursor('default');
                 api.tasks.raise.moveEnd(model);
+                delete $draggingTaskCache[model.id];
             },
             onResize(event) {
                 _position.x = event.x;
@@ -244,8 +249,10 @@
                 scrollIfOutOfBounds(event.event);
             },
             onDrop(event) {
-                onDrop(event);
-                draggingContext.dropAll(event);
+                if (event.dragging || event.resizing) {
+                    onDrop(event);
+                    draggingContext.dropAll(event);
+                }
             }
         });
 
@@ -271,7 +278,7 @@
 
     let classes;
     $: {
-        classes = normalizeClassAttr(model.classes);
+        classes = model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default';
     }
 
     let resizeEnabled: boolean;
@@ -282,29 +289,14 @@
             model.enableResize;
     }
 
-    let _height: number;
-    $: {
-        if (height !== undefined && $layout !== 'overlap') {
-            _height = height;
-        } else {
-            _height = $rowStore.entities[model.resourceId].height - 2 * $rowPadding;
-        }
-    }
-
     let _top: number;
     $: {
-        if (top !== undefined && $layout !== 'overlap') {
-            _top = _position.y;
-        } else if (_dragging || _resizing || ($selectedTasks[model.id] && $draggingActive)) {
-            _top = _position.y;
-        } else {
-            _top = $rowStore.entities[model.resourceId].y + $rowPadding + topDelta;
-        }
+        _top = _position.y;
     }
 
     let _moving: boolean;
     $: {
-        _moving = _dragging || _resizing || ($selectedTasks[model.id] && $draggingActive);
+        _moving = _dragging || _resizing || ($draggingTasks[model.id] && $draggingActive);
     }
 
     let _animating: boolean;
@@ -319,7 +311,7 @@
     use:taskElement={model}
     class="sg-task {classes}"
     class:sg-milestone={model.type === 'milestone'}
-    style="width:{_position.width}px; height:{_height}px; left: {_position.x}px; top: {_top}px;"
+    style="width:{_position.width}px; height:{height}px; left: {_position.x}px; top: {_top}px;"
     class:moving={_moving}
     class:animating={_animating}
     class:sg-task-reflected={reflected}
@@ -484,17 +476,23 @@
         background: rgba(0, 0, 0, 0.2);
     }
 
-    :global(.sg-task) {
+    :global(.sg-task-default) {
         color: white;
         background: rgb(116, 191, 255);
     }
 
-    :global(.sg-task:hover) {
+    :global(.sg-task-default:hover) {
         background: rgb(98, 161, 216);
     }
 
-    :global(.sg-task.selected) {
+    :global(.sg-task-default.selected) {
         background: rgb(69, 112, 150);
+    }
+
+    :global(.sg-task-selected) {
+        outline: 2px solid rgba(3, 169, 244, 0.5);
+        outline-offset: 3px;
+        z-index: 1;
     }
 
     .sg-milestone {

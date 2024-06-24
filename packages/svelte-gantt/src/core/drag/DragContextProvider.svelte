@@ -5,7 +5,7 @@
     import type { DownDropEvent } from './draggable';
 
     type Pos = {
-        id: number;
+        id: PropertyKey;
         xDelta: number;
         yDelta: number;
         width: number;
@@ -15,10 +15,12 @@
     const _handlers: DragContext['handlers'] = {};
     let _relativePos: Pos[] = [];
     let _active = writable(false);
+    const _dragging = writable<{ [taskId: PropertyKey]: boolean; }>({});
 
     const context: DragContext = {
         active: _active,
         handlers: _handlers,
+        dragging: _dragging,
         on(taskId, handlers) {
             _handlers[taskId] = handlers;
         },
@@ -32,7 +34,9 @@
         },
         save(start: {x: number; y: number; width: number; }, tasks) {
             _relativePos = [];
+            $_dragging = {};
             for (const task of tasks) {
+                $_dragging[task.model.id] = true;
                 _relativePos.push({
                     id: task.model.id,
                     xDelta: task.left - start.x,

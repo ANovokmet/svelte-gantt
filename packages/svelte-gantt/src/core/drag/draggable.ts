@@ -64,7 +64,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
 
     let initialX: number;
     let initialY: number;
-    let resizeTriggered = false;
+    let triggered = false;
 
     const dragAllowed = getAccessor(options.dragAllowed);
     const resizeAllowed = getAccessor(options.resizeAllowed);
@@ -127,12 +127,12 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
     };
 
     function onMousemove(event: MouseEvent) {
-        if (!resizeTriggered) {
+        if (!triggered) {
             if (
                 Math.abs(event.clientX - initialX) > MIN_DRAG_X ||
                 Math.abs(event.clientY - initialY) > MIN_DRAG_Y
             ) {
-                resizeTriggered = true;
+                triggered = true;
             } else {
                 return;
             }
@@ -202,7 +202,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
         // there is an issue here maybe, we update task according to the mousemove event, but we ignore the mouseup event and use the previously commited x, y and width
         // you know those issues when task gets rounded incorrectly on resize? could be the cause
         // ....or not really, this issue results in task resizing when task is merely dragged
-        if (resizeTriggered && options.onDrop) {
+        if (triggered && options.onDrop) {
             options.onDrop({
                 mouseEvent: event,
                 x,
@@ -222,7 +222,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
 
         initialX = null;
         initialY = null;
-        resizeTriggered = false;
+        triggered = false;
 
         window.removeEventListener('pointermove', onMousemove, false);
     };
