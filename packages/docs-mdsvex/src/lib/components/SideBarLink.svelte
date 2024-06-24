@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/stores';	
+	import { base } from '$app/paths';
 
 	export let href;
 	export let label;
@@ -13,7 +14,7 @@
 		{isActive
 		? 'text-brand font-semibold border-brand'
 		: 'hover:border-inverse focus-visible:border-inverse text-soft hover:text-inverse focus-visible:text-inverse border-transparent font-normal'}"
-	{href}
+	href="{base}{href}"
 >
 	{label}
 </a>

@@ -1,6 +1,3 @@
-<script>
-</script>
-
 # Gantt
 
 Pass options object as `props` to the SvelteGantt constructor. 
@@ -22,7 +19,6 @@ gantt.$set({
     // ...
 });
 ```
-
 
 | Name | Description | Type | Default |
 | - | - | - | -: |

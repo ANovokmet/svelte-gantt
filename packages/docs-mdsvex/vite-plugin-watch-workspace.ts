@@ -173,7 +173,6 @@ const getOutFile = (outdir: string, file: string, fileExtension: string) => {
  *  - ignorePaths: paths or globs to ignore (optional)
  * @constructor
  */
-console.log('load');
 export async function VitePluginWatchWorkspace(
 	config: VitePluginWatchExternalOptions
 ): Promise<Plugin<any>> {

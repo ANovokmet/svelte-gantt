@@ -7,6 +7,7 @@
     "type": "module",
     "scripts": {
         "dev:docs": "pnpm --filter docs-mdsvex run dev",
+        "build:docs": "pnpm --filter docs-mdsvex run build",
         "dev:demo": "pnpm --filter demo run dev",
         "dev:svelte-gantt": "pnpm --filter svelte-gantt run autobuild",
         "playground": "run-p dev:demo dev:svelte-gantt"

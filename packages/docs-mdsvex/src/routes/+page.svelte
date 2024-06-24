@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import FeatureCard from './FeatureCard.svelte';
 	import HeroExample from './HeroExample.svelte';
+	import { base } from '$app/paths';
 
 	let expansionObserver = new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
@@ -38,7 +39,7 @@
 				<div class="mt-6 sm:mt-10 flex justify-center space-x-6 text-sm">
 					<a
 						class="group text-white font-medium text-2xl transition-all hover:scale-105 px-6 py-3 text-soft mb-12 bg-gradient-to-tr from-pink-500 to-violet-500 hover:bg-violet-600 mx-auto transition-all"
-						href="/docs/getting-started/installation"
+						href="{base}/docs/getting-started/installation"
 					>
 						<span class="inline-block transform transition-transform duration-100 group-hover:translate-x-0">Get started</span>
 					</a>

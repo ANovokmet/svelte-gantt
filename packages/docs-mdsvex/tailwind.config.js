@@ -116,7 +116,8 @@ function kitDocsTypography(theme) {
 				a: {
 					fontWeight: theme('fontWeight.normal'),
 					textDecoration: 'none',
-					borderBottom: `1px solid ${colors.violet[600]}`
+					color: theme('colors.blue.700'),
+					borderBottom: `1px solid ${colors.blue[600]}`
 				},
 				'a:hover': {
 					borderBottomWidth: '2px'
