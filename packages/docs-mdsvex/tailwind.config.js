@@ -10,7 +10,7 @@ export default {
 	},
 	theme: {
 		fontFamily: {
-			// sans: ['var(--kd-font-family-sans)'],
+			// sans: ['var(--sg-font-family-sans)'],
 			mono: ['monospace'],
 		},
 		extend: {
@@ -19,17 +19,16 @@ export default {
 			},
 			colors: {
 				brand: {
-					DEFAULT: colors.violet[600],
+					DEFAULT: colors.blue[700],
 				},
 				focus: {
-					DEFAULT: 'rgb(var(--kd-color-focus) / <alpha-value>)'
+					DEFAULT: 'rgb(var(--sg-color-focus) / <alpha-value>)'
 				},
 				gray: {},
-				border: 'rgb(var(--kd-color-border) / <alpha-value>)',
-				soft: 'rgb(var(--kd-color-soft) / <alpha-value>)',
-				inverse: 'rgb(var(--kd-color-inverse) / <alpha-value>)',
-				body: 'rgb(var(--kd-color-body) / <alpha-value>)',
-				elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)'
+				border: 'rgb(var(--sg-color-border) / <alpha-value>)',
+				soft: 'rgb(var(--sg-color-soft) / <alpha-value>)',
+				inverse: 'rgb(var(--sg-color-inverse) / <alpha-value>)',
+				body: 'rgb(var(--sg-color-body) / <alpha-value>)',
 			},
 			typography: kitDocsTypography,
 			backgroundImage: () => ({
@@ -52,13 +51,12 @@ function kitDocsTypography(theme) {
 	return {
 		DEFAULT: {
 			css: {
-				'--tw-prose-counters': 'rgb(var(--kd-color-inverse))',
-				'--tw-prose-invert-counters': 'rgb(var(--kd-color-inverse))',
-				color: 'rgb(var(--kd-color-soft))',
-				fontSize: '18px',
+				'--tw-prose-counters': 'rgb(var(--sg-color-inverse))',
+				'--tw-prose-invert-counters': 'rgb(var(--sg-color-inverse))',
+				color: 'rgb(var(--sg-color-soft))',
 				maxWidth: 'none',
 				hr: {
-					borderColor: 'rgb(var(--kd-color-border))',
+					borderColor: 'rgb(var(--sg-color-border))',
 					marginTop: '3em',
 					marginBottom: '3em'
 				},
@@ -101,7 +99,7 @@ function kitDocsTypography(theme) {
 					paddingLeft: '0.25rem'
 				},
 				'ul > li::marker': {
-					color: 'rgb(var(--kd-color-inverse))'
+					color: 'rgb(var(--sg-color-inverse))'
 				},
 				'ul > li::before': {
 					content: '""',
@@ -149,7 +147,7 @@ function kitDocsTypography(theme) {
 					content: '',
 				},
 				pre: {
-					backgroundColor: 'var(--kd-code-fence-bg)',
+					backgroundColor: 'var(--sg-code-fence-bg)',
 					boxShadow: 'none',
 					display: 'flex'
 				},
@@ -166,8 +164,8 @@ function kitDocsTypography(theme) {
 					borderCollapse: 'collapse'
 				},
 				thead: {
-					color: 'rgb(var(--kd-color-inverse))',
-					borderBottomColor: 'rgb(var(--kd-color-border))'
+					color: 'rgb(var(--sg-color-inverse))',
+					borderBottomColor: 'rgb(var(--sg-color-border))'
 				},
 				tbody: {
 					verticalAlign: 'baseline'
@@ -178,7 +176,7 @@ function kitDocsTypography(theme) {
 				},
 				'tbody tr': {
 					fontSize: theme('fontSize.sm')[0],
-					borderBottomColor: 'rgb(var(--kd-color-border))'
+					borderBottomColor: 'rgb(var(--sg-color-border))'
 				},
 				'tbody td': {
 					whiteSpace: 'normal'
@@ -202,7 +200,7 @@ function kitDocsTypography(theme) {
 					paddingRight: '0.5714286em'
 				},
 				'tbody tr td:first-child code': {
-					color: theme('colors.indigo.500'),
+					color: theme('colors.blue.600'),
 					paddingLeft: '8px',
 					'&::before': { display: 'none' },
 					'&::after': { display: 'none' }
@@ -215,7 +213,7 @@ function kitDocsTypography(theme) {
 					marginTop: `${12 / 14}em`
 				},
 				blockQuote: {
-					color: 'rgb(var(--kd-color-inverse))',
+					color: 'rgb(var(--sg-color-inverse))',
 					borderRadius: 2,
 					borderColor: 'currentColor'
 				}
@@ -223,12 +221,12 @@ function kitDocsTypography(theme) {
 		},
 		invert: {
 			css: {
-				color: 'rgb(var(--kd-color-soft))',
+				color: 'rgb(var(--sg-color-soft))',
 				'tbody tr td:first-child code': {
 					color: theme('colors.indigo.300')
 				},
 				'tbody tr': {
-					borderBottomColor: 'rgb(var(--kd-color-border))'
+					borderBottomColor: 'rgb(var(--sg-color-border))'
 				}
 			}
 		}

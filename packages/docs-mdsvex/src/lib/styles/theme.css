@@ -14,7 +14,7 @@ body {
 
 .js-focus-visible [data-focus-visible-added] {
 	@apply outline-none ring-2;
-	--tw-ring-color: var(--kd-color-focus);
+	--tw-ring-color: var(--sg-color-focus);
 }
 
 * {
@@ -47,12 +47,12 @@ body {
 
 .scrollbar {
 	scrollbar-width: thin;
-	--kd-scrollbar-track-bg: rgb(var(--kd-color-border) / 0.3);
-	--kd-scrollbar-thumb-bg: rgb(var(--kd-color-border));
+	--sg-scrollbar-track-bg: rgb(var(--sg-color-border) / 0.3);
+	--sg-scrollbar-thumb-bg: rgb(var(--sg-color-border));
 }
 
 .dark .scrollbar {
-	--kd-scrollbar-track-bg: rgb(var(--kd-color-border) / 0.2);
+	--sg-scrollbar-track-bg: rgb(var(--sg-color-border) / 0.2);
 }
 
 @media screen and (prefers-reduced-motion: no-preference) {
@@ -67,12 +67,12 @@ body {
 
 .scrollbar::-webkit-scrollbar-track {
 	@apply !rounded;
-	background-color: var(--kd-scrollbar-track-bg) !important;
+	background-color: var(--sg-scrollbar-track-bg) !important;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
 	@apply !rounded;
-	background-color: var(--kd-scrollbar-thumb-bg) !important;
+	background-color: var(--sg-scrollbar-thumb-bg) !important;
 }
 
 /*
@@ -102,63 +102,63 @@ body {
  * -----------------------------------------------------
  */
 
-.kit-docs pre {
+.sg-docs pre {
 	tab-size: 2;
 	-o-tab-size: 2;
 	-moz-tab-size: 2;
 }
 
-.kit-docs p + .admonition,
-.kit-docs p + .steps {
+.sg-docs p + .admonition,
+.sg-docs p + .steps {
 	margin-top: 2.5rem;
 }
 
-.kit-docs .steps + p {
+.sg-docs .steps + p {
 	margin-top: 4rem;
 }
 
-.kit-docs .admonition + .steps {
+.sg-docs .admonition + .steps {
 	margin-top: 3.5rem;
 }
 
-.kit-docs .admonition + table {
+.sg-docs .admonition + table {
 	margin-top: 4rem;
 }
 
-.kit-docs .code-fence .code pre {
+.sg-docs .code-fence .code pre {
 	margin: 0;
 }
 
-.kit-docs .code-fence.lang-bash pre span {
+.sg-docs .code-fence.lang-bash pre span {
 	color: #fafafa !important;
 }
 
-.kit-docs .code-fence.lang-bash pre .line:not(:empty)::before {
+.sg-docs .code-fence.lang-bash pre .line:not(:empty)::before {
 	content: '> ';
 	font-weight: bold;
-	color: var(--kd-terminal-line-pointer);
+	color: var(--sg-terminal-line-pointer);
 }
 
-.kit-docs .step .description > code {
-	color: var(--kd-color-inverse);
+.sg-docs .step .description > code {
+	color: var(--sg-color-inverse);
 }
 
-.kit-docs .step .code-fence {
+.sg-docs .step .code-fence {
 	margin: 0;
 	padding: 0;
 }
 
-.kit-docs .code-fence + .code-fence {
+.sg-docs .code-fence + .code-fence {
 	margin-top: 0.5rem;
 }
 
-.kit-docs h1 + .steps,
-.kit-docs h2 + .steps,
-.kit-docs h3 + .steps {
+.sg-docs h1 + .steps,
+.sg-docs h2 + .steps,
+.sg-docs h3 + .steps {
 	margin-top: 2.5rem;
 }
 
-.kit-docs .header-anchor {
+.sg-docs .header-anchor {
 	margin-left: 0.25em;
 	padding: 0 0.23em;
 	font-size: 0.9em;
@@ -167,37 +167,37 @@ body {
 	background-color: none;
 }
 
-.kit-docs h1:focus,
-.kit-docs h2:focus,
-.kit-docs h3:focus,
-.kit-docs h4:focus,
-.kit-docs h5:focus,
-.kit-docs h6:focus {
+.sg-docs h1:focus,
+.sg-docs h2:focus,
+.sg-docs h3:focus,
+.sg-docs h4:focus,
+.sg-docs h5:focus,
+.sg-docs h6:focus {
 	outline: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
-	.kit-docs h1:hover .header-anchor,
-	.kit-docs h2:hover .header-anchor,
-	.kit-docs h3:hover .header-anchor,
-	.kit-docs h4:hover .header-anchor,
-	.kit-docs h5:hover .header-anchor,
-	.kit-docs h6:hover .header-anchor {
+	.sg-docs h1:hover .header-anchor,
+	.sg-docs h2:hover .header-anchor,
+	.sg-docs h3:hover .header-anchor,
+	.sg-docs h4:hover .header-anchor,
+	.sg-docs h5:hover .header-anchor,
+	.sg-docs h6:hover .header-anchor {
 		opacity: 1;
 	}
 }
 
 @media (pointer: coarse) {
-	.kit-docs h1:focus .header-anchor,
-	.kit-docs h2:focus .header-anchor,
-	.kit-docs h3:focus .header-anchor,
-	.kit-docs h4:focus .header-anchor,
-	.kit-docs h5:focus .header-anchor,
-	.kit-docs h6:focus .header-anchor {
+	.sg-docs h1:focus .header-anchor,
+	.sg-docs h2:focus .header-anchor,
+	.sg-docs h3:focus .header-anchor,
+	.sg-docs h4:focus .header-anchor,
+	.sg-docs h5:focus .header-anchor,
+	.sg-docs h6:focus .header-anchor {
 		opacity: 1;
 	}
 }
 
-.kit-docs .header-anchor:focus {
+.sg-docs .header-anchor:focus {
 	opacity: 1;
 }

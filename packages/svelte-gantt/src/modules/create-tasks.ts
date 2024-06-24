@@ -47,7 +47,7 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
 
     let initialX: number;
     let initialY: number;
-    let resizeTriggered = false;
+    let triggered = false;
 
     const container = () => options.container;
 
@@ -75,9 +75,9 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
     };
 
     function onMousemove(event: MouseEvent) {
-        if (!resizeTriggered) {
+        if (!triggered) {
             if (Math.abs(event.clientX - initialX) > MIN_DRAG_X || Math.abs(event.clientY - initialY) > MIN_DRAG_Y) {
-                resizeTriggered = true;
+                triggered = true;
             } else {
                 return;
             }
@@ -134,7 +134,7 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
         window.removeEventListener('pointerup', onMouseup);
         window.removeEventListener('pointermove', onMousemove, false);
 
-        if (resizeTriggered) {
+        if (triggered) {
             const { x, width, y } = getValues(event);
 
             const newFrom = options.utils.roundTo(options.columnService.getDateByPosition(x));
@@ -155,7 +155,7 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
 
         initialX = null;
         initialY = null;
-        resizeTriggered = false;
+        triggered = false;
     };
 
     node.addEventListener('pointerdown', onMousedown);

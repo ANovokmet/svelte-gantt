@@ -1,4 +1,3 @@
-
 # Migrating from version 3.x to 4
 
 `svelte-gantt` no longer requires `moment`. You can still use it as `MomentSvelteGanttDateAdapter`. All parameters that were previously moment objects became numbers (milliseconds since UNIX epoch).

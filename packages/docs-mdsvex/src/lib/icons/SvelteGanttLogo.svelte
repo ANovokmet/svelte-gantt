@@ -1,15 +1,20 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...$$props}>
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" {...$$props}>
 	<defs>
-	  <clipPath id="cut-off-bottom">
-		<circle cx="12" cy="12" r="12" />
-	  </clipPath>
+		<clipPath id="clip-0">
+			<path
+				d="M 27.148 4.445 Q 31.589 0.004 36.03 4.445 L 58.869 27.283 Q 63.31 31.724 58.869 36.165 L 36.03 59.003 Q 31.589 63.444 27.148 59.003 L 4.309 36.165 Q -0.132 31.724 4.309 27.283 Z"
+				style="fill: rgb(216, 216, 216);"
+			></path>
+		</clipPath>
 	</defs>
-	<g clip-path="url(#cut-off-bottom)">
-		<g>
-			<path d="M 6.0 0 L 6.0 18.0 L 24 18.0 L 24 24 L 0 24 L 0 0 L 6.0 0 Z" class="fill-blue-400" />
-			<path d="M 0 0 L 6.0 0 L 6.0 15 L 0 16 L 0 0 Z" class="fill-blue-500"></path>
-			<path d="M 6 18.0 L 24 18.0 L 24 24 L 6.0 24 L 8.0 18.0 Z" class="fill-blue-700"></path>
-			<rect width="17" height="15" x="9" class="fill-blue-950" />
-		</g>
+	<g style="clip-path: url(#clip-0);">
+		<path d="M 0 0 L 63 0 L 0 27 L 0 0 Z" class="fill-blue-400" style="-fill: rgb(255, 0, 0);"></path>
+		<path d="M 0 27 L 63 0 L 0 63 L 0 27 Z" class="fill-blue-950" style="-fill: rgb(133, 31, 31);"></path>
+		<path d="M 63 0 L 24 63 L 0 63 L 63 0 Z" class="fill-blue-500" style="-fill: rgb(89, 27, 27);"></path>
+		<path d="M 63 0 L 63 63 L 24 63 L 63 0 Z" class="fill-blue-700" style=""></path>
 	</g>
+	<path
+		style="fill: none; stroke: rgb(255, 255, 255); stroke-width: 7px;"
+		d="M 31.107 20.88 C 28.239 17.67 17.482 16.875 16.077 27.656 C 14.118 42.686 41.127 40.817 46.388 37.717 C 51.041 34.975 54.128 28.569 47.601 24.075 C 43.849 21.491 37.477 22.666 35.264 26.058 C 32.373 30.489 32.769 34.965 31.186 40.483 C 29.791 45.347 23.348 48.693 19.161 48.852 C 12.369 49.111 0 39.463 0 37.898"
+	></path>
 </svg>

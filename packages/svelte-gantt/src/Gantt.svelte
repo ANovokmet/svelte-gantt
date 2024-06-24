@@ -481,7 +481,7 @@
         taskStore.addAll(tasks);
     }
 
-    let _reflectedTasksCache: { [rowId: string]: SvelteTask[] } = {};
+    let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = {};
     $: {
         _reflectedTasksCache = {};
         const opts = { rowPadding: $_rowPadding };
@@ -555,7 +555,7 @@
         api,
         dndManager,
         selectionManager,
-        columnService
+        columnService,
     });
 
     export function refreshTimeRanges() {
@@ -600,10 +600,11 @@
 
     export function scrollToRow(id, scrollBehavior = 'auto') {
         const { scrollTop, clientHeight } = mainContainer;
-
-        const index = $allRows.findIndex(r => r.model.id == id);
-        if (index === -1) return;
-        const targetTop = index * rowHeight;
+        const row = $rowStore.entities[id];
+        if (!row) {
+            return;
+        }
+        const targetTop = row.y;
 
         if (targetTop < scrollTop) {
             mainContainer.scrollTo({
@@ -614,7 +615,7 @@
 
         if (targetTop > scrollTop + clientHeight) {
             mainContainer.scrollTo({
-                top: targetTop + rowHeight - clientHeight,
+                top: targetTop + row.height - clientHeight,
                 behavior: scrollBehavior
             });
         }
@@ -625,9 +626,9 @@
 
         const task = $taskStore.entities[id];
         if (!task) return;
+        const row = $rowStore.entities[task.model.resourceId];
         const targetLeft = task.left;
-        const rowIndex = $allRows.findIndex(r => r.model.id == task.model.resourceId);
-        const targetTop = rowIndex * rowHeight;
+        const targetTop = row.y;
 
         const options = {
             top: undefined,
@@ -648,7 +649,7 @@
         }
 
         if (targetTop > scrollTop + clientHeight) {
-            options.top = targetTop + rowHeight - clientHeight;
+            options.top = targetTop + row.height - clientHeight;
         }
 
         mainContainer.scrollTo(options);
@@ -703,8 +704,7 @@
     $: {
         filteredRows = [];
         rowContainerHeight = 0;
-
-        rowsHeightChanged;
+        layoutChanged;
         const firstRow = $allRows[0];
         for (const row of $allRows) {
             if (!row.hidden) {
@@ -746,10 +746,10 @@
     $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
 
     let visibleTasks: SvelteTask[]; // try to keep the same order in the array as before
-    let previousOrder: {};
+    let previousOrder: { [id: PropertyKey]: number; } = {};
     $: {
         const tasks: SvelteTask[] = [];
-        const rendered: { [id: string]: boolean } = {};
+        const rendered: { [id: PropertyKey]: boolean } = {};
 
         const tasksOrdered: SvelteTask[] = [];
         const order: { [id: PropertyKey]: number; } = {};
@@ -758,6 +758,7 @@
         let ordered = true;
         let ordinal = 0;
         function tryRestorePosition(task: SvelteTask) {
+            tasks.push(task);
             const id = task.model.id;
             if (previousOrder[id] != null) {
                 tasksOrdered[previousOrder[id]] = task;
@@ -773,7 +774,6 @@
             if ($rowTaskCache[row.model.id]) {
                 for (let j = 0; j < $rowTaskCache[row.model.id].length; j++) {
                     const id = $rowTaskCache[row.model.id][j];
-                    tasks.push($taskStore.entities[id]);
                     rendered[id] = true;
                     tryRestorePosition($taskStore.entities[id]);
                 }
@@ -781,7 +781,6 @@
 
             if (_reflectedTasksCache[row.model.id]) {
                 for (const task of _reflectedTasksCache[row.model.id]) {
-                    tasks.push(task);
                     tryRestorePosition(task);
                 }
             }
@@ -790,7 +789,6 @@
         // render all tasks being dragged if not already
         for (const id in $draggingTaskCache) {
             if (!rendered[id]) {
-                tasks.push($taskStore.entities[id]);
                 rendered[id] = true;
                 tryRestorePosition($taskStore.entities[id]);
             }
@@ -800,13 +798,35 @@
             ordered = false;
         }
 
-        previousOrder = order;
+        previousOrder = ordered ? previousOrder : order;
         visibleTasks = ordered ? tasksOrdered : tasks;
     }
 
-    let rowsHeightChanged = {};
+    let layoutChanged = {};
     /** apply other layouts */
     $: {
+        let changed = false;
+        if (layout === 'overlap') {
+            let top = 0;
+            for (const rowId of $rowStore.ids) {
+                const row = $rowStore.entities[rowId];
+                row.y = top;
+                const heightBefore = row.height;
+                row.height = row.model.height || rowHeight;
+                top += row.height;
+                if (heightBefore != row.height) {
+                    changed = true;
+                }
+            }
+
+            for (const taskId of $taskStore.ids) {
+                const task = $taskStore.entities[taskId];
+                const row = $rowStore.entities[task.model.resourceId];
+                task.height = (row ? row.height : undefined) - 2 * rowPadding;
+                task.top = row.y + rowPadding;
+            }
+        }
+
         if (layout === 'pack' || layout === 'expand') {
             let top = 0;
             for (const rowId of $rowStore.ids) {
@@ -817,22 +837,24 @@
                 if (taskIds) {
                     const tasks = taskIds.map(taskId => $taskStore.entities[taskId]);
                     packLayout.layout(tasks, row, { 
-                        contentHeight: 52 - rowPadding * 2,
+                        rowHeight: rowHeight,
                         rowPadding,
                         expandRow: layout === 'expand'
                     });
                 }
                 top += row.height;
                 if (heightBefore != row.height) {
-                    rowsHeightChanged = {};
+                    changed = true;
                 }
             }
         }
+
+        layoutChanged = {};
     }
 
     /** enable create task by dragging */
     export let enableCreateTask = false;
-    export let onCreateTask = (e: { from: number; to: number; resourceId: string | number; }) => {
+    export let onCreateTask = (e: { from: number; to: number; resourceId: PropertyKey; }) => {
         const id: any = `creating-task-${(Math.random() + 1).toString(36).substring(2, 7)}`;
         return ({
             id,

@@ -2,8 +2,8 @@ import type { SvelteRow } from './row';
 import type { ColumnService } from './column';
 
 export interface TaskModel {
-    id: number; // | string;
-    resourceId: number | string; // | string
+    id: PropertyKey;
+    resourceId: PropertyKey;
     from: number; // date
     to: number; // date
 
@@ -34,13 +34,12 @@ export interface SvelteTask {
     reflected?: boolean;
     reflectedOnParent?: boolean;
     reflectedOnChild?: boolean;
-    originalId?: number;
+    originalId?: PropertyKey;
     
     /* pack layout fields */
     intersectsWith?: SvelteTask[];
     numYSlots?: number;
     yPos?: number;
-    topDelta?: number;
 }
 
 export class TaskFactory {
@@ -114,12 +113,12 @@ export function overlap(one: SvelteTask, other: SvelteTask) {
 }
 
 export function reflectTask(task: SvelteTask, row: SvelteRow, options: { rowPadding: number }): SvelteTask {
-    const reflectedId = `reflected-task-${task.model.id}-${row.model.id}`;
+    const reflectedId = `reflected-task-${String(task.model.id)}-${String(row.model.id)}`;
 
     const model = {
         ...task.model,
         resourceId: row.model.id,
-        id: reflectedId as any,
+        id: reflectedId as PropertyKey,
         enableDragging: false
     };
 

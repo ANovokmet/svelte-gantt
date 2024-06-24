@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 import type { SvelteTask } from '../core/task';
 
 export class SelectionManager {
-    _selectedTasks = writable<{ [taskId: string]: boolean; }>({});
+    _selectedTasks = writable<{ [taskId: PropertyKey]: boolean; }>({});
 
     constructor(private taskStore: EntityStore<SvelteTask>) {}
 

@@ -1,5 +1,5 @@
 export interface RowModel {
-    id: number | string;
+    id: PropertyKey;
     label: string;
     classes?: string | string[];
     contentHtml?: string;

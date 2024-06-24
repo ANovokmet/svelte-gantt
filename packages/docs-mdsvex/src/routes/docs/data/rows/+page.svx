@@ -5,6 +5,8 @@ title: Rows
 <script>
     import {SvelteGantt, SvelteGanttTable} from 'svelte-gantt/svelte';
     import { defaultOptions, time } from '$lib';
+    import TreeExample from './TreeExample.svelte';
+    import RowsExample from './RowsExample.svelte';
 </script>
 
 # Row
@@ -25,17 +27,7 @@ Rows are defined as a list of objects. Rows can be rendered as a collapsible tre
 `height` | `number` | The height of the row. | `52`
 
 
-<section class="my-12">
-<SvelteGantt from={time('8:00')} to={time('12:00')}
-    rows={[
-        {id: 1, label: 'Using the label'}, 
-        {id: 2, label: 'Apply custom classes', classes: 'row-red' },
-        {id: 3, label: 'With custom html content', contentHtml: '<div class="h-full flex justify-center items-center"><span class="bg-gradient-to-tr from-pink-500 to-violet-500 text-violet-50 px-1">Custom html content</span></div>' },
-        {id: 4, headerHtml: '<div class="h-full flex justify-center items-center"><span class="bg-gradient-to-tr from-pink-500 to-violet-500 text-violet-50 px-1">This time in header</span></div>' },
-    ]}
-    ganttTableModules={[SvelteGanttTable]}
-/>
-</section>
+<RowsExample />
 
 # Collapsible rows
 
@@ -73,37 +65,4 @@ gantt.$set({
 
 ```
 
-<section class="my-12">
-<SvelteGantt from={time('8:00')} to={time('12:00')}
-    tableHeaders={[ { title: 'Title', property: 'label', type: 'tree' } ]}
-    rows={[
-        {id: 1, label: 'Parent 1', expanded: false, children: [{ id: 11, label: 'Child 1' }, { id: 12, label: 'Child 2' }] },
-        {id: 2, label: 'Parent 2', expanded: true, children: [{ id: 21, label: 'Child 1', children: [{ id: 211, label: 'Grandchild 1' }] }, { id: 22, label: 'Child 2' }, { id: 23, label: 'Child 3' }] },
-        {id: 3, label: 'No children' },
-    ]}
-    ganttTableModules={[SvelteGanttTable]}
-/>
-</section>
-
-<style lang="postcss">
-    :global(.row-red) {
-        @apply bg-gradient-to-tr from-pink-500 to-violet-500 opacity-50;
-    }
-
-    :global(.sg-tree-expander .fa-angle-right::before) {
-        display: block;
-        content: url('data:image/svg+xml; utf8, <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>');
-        width: 1rem;
-        height: 1rem;
-    }
-    :global(.sg-tree-expander .fa-angle-down::before) {
-        display: block;
-        content: url('data:image/svg+xml; utf8, <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>');
-        width: 1rem;
-        height: 1rem;
-    }
-
-    :global(.sg-gantt) {
-        @apply border;
-    }
-</style>
+<TreeExample />

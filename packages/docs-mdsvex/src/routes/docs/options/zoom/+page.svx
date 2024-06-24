@@ -1,12 +1,74 @@
+<script>
+    import ZoomExample, { zoomLevels } from './ZoomExample.svelte';
+</script>
 
+# Zoom level
 
-## Zoom level
-
-Represents a zoom level which cycle on ctrl+scroll.
-
+To zoom the chart, a list of zoom levels (`zoomLevels`) can be provided. When using `wheel` + `ctrl` the options cycle. 
+Each of the levels can have the following fields:
 
 | Name | Type | Description | Default |
 | - | - | - | -: |
-`headers` | `Array` | See above.
+`headers` | `Header[]` | See above.
 `minWidth` | `number` | See above.
 `fitWidth` | `boolean` | See above.
+`columnUnit` | `string` | See above.
+`columnOffset` | `number` | See above.
+
+You can have as many zoom levels as you need.
+
+<ZoomExample />
+
+---
+
+
+```js
+gantt.$set({
+    zoomLevels: [
+		{
+			headers: [{ unit: 'month', format: 'MMM YYYY' }],
+			minWidth: 800,
+			columnUnit: 'day',
+			columnOffset: 1
+		},
+		{
+			headers: [
+				{ unit: 'month', format: 'MMM YYYY' },
+				{ unit: 'week', format: '[week] w' },
+				{ unit: 'day', format: 'D' }
+			],
+			minWidth: 3200,
+			columnUnit: 'hour',
+			columnOffset: 4
+		},
+		{
+			headers: [
+				{ unit: 'day', format: 'MMM D, YYYY' },
+				{ unit: 'hour', format: 'HH' }
+			],
+			minWidth: 8000,
+			columnUnit: 'hour',
+			columnOffset: 2
+		},
+		{
+			headers: [
+				{ unit: 'day', format: 'MMM D, YYYY' },
+				{ unit: 'hour', format: 'HH' }
+			],
+			minWidth: 16000,
+			columnUnit: 'hour',
+			columnOffset: 2
+		},
+		{
+			headers: [
+				{ unit: 'day', format: 'MMM D, YYYY' },
+				{ unit: 'hour', format: 'HH' }
+			],
+			minWidth: 32000,
+			columnUnit: 'hour',
+			columnOffset: 2
+		}
+	]
+})
+```
+

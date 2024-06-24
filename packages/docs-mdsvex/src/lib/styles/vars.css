@@ -1,23 +1,23 @@
 :root,
 .prefers-light-scheme {
-	--kd-color-focus: 79 70 229;
-	--kd-color-soft: 68 78 94;
-	--kd-color-body: 250 250 250;
-	--kd-color-elevate: 243 244 246;
-	--kd-color-inverse: 5 11 23;
-	--kd-color-border: 209 213 219;
+	--sg-color-focus: 79 70 229;
+	--sg-color-soft: 68 78 94;
+	--sg-color-body: 250 250 250;
+	--sg-color-elevate: 243 244 246;
+	--sg-color-inverse: 5 11 23;
+	--sg-color-border: 209 213 219;
 }
 
 :root {
 	font-size: 16px;
 	scroll-padding-top: 6rem;
-	--kd-breadcrumbs-height: 5rem;
-	--kd-article-max-width: 98ch;
+	--sg-breadcrumbs-height: 5rem;
+	--sg-article-max-width: 98ch;
 }
 
 @media screen and (min-width: 992px) {
 	:root {
-		--kd-breadcrumbs-height: 0px;
+		--sg-breadcrumbs-height: 0px;
 	}
 }
 
@@ -29,10 +29,10 @@
 :root.dark,
 .prefers-dark-scheme {
 	color-scheme: dark;
-	--kd-color-soft: 150 155 166;
-	--kd-color-inverse: 245 245 245;
-	--kd-color-border: 38 48 64;
-	--kd-color-elevate: 10 19 33;
-	--kd-color-body: 5 11 23;
-	--kd-color-focus: 129 140 248;
+	--sg-color-soft: 150 155 166;
+	--sg-color-inverse: 245 245 245;
+	--sg-color-border: 38 48 64;
+	--sg-color-elevate: 10 19 33;
+	--sg-color-body: 5 11 23;
+	--sg-color-focus: 129 140 248;
 }

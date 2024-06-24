@@ -1,9 +1,7 @@
 <script>
-	import { SvelteGantt, SvelteGanttDependencies, SvelteGanttTable } from 'svelte-gantt/svelte';
-	import { defaultOptions, time } from '$lib';
 	import { onDestroy, onMount } from 'svelte';
-	import Button from '$lib/components/Button.svelte';
 	import FeatureCard from './FeatureCard.svelte';
+	import HeroExample from './HeroExample.svelte';
 
 	let expansionObserver = new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
@@ -52,41 +50,7 @@
 				<div
 					class="relative overflow-hidden shadow-xl flex bg-white max-h-[60vh] sm:rounded-xl lg:h-[34.6875rem] xl:h-[31.625rem] dark:bg-slate-900/70 dark:backdrop-blur dark:ring-1 dark:ring-inset dark:ring-white/10 !h-auto max-h-[none]"
 				>
-					<SvelteGantt
-						from={time('8:00')}
-						to={time('16:00')}
-                        fitWidth={true}
-						ganttTableModules={[SvelteGanttTable]}
-                        ganttBodyModules={[SvelteGanttDependencies]}
-						rows={[
-							{ id: 1, label: 'Jedd Balden' },
-							{ id: 2, label: 'Rozele McFarland' },
-							{ id: 3, label: 'Chrissy Bullard' },
-							{ id: 4, label: 'Patience Leschelle' },
-							{ id: 5, label: 'Rosette Henrie' }
-						]}
-                        dependencies={[{
-                            id: 1,
-                            fromId: 2,
-                            toId: 3,
-                            stroke: '#64748b',
-                        }]}
-						tasks={[
-							{ id: 1, resourceId: 1, from: time('9:00'), to: time('10:00'), label: 'Development', classes: 'task-slate' },
-							{ id: 2, resourceId: 4, from: time('8:30'), to: time('10:30'), label: 'Design', classes: 'task-blue' },
-							{ id: 3, resourceId: 5, from: time('12:30'), to: time('14:30'), label: 'Review', classes: 'task-blue' }
-						]}
-						timeRanges={[
-							{
-								id: 0,
-								from: time('10:00'),
-								to: time('11:00'),
-								classes: 'time-range-lunch',
-								label: 'Lunch',
-								resizable: false
-							}
-						]}
-					/>
+					<HeroExample />
 				</div>
 			</div>
 		</div>
@@ -111,7 +75,6 @@
 					<svelte:fragment slot="title">Layouts</svelte:fragment>
 					<svelte:fragment slot="subtitle">Display tasks overlapped or spaced apart.</svelte:fragment>
 				</FeatureCard>
-                <!-- TODO:: need more features? contact me -->
 			</div>
 		</div>
 	</section>
@@ -124,21 +87,3 @@
 		</div>
 	</footer>
 </main>
-
-<style lang="postcss">
-	:global(.sg-task.task-slate) {
-		@apply bg-slate-500;
-	}
-
-	:global(.sg-task.task-slate:hover) {
-		@apply bg-slate-700;
-	}
-
-	:global(.sg-task.task-blue) {
-		@apply bg-blue-500;
-	}
-
-	:global(.sg-task.task-blue:hover) {
-		@apply bg-blue-700;
-	}
-</style>

@@ -1,5 +1,4 @@
 <script>
-    import TaskComponentExample from './TaskComponentExample.svelte';
 </script>
 
 # Gantt
@@ -54,37 +53,16 @@ gantt.$set({
 | `resizeHandleWidth` | `number` | Width of handle for resizing tasks, in px. | undefined |
 | `onTaskButtonClick` | `(task: Task) => void` | Callback for task button clicks. | undefined |
 | `taskContent` | `(task: Task) => string` | Task content factory function. | undefined |
-| `taskElementHook` | `Function` | [Task element hook](#taskelementhook) | undefined |
+| `taskElementHook` | `Function` | [Task element hook](/docs/data/tasks#taskelementhook) | undefined |
 | `tableWidth` | `number` | Width of table, used with SvelteGanttTable module. | undefined |
 | `tableHeaders` | `Array` | Headers of table, used with SvelteGanttTable module. | undefined |
 | `columnStrokeColor` | `string` | Color of column lines. eg. `'#efefef'` | undefined |
 | `columnStrokeWidth` | `number` | Width of column lines. | undefined |
-| `layout` | `'overlap'`, `'pack'` | The [layout](#layout) used to arrange tasks in a row. | undefined |
+| `layout` | `'overlap'`, `'pack'`, `'expand'` | The [layout](#layout) used to arrange tasks in a row. | undefined |
 | `enableCreateTask` | `boolean` | Enables creating new tasks by dragging. | undefined |
 | `onCreateTask` | `({ from: number; to: number; resourceId: string number; }) => TaskModel` | This function provides the new task model when dragging to create task. | undefined |
 | `onCreatedTask` | `(task: SvelteTask) => void` | Called after task was created by dragging. | undefined |
 
-### TaskElementHook
-
-Task element hook function, it is a svelte action, eg. 
-
-```js
-(node, task) => { 
-    node.addEventListener('click', console.log); 
-    return { 
-        update(task) { 
-            // ...
-        },
-        destroy() {
-            node.removeEventListener('click', console.log);
-        } 
-    }; 
-}
-```
-
-This enables you to add custom behaviour and look to tasks. For example, displaying a popup on hover, or rendering Angular components within the task.
-
-<TaskComponentExample />
 
 ### TaskContent
 

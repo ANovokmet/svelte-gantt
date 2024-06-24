@@ -4,17 +4,17 @@ import type { SvelteTask } from './task';
 import type { SvelteRow } from './row';
 import type { SvelteTimeRange } from './timeRange';
 
-interface EntityState<T> {
-    ids: (string | number)[];
-    entities: { [key: string]: T };
+interface EntityState<T, K = PropertyKey> {
+    ids: K[];
+    entities: { [key: PropertyKey]: T };
 }
 
-interface EntityType {
-    model: { id: string | number };
+interface EntityType<K = PropertyKey> {
+    model: { id: K };
     hidden?: boolean;
 }
 
-export type EntityKey = string | number;
+export type EntityKey = string | number | symbol;
 
 export interface EntityStore<T extends EntityType, K extends EntityKey = EntityKey>
     extends Readable<EntityState<T>> {
@@ -49,7 +49,7 @@ function createEntityStore<T extends EntityType, K extends EntityKey = EntityKey
                     [item.model.id]: item
                 }
             })),
-        delete: (id: number | string) =>
+        delete: (id: K) =>
             update(state => {
                 const { [id]: _, ...entities } = state.entities;
                 return {
@@ -57,19 +57,19 @@ function createEntityStore<T extends EntityType, K extends EntityKey = EntityKey
                     entities
                 };
             }),
-        deleteAll: (ids: (number | string)[]) =>
+        deleteAll: (ids: K[]) =>
             update(state => {
                 const entities = { ...state.entities };
                 const idSet = new Set(ids);
 
                 for (let i = 0; i < state.ids.length; i++) {
-                    if (idSet.has(state.ids[i])) {
+                    if (idSet.has(state.ids[i] as K)) {
                         delete entities[state.ids[i]];
                     }
                 }
 
                 return {
-                    ids: state.ids.filter(i => !idSet.has(i)),
+                    ids: state.ids.filter(i => !idSet.has(i as K)),
                     entities
                 };
             }),
@@ -171,7 +171,7 @@ export function createDataStore() {
         return cache;
     });
 
-    const draggingTaskCache = writable<{ [id: string]: boolean }>({});
+    const draggingTaskCache = writable<{ [id: PropertyKey]: boolean }>({});
 
     return {
         taskStore,

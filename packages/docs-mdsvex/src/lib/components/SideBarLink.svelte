@@ -8,9 +8,11 @@
 </script>
 
 <a
-	class={`lg:py-1 -ml-px flex items-center border-l py-2 pl-4 ${
-		isActive ? 'text-violet-500 font-semibold border-violet-600' : 'hover:border-inverse focus-visible:border-inverse text-soft hover:text-inverse focus-visible:text-inverse border-transparent font-normal'
-	}`}
+	class="
+		lg:py-1 -ml-px flex items-center border-l py-2 pl-4 transition-all
+		{isActive
+		? 'text-brand font-semibold border-brand'
+		: 'hover:border-inverse focus-visible:border-inverse text-soft hover:text-inverse focus-visible:text-inverse border-transparent font-normal'}"
 	{href}
 >
 	{label}
