@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	@apply h-screen w-screen;
+
+	font-family: "Inter", sans-serif;
+}
+
+.js-focus-visible :focus:not([data-focus-visible-added]) {
+	@apply outline-none;
+}
+
+.js-focus-visible [data-focus-visible-added] {
+	@apply outline-none ring-2;
+	--tw-ring-color: var(--sg-color-focus);
+}
+
+* {
+	-webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * -----------------------------------------------------
+ * SCROLLBAR
+ * -----------------------------------------------------
+ */
+
+.no-scrollbar {
+	scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+@media screen and (min-width: 1280px) {
+	.scroll-contain {
+		overscroll-behavior: contain;
+	}
+}
+
+.scroll-contain-mobile {
+	overscroll-behavior: contain;
+}
+
+.scrollbar {
+	scrollbar-width: thin;
+	--sg-scrollbar-track-bg: rgb(var(--sg-color-border) / 0.3);
+	--sg-scrollbar-thumb-bg: rgb(var(--sg-color-border));
+}
+
+.dark .scrollbar {
+	--sg-scrollbar-track-bg: rgb(var(--sg-color-border) / 0.2);
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+	.scrollbar {
+		scroll-behavior: smooth;
+	}
+}
+
+.scrollbar::-webkit-scrollbar {
+	@apply !h-1.5 !w-[5px] !bg-transparent;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+	@apply !rounded;
+	background-color: var(--sg-scrollbar-track-bg) !important;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+	@apply !rounded;
+	background-color: var(--sg-scrollbar-thumb-bg) !important;
+}
+
+/*
+ * -----------------------------------------------------
+ * BLUR
+ * -----------------------------------------------------
+ */
+
+.blur-bg {
+	@apply bg-body dark:bg-body backdrop-blur backdrop-filter;
+}
+
+@supports (backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0)) {
+	.blur-bg {
+		@apply bg-body/20 dark:bg-body/60;
+	}
+}
+
+.svg-responsive > svg {
+	width: 100%;
+	height: 100%;
+}
+
+/*
+ * -----------------------------------------------------
+ * DOCS
+ * -----------------------------------------------------
+ */
+
+.sg-docs pre {
+	tab-size: 2;
+	-o-tab-size: 2;
+	-moz-tab-size: 2;
+}
+
+.sg-docs p + .admonition,
+.sg-docs p + .steps {
+	margin-top: 2.5rem;
+}
+
+.sg-docs .steps + p {
+	margin-top: 4rem;
+}
+
+.sg-docs .admonition + .steps {
+	margin-top: 3.5rem;
+}
+
+.sg-docs .admonition + table {
+	margin-top: 4rem;
+}
+
+.sg-docs .code-fence .code pre {
+	margin: 0;
+}
+
+.sg-docs .code-fence.lang-bash pre span {
+	color: #fafafa !important;
+}
+
+.sg-docs .code-fence.lang-bash pre .line:not(:empty)::before {
+	content: '> ';
+	font-weight: bold;
+	color: var(--sg-terminal-line-pointer);
+}
+
+.sg-docs .step .description > code {
+	color: var(--sg-color-inverse);
+}
+
+.sg-docs .step .code-fence {
+	margin: 0;
+	padding: 0;
+}
+
+.sg-docs .code-fence + .code-fence {
+	margin-top: 0.5rem;
+}
+
+.sg-docs h1 + .steps,
+.sg-docs h2 + .steps,
+.sg-docs h3 + .steps {
+	margin-top: 2.5rem;
+}
+
+.sg-docs .header-anchor {
+	margin-left: 0.25em;
+	padding: 0 0.23em;
+	font-size: 0.9em;
+	opacity: 0;
+	border: 0;
+	background-color: none;
+}
+
+.sg-docs h1:focus,
+.sg-docs h2:focus,
+.sg-docs h3:focus,
+.sg-docs h4:focus,
+.sg-docs h5:focus,
+.sg-docs h6:focus {
+	outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.sg-docs h1:hover .header-anchor,
+	.sg-docs h2:hover .header-anchor,
+	.sg-docs h3:hover .header-anchor,
+	.sg-docs h4:hover .header-anchor,
+	.sg-docs h5:hover .header-anchor,
+	.sg-docs h6:hover .header-anchor {
+		opacity: 1;
+	}
+}
+
+@media (pointer: coarse) {
+	.sg-docs h1:focus .header-anchor,
+	.sg-docs h2:focus .header-anchor,
+	.sg-docs h3:focus .header-anchor,
+	.sg-docs h4:focus .header-anchor,
+	.sg-docs h5:focus .header-anchor,
+	.sg-docs h6:focus .header-anchor {
+		opacity: 1;
+	}
+}
+
+.sg-docs .header-anchor:focus {
+	opacity: 1;
+}

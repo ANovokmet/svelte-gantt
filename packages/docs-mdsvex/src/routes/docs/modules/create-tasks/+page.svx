@@ -1,0 +1,40 @@
+<script>
+    import CreateTasksExample from './CreateTasksExample.svelte';
+</script>
+
+
+# Create tasks
+
+Using the following options, tasks can be created by dragging on the chart:
+
+- `enableCreateTask` (`boolean`) - Set to `true` to enable task creation.
+- `onCreateTask` (`Function`) - Triggers at the moment when a new task has started being dragged. It should return the new tasks model.
+- `onCreatedTask` (`Function`) - Triggers after task has been successfully created.
+
+
+
+<CreateTasksExample />
+
+---
+
+```js
+import { SvelteGantt, SvelteGanttTable } from 'svelte-gantt';
+
+// ...
+let id = 0;
+
+gantt.$set({
+    enableCreateTask: true,
+    onCreateTask: (data) => {
+        id++;
+        return {
+            id: id,
+            label: `New task ${id}`,
+            ...data
+        };
+    },
+    onCreatedTask: (task) => {
+        console.log('task created', task);
+    }
+});
+```

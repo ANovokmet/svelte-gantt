@@ -1,0 +1,61 @@
+---
+title: Tasks
+---
+
+# Task
+
+Tasks are intervals of time that are assigned to a resource. They are defined as a list of objects:
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`id` | `number`\|`string` | Id of task, every task needs to have a unique one. | undefined |
+`amountDone` | `number` | Task completion in percent, indicated on task. | undefined |
+`classes` | `string`\|`Array` | Custom CSS classes to apply to task. | undefined |
+`from` | `number` | Datetime task starts on. | undefined |
+`to` | `number` | Datetime task ends on. | undefined |
+`label` | `string` | Label of task. | undefined |
+`html` | `string` | Html content of task, will override label. | undefined |
+`showButton` | `boolean` | Show button bar. | undefined |
+`buttonClasses` | `string`\|`Array` | Button classes, useful for fontawesome icons. | undefined |
+`buttonHtml` | `string` | Html content of button. | undefined |
+`enableDragging` | `boolean` | enable dragging of task. | true |
+`enableResize` | `boolean` | enable resize of task. | true |
+
+
+
+<script>
+    import {SvelteGantt, SvelteGanttTable} from 'svelte-gantt/svelte';
+    import { defaultOptions, time } from '$lib';
+    import TasksExample from './TasksExample.svelte';
+    import TaskComponentExample from './TaskComponentExample.svelte';
+</script>
+
+<TasksExample />
+
+### TaskElementHook
+
+Custom task components can be created by passing `taskElementHook` to gantt.
+
+| Name | Description | Type | Default |
+| - | - | - | -: |
+| `taskElementHook` | `function` | [Task element hook](#taskelementhook) | undefined |
+
+Task element hook function is a svelte action, eg. 
+
+```js
+(node, task) => { 
+    node.addEventListener('click', console.log); 
+    return { 
+        update(task) { 
+            // ...
+        },
+        destroy() {
+            node.removeEventListener('click', console.log);
+        } 
+    }; 
+}
+```
+
+This enables you to add custom behaviour and look to tasks. For example, displaying a popup on hover, or rendering Angular components within the task.
+
+<TaskComponentExample />

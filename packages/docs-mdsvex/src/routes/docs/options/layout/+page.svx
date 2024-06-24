@@ -1,0 +1,13 @@
+<script>
+    import LayoutExample from './LayoutExample.svelte';
+</script>
+
+# Layout
+
+Multiple ways of displaying overlapped tasks are available as the `layout` option:
+
+- `'overlap'` - Tasks cover each other.
+- `'pack'` - Tasks shrink to fit in the row.
+- `'expand'` - Row expands to fit tasks.
+
+<LayoutExample />

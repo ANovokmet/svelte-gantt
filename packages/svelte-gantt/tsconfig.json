@@ -1,0 +1,19 @@
+{
+    "extends": "@tsconfig/svelte/tsconfig.json",
+    "compilerOptions": {
+        "sourceMap": true,
+        "baseUrl": "./",
+        "rootDir": ".",
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "types": ["svelte"],
+        "declaration": true,
+        "declarationDir": "./dist",
+        // "declarationDir": "./dist/types",
+        "importsNotUsedAsValues": "remove",
+        "isolatedModules": false
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules/*", "__sapper__/*", "public/*"]
+}

@@ -1,0 +1,40 @@
+
+
+
+## Dependencies
+
+Renders a dependency between two tasks. Used by `SvelteGanttDependencies` module:
+
+```js    
+import { SvelteGanttDependencies } from 'svelte-gantt';
+
+gantt.$set({
+        dependencies: [
+            {
+                id: 1,
+                fromId: 1,
+                toId: 2
+            }
+        ],
+        ganttBodyModules: [SvelteGanttDependencies]
+});
+```
+
+Gantt props:
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`dependencies` | `object[]` | List of dependencies.
+
+
+Each dependency contains these fields:
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`id` | `number &#124; string` | Unique id of dependency. **(required)**
+`fromId` | `number &#124; string` | Id of dependent task. **(required)**
+`toId` | `number &#124; string` | Id of dependency task. **(required)**
+`stroke` | `string` | Stroke color, eg. `'red'` or `'#ff0000'`
+`strokeWidth` | `number` | Width of stroke.
+`arrowSize` | `number` | Size of the arrow head.
+

@@ -1,0 +1,49 @@
+
+<script>
+    import TimeRangesExample from './TimeRangesExample.svelte';
+</script>
+
+
+# Time range
+
+Renders a block of time spanning all the rows.
+
+| Name | Description | Type | Default |
+| - | - | - | -: |
+| `id`  | Unique id of time range. | `number`\|`string` | undefined |
+|`from` | Datetime timeRange starts on.| `number`  | undefined |
+| `to`  | Datetime timeRange ends on. | `number` | undefined |
+| `classes`| Custom CSS classes. | `string`\|`Array` | undefined |
+| `label`  | Display label. | `string` | undefined |
+| `resizable` | Should the time range be resizable. | `boolean` | false |
+
+```js
+const options = {
+    // ...
+    timeRanges: [
+            {
+                id: 2,
+                from: new Date('2024-02-01T08:00:00').valueOf(),
+                to: new Date('2024-02-01T09:00:00').valueOf(),
+                label: 'Breakfast'
+            },
+            {
+                id: 1,
+                from: new Date('2024-02-01T10:00:00').valueOf(),
+                to: new Date('2024-02-01T11:00:00').valueOf(),
+                classes: 'time-range-lunch',
+                label: 'Lunch',
+                resizable: false,
+            },
+            {
+                id: 3,
+                from: new Date('2024-02-01T11:00:00').valueOf(),
+                to: new Date('2024-02-01T12:00:00').valueOf(),
+                label: 'Custom class',
+                classes: 'gradient',
+            }
+    ]
+}
+```
+
+<TimeRangesExample />

@@ -1,0 +1,39 @@
+---
+title: Table
+headers: 
+---
+
+<script>
+    import TableExample from './TableExample.svelte';
+</script>
+
+
+# Table
+
+Display row information in a table on the side. 
+
+## Table Header
+
+Represents a single column rendered in SvelteGanttTable.
+
+-   `title` (`string`) Label to display in the table column header.
+-   `property` (`string`) Property of row to display in table column cells.
+-   `width` (`number`) Width of table column, in px.
+
+<TableExample />
+
+---
+
+```js
+import { SvelteGantt, SvelteGanttTable } from 'svelte-gantt';
+
+// ...
+
+gantt.$set({
+    tableHeaders: [
+        { title: 'Name', property: 'label', width: 150 },
+        { title: 'Age', property: 'age', width: 50 },
+    ],
+    ganttTableModules: [SvelteGanttTable],
+});
+```

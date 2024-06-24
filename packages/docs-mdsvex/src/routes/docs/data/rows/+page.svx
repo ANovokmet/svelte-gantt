@@ -1,0 +1,68 @@
+---
+title: Rows
+---
+
+<script>
+    import {SvelteGantt, SvelteGanttTable} from 'svelte-gantt/svelte';
+    import { defaultOptions, time } from '$lib';
+    import TreeExample from './TreeExample.svelte';
+    import RowsExample from './RowsExample.svelte';
+</script>
+
+# Row
+
+Rows are defined as a list of objects. Rows can be rendered as a collapsible tree (rows are collapsed with SvelteGanttTable module). Row objects may have these parameters:
+
+| Name | Type | Description | Default |
+| - | - | - | -: |
+`id` | `number &#124; string` | Id of row, every row needs to have a unique one. **(required)**
+`classes` | `string &#124; string[]` | Custom CSS classes to apply to row.
+`contentHtml` | `string` | Html content of row, renders as background to a row.
+`enableDragging` | `boolean` | enable dragging of tasks to and from this row. | `true`
+`enableResize` | `boolean` | enable resize of tasks on this row. | `true`
+`label` | `string` | Label of row, could be any other property, can be displayed with SvelteGanttTable.
+`headerHtml` | `string` | Html content of table row header, displayed in SvelteGanttTable.
+`children` | `object[]` | List of children row objects, these can have their own children.
+`expanded` | `boolean` | Used when tree view is enabled, controls the expanded state.
+`height` | `number` | The height of the row. | `52`
+
+
+<RowsExample />
+
+# Collapsible rows
+
+To use collapsible rows add row items to `row.children` property. To show a button for expanding rows, set `type: 'tree'` to the table header.
+
+```js
+gantt.$set({
+    tableHeaders={[ { title: 'Title', property: 'label', type: 'tree' } ]},
+    rows={[
+        {
+            id: 1, 
+            label: 'Parent 1', 
+            expanded: false, 
+            children: [
+                { id: 11, label: 'Child 1' }, 
+                { id: 12, label: 'Child 2' }
+            ]
+        }, 
+        {
+            id: 2, 
+            label: 'Parent 2', 
+            expanded: true, 
+            children: [
+                { id: 21, label: 'Child 1', children: [{ id: 211, label: 'Grandchild 1' }] }, 
+                { id: 22, label: 'Child 2' }, 
+                { id: 23, label: 'Child 3' }
+            ]
+        },
+        {
+            id: 3, 
+            label: 'No children' 
+        },
+    ]}
+});
+
+```
+
+<TreeExample />
