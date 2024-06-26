@@ -69,7 +69,7 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
     const dragAllowed = getAccessor(options.dragAllowed);
     const resizeAllowed = getAccessor(options.resizeAllowed);
 
-    node.addEventListener('pointerdown', onMousedown, { passive: true });
+    node.addEventListener('pointerdown', onMousedown);
 
     function onMousedown(event: PointerEvent) {
         if (!isLeftClick(event)) {
