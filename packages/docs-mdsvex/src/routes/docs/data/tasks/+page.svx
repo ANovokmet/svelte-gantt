@@ -9,6 +9,7 @@ Tasks are intervals of time that are assigned to a resource. They are defined as
 | Name | Type | Description | Default |
 | - | - | - | -: |
 `id` | `number`\|`string` | Id of task, every task needs to have a unique one. | undefined |
+`resourceId` | `number`\`string` | Id of row, every task must specify a valid resourceId. **(required)** | undefined |
 `amountDone` | `number` | Task completion in percent, indicated on task. | undefined |
 `classes` | `string`\|`Array` | Custom CSS classes to apply to task. | undefined |
 `from` | `number` | Datetime task starts on. | undefined |
