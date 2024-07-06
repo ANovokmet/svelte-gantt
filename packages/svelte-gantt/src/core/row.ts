@@ -30,87 +30,87 @@ export interface SvelteRow {
     childLevel?: number;
 }
 
-export class RowFactory {
+export type CreateRowParams = {
     rowHeight: number;
+}
 
-    constructor() {}
+export function createRows(rows: RowModel[], params: CreateRowParams) {
+    const context = { y: 0, result: [] };
+    createChildRows(rows, context, params);
+    return context.result;
+}
 
-    createRow(row: RowModel, y: number): SvelteRow {
-        // defaults
-        // id of task, every task needs to have a unique one
-        //row.id = row.id || undefined;
-        // css classes
-        row.classes = row.classes ?? '';
-        // enable dragging of tasks to and from this row
-        row.enableDragging = row.enableDragging ?? true;
-        row.enableResize = row.enableResize ?? true;
-        // height of row element
-        const height = row.height ?? this.rowHeight;
+function createChildRows(
+    rowModels: RowModel[],
+    context: { y: number; result: SvelteRow[] },
+    params: CreateRowParams,
+    parent: SvelteRow = null,
+    level: number = 0,
+    parents: SvelteRow[] = [],
+) {
+    const rowsAtLevel = [];
+    const allRows = [];
 
-        return {
-            model: row,
-            y,
-            height,
-        };
+    if (parent) {
+        parents = [...parents, parent];
     }
 
-    createRows(rows: RowModel[]) {
-        const ctx = { y: 0, result: [] };
-        this.createChildRows(rows, ctx);
-        return ctx.result;
-    }
+    for (const model of rowModels) {
+        const row = createRow(model, context.y, params);
+        context.result.push(row);
+        rowsAtLevel.push(row);
+        allRows.push(row);
 
-    createChildRows(
-        rowModels: RowModel[],
-        ctx: { y: number; result: SvelteRow[] },
-        parent: SvelteRow = null,
-        level: number = 0,
-        parents: SvelteRow[] = []
-    ) {
-        const rowsAtLevel = [];
-        const allRows = [];
-
+        row.childLevel = level;
+        row.parent = parent;
+        row.allParents = parents;
         if (parent) {
-            parents = [...parents, parent];
+            // when row is hidden, other rows (y-pos) move upward
+            row.hidden = !(parent.model.expanded || parent.model.expanded == null) || parent.hidden != null && parent.hidden;
         }
 
-        for (const rowModel of rowModels) {
-            const row = this.createRow(rowModel, ctx.y);
-            ctx.result.push(row);
-            rowsAtLevel.push(row);
-            allRows.push(row);
-
-            row.childLevel = level;
-            row.parent = parent;
-            row.allParents = parents;
-            if (parent) {
-                // when row is hidden, other rows (y-pos) move upward
-                row.hidden = !(parent.model.expanded || parent.model.expanded == null) || parent.hidden != null && parent.hidden;
-            }
-
-            if (!row.hidden) {
-                ctx.y += row.height;
-            }
-
-            if (rowModel.children) {
-                const nextLevel = this.createChildRows(
-                    rowModel.children,
-                    ctx,
-                    row,
-                    level + 1,
-                    parents,
-                );
-                row.children = nextLevel.rows;
-                row.allChildren = nextLevel.allRows;
-                allRows.push(...nextLevel.allRows);
-            }
+        if (!row.hidden) {
+            context.y += row.height;
         }
 
-        return {
-            rows: rowsAtLevel,
-            allRows
-        };
+        if (model.children) {
+            const nextLevel = createChildRows(
+                model.children,
+                context,
+                params,
+                row,
+                level + 1,
+                parents,
+            );
+            row.children = nextLevel.rows;
+            row.allChildren = nextLevel.allRows;
+            allRows.push(...nextLevel.allRows);
+        }
     }
+
+    return {
+        rows: rowsAtLevel,
+        allRows
+    };
+}
+
+function createRow(model: RowModel, y: number, params: CreateRowParams): SvelteRow {
+    // defaults
+    // id of task, every task needs to have a unique one
+    //row.id = row.id || undefined;
+    // css classes
+    model.classes = model.classes ?? '';
+    // enable dragging of tasks to and from this row
+    model.enableDragging = model.enableDragging ?? true;
+    model.enableResize = model.enableResize ?? true;
+    // height of row element
+    const height = model.height ?? params.rowHeight;
+
+    return {
+        model: model,
+        y,
+        height,
+    };
 }
 
 export function expandRow(row: SvelteRow) {

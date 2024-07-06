@@ -18,7 +18,7 @@
 
 <div class="sg-cell-inner" style="padding-left: {row.childLevel * 3}em">
     {#if row.children}
-        <div class="sg-tree-expander" on:click={onExpandToggle}>
+        <div class="sg-tree-expander" role="button" tabindex="0" on:click={onExpandToggle}>
             {#if row.model.expanded}
                 <i class="fas fa-angle-down"></i>
             {:else}

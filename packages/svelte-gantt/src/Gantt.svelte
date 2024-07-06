@@ -14,18 +14,18 @@
     import { Columns, ColumnHeader } from './column';
     import { Resizer } from './ui';
 
-    import { GanttUtils, getIndicesOnly, getPositionByDate } from './utils/utils';
+    import { createUtils, getIndicesOnly, getPositionByDate } from './utils/utils';
     import { getRelativePos, isLeftClick } from './utils/dom';
-    import { GanttApi } from './core/api';
-    import { TaskFactory, reflectTask } from './core/task';
+    import { provideGanttApi } from './core/api';
+    import { createTaskFactory } from './core/task';
     import type { SvelteTask, TaskModel } from './core/task';
-    import { collapseRow, expandRow, RowFactory } from './core/row';
+    import { collapseRow, expandRow, createRows } from './core/row';
     import type { RowModel, SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager, DragContextProvider } from './core/drag';
     import type { DragContext } from './core/drag';
     import { SelectionManager } from './core/selectionManager';
-    import { findByPosition, findByDate } from './core/column';
+    import { createColumnService } from './core/column';
     import type { HighlightedDurations, Column as IColumn } from './core/column';
     import { createDelegatedEventDispatcher } from './core/events';
     import { getDuration, getAllPeriods } from './utils/date';
@@ -113,7 +113,7 @@
 
     export let magnetUnit = 'minute';
     export let magnetOffset = 15;
-    let magnetDuration;
+    let magnetDuration: number;
     $: setMagnetDuration(magnetUnit, magnetOffset);
     setMagnetDuration(magnetUnit, magnetOffset);
 
@@ -172,44 +172,10 @@
         draggingTaskCache
     } = dataStore;
 
-    export const columnService = {
-        getColumnByDate(date: number) {
-            const pair = findByDate(columns, date);
-            return !pair[0] ? pair[1] : pair[0];
-        },
-        getColumnByPosition(x: number) {
-            const pair = findByPosition(columns, x);
-            return !pair[0] ? pair[1] : pair[0];
-        },
-        getPositionByDate(date: number) {
-            if (!date) return null;
-            const column = this.getColumnByDate(date);
-
-            let durationTo = date - column.from;
-            const position = (durationTo / column.duration) * column.width;
-
-            //multiples - skip every nth col, use other duration
-            return column.left + position;
-        },
-        getDateByPosition(x: number) {
-            const column = this.getColumnByPosition(x);
-            x = x - column.left;
-
-            let positionDuration = (column.duration / column.width) * x;
-            const date = column.from + positionDuration;
-
-            return date;
-        },
-        /**
-         * TODO: remove, currently unused
-         * @param {number} date - Date
-         * @returns {number} rounded date passed as parameter
-         */
-        roundTo(date: number) {
-            let value = Math.round(date / magnetDuration) * magnetDuration;
-            return value;
-        }
-    };
+    export const columnService = createColumnService({
+        get columns() { return columns },
+        get magnetDuration() { return magnetDuration },
+    });
 
     let disableTransition = false;
 
@@ -340,20 +306,6 @@
             mainContainer,
             mainHeaderContainer
         });
-
-        api.registerEvent('tasks', 'move');
-        api.registerEvent('tasks', 'select');
-        api.registerEvent('tasks', 'switchRow');
-        api.registerEvent('tasks', 'moveEnd');
-        api.registerEvent('tasks', 'change');
-        api.registerEvent('tasks', 'changed');
-        api.registerEvent('gantt', 'viewChanged');
-        api.registerEvent('gantt', 'dateSelected');
-        api.registerEvent('tasks', 'dblclicked');
-        api.registerEvent('timeranges', 'clicked');
-        api.registerEvent('timeranges', 'resized');
-        api.registerEvent('timeranges', 'changed');
-
         mounted = true;
     });
 
@@ -489,22 +441,25 @@
 
     function initRows(rowsData) {
         //Bug: Running twice on change options
-        const rows = rowFactory.createRows(rowsData);
+        const rows = createRows(rowsData, { rowHeight });
         rowStore.addAll(rows);
         updateLayout();
     }
 
-    async function initTasks(taskData: TaskModel[]) {
-        // because otherwise we need to use tick() which will update other things
-        taskFactory.rowEntities = $rowStore.entities;
+    const { createTask, reflectTask } = createTaskFactory({
+        get rowEntities() { return $rowStore.entities; },
+        get rowPadding() { return rowPadding },
+        getPositionByDate: (date) => columnService.getPositionByDate(date),
+    });
 
+    async function initTasks(taskData: TaskModel[]) {
         const tasks = [];
         const draggingTasks = {};
         for (const taskModel of taskData) {
             if ($draggingTaskCache[taskModel.id]) {
                 draggingTasks[taskModel.id] = true;
             }
-            const task = taskFactory.createTask(taskModel);
+            const task = createTask(taskModel);
             tasks.push(task);
         }
         $draggingTaskCache = draggingTasks;
@@ -515,7 +470,6 @@
     let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = {};
     $: {
         _reflectedTasksCache = {};
-        const opts = { rowPadding: $_rowPadding };
         for (const task of $allTasks) {
             const row = $rowStore.entities[task.model.resourceId];
             if (!row) {
@@ -524,7 +478,7 @@
 
             if (reflectOnChildRows && row.allChildren) {
                 row.allChildren.forEach(r => {
-                    const reflectedTask = reflectTask(task, r, opts);
+                    const reflectedTask = reflectTask(task, r);
                     if (!_reflectedTasksCache[r.model.id]) {
                         _reflectedTasksCache[r.model.id] = [];
                     }
@@ -534,7 +488,7 @@
 
             if (reflectOnParentRows && row.allParents) {
                 row.allParents.forEach(r => {
-                    const reflectedTask = reflectTask(task, r, opts);
+                    const reflectedTask = reflectTask(task, r);
                     if (!_reflectedTasksCache[r.model.id]) {
                         _reflectedTasksCache[r.model.id] = [];
                     }
@@ -551,33 +505,21 @@
         timeRangeStore.addAll(timeRanges);
     }
 
-    export const api = new GanttApi();
+    export const api = provideGanttApi();
     const selectionManager = new SelectionManager(taskStore);
-
-    export const taskFactory = new TaskFactory(columnService);
-    $: {
-        taskFactory.rowPadding = $_rowPadding;
-        taskFactory.rowEntities = $rowStore.entities;
-    }
-
-    export const rowFactory = new RowFactory();
-    $: rowFactory.rowHeight = rowHeight;
 
     export const dndManager = new DragDropManager(rowStore);
     export const timeRangeFactory = new TimeRangeFactory(columnService);
 
-    export const utils = new GanttUtils();
-    $: {
-        utils.from = $_from;
-        utils.to = $_to;
-        utils.width = $_width;
-        utils.magnetOffset = magnetOffset;
-        utils.magnetUnit = magnetUnit;
-        utils.magnetDuration = magnetDuration;
-        utils.dateAdapter = dateAdapter;
-        //utils.to = columns[columns.length - 1].to;
-        //utils.width = columns.length * columns[columns.length - 1].width;
-    }
+    export const utils = createUtils({
+        get from() { return $_from },
+        get to() { return $_to },
+        get width() { return $_width },
+        get magnetOffset() { return  magnetOffset;},
+        get magnetUnit() { return magnetUnit;},
+        get magnetDuration() { return  magnetDuration;},
+        get dateAdapter() { return  dateAdapter;},
+    });
 
     setContext('services', {
         utils,
@@ -684,36 +626,65 @@
         mainContainer.scrollTo(options);
     }
 
-    export function updateTask(model) {
-        const task = taskFactory.createTask(model);
+    export function updateTask(model: TaskModel) {
+        const task = createTask(model);
         taskStore.upsert(task);
         invalidatePosition({ task });
+        updateLayoutSync();
     }
 
-    export function updateTasks(taskModels: TaskModel[]) {
-        const tasks = taskModels.map(model => taskFactory.createTask(model));
+    export function updateTasks(models: TaskModel[]) {
+        const tasks = models.map(model => createTask(model));
         taskStore.upsertAll(tasks);
         tasks.forEach(task => invalidatePosition({ task }));
+        updateLayoutSync();
     }
 
-    export function removeTask(taskId) {
+    export function removeTask(taskId: PropertyKey) {
+        const task = $taskStore.entities[taskId];
+        if (!task) {
+            return;
+        }
         taskStore.delete(taskId);
+
+        const row = $rowStore.entities[task.model.resourceId];
+        if (!row) {
+            return;
+        }
+        invalidatePosition({ row });
+        updateLayoutSync();
     }
 
-    export function removeTasks(taskIds) {
+    export function removeTasks(taskIds: PropertyKey[]) {
+        for (const taskId of taskIds) {
+            const task = $taskStore.entities[taskId];
+            if (!task) {
+                continue;
+            }
+
+            const row = $rowStore.entities[task.model.resourceId];
+            if (!row) {
+                continue;
+            }
+            invalidatePosition({ row });
+        }
+
         taskStore.deleteAll(taskIds);
+        updateLayoutSync();
     }
 
-    export function updateRow(model) {
-        const results = rowFactory.createRows([...rows, model]);
-        rowStore.upsertAll(results);
+    export function updateRow(model: RowModel) {
+        const row = createRows([model], { rowHeight });
+        rowStore.upsertAll(row);
         updateLayout();
+        updateLayoutSync();
     }
 
-    export function updateRows(rowModels) {
-        const rows = rowModels.map(model => rowFactory.createRow(model, null));
+    export function updateRows(models: RowModel[]) {
+        const rows = createRows(models, { rowHeight });
         rowStore.upsertAll(rows);
         updateLayout();
+        updateLayoutSync();
     }
 
     export function getRow(resourceId) {
@@ -878,6 +849,37 @@
         updateLayout();
     }
 
+    export function updateLayoutSync(_invalidateFull?: boolean) {
+        const params: layouts.LayoutParams = {
+            taskStore: $taskStore,
+            rowStore: $rowStore,
+            rowTasks: $rowTaskCache,
+            rowHeight,
+            rowPadding,
+            rowReflectedTasks: _reflectedTasksCache,
+            invalidatedRows,
+            invalidatedTasks,
+            invalidateFull: _invalidateFull ?? invalidateFull,
+        };
+
+        if (layout === 'overlap') {
+            layouts.overlap(params);
+        }
+
+        if (layout === 'pack') {
+            layouts.pack(params);
+        }
+
+        if (layout === 'expand') {
+            layouts.expand(params);
+        }
+
+        layoutChanged = {};
+        invalidateFull = false;
+        invalidatedTasks = {};
+        invalidatedRows = {};
+    }
+
     export function updateLayout() {
         refreshLayout = {};
         invalidateFull = true;
@@ -902,7 +904,7 @@
             // TODO:: incorrect for collapsible rows, if creating under one
             const row = $allRows.find(row => row.y < y && y < row.y + row.height);
             const resourceId = row.model.id;
-            _creatingTask = taskFactory.createTask(onCreateTask({
+            _creatingTask = createTask(onCreateTask({
                 resourceId,
                 from,
                 to,
@@ -926,7 +928,7 @@
         _creatingTask = null;
     }
 
-    const createTasks = useCreateTask();
+    const dragCreateTasks = useCreateTask();
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -983,7 +985,7 @@
                 bind:offsetHeight={offsetHeight}
                 bind:clientWidth={$visibleWidth}
                 bind:offsetWidth={offsetWidth}
-                use:createTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd }}
+                use:dragCreateTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd }}
             >
                 <div class="content" style="width:{$_width}px">
                     <Columns {columns} {columnStrokeColor} {columnStrokeWidth} {useCanvasColumns} />

@@ -1,19 +1,44 @@
 import type { SvelteRow } from './row';
-import type { ColumnService } from './column';
 
 export interface TaskModel {
+    /** id of task, every task needs to have a unique one */
     id: PropertyKey;
     resourceId: PropertyKey;
+    /** date task starts on */
     from: number; // date
+    /** date task ends on */
     to: number; // date
 
+    /** completion %, indicated on task */
     amountDone?: number;
+
+    /** css classes */
     classes?: string | string[];
+    /** label of task */
     label?: string;
+
+    /** html content of task, will override label */
     html?: string;
+
+    /**  
+     * show button bar 
+     * @deprecated 
+     **/
     showButton?: boolean;
+
+    /**  
+     * button classes, useful for fontawesome icons 
+     * @deprecated 
+     **/
     buttonClasses?: string | string[];
+
+    /**
+     * html content of button
+     * @deprecated 
+     */
     buttonHtml?: string;
+
+    /** enable dragging of task */
     enableDragging?: boolean;
     enableResize?: boolean;
     labelBottom?: string;
@@ -35,89 +60,61 @@ export interface SvelteTask {
     reflectedOnParent?: boolean;
     reflectedOnChild?: boolean;
     originalId?: PropertyKey;
-    
+
     /* pack layout fields */
     intersectsWith?: SvelteTask[];
     numYSlots?: number;
     yPos?: number;
 }
 
-export class TaskFactory {
-    columnService: ColumnService;
-
+type CreateTaskParams = {
     rowPadding: number;
-    rowEntities: { [key: number]: SvelteRow };
+    rowEntities: { [rowId: PropertyKey]: SvelteRow };
+    getPositionByDate(date: any): number;
+}
 
-    constructor(columnService: ColumnService) {
-        this.columnService = columnService;
-    }
-
-    createTask(model: TaskModel): SvelteTask {
-        // id of task, every task needs to have a unique one
-        //task.id = task.id || undefined;
-        // completion %, indicated on task
-        model.amountDone = model.amountDone || 0;
-        // css classes
-        model.classes = model.classes || '';
-        // date task starts on
-        model.from = model.from || null;
-        // date task ends on
-        model.to = model.to || null;
-        // label of task
-        model.label = model.label || undefined;
-        // html content of task, will override label
-        model.html = model.html || undefined;
-        // show button bar
-        model.showButton = model.showButton || false;
-        // button classes, useful for fontawesome icons
-        model.buttonClasses = model.buttonClasses || '';
-        // html content of button
-        model.buttonHtml = model.buttonHtml || '';
-        // enable dragging of task
-        model.enableDragging = model.enableDragging === undefined ? true : model.enableDragging;
-        model.enableResize = model.enableResize === undefined ? true : model.enableResize;
-
-        const left = this.columnService.getPositionByDate(model.from) | 0;
-        const right = this.columnService.getPositionByDate(model.to) | 0;
-
-        return {
-            model,
-            left: left,
-            width: right - left,
-            height: this.getHeight(model),
-            top: this.getPosY(model),
-        };
-    }
-
-    createTasks(tasks: TaskModel[]) {
-        return tasks.map(task => this.createTask(task));
-    }
-
-    row(resourceId): SvelteRow {
-        return this.rowEntities[resourceId];
-    }
-
-    getHeight(model) {
-        const row = this.row(model.resourceId);
-        return (row ? row.height : undefined) - 2 * this.rowPadding;
-    }
-
-    getPosY(model) {
-        const row = this.row(model.resourceId);
-        return (row ? row.y : -1000) + this.rowPadding;
+export function createTaskFactory(params: CreateTaskParams) {
+    return {
+        createTask: (model: TaskModel) => createTask(model, params),
+        reflectTask: (task: SvelteTask, targetRow: SvelteRow) => reflectTask(task, targetRow, params),
     }
 }
 
-export function overlap(one: SvelteTask, other: SvelteTask) {
-    return !(one.left + one.width <= other.left || one.left >= other.left + other.width);
+export function createTask(model: TaskModel, params: CreateTaskParams): SvelteTask {
+    model.amountDone = model.amountDone ?? 0;
+    model.classes = model.classes ?? '';
+    model.showButton = model.showButton ?? false;
+    model.buttonClasses = model.buttonClasses ?? '';
+    model.buttonHtml = model.buttonHtml ?? '';
+    model.enableDragging = model.enableDragging ?? true;
+    model.enableResize = model.enableResize ?? true;
+
+    const left = params.getPositionByDate(model.from) | 0;
+    const right = params.getPositionByDate(model.to) | 0;
+
+    const row = params.rowEntities[model.resourceId];
+    const height = (row ? row.height : undefined) - 2 * params.rowPadding;
+    const top = (row ? row.y : -1000) + params.rowPadding;
+
+    return {
+        model,
+        left: left,
+        width: right - left,
+        height,
+        top,
+    };
 }
 
-export function reflectTask(task: SvelteTask, row: SvelteRow, options: { rowPadding: number }): SvelteTask {
-    const reflectedId = `reflected-task-${String(task.model.id)}-${String(row.model.id)}`;
+export function overlap(left: SvelteTask, right: SvelteTask) {
+    return !(left.left + left.width <= right.left || left.left >= right.left + right.width);
+}
+
+export function reflectTask(task: SvelteTask, targetRow: SvelteRow, params: CreateTaskParams): SvelteTask {
+    const reflectedId = `reflected-task-${String(task.model.id)}-${String(targetRow.model.id)}`;
 
     const model = {
         ...task.model,
-        resourceId: row.model.id,
+        resourceId: targetRow.model.id,
         id: reflectedId as PropertyKey,
         enableDragging: false
     };
@@ -125,7 +122,7 @@ export function reflectTask(task: SvelteTask, row: SvelteRow, options: { rowPadd
     return {
         ...task,
         model,
-        top: row.y + options.rowPadding,
+        top: targetRow.y + params.rowPadding,
         reflected: true,
         reflectedOnParent: false,
         reflectedOnChild: true,

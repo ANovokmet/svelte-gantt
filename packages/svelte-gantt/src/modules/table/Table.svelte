@@ -135,9 +135,6 @@
         background-color: #fbfbfb;
     }
 
-    .sg-table-rows {
-    }
-
     .sg-table-body {
         display: flex;
         flex: 1 1 0;

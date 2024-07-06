@@ -2,8 +2,8 @@ import type { ColumnService } from './core/column';
 import type { GanttApi } from './core/api';
 import type { Component } from './core/svelte';
 import type { DragDropManager } from './core/drag';
-import type { RowModel, RowFactory, SvelteRow } from './core/row';
-import type { TaskModel, TaskFactory, SvelteTask } from './core/task';
+import type { RowModel, SvelteRow } from './core/row';
+import type { TaskModel, SvelteTask } from './core/task';
 import type { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
 import type { GanttUtils } from './utils/utils';
 import type { DependencyModel } from './modules/dependencies';
@@ -175,8 +175,6 @@ export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
     utils: GanttUtils;
     columnService: ColumnService;
     dndManager: DragDropManager;
-    taskFactory: TaskFactory;
-    rowFactory: RowFactory;
     timeRangeFactory: TimeRangeFactory;
 
     refreshTasks();

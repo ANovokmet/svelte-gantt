@@ -1,46 +1,47 @@
 import { SvelteGanttDateAdapter } from './date';
 
-export class GanttUtils {
+type UtilsParams = Readonly<{
     from: number;
     to: number;
     width: number;
     magnetOffset: number;
     magnetUnit: string;
     magnetDuration: number;
-
     dateAdapter: SvelteGanttDateAdapter;
 
     /** because gantt width is not always correct */
     /**BlueFox 09.01.23: couldn't reproduce the above so I removed the code
     //totalColumnDuration: number;
-    //totalColumnWidth: number;
+    //totalColumnWidth: number;**/
+}>;
 
-    constructor() {
-    }
+export function createUtils(params: UtilsParams) {
+    return {        
+        /**
+         * Returns position of date on a line if from and to represent length of width
+         * @param {*} date 
+         */
+        getPositionByDate(date: number) {
+            return getPositionByDate(date, params.from, params.to, params.width);
+        },
 
-    /**
-     * Returns position of date on a line if from and to represent length of width
-     * @param {*} date 
-     */
-    getPositionByDate(date: number) {
-        return getPositionByDate(date, this.from, this.to, this.width);
-    }
+        getDateByPosition(x) {
+            return getDateByPosition(x, params.from, params.to, params.width);
+        },
 
-    getDateByPosition(x) {
-        return getDateByPosition(x, this.from, this.to, this.width);
-    }
-
-    roundTo(date: number) {
-        if (this.dateAdapter) {
-            return this.dateAdapter.roundTo(date, this.magnetUnit, this.magnetOffset);
+        roundTo(date: number) {
+            if (params.dateAdapter) {
+                return params.dateAdapter.roundTo(date, params.magnetUnit, params.magnetOffset);
+            }
+            // this does not consider the timezone, rounds only to the UTC time
+            // let value = Math.round((date - 7200000) / params.magnetDuration) * params.magnetDuration;
+            // cases where rounding to day or timezone offset is not rounded, this won't work
+            return null;
         }
-        // this does not consider the timezone, rounds only to the UTC time
-        // let value = Math.round((date - 7200000) / this.magnetDuration) * this.magnetDuration;
-        // cases where rounding to day or timezone offset is not rounded, this won't work
-
-        return null;
     }
 }
+
+export type GanttUtils = ReturnType<typeof createUtils>;
 
 export function getPositionByDate(date: number, from: number, to: number, width: number) {
     if (!date) {

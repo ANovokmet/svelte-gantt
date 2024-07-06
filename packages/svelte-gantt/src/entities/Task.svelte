@@ -118,6 +118,7 @@
                 from: model.from,
                 to: model.to
             };
+            const task = $taskStore.entities[model.id];
 
             //row switching
             const sourceRow = $rowStore.entities[model.resourceId];
@@ -125,7 +126,7 @@
                 const targetRow = dndManager.getTarget('row', event.mouseEvent);
                 if (targetRow) {
                     model.resourceId = targetRow.model.id;
-                    api.tasks.raise.switchRow(this, targetRow, sourceRow);
+                    api.tasks.raise.switchRow(task, targetRow, sourceRow);
                 } else {
                     rowChangeValid = false;
                 }
@@ -136,7 +137,6 @@
                 _ignoreClick = false;
             });
 
-            const task = $taskStore.entities[model.id];
             delete $draggingTaskCache[model.id];
 
             if (!rowChangeValid) {
