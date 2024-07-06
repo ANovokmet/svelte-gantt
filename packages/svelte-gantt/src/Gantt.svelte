@@ -31,9 +31,10 @@
     import { getDuration, getAllPeriods } from './utils/date';
     import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
     import type { SvelteGanttDateAdapter } from './utils/date';
-    import * as packLayout from './core/pack-layout';
+    import * as layouts from './core/layouts';
     import { useCreateTask } from './modules/create-tasks';
     import type { MoveEvent } from './modules/create-tasks';
+    import type { GanttContext } from './gantt';
 
     function assertSet(values) {
         for (const name in values) {
@@ -298,11 +299,14 @@
     const hoveredRow = writable<number | string>(null);
     const selectedRow = writable<number | string>(null);
 
-    const ganttContext = {
+    const ganttContext: GanttContext = {
+        rowContainer: null,
+        mainContainer: null,
+        mainHeaderContainer: null,
         scrollables,
         hoveredRow,
         selectedRow,
-        updateYPositions,
+        updateLayout,
     };
     setContext('gantt', ganttContext);
 
@@ -804,76 +808,37 @@
     }
 
     let layoutChanged = {};
-    /** apply other layouts */
+    let refreshLayout = {};
+    /** apply layouts */
     $: {
-        let changed = false;
+        refreshLayout;
+
+        const params: layouts.LayoutParams = {
+            taskStore: $taskStore,
+            rowStore: $rowStore,
+            rowTasks: $rowTaskCache,
+            rowHeight,
+            rowPadding,
+            rowReflectedTasks: _reflectedTasksCache,
+        };
+
         if (layout === 'overlap') {
-            let top = 0;
-            for (const rowId of $rowStore.ids) {
-                const row = $rowStore.entities[rowId];
-                row.y = top;
-                const heightBefore = row.height;
-                row.height = row.model.height || rowHeight;
-                if (!row.hidden) {
-                    top += row.height;
-                }
-
-                if (heightBefore != row.height) {
-                    changed = true;
-                }
-            }
-
-            for (const taskId of $taskStore.ids) {
-                const task = $taskStore.entities[taskId];
-                const row = $rowStore.entities[task.model.resourceId];
-                task.height = (row ? row.height : undefined) - 2 * rowPadding;
-                task.top = row.y + rowPadding;
-            }
+            layouts.overlap(params);
         }
 
-        if (layout === 'pack' || layout === 'expand') {
-            let top = 0;
-            for (const rowId of $rowStore.ids) {
-                const row = $rowStore.entities[rowId];
-                const taskIds = $rowTaskCache[rowId];
-                row.y = top;
-                const heightBefore = row.height;
-                if (taskIds) {
-                    const tasks = taskIds.map(taskId => $taskStore.entities[taskId]);
-                    packLayout.layout(tasks, row, { 
-                        rowHeight: rowHeight,
-                        rowPadding,
-                        expandRow: layout === 'expand'
-                    });
-                }
+        if (layout === 'pack') {
+            layouts.pack(params);
+        }
 
-                if (!row.hidden) {
-                    top += row.height;
-                }
-                if (heightBefore != row.height) {
-                    changed = true;
-                }
-            }
+        if (layout === 'expand') {
+            layouts.expand(params);
         }
 
         layoutChanged = {};
     }
 
-    function updateYPositions() {
-        let y = 0;
-        $rowStore.ids.forEach(id => {
-            const row = $rowStore.entities[id];
-            if (!row.hidden) {
-                $rowStore.entities[id].y = y;
-                y += row.height;
-            }
-        });
-
-        $taskStore.ids.forEach(id => {
-            const task = $taskStore.entities[id];
-            const row = $rowStore.entities[task.model.resourceId];
-            $taskStore.entities[id].top = row.y + rowPadding;
-        });
+    function updateLayout() {
+        refreshLayout = {};
     }
 
     /** enable create task by dragging */

@@ -25,7 +25,7 @@
     const { headerHeight, bottomScrollbarVisible } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
     const { rowStore, taskStore } = getContext('dataStore');
-    const { scrollables, updateYPositions } = getContext('gantt');
+    const { scrollables, updateLayout } = getContext('gantt');
 
     onMount(() => {
         dispatch('init', { module: this });
@@ -58,31 +58,31 @@
     }
 
     function onRowExpanded(event) {
-        const row = event.detail.row;
+        const row = event.detail.row as SvelteRow;
         row.model.expanded = true;
         if (row.children) show(row.children);
-        updateYPositions();
+        updateLayout();
     }
 
     function onRowCollapsed(event) {
-        const row = event.detail.row;
+        const row = event.detail.row as SvelteRow;
         row.model.expanded = false;
         if (row.children) hide(row.children);
-        updateYPositions();
+        updateLayout();
     }
 
-    function hide(children) {
-        children.forEach(row => {
+    function hide(children: SvelteRow[]) {
+        for (const row of children) {
             if (row.children) hide(row.children);
             row.hidden = true;
-        });
+        }
     }
 
-    function show(children, hidden = false) {
-        children.forEach(row => {
+    function show(children: SvelteRow[], hidden = false) {
+        for (const row of children) {
             if (row.children) show(row.children, !row.model.expanded);
             row.hidden = hidden;
-        });
+        }
     }
 </script>
 

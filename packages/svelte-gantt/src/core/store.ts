@@ -4,7 +4,7 @@ import type { SvelteTask } from './task';
 import type { SvelteRow } from './row';
 import type { SvelteTimeRange } from './timeRange';
 
-interface EntityState<T, K = PropertyKey> {
+export interface EntityState<T, K = PropertyKey> {
     ids: K[];
     entities: { [key: PropertyKey]: T };
 }

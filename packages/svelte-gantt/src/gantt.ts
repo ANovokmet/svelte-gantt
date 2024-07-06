@@ -33,12 +33,12 @@ export interface GanttContextDimensions {
 
 export interface GanttContext {
     scrollables: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
-    hoveredRow: Writable<number>;
-    selectedRow: Writable<number>;
+    hoveredRow: Writable<PropertyKey>;
+    selectedRow: Writable<PropertyKey>;
     rowContainer: HTMLElement;
     mainContainer: HTMLElement;
     mainHeaderContainer: HTMLElement;
-    updateYPositions();
+    updateLayout();
 }
 
 export interface GanttContextServices {
