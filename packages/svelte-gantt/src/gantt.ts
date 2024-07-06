@@ -38,6 +38,7 @@ export interface GanttContext {
     rowContainer: HTMLElement;
     mainContainer: HTMLElement;
     mainHeaderContainer: HTMLElement;
+    updateYPositions();
 }
 
 export interface GanttContextServices {
@@ -181,7 +182,7 @@ export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
     updateTask(model: TaskModel);
     updateTasks(models: TaskModel[]);
     updateRow(model: RowModel);
-    updateRowss(models: RowModel[]);
+    updateRows(models: RowModel[]);
     getTask(id): SvelteTask;
     getTasks(resourceId): SvelteTask[];
     getRow(id): SvelteRow;

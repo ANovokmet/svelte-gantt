@@ -20,7 +20,7 @@
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask, TaskModel } from './core/task';
     import { RowFactory } from './core/row';
-    import type { SvelteRow } from './core/row';
+    import type { RowModel, SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager, DragContextProvider } from './core/drag';
     import type { DragContext } from './core/drag';
@@ -43,7 +43,7 @@
         }
     }
 
-    export let rows;
+    export let rows: RowModel[];
     export let tasks: TaskModel[] = [];
     export let timeRanges = [];
 
@@ -301,7 +301,8 @@
     const ganttContext = {
         scrollables,
         hoveredRow,
-        selectedRow
+        selectedRow,
+        updateYPositions,
     };
     setContext('gantt', ganttContext);
 
@@ -674,8 +675,8 @@
     }
 
     export function updateRow(model) {
-        const row = rowFactory.createRow(model, null);
-        rowStore.upsert(row);
+        const results = rowFactory.createRows([...rows, model]);
+        rowStore.upsertAll(results);
     }
 
     export function updateRows(rowModels) {
@@ -813,7 +814,10 @@
                 row.y = top;
                 const heightBefore = row.height;
                 row.height = row.model.height || rowHeight;
-                top += row.height;
+                if (!row.hidden) {
+                    top += row.height;
+                }
+
                 if (heightBefore != row.height) {
                     changed = true;
                 }
@@ -842,7 +846,10 @@
                         expandRow: layout === 'expand'
                     });
                 }
-                top += row.height;
+
+                if (!row.hidden) {
+                    top += row.height;
+                }
                 if (heightBefore != row.height) {
                     changed = true;
                 }
@@ -850,6 +857,23 @@
         }
 
         layoutChanged = {};
+    }
+
+    function updateYPositions() {
+        let y = 0;
+        $rowStore.ids.forEach(id => {
+            const row = $rowStore.entities[id];
+            if (!row.hidden) {
+                $rowStore.entities[id].y = y;
+                y += row.height;
+            }
+        });
+
+        $taskStore.ids.forEach(id => {
+            const task = $taskStore.entities[id];
+            const row = $rowStore.entities[task.model.resourceId];
+            $taskStore.entities[id].top = row.y + rowPadding;
+        });
     }
 
     /** enable create task by dragging */

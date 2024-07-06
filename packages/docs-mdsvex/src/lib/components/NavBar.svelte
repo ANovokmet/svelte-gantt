@@ -10,6 +10,7 @@
 	import ArrowRightIcon from '$lib/icons/ArrowRightIcon.svelte';
 	import { meta } from '$lib/store';
 	import SvelteGanttLogo from '$lib/icons/SvelteGanttLogo.svelte';
+	import { base } from '$app/paths';
 
 	const dispatch = createEventDispatcher();
 	let theme = 'light';
@@ -26,7 +27,7 @@
 	<!-- width 8xl when docs, h-18/h-32 -->
 	<div class="flex items-center py-4 mx-4 border-b lg:border-0 border-slate-900/10 h-20">
 		<div class="logo">
-			<Button href="/" class="block">
+			<Button href="{base}/" class="block">
 				<span class="flex items-center">
 					<SvelteGanttLogo class="inline-block size-12 mr-2" /> svelte-gantt
 				</span>

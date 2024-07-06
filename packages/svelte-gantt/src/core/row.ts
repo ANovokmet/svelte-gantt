@@ -40,14 +40,12 @@ export class RowFactory {
         // id of task, every task needs to have a unique one
         //row.id = row.id || undefined;
         // css classes
-        row.classes = row.classes || '';
-        // html content of row
-        row.contentHtml = row.contentHtml || undefined;
+        row.classes = row.classes ?? '';
         // enable dragging of tasks to and from this row
-        row.enableDragging = row.enableDragging === undefined ? true : row.enableDragging;
-        row.enableResize = row.enableResize === undefined ? true : row.enableResize;
+        row.enableDragging = row.enableDragging ?? true;
+        row.enableResize = row.enableResize ?? true;
         // height of row element
-        const height = row.height || this.rowHeight;
+        const height = row.height ?? this.rowHeight;
 
         return {
             model: row,
@@ -76,7 +74,7 @@ export class RowFactory {
             parents = [...parents, parent];
         }
 
-        rowModels.forEach(rowModel => {
+        for (const rowModel of rowModels) {
             const row = this.createRow(rowModel, ctx.y);
             ctx.result.push(row);
             rowsAtLevel.push(row);
@@ -87,7 +85,7 @@ export class RowFactory {
             row.allParents = parents;
             if (parent) {
                 // when row is hidden, other rows (y-pos) move upward
-                row.hidden = !(parent.model.expanded || parent.model.expanded == null);
+                row.hidden = !(parent.model.expanded || parent.model.expanded == null) || parent.hidden != null && parent.hidden;
             }
 
             if (!row.hidden) {
@@ -106,7 +104,8 @@ export class RowFactory {
                 row.allChildren = nextLevel.allRows;
                 allRows.push(...nextLevel.allRows);
             }
-        });
+        }
+
         return {
             rows: rowsAtLevel,
             allRows

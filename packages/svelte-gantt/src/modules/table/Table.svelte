@@ -25,7 +25,7 @@
     const { headerHeight, bottomScrollbarVisible } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
     const { rowStore, taskStore } = getContext('dataStore');
-    const { scrollables } = getContext('gantt');
+    const { scrollables, updateYPositions } = getContext('gantt');
 
     onMount(() => {
         dispatch('init', { module: this });
@@ -69,23 +69,6 @@
         row.model.expanded = false;
         if (row.children) hide(row.children);
         updateYPositions();
-    }
-
-    function updateYPositions() {
-        let y = 0;
-        $rowStore.ids.forEach(id => {
-            const row = $rowStore.entities[id];
-            if (!row.hidden) {
-                $rowStore.entities[id].y = y;
-                y += $rowHeight;
-            }
-        });
-
-        $taskStore.ids.forEach(id => {
-            const task = $taskStore.entities[id];
-            const row = $rowStore.entities[task.model.resourceId];
-            $taskStore.entities[id].top = row.y + $rowPadding;
-        });
     }
 
     function hide(children) {
