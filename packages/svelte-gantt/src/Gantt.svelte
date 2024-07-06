@@ -19,7 +19,7 @@
     import { GanttApi } from './core/api';
     import { TaskFactory, reflectTask } from './core/task';
     import type { SvelteTask, TaskModel } from './core/task';
-    import { RowFactory } from './core/row';
+    import { collapseRow, expandRow, RowFactory } from './core/row';
     import type { RowModel, SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
     import { DragDropManager, DragContextProvider } from './core/drag';
@@ -34,7 +34,7 @@
     import * as layouts from './core/layouts';
     import { useCreateTask } from './modules/create-tasks';
     import type { MoveEvent } from './modules/create-tasks';
-    import type { GanttContext } from './gantt';
+    import type { GanttContext, InvalidatePositionOptions } from './gantt';
 
     function assertSet(values) {
         for (const name in values) {
@@ -307,8 +307,32 @@
         hoveredRow,
         selectedRow,
         updateLayout,
+        expandRow(row) {
+            expandRow(row);
+            updateLayout();
+        },
+        collapseRow(row) {
+            collapseRow(row);
+            updateLayout();
+        },
+        invalidatePosition,
     };
     setContext('gantt', ganttContext);
+
+    let invalidatedTasks: { [taskId: PropertyKey]: boolean; } = {};
+    let invalidatedRows: { [rowId: PropertyKey]: boolean; } = {};
+    let invalidateFull = true;
+    function invalidatePosition({ task, row }: InvalidatePositionOptions) {
+        if (row) {
+            invalidatedRows[row.model.id] = true;
+            invalidateFull = false;
+        }
+        if (task) {
+            invalidatedTasks[task.model.id] = true;
+            invalidatedRows[task.model.resourceId] = true;
+            invalidateFull = false;
+        }
+    }
 
     onMount(() => {
         Object.assign(ganttContext, {
@@ -467,6 +491,7 @@
         //Bug: Running twice on change options
         const rows = rowFactory.createRows(rowsData);
         rowStore.addAll(rows);
+        updateLayout();
     }
 
     async function initTasks(taskData: TaskModel[]) {
@@ -484,6 +509,7 @@
         }
         $draggingTaskCache = draggingTasks;
         taskStore.addAll(tasks);
+        updateLayout();
     }
 
     let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = {};
@@ -524,8 +550,6 @@
         });
         timeRangeStore.addAll(timeRanges);
     }
-
-    function onModuleInit(module) {}
 
     export const api = new GanttApi();
     const selectionManager = new SelectionManager(taskStore);
@@ -663,11 +687,13 @@
     export function updateTask(model) {
         const task = taskFactory.createTask(model);
         taskStore.upsert(task);
+        invalidatePosition({ task });
     }
 
-    export function updateTasks(taskModels) {
+    export function updateTasks(taskModels: TaskModel[]) {
         const tasks = taskModels.map(model => taskFactory.createTask(model));
         taskStore.upsertAll(tasks);
+        tasks.forEach(task => invalidatePosition({ task }));
     }
 
     export function removeTask(taskId) {
@@ -681,11 +707,13 @@
     export function updateRow(model) {
         const results = rowFactory.createRows([...rows, model]);
         rowStore.upsertAll(results);
+        updateLayout();
     }
 
     export function updateRows(rowModels) {
         const rows = rowModels.map(model => rowFactory.createRow(model, null));
         rowStore.upsertAll(rows);
+        updateLayout();
     }
 
     export function getRow(resourceId) {
@@ -820,6 +848,9 @@
             rowHeight,
             rowPadding,
             rowReflectedTasks: _reflectedTasksCache,
+            invalidatedRows,
+            invalidatedTasks,
+            invalidateFull,
         };
 
         if (layout === 'overlap') {
@@ -835,10 +866,21 @@
         }
 
         layoutChanged = {};
+        invalidateFull = false;
+        invalidatedTasks = {};
+        invalidatedRows = {};
     }
 
-    function updateLayout() {
+    $: {
+        layout;
+        tasks;
+        rows;
+        updateLayout();
+    }
+
+    export function updateLayout() {
         refreshLayout = {};
+        invalidateFull = true;
     }
 
     /** enable create task by dragging */
@@ -908,7 +950,6 @@
                 {paddingTop}
                 {tableWidth}
                 {...$$restProps}
-                on:init={onModuleInit}
                 {visibleRows}
             />
 
@@ -981,7 +1022,6 @@
                             {paddingTop}
                             {visibleRows}
                             {...$$restProps}
-                            on:init={onModuleInit}
                         />
                     {/each}
                 </div>

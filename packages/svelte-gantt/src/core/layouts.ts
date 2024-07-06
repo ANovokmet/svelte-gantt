@@ -9,6 +9,9 @@ export type LayoutParams = {
     rowHeight: number; 
     rowPadding: number; 
     rowReflectedTasks: { [rowId: PropertyKey]: SvelteTask[] }; 
+    invalidatedTasks: { [rowId: PropertyKey]: boolean; }; 
+    invalidatedRows: { [rowId: PropertyKey]: boolean; };
+    invalidateFull?: boolean;
 }
 
 type LayoutRowParams = {
@@ -25,9 +28,18 @@ type LayoutResult = {
  * Layouts tasks - overlapping tasks display one over another
  * @param params 
  */
-export function overlap({ taskStore, rowStore, rowHeight, rowPadding, rowReflectedTasks }: LayoutParams): LayoutResult {
+export function overlap(params: LayoutParams): LayoutResult {
+    const { taskStore, rowStore, rowHeight, rowPadding, rowReflectedTasks } = params;
     let top = 0;
     const result: LayoutResult = { changed: false };
+
+    if (!params.invalidateFull) {
+        for (const taskId in params.invalidatedTasks) {
+            positionTask(taskStore.entities[taskId]);
+        }
+        return result;
+    }
+
     for (const rowId of rowStore.ids) {
         const row = rowStore.entities[rowId];
         row.y = top;
@@ -67,6 +79,7 @@ export function overlap({ taskStore, rowStore, rowHeight, rowPadding, rowReflect
  * @param params 
  */
 export function pack(params: LayoutParams) {
+    // TODO:: partial invalidation
     return _layoutRows(params, false);
 }
 
@@ -76,10 +89,12 @@ export function pack(params: LayoutParams) {
  * @returns 
  */
 export function expand(params: LayoutParams) {
+    // TODO:: partial invalidation
     return _layoutRows(params, true);
 }
 
-function _layoutRows({ taskStore, rowStore, rowTasks, rowHeight, rowPadding }: LayoutParams, expandRow: boolean) {
+function _layoutRows(params: LayoutParams, expandRow: boolean) {
+    const { taskStore, rowStore, rowTasks, rowHeight, rowPadding } = params;
     let top = 0;
     const result: LayoutResult = { changed: false };
     for (const rowId of rowStore.ids) {

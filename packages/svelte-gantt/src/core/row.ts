@@ -112,3 +112,27 @@ export class RowFactory {
         };
     }
 }
+
+export function expandRow(row: SvelteRow) {
+    row.model.expanded = true;
+    if (row.children) show(row.children);
+}
+
+export function collapseRow(row: SvelteRow) {
+    row.model.expanded = false;
+    if (row.children) hide(row.children);
+}
+
+function hide(children: SvelteRow[]) {
+    for (const row of children) {
+        if (row.children) hide(row.children);
+        row.hidden = true;
+    }
+}
+
+function show(children: SvelteRow[], hidden = false) {
+    for (const row of children) {
+        if (row.children) show(row.children, !row.model.expanded);
+        row.hidden = hidden;
+    }
+}

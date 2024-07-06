@@ -36,14 +36,13 @@
     }
 
     const { taskStore, rowStore, draggingTaskCache } = getContext('dataStore');
-    const { rowContainer, mainContainer } = getContext('gantt');
+    const { rowContainer, mainContainer, invalidatePosition } = getContext('gantt');
     const {
         taskContent,
         resizeHandleWidth,
         rowPadding,
         onTaskButtonClick,
         taskElementHook,
-        layout
     } = getContext('options');
     const { dndManager, api, utils, columnService, selectionManager } = getContext('services');
     const draggingContext = getContext('drag');
@@ -183,6 +182,8 @@
                 api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState });
             }
             taskStore.update(newTask);
+            invalidatePosition({ row: sourceRow });
+            invalidatePosition({ task: newTask });
         }
 
         const draggable = useDraggable(node, {

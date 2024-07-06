@@ -39,7 +39,15 @@ export interface GanttContext {
     mainContainer: HTMLElement;
     mainHeaderContainer: HTMLElement;
     updateLayout();
+    expandRow(row: SvelteRow);
+    collapseRow(row: SvelteRow);
+    invalidatePosition(options: InvalidatePositionOptions);
 }
+
+export type InvalidatePositionOptions = {
+    task?: SvelteTask;
+    row?: SvelteRow;
+};
 
 export interface GanttContextServices {
     utils: GanttUtils;
