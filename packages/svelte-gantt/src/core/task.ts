@@ -60,11 +60,6 @@ export interface SvelteTask {
     reflectedOnParent?: boolean;
     reflectedOnChild?: boolean;
     originalId?: PropertyKey;
-
-    /* pack layout fields */
-    intersectsWith?: SvelteTask[];
-    numYSlots?: number;
-    yPos?: number;
 }
 
 type CreateTaskParams = {

@@ -128,20 +128,24 @@ function _layoutRow(tasks: SvelteTask[], row: SvelteRow, params: LayoutRowParams
     tasks.sort(_byStartThenByLongestSortFn);
 
     const others: { [yPos: number]: SvelteTask[] } = {};
+    const context: { [taskId: PropertyKey]: { yPos?: number; intersects?: boolean; } } = {};
+    const ctx = (task: SvelteTask) => context[task.model.id] ?? (context[task.model.id] = {});
 
     let maxYPos = 0;
 
     for (const task of tasks) {
-        task.yPos = 0;
+        const c = ctx(task);
+        c.yPos = 0;
         let fits = false;
         while (!fits) {
-            const othersAtYPos = others[task.yPos] || [];
+            const othersAtYPos = others[c.yPos] || [];
             fits = true;
             for (const other of othersAtYPos) { // can use binary search to find this iterator
                 if (_intersects(task, other)) {
-                    task.yPos++;
-                    if (task.yPos > maxYPos) {
-                        maxYPos = task.yPos;
+                    ctx(task).intersects = ctx(other).intersects = true;
+                    c.yPos++;
+                    if (c.yPos > maxYPos) {
+                        maxYPos = c.yPos;
                     }
                     fits = false;
                     break;
@@ -151,10 +155,10 @@ function _layoutRow(tasks: SvelteTask[], row: SvelteRow, params: LayoutRowParams
             }
         }
 
-        if (!others[task.yPos]) {
-            others[task.yPos] = [];
+        if (!others[c.yPos]) {
+            others[c.yPos] = [];
         }
-        others[task.yPos].push(task);
+        others[c.yPos].push(task);
 
     }
 
@@ -163,16 +167,18 @@ function _layoutRow(tasks: SvelteTask[], row: SvelteRow, params: LayoutRowParams
         row.height = contentHeight * (maxYPos + 1) + 2 * params.rowPadding;
     
         for (const task of tasks) {
+            const c = ctx(task);
             task.height = contentHeight;
-            task.top = row.y + params.rowPadding + (task.height * task.yPos);
+            task.top = row.y + params.rowPadding + (task.height * c.yPos);
         }
     } else {
         row.height = row.model.height || params.rowHeight;
         const contentHeight = row.height - 2 * params.rowPadding;
     
         for (const task of tasks) {
+            const c = ctx(task);
             task.height = contentHeight / (maxYPos + 1);
-            task.top = row.y + params.rowPadding + (task.height * task.yPos);
+            task.top = row.y + params.rowPadding + (task.height * c.yPos);
         }
     }
 }
