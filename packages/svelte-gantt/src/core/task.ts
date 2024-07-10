@@ -9,7 +9,10 @@ export interface TaskModel {
     /** date task ends on */
     to: number; // date
 
-    /** completion %, indicated on task */
+    /**
+     * completion %, indicated on task
+     * @deprecated
+     */
     amountDone?: number;
 
     /** css classes */
@@ -41,6 +44,11 @@ export interface TaskModel {
     /** enable dragging of task */
     enableDragging?: boolean;
     enableResize?: boolean;
+
+    /**  
+     * label displayed below
+     * @deprecated 
+     **/
     labelBottom?: string;
     type?: 'milestone' | 'task';
     stickyLabel?: boolean;

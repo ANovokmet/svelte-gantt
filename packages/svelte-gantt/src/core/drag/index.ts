@@ -1,4 +1,5 @@
 export * from './draggable';
 export * from './dragDropManager';
-export { default as DragContextProvider } from './DragContextProvider.svelte';
-export type { DragContext } from './DragContextProvider';
+export { default as DraggableGroup } from './DraggableGroup.svelte';
+export { default as Draggable } from './Draggable.svelte';
+export type { DragContext } from './DragContext';

@@ -1,7 +1,7 @@
 import { setContext, getContext } from "svelte";
-import { SvelteTask, TaskModel } from "./task";
-import { SvelteRow } from "./row";
-import { TimeRangeModel } from "./timeRange";
+import type { SvelteTask, TaskModel } from "./task";
+import type { SvelteRow } from "./row";
+import type { TimeRangeModel } from "./timeRange";
 
 type EventController<T extends any[]> = [(handler: (arg: T) => void) => () => void, (...params: T) => void];
 
@@ -64,6 +64,7 @@ function createGanttApi() {
     return {
         tasks: feature({
             move: controller<[TaskModel]>(),
+            resize: controller<[TaskModel]>(),
             select: controller<[SvelteTask]>(),
             switchRow: controller<[SvelteTask, SvelteRow, SvelteRow]>(),
             moveEnd: controller<[TaskModel]>(),

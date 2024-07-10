@@ -60,3 +60,7 @@ Task element hook function is a svelte action, eg.
 This enables you to add custom behaviour and look to tasks. For example, displaying a popup on hover, or rendering Angular components within the task.
 
 <TaskComponentExample />
+
+### Milestones
+
+TODO

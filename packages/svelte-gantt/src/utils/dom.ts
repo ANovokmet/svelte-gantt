@@ -106,3 +106,38 @@ export function throttle<F extends (...args) => void>(func: F, limit: number): F
         }
     } as F;
 }
+
+/** How much pixels near the bounds user has to drag to start scrolling */
+const DRAGGING_TO_SCROLL_TRESHOLD = 40;
+/** How much pixels does the view scroll when dragging */
+const DRAGGING_TO_SCROLL_DELTA = 40;
+
+function outOfBounds(event: MouseEvent, rect: DOMRect) {
+    return {
+        left: event.clientX - rect.left < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
+        top: event.clientY - rect.top < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
+        right: event.clientX - rect.left > rect.width - DRAGGING_TO_SCROLL_TRESHOLD,
+        bottom: event.clientY - rect.top > rect.height - DRAGGING_TO_SCROLL_TRESHOLD
+    };
+}
+
+export const scrollIfOutOfBounds = throttle((event: MouseEvent, scrollable: HTMLElement) => { // throttle elsewhere
+    // throttle the following
+    const mainContainerRect = scrollable.getBoundingClientRect();
+    const bounds = outOfBounds(event, mainContainerRect);
+    if (bounds.left || bounds.right) {
+        // scroll left
+        scrollable.scrollTo({
+            left: scrollable.scrollLeft + (bounds.left ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
+            behavior: 'smooth'
+        });
+    }
+
+    if (bounds.top || bounds.bottom) {
+        // scroll top
+        scrollable.scrollTo({
+            top: scrollable.scrollTop + (bounds.top ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
+            behavior: 'smooth'
+        });
+    }
+}, 250);

@@ -54,6 +54,19 @@ function getAccessor<T>(accessor: MaybeAccessor<T>): () => T {
  * Applies dragging interaction to gantt elements
  */
 export function useDraggable(node: HTMLElement, options: DraggableOptions) {
+    const onMousedown = createDraggable(options);
+    node.addEventListener('pointerdown', onMousedown);
+    return {
+        destroy() {
+            node.removeEventListener('pointerdown', onMousedown, false);
+        }
+    };
+}
+
+/**
+ * Applies dragging interaction to gantt elements
+ */
+export function createDraggable(options: DraggableOptions) {
     let mouseStartPosX: number;
     let mouseStartPosY: number;
     let mouseStartRight: number;
@@ -68,8 +81,6 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
 
     const dragAllowed = getAccessor(options.dragAllowed);
     const resizeAllowed = getAccessor(options.resizeAllowed);
-
-    node.addEventListener('pointerdown', onMousedown);
 
     function onMousedown(event: PointerEvent) {
         if (!isLeftClick(event)) {
@@ -227,11 +238,5 @@ export function useDraggable(node: HTMLElement, options: DraggableOptions) {
         window.removeEventListener('pointermove', onMousemove, false);
     };
 
-    return {
-        destroy() {
-            node.removeEventListener('pointerdown', onMousedown, false);
-            node.removeEventListener('pointermove', onMousemove, false);
-            node.removeEventListener('pointerup', onMouseup, false);
-        }
-    };
+    return onMousedown;
 }

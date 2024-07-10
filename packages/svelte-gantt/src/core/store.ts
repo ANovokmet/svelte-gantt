@@ -171,8 +171,6 @@ export function createDataStore() {
         return cache;
     });
 
-    const draggingTaskCache = writable<{ [id: PropertyKey]: boolean }>({});
-
     return {
         taskStore,
         rowStore,
@@ -180,8 +178,7 @@ export function createDataStore() {
         allTasks,
         allRows,
         allTimeRanges,
-        rowTaskCache,
-        draggingTaskCache
+        rowTaskCache
     };
 }
 

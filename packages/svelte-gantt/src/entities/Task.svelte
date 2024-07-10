@@ -1,9 +1,7 @@
 <script lang="ts">
     import { getContext } from 'svelte';
     import type { TaskModel, SvelteTask } from '../core/task';
-    import { normalizeClassAttr, setCursor, throttle } from '../utils/dom';
-    import { useDraggable } from '../core/drag';
-    import type { DownDropEvent } from '../core/drag';
+    import { normalizeClassAttr } from '../utils/dom';
 
     export let model: TaskModel;
     export let height: number;
@@ -11,259 +9,18 @@
     export let top: number;
     export let width: number;
     export let reflected = false;
+    export let animating = true;
 
-    let animating = true;
-    let _dragging = false;
-    let _resizing = false;
+    export let dragging = false;
+    export let resizing = false;
 
-    let _position = {
-        x: left,
-        y: top,
-        width: width
-    };
+    const { rowStore } = getContext('dataStore');
+    const { taskContent, onTaskButtonClick, taskElementHook } = getContext('options');
+    const { selectionManager } = getContext('services');
 
-    $: {
-        updatePosition(left, top, width);
-    }
-
-    function updatePosition(x, y, width) {
-        if (!_dragging && !_resizing) {
-            _position.x = x;
-            _position.y = y;
-            _position.width = width;
-            // should NOT animate on resize/update of columns
-        }
-    }
-
-    const { taskStore, rowStore, draggingTaskCache } = getContext('dataStore');
-    const { rowContainer, mainContainer, invalidatePosition } = getContext('gantt');
-    const {
-        taskContent,
-        resizeHandleWidth,
-        rowPadding,
-        onTaskButtonClick,
-        taskElementHook,
-    } = getContext('options');
-    const { dndManager, api, utils, columnService, selectionManager } = getContext('services');
-    const draggingContext = getContext('drag');
-    const draggingActive = draggingContext.active;
-    const draggingTasks = draggingContext.dragging;
-
-    let selectedTasks = selectionManager._selectedTasks;
-
-    /** How much pixels near the bounds user has to drag to start scrolling */
-    const DRAGGING_TO_SCROLL_TRESHOLD = 40;
-    /** How much pixels does the view scroll when dragging */
-    const DRAGGING_TO_SCROLL_DELTA = 40;
-    /** Bounds of the main gantt area, changes only on window resize */
-    let mainContainerRect: DOMRect;
-    function outOfBounds(event: MouseEvent, rect: DOMRect) {
-        return {
-            left: event.clientX - rect.left < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
-            top: event.clientY - rect.top < 0 + DRAGGING_TO_SCROLL_TRESHOLD,
-            right: event.clientX - rect.left > rect.width - DRAGGING_TO_SCROLL_TRESHOLD,
-            bottom: event.clientY - rect.top > rect.height - DRAGGING_TO_SCROLL_TRESHOLD
-        };
-    }
-
-    const scrollIfOutOfBounds = throttle((event: MouseEvent) => {
-        // throttle the following
-        const bounds = outOfBounds(event, mainContainerRect);
-        if (bounds.left || bounds.right) {
-            // scroll left
-            mainContainer.scrollTo({
-                left:
-                    mainContainer.scrollLeft +
-                    (bounds.left ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
-                behavior: 'smooth'
-            });
-        }
-
-        if (bounds.top || bounds.bottom) {
-            // scroll top
-            mainContainer.scrollTo({
-                top:
-                    mainContainer.scrollTop +
-                    (bounds.top ? -DRAGGING_TO_SCROLL_DELTA : DRAGGING_TO_SCROLL_DELTA),
-                behavior: 'smooth'
-            });
-        }
-    }, 250);
+    const selectedTasks = selectionManager._selectedTasks;
 
     let _ignoreClick = false;
-    function drag(node: HTMLElement) {
-        // reflected tasks must not be resized or dragged
-        if (reflected) {
-            return;
-        }
-
-        draggingContext.on(model.id, {
-            move(event) {
-                _position = {
-                    x: event.x != null ? event.x : _position.x,
-                    y: event.y != null ? event.y : _position.y,
-                    width: event.width != null ? event.width : _position.width,
-                };
-            },
-            drop(event) {
-                onDrop(event);
-            }
-        });
-
-        function onDrop(event: DownDropEvent) {
-            let rowChangeValid = true;
-            const previousState = {
-                id: model.id,
-                resourceId: model.resourceId,
-                from: model.from,
-                to: model.to
-            };
-            const task = $taskStore.entities[model.id];
-
-            //row switching
-            const sourceRow = $rowStore.entities[model.resourceId];
-            if (event.dragging) {
-                const targetRow = dndManager.getTarget('row', event.mouseEvent);
-                if (targetRow) {
-                    model.resourceId = targetRow.model.id;
-                    api.tasks.raise.switchRow(task, targetRow, sourceRow);
-                } else {
-                    rowChangeValid = false;
-                }
-            }
-
-            _dragging = _resizing = false;
-            setTimeout(() => { // because we want to block delegated clicks on gantt after dragging
-                _ignoreClick = false;
-            });
-
-            delete $draggingTaskCache[model.id];
-
-            if (!rowChangeValid) {
-                // reset position
-                _position.x = task.left;
-                _position.width = task.width;
-                _position.y = task.top;
-                return;
-            }
-
-            const prevFrom = model.from;
-            const prevTo = model.to;
-            const newFrom = (model.from = utils.roundTo(columnService.getDateByPosition(event.x)));
-            const newTo = (model.to = utils.roundTo(columnService.getDateByPosition(event.x + event.width)));
-            const newLeft = columnService.getPositionByDate(newFrom) | 0;
-            const newRight = columnService.getPositionByDate(newTo) | 0;
-
-            const targetRow = $rowStore.entities[model.resourceId];
-            const left = newLeft;
-            const width = newRight - newLeft;
-            const top = $rowPadding + targetRow.y;
-            // get value of top from the layout
-
-            updatePosition(left, task.top, width);
-
-            const newTask = {
-                ...task,
-                left: left,
-                width: width,
-                // top: top,
-                model
-            };
-
-            const changed =
-                prevFrom != newFrom ||
-                prevTo != newTo ||
-                (sourceRow && sourceRow.model.id !== targetRow.model.id);
-            if (changed) {
-                api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState });
-            }
-
-            if (changed) {
-                api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState });
-            }
-            taskStore.update(newTask);
-            invalidatePosition({ row: sourceRow });
-            invalidatePosition({ task: newTask });
-        }
-
-        const draggable = useDraggable(node, {
-            container: rowContainer,
-            resizeHandleWidth,
-            getX: () => _position.x,
-            getY: () => _position.y,
-            getWidth: () => _position.width,
-            dragAllowed() {
-                return (
-                    $rowStore.entities[model.resourceId].model.enableDragging &&
-                    model.enableDragging
-                );
-            },
-            resizeAllowed() {
-                return (
-                    model.type !== 'milestone' &&
-                    $rowStore.entities[model.resourceId].model.enableResize &&
-                    model.enableResize
-                );
-            },
-            onDown(event) {
-                const { mouseEvent } = event;
-                let draggingTasks: SvelteTask[] = [];
-                if (mouseEvent.ctrlKey) {
-                    for (const [taskId, isSelected] of Object.entries($selectedTasks)) {
-                        if (isSelected && taskId !== String(model.id)) {
-                            draggingTasks.push($taskStore.entities[taskId]);
-                        }
-                    }
-                }
-
-                draggingContext.save(event, draggingTasks);
-
-                mainContainerRect = mainContainer.getBoundingClientRect();
-                if (event.dragging) {
-                    setCursor('move');
-                }
-                if (event.resizing) {
-                    setCursor('e-resize');
-                }
-                $draggingTaskCache[model.id] = true;
-            },
-            onMouseUp() {
-                setCursor('default');
-                api.tasks.raise.moveEnd(model);
-                delete $draggingTaskCache[model.id];
-            },
-            onResize(event) {
-                _position.x = event.x;
-                _position.width = event.width;
-                _resizing = true;
-                _ignoreClick = true;
-                draggingContext.moveAll(event);
-                scrollIfOutOfBounds(event.event);
-            },
-            onDrag(event) {
-                _position.x = event.x;
-                _position.y = event.y;
-                _dragging = true;
-                _ignoreClick = true;
-                api.tasks.raise.move(model);
-                draggingContext.moveAll(event);
-                scrollIfOutOfBounds(event.event);
-            },
-            onDrop(event) {
-                if (event.dragging || event.resizing) {
-                    onDrop(event);
-                    draggingContext.dropAll(event);
-                }
-            }
-        });
-
-        return {
-            destroy: () => {
-                draggingContext.off(model.id);
-                draggable.destroy();
-            }
-        };
-    }
 
     function taskElement(node, model) {
         if (taskElementHook) {
@@ -290,37 +47,27 @@
             model.enableResize;
     }
 
-    let _top: number;
-    $: {
-        _top = _position.y;
-    }
-
     let _moving: boolean;
     $: {
-        _moving = _dragging || _resizing || ($draggingTasks[model.id] && $draggingActive);
-    }
-
-    let _animating: boolean;
-    $: {
-        _animating = animating && !$draggingTaskCache[model.id];
+        _moving = dragging || resizing;
     }
 </script>
 
 <div
     data-task-id={model.id}
-    use:drag
     use:taskElement={model}
     class="sg-task {classes}"
     class:sg-milestone={model.type === 'milestone'}
-    style="width:{_position.width}px; height:{height}px; left: {_position.x}px; top: {_top}px;"
+    style="width:{width}px; height:{height}px; left: {left}px; top: {top}px;"
     class:moving={_moving}
-    class:animating={_animating}
+    class:animating={animating}
     class:sg-task-reflected={reflected}
     class:sg-task-selected={$selectedTasks[model.id]}
     class:resize-enabled={resizeEnabled}
     class:sg-task--sticky={model.stickyLabel}
     class:sg-ignore-click={_ignoreClick}
-    class:sg-task-instant={_position.width === 0}
+    class:sg-task-instant={width === 0}
+    on:pointerdown
 >
     {#if model.type === 'milestone'}
         <div class="sg-milestone__diamond"></div>
