@@ -8,7 +8,7 @@
         "autobuild": "rollup -c -w"
     },
     "dependencies": {
-        "moment": "^2.22.2",
+        "moment": "^2.29.4",
         "svelte-routing": "^1.6.0"
     },
     "devDependencies": {
