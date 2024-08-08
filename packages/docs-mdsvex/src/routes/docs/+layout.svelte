@@ -1,6 +1,7 @@
 <script>
 	import Sidebar from '$lib/components/SideBar.svelte';
 	import Button from '$lib/components/Button.svelte';
+	import { base } from '$app/paths';
 
 	import { isSidebarOpen, meta, nextPage, previousPage } from '$lib/store';
 </script>
@@ -31,7 +32,7 @@
 				{#if $previousPage}
 					<div class="mb-4 flex flex-col items-start">
 						<span class="text-inverse ml-3 mb-4 inline-block">Previous</span>
-						<Button arrow="left" href={$previousPage.href} class="hover:text-inverse" data-sveltekit-prefetch>
+						<Button arrow="left" href={base}{$previousPage.href} class="hover:text-inverse" data-sveltekit-prefetch>
 							{$previousPage.label}
 						</Button>
 					</div>
@@ -40,7 +41,7 @@
 				{#if $nextPage}
 					<div class="ml-auto mb-4 flex flex-col items-end">
 						<span class="text-inverse mr-3 mb-4 inline-block">Next</span>
-						<Button arrow="right" href={$nextPage.href} class="hover:text-inverse" data-sveltekit-prefetch>
+						<Button arrow="right" href={base}{$nextPage.href} class="hover:text-inverse" data-sveltekit-prefetch>
 							{$nextPage.label}
 						</Button>
 					</div>
