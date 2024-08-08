@@ -1,12 +1,15 @@
 <script lang="ts">
+    import { normalizeClassAttr } from '../utils/dom';
     import type { SvelteRow } from '../core/row';
     import { getContext } from 'svelte';
     export let row: SvelteRow;
     const { hoveredRow, selectedRow } = getContext('gantt');
+
+    $: classes = normalizeClassAttr(row.model.classes);
 </script>
 
 <div
-    class="sg-row {row.model.classes}"
+    class="sg-row {classes}"
     data-row-id={row.model.id}
     class:sg-hover={$hoveredRow == row.model.id}
     class:sg-selected={$selectedRow == row.model.id}

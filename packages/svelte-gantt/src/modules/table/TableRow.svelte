@@ -1,27 +1,28 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from 'svelte';
+    import { getContext } from 'svelte';
 
     import TableTreeCell from './TableTreeCell.svelte';
     import type { TableHeader } from './tableHeader';
     import type { SvelteRow } from '../../core/row';
+    import { normalizeClassAttr } from '../../utils/dom';
 
     export let headers: TableHeader[] = null;
     export let row: SvelteRow = null;
 
     const { hoveredRow, selectedRow } = getContext('gantt');
 
-    const dispatch = createEventDispatcher();
-
     let treeIndentationStyle = '';
     $: {
         treeIndentationStyle = row.parent ? `padding-left: ${row.childLevel * 3}em;` : '';
     }
+
+    $: classes = normalizeClassAttr(row.model.classes)
 </script>
 
 <div
     data-row-id={row.model.id}
     style="height:{row.height}px"
-    class="sg-table-row {row.model.classes || ''} sg-table-row-level-{row.childLevel}"
+    class="sg-table-row {classes} sg-table-row-level-{row.childLevel}"
     class:sg-row-expanded={row.model.expanded}
     class:sg-hover={$hoveredRow == row.model.id}
     class:sg-selected={$selectedRow == row.model.id}

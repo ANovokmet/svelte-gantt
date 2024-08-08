@@ -2,6 +2,7 @@
     import { getContext } from 'svelte';
     import type { TaskModel, SvelteTask } from '../core/task';
     import { normalizeClassAttr } from '../utils/dom';
+    import { isResizable } from '../utils/utils';
 
     export let model: TaskModel;
     export let height: number;
@@ -34,17 +35,12 @@
         }
     }
 
-    let classes;
-    $: {
-        classes = model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default';
-    }
+    $: classes = model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default';
 
     let resizeEnabled: boolean;
     $: {
-        resizeEnabled =
-            model.type !== 'milestone' &&
-            $rowStore.entities[model.resourceId].model.enableResize &&
-            model.enableResize;
+        const rowModel = $rowStore.entities[model.resourceId].model;
+        resizeEnabled = model.type !== 'milestone' && isResizable(rowModel) && isResizable(model);
     }
 
     let _moving: boolean;

@@ -1,20 +1,47 @@
 export interface RowModel {
+    /**
+     * Id of row, every resource needs to have a unique one
+     */
     id: PropertyKey;
     label: string;
     classes?: string | string[];
     contentHtml?: string;
-    enableDragging?: boolean;
-    enableResize?: boolean;
     height: number;
+
+    /** 
+     * enable dragging to row
+     * @deprecated use draggable
+     **/
+    enableDragging?: boolean;
+    /** 
+     * enable dragging to row
+     **/
+    draggable?: boolean;
+    /** 
+     * enable resizing on row
+     * @deprecated use resizable
+     */
+    enableResize?: boolean;
+    /** 
+     * enable resizing on row
+     */
+    resizable?: boolean;
+
     /** Child rows in expandable tree */
     children?: RowModel[];
+    expanded?: boolean;
     /** Content of row header, html string */
     headerHtml?: string;
-    /** Class of icon in row header */
+    /**
+     * Class of icon in row header
+     * @deprecated
+     **/
     iconClass?: string;
-    /** Url of image in row header */
+    /**
+     * Url of image in row header
+     * @deprecated
+     **/
     imageSrc?: string;
-    expanded?: boolean;
 }
 
 export interface SvelteRow {
@@ -96,13 +123,6 @@ function createChildRows(
 
 function createRow(model: RowModel, y: number, params: CreateRowParams): SvelteRow {
     // defaults
-    // id of task, every task needs to have a unique one
-    //row.id = row.id || undefined;
-    // css classes
-    model.classes = model.classes ?? '';
-    // enable dragging of tasks to and from this row
-    model.enableDragging = model.enableDragging ?? true;
-    model.enableResize = model.enableResize ?? true;
     // height of row element
     const height = model.height ?? params.rowHeight;
 

@@ -2,6 +2,7 @@
     import { getContext } from 'svelte';
     import { useDraggable } from '../core/drag';
     import { normalizeClassAttr } from '../utils/dom';
+    import { isResizable } from '../utils/utils';
 
     const { rowContainer } = getContext('gantt');
     const { api, utils, columnService } = getContext('services');
@@ -69,7 +70,7 @@
                 });
             },
             dragAllowed: false,
-            resizeAllowed: () => isResizable(),
+            resizeAllowed: () => isResizable(model),
             onDrop: ondrop,
             container: rowContainer,
             resizeHandleWidth,
@@ -81,10 +82,6 @@
         return { destroy: () => draggable.destroy() };
     }
 
-    function isResizable() {
-        return model.resizable !== undefined ? model.resizable : true;
-    }
-
     let classes;
     $: {
         classes = normalizeClassAttr(model.classes);
@@ -94,7 +91,7 @@
 <div
     class="sg-time-range-control {classes}"
     style="width:{_position.width}px;left:{_position.x}px"
-    class:sg-time-range-disabled={!isResizable()}
+    class:sg-time-range-disabled={!isResizable(model)}
 >
     <div class="sg-time-range-handle-left" use:drag></div>
     <div class="sg-time-range-handle-right" use:drag></div>

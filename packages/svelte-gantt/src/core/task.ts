@@ -41,9 +41,24 @@ export interface TaskModel {
      */
     buttonHtml?: string;
 
-    /** enable dragging of task */
+    /** 
+     * enable dragging of task
+     * @deprecated use draggable
+     **/
     enableDragging?: boolean;
+    /** 
+     * enable dragging of task
+     **/
+    draggable?: boolean;
+    /** 
+     * enable resizing of task
+     * @deprecated use resizable
+     */
     enableResize?: boolean;
+    /** 
+     * enable resizing of task
+     */
+    resizable?: boolean;
 
     /**  
      * label displayed below
@@ -85,12 +100,9 @@ export function createTaskFactory(params: CreateTaskParams) {
 
 export function createTask(model: TaskModel, params: CreateTaskParams): SvelteTask {
     model.amountDone = model.amountDone ?? 0;
-    model.classes = model.classes ?? '';
     model.showButton = model.showButton ?? false;
     model.buttonClasses = model.buttonClasses ?? '';
     model.buttonHtml = model.buttonHtml ?? '';
-    model.enableDragging = model.enableDragging ?? true;
-    model.enableResize = model.enableResize ?? true;
 
     const left = params.getPositionByDate(model.from) | 0;
     const right = params.getPositionByDate(model.to) | 0;

@@ -19,8 +19,10 @@ Tasks are intervals of time that are assigned to a resource. They are defined as
 `showButton` | `boolean` | Show button bar. | undefined |
 `buttonClasses` | `string`\|`Array` | Button classes, useful for fontawesome icons. | undefined |
 `buttonHtml` | `string` | Html content of button. | undefined |
-`enableDragging` | `boolean` | enable dragging of task. | true |
-`enableResize` | `boolean` | enable resize of task. | true |
+`draggable` | `boolean` | enable dragging of task. | true |
+`enableDragging` | `boolean` | enable dragging of task. *(deprecated)* | true |
+`resizable` | `boolean` | enable resize of task. | true |
+`resizeEnabled` | `boolean` | enable resize of task. *(deprecated)* | true |
 
 
 

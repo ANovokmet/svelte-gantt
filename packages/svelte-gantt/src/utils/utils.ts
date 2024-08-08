@@ -93,3 +93,11 @@ export function get<T, C = number | Date>(
     const res = getIndicesOnly(input, value, comparer, strict);
     return [input[res[0]], input[res[1]]];
 }
+
+export function isDraggable(item: { draggable?: boolean; enableDragging?: boolean; }) {
+    return item.draggable ?? item.enableDragging ?? true;
+}
+
+export function isResizable(item: { resizable?: boolean; enableResize?: boolean; }) {
+    return item.resizable ?? item.enableResize ?? true;
+}

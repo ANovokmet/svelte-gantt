@@ -19,7 +19,9 @@ Rows are defined as a list of objects. Rows can be rendered as a collapsible tre
 `classes` | `string &#124; string[]` | Custom CSS classes to apply to row.
 `contentHtml` | `string` | Html content of row, renders as background to a row.
 `enableDragging` | `boolean` | enable dragging of tasks to and from this row. | `true`
+`draggable` | `boolean` | enable dragging of tasks to and from this row. *(deprecated)* | `true`
 `enableResize` | `boolean` | enable resize of tasks on this row. | `true`
+`resizable` | `boolean` | enable resize of tasks on this row. *(deprecated)* | `true`
 `label` | `string` | Label of row, could be any other property, can be displayed with SvelteGanttTable.
 `headerHtml` | `string` | Html content of table row header, displayed in SvelteGanttTable.
 `children` | `object[]` | List of children row objects, these can have their own children.

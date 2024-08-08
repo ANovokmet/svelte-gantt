@@ -8,6 +8,7 @@
     import type { SvelteTask } from '../task';
     import type { SvelteRow } from '../row';
     import { scrollIfOutOfBounds, setCursor } from '../../utils/dom';
+    import { isDraggable, isResizable } from '../../utils/utils';
 
     type RootState = Partial<{
         xDelta: number;
@@ -41,17 +42,12 @@
     const context: DragContext = {
         rootState: root,
         dragAllowed({ model }: SvelteTask) {
-            return (
-                $rowStore.entities[model.resourceId].model.enableDragging &&
-                model.enableDragging
-            );
+            const rowModel = $rowStore.entities[model.resourceId].model;
+            return isDraggable(rowModel) && isDraggable(model);
         },
         resizeAllowed({ model }: SvelteTask) {
-            return (
-                model.type !== 'milestone' &&
-                $rowStore.entities[model.resourceId].model.enableResize &&
-                model.enableResize
-            );
+            const rowModel = $rowStore.entities[model.resourceId].model;
+            return model.type !== 'milestone' && isResizable(rowModel) && isResizable(model);
         },
         off(taskId) {
             delete $root[taskId];

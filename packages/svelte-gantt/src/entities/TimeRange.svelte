@@ -6,25 +6,13 @@
     export let width;
     export let resizing = false;
 
-    const _position = {
-        width,
-        x: left
-    };
-    $: {
-        _position.x = left;
-        _position.width = width;
-    }
-
-    let classes;
-    $: {
-        classes = normalizeClassAttr(model.classes);
-    }
+    $: classes = normalizeClassAttr(model.classes);
 </script>
 
 <div
     class="sg-time-range {classes}"
     class:moving={resizing}
-    style="width:{_position.width}px;left:{_position.x}px"
+    style="width:{width}px;left:{left}px"
 >
     {#if model.label}
         <div class="sg-time-range-label">{model.label}</div>
