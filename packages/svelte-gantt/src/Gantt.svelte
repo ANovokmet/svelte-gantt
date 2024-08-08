@@ -724,6 +724,7 @@
     let startIndex;
     $: {
         if (rowsAreOfSameHeight) {
+            const rowHeight = rowContainerHeight / filteredRows.length;
             startIndex = Math.floor(__scrollTop / rowHeight);
         } else {
             startIndex = getIndicesOnly(filteredRows, __scrollTop, row => row.y)[0];
