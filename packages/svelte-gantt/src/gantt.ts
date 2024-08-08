@@ -1,7 +1,6 @@
 import type { ColumnService } from './core/column';
 import type { GanttApi } from './core/api';
 import type { Component } from './core/svelte';
-import type { DragDropManager } from './core/drag';
 import type { RowModel, SvelteRow } from './core/row';
 import type { TaskModel, SvelteTask } from './core/task';
 import type { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
@@ -52,7 +51,6 @@ export type InvalidatePositionOptions = {
 export interface GanttContextServices {
     utils: GanttUtils;
     api: GanttApi;
-    dndManager: DragDropManager;
     selectionManager: SelectionManager;
     columnService: ColumnService;
 }
@@ -174,7 +172,6 @@ export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
     api: GanttApi;
     utils: GanttUtils;
     columnService: ColumnService;
-    dndManager: DragDropManager;
     timeRangeFactory: TimeRangeFactory;
 
     refreshTasks();

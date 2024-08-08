@@ -6,6 +6,7 @@ import { getContext } from 'svelte';
 type Options = {
     enabled?: boolean;
     container: HTMLElement;
+    boundsContainer?: HTMLElement;
     onMove(e: MoveEvent): void;
     onEnd(e: MoveEvent): void;
 }
@@ -49,7 +50,17 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
     let initialY: number;
     let triggered = false;
 
+    /** dragging will not activate around the edges */
+    let deadZone = 10;
+
     const container = () => options.container;
+
+    function isNearEdge(x: number, y: number) {
+        const rect = options.boundsContainer.getBoundingClientRect();
+        const nearBottomEdge = y - rect.top >= rect.height - deadZone;
+        const nearRightEdge = x - rect.left >= rect.width - deadZone;
+        return nearBottomEdge || nearRightEdge;
+    }
 
     function onMousedown(event: MouseEvent) {
         if (!options.enabled) {
@@ -58,6 +69,10 @@ function createTaskAction(node: HTMLElement, options: InnerOptions) {
 
         event.stopPropagation();
         event.preventDefault();
+
+        if (isNearEdge(event.clientX, event.clientY)) {
+            return;
+        }
 
         const [mousePosX, _] = getRelativePosition(container(), event);
 

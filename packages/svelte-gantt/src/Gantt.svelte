@@ -22,7 +22,7 @@
     import { collapseRow, expandRow, createRows } from './core/row';
     import type { RowModel, SvelteRow } from './core/row';
     import { TimeRangeFactory } from './core/timeRange';
-    import { DragDropManager, DraggableGroup } from './core/drag';
+    import { DraggableGroup } from './core/drag';
     import { SelectionManager } from './core/selectionManager';
     import { createColumnService } from './core/column';
     import type { HighlightedDurations, Column as IColumn } from './core/column';
@@ -506,7 +506,6 @@
     export const api = provideGanttApi();
     const selectionManager = new SelectionManager(taskStore);
 
-    export const dndManager = new DragDropManager(rowStore);
     export const timeRangeFactory = new TimeRangeFactory(columnService);
 
     export const utils = createUtils({
@@ -522,7 +521,6 @@
     setContext('services', {
         utils,
         api,
-        dndManager,
         selectionManager,
         columnService,
     });
@@ -1028,7 +1026,7 @@
             bind:offsetHeight={offsetHeight}
             bind:clientWidth={$visibleWidth}
             bind:offsetWidth={offsetWidth}
-            use:dragCreateTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd }}
+            use:dragCreateTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd, boundsContainer: mainContainer }}
         >
             <div class="content" style="width:{$_width}px">
                 <Columns {columns} {columnStrokeColor} {columnStrokeWidth} {useCanvasColumns} />

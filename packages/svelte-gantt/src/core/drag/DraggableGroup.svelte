@@ -7,7 +7,7 @@
     import { getContext } from 'svelte';
     import type { SvelteTask } from '../task';
     import type { SvelteRow } from '../row';
-    import { scrollIfOutOfBounds, setCursor } from '../../utils/dom';
+    import { scrollIfOutOfBounds, setCursor, getRowAtPoint } from '../../utils/dom';
     import { isDraggable, isResizable } from '../../utils/utils';
 
     type RootState = Partial<{
@@ -30,7 +30,7 @@
     const { taskStore, rowStore } = getContext('dataStore');
     const gantt = getContext('gantt');
     const { rowPadding } = getContext('options');
-    const { dndManager, api, utils, columnService, selectionManager } = getContext('services');
+    const { api, utils, columnService, selectionManager } = getContext('services');
 
     const dispatcher = createEventDispatcher<{ 
         change: {  changes: DragChange[]; }; 
@@ -168,7 +168,11 @@
         const sourceRow = $rowStore.entities[model.resourceId];
         let targetRow: SvelteRow;
         if (event.dragging) {
-            targetRow = dndManager.getTarget('row', event.mouseEvent);
+            const rowId = getRowAtPoint(event.mouseEvent);
+            const row = $rowStore.entities[rowId];
+            if (isDraggable(row.model)) {
+                targetRow = row;
+            }
             // target row can be null
         } else {
             // dont know about this
@@ -197,6 +201,7 @@
         const top = $rowPadding + (targetRow?.y ?? 0);
         // get value of top from the layout
 
+
         const current: Position = {
             left,
             top,
@@ -211,6 +216,7 @@
             from: model.from,
             to: model.to,
         }
+
         return {
             valid: true,
             task,

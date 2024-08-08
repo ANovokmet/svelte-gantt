@@ -1,7 +1,8 @@
+import { isDraggable } from '../../utils/utils';
 import { useDraggable } from '../../core/drag';
 import type { SvelteRow } from '../../core/row';
 import type { SvelteGanttComponent } from '../../gantt';
-import { getRelativePos } from '../../utils/dom';
+import { getRelativePos, getRowAtPoint } from '../../utils/dom';
 
 interface DragOptions {
     /** SvelteGantt this is binded to */
@@ -64,10 +65,11 @@ export class SvelteGanttExternal {
         this.element.style.left = x + 'px';
     }
 
-    onDrop(event) {
+    onDrop(event: { mouseEvent: MouseEvent }) {
         const gantt = this.options.gantt;
-        const targetRow = gantt.dndManager.getTarget('row', event.mouseEvent);
-        if (targetRow) {
+        const rowId = getRowAtPoint(event.mouseEvent);
+        const targetRow = gantt.getRow(rowId);
+        if (targetRow && isDraggable(targetRow.model)) {
             const mousePos = getRelativePos(gantt.getRowContainer(), event.mouseEvent);
             const date = gantt.utils.getDateByPosition(mousePos.x);
 

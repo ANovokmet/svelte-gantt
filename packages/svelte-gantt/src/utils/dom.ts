@@ -141,3 +141,13 @@ export const scrollIfOutOfBounds = throttle((event: MouseEvent, scrollable: HTML
         });
     }
 }, 250);
+
+export function getRowAtPoint(event: MouseEvent) {
+    const elements = document.elementsFromPoint(event.clientX, event.clientY);
+    const rowElement = elements.find(element => !!element.getAttribute('data-row-id'));
+    if (rowElement !== undefined) {
+        const rowId = rowElement.getAttribute('data-row-id');
+        return rowId;
+    }
+    return null;
+}
