@@ -594,6 +594,7 @@
         const task = $taskStore.entities[id];
         if (!task) return;
         const row = $rowStore.entities[task.model.resourceId];
+        if (!row) return;
         const targetLeft = task.left;
         const targetTop = row.y;
 
@@ -759,6 +760,7 @@
         let ordered = true;
         let ordinal = 0;
         function tryRestorePosition(task: SvelteTask) {
+            if (!task) return;
             tasks.push(task);
             const id = task.model.id;
             if (previousOrder[id] != null) {

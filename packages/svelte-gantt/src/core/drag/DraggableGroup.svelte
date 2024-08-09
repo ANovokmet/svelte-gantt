@@ -42,12 +42,12 @@
     const context: DragContext = {
         rootState: root,
         dragAllowed({ model }: SvelteTask) {
-            const rowModel = $rowStore.entities[model.resourceId].model;
-            return isDraggable(rowModel) && isDraggable(model);
+            const row = $rowStore.entities[model.resourceId];
+            return row && isDraggable(row.model) && isDraggable(model);
         },
         resizeAllowed({ model }: SvelteTask) {
-            const rowModel = $rowStore.entities[model.resourceId].model;
-            return model.type !== 'milestone' && isResizable(rowModel) && isResizable(model);
+            const row = $rowStore.entities[model.resourceId];
+            return model.type !== 'milestone' && row && isResizable(row.model) && isResizable(model);
         },
         off(taskId) {
             delete $root[taskId];
@@ -170,7 +170,7 @@
         if (event.dragging) {
             const rowId = getRowAtPoint(event.mouseEvent);
             const row = $rowStore.entities[rowId];
-            if (isDraggable(row.model)) {
+            if (row && isDraggable(row.model)) {
                 targetRow = row;
             }
             // target row can be null

@@ -63,6 +63,7 @@ export function overlap(params: LayoutParams): LayoutResult {
 
     function positionTask(task: SvelteTask) {
         const row = rowStore.entities[task.model.resourceId];
+        if (!row) return;
         task.height = (row ? row.height : undefined) - 2 * rowPadding;
         task.top = row.y + rowPadding;
     }

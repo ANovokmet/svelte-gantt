@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import type { TaskModel, SvelteTask } from '../core/task';
+    import type { TaskModel } from '../core/task';
     import { normalizeClassAttr } from '../utils/dom';
     import { isResizable } from '../utils/utils';
 
@@ -39,8 +39,8 @@
 
     let resizeEnabled: boolean;
     $: {
-        const rowModel = $rowStore.entities[model.resourceId].model;
-        resizeEnabled = model.type !== 'milestone' && isResizable(rowModel) && isResizable(model);
+        const row = $rowStore.entities[model.resourceId];
+        resizeEnabled = model.type !== 'milestone' && row && isResizable(row.model) && isResizable(model);
     }
 
     let _moving: boolean;
