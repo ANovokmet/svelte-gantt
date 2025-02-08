@@ -11,7 +11,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import sveltePreprocess from 'svelte-preprocess';
-import dts from 'rollup-plugin-dts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json')));
@@ -55,9 +54,9 @@ promise = promise.then(() =>
 );
 
 // Compile source code into a distributable format
-promise = promise.then((bundle) => {
-    return Promise.all(['es', 'iife'].map(format => {
-        // /*, 'cjs', 'umd'*/
+['es', 'iife'].forEach(format => {
+    // /*, 'cjs', 'umd'*/
+    promise.then(bundle => {
         return bundle.write({
             file: `${outputDir}/${format === 'es' ? 'index' : `index.${format}`}.js`,
             sourcemap: true,
@@ -65,19 +64,7 @@ promise = promise.then((bundle) => {
             extend: format === 'iife',
             name: format === 'iife' ? 'window' : undefined // pkg.name : undefined,
         });
-    })).then(() => bundle.close());
-})
-
-promise = promise.then(() => {
-    return _rollup({
-        input: `${outputDir}/types/src/index.d.ts`,
-        plugins: [dts()],
-    }).then((bundle) => bundle.write({
-        file: `${outputDir}/index.d.ts`, 
-        format: 'es'
-    })).then(() => 
-        del([`${outputDir}/types`])
-    )
+    });
 });
 
 // Copy package.json and LICENSE.txt
@@ -90,7 +77,7 @@ promise = promise.then(() => {
     pkg.peerDependencies.svelte = '^4.0.0';
     pkg.exports = {
         '.': {
-            types: './index.d.ts',
+            types: './types/index.d.ts',
             default: './index.js'
         },
         './svelte': {

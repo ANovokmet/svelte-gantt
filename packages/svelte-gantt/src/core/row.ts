@@ -6,7 +6,7 @@ export interface RowModel {
     label: string;
     classes?: string | string[];
     contentHtml?: string;
-    height?: number;
+    height: number;
 
     /** 
      * enable dragging to row
