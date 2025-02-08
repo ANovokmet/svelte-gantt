@@ -83,7 +83,7 @@
     }
 
     .sg-table-cell {
-        border-right: 1px solid #eee;
+        border-right: 1px solid var(--sg-table-cell-border-color);
     }
 
     .sg-table-cell:last-child {
@@ -91,8 +91,7 @@
     }
 
     .sg-table-body-cell {
-        border-bottom: #efefef 1px solid;
-        background-color: #fff;
+        border-bottom: 1px solid var(--sg-table-cell-border-color);
         font-weight: bold;
     }
 

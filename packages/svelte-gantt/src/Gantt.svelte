@@ -1082,6 +1082,29 @@
 </div>
 
 <style>
+    :global(.sg-gantt) {
+        --sg-column-header-bg-hover: #f9f9f9;
+        --sg-column-border-color: #efefef;
+        --sg-column-header-border-color: #efefef;
+        --sg-table-cell-border-color: #efefef;
+        --sg-table-header-cell-border-color: #efefef;
+        --sg-table-header-cell-bg: #fbfbfb;
+        --sg-resize-color: #e9eaeb;
+        --sg-dependency-arrow-color: #64748b;
+        --sg-task-resize-color: rgba(255, 255, 255, 0.5);
+        --sg-task-selected-outline-color: rgba(3, 169, 244, 0.5);
+
+        --sg-column-header-bg-hover: #333;
+        --sg-column-border-color: #333;
+        --sg-column-header-border-color: #333;
+        --sg-table-cell-border-color: #333;
+        --sg-table-header-cell-border-color: #333;
+        --sg-table-header-cell-bg: #333;
+        --sg-resize-color: #333;
+        --sg-dependency-arrow-color: red;
+        --sg-task-resize-color: #ccc;
+    }
+
     .sg-disable-transition :global(.sg-task),
     .sg-disable-transition :global(.sg-milestone) {
         transition:

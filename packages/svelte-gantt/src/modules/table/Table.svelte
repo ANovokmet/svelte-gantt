@@ -131,8 +131,8 @@
         display: flex;
         align-items: stretch;
         overflow: hidden;
-        border-bottom: #efefef 1px solid;
-        background-color: #fbfbfb;
+        border-bottom: 1px solid var(--sg-table-header-cell-border-color);
+        background: var(--sg-table-header-cell-bg);
     }
 
     .sg-table-body {

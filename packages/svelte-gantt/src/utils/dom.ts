@@ -151,3 +151,11 @@ export function getRowAtPoint(event: MouseEvent) {
     }
     return null;
 }
+
+export function whenEnterPress(callback: (e: KeyboardEvent) => void) {
+    return (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            callback(e);
+        }
+    }
+}

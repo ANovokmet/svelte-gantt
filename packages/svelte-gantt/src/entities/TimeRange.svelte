@@ -29,19 +29,19 @@
 
         background-image: linear-gradient(
             -45deg,
-            rgba(0, 0, 0, 0) 46%,
+            transparent 46%,
             #e03218 49%,
             #e03218 51%,
-            rgba(0, 0, 0, 0) 55%
+            transparent 55%
         );
         background-size: 6px 6px !important;
-        color: red;
         font-weight: 400;
     }
 
     .sg-time-range-label {
         margin-top: 10px;
         background: #fff;
+        color: red;
         white-space: nowrap;
         padding: 4px;
         font-weight: 400;

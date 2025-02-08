@@ -4,6 +4,7 @@
 
     import { getAllPeriods } from '../utils/date';
     import { getPositionByDate } from '../utils/utils';
+    import { whenEnterPress } from '../utils/dom';
 
     const { from, to, width } = getContext('dimensions');
     const { dateAdapter } = getContext('options');
@@ -50,7 +51,6 @@
 
 <div class="column-header-row">
     {#each header.columns as _header}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             class="column-header-cell"
             role="button"
@@ -58,6 +58,7 @@
             class:sticky={header.sticky}
             style="left:{_header.left}px;width:{_header.width}px"
             on:click={() => onHeaderClick(_header)}
+            on:keydown={whenEnterPress(() => onHeaderClick(_header))}
         >
             <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
         </div>
@@ -93,12 +94,12 @@
         cursor: pointer;
         user-select: none;
 
-        border-right: #efefef 1px solid;
-        border-bottom: #efefef 1px solid;
+        border-right: var(--sg-column-header-border-color) 1px solid;
+        border-bottom: var(--sg-column-header-border-color) 1px solid;
     }
 
     .column-header-cell:hover {
-        background: #f9f9f9;
+        background: var(--sg-column-header-bg-hover);
     }
 
     .column-header-cell.sticky > .column-header-cell-label {

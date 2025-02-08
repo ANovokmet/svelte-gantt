@@ -5,8 +5,8 @@
     export let id;
     export let fromId;
     export let toId;
-    export let stroke = 'red';
-    export let strokeWidth = 2;
+    export let stroke: string = undefined;
+    export let strokeWidth: number = undefined;
 
     const MIN_LEN = 12;
     const ARROW_SIZE = 5;
@@ -83,20 +83,14 @@
 {#if (!isFromRowHidden && !isToRowHidden) || isFromRowHidden !== isToRowHidden}
     <div class="sg-dependency" style="left:0;top:0" data-dependency-id={id}>
         <svg
-            class="arrow"
+            class="sg-arrow"
             xmlns="http://www.w3.org/2000/svg"
             shape-rendering="crispEdges"
             height="100%"
             width="100%"
         >
-            <path
-                class="select-area"
-                d={path}
-                {stroke}
-                stroke-width={strokeWidth}
-                fill="transparent"
-            />
-            <path d={arrowPath} fill={stroke} />
+            <path class="sg-arrow-path select-area" d={path} style:stroke={stroke} style:stroke-width={strokeWidth != null ? `${strokeWidth}px` : null} />
+            <path class="sg-arrow-head" d={arrowPath} style:fill={stroke} />
         </svg>
     </div>
 {/if}
@@ -107,11 +101,23 @@
         width: 100%;
         height: 100%;
     }
-    .arrow {
+
+    .sg-arrow {
         position: absolute;
         left: 0px;
         pointer-events: none;
     }
+
+    :global(path.sg-arrow-path) {
+        stroke: var(--sg-dependency-arrow-color);
+        fill: transparent;
+        stroke-width: 2px;
+    }
+
+    :global(.sg-arrow-head) {
+        fill: var(--sg-dependency-arrow-color);
+    }
+
     .select-area {
         pointer-events: visible;
         position: absolute;

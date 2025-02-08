@@ -104,14 +104,6 @@
         color: #888;
     }
 
-    .debug {
-        position: absolute;
-        top: -10px;
-        right: 0;
-        font-size: 8px;
-        color: black;
-    }
-
     .sg-task {
         position: absolute;
         border-radius: 2px;
@@ -146,16 +138,7 @@
         user-select: none;
     }
 
-    .sg-task.animating:not(.moving) {
-        transition:
-            left 0.2s,
-            top 0.2s,
-            transform 0.2s,
-            background-color 0.2s,
-            width 0.2s,
-            height 0.2s;
-    }
-
+    .sg-task.animating:not(.moving),
     .sg-task--sticky:not(.moving) {
         transition:
             left 0.2s,
@@ -177,21 +160,7 @@
         opacity: 0.5;
     }
 
-    .sg-task.resize-enabled:hover::before {
-        content: '';
-        width: 4px;
-        height: 50%;
-        top: 25%;
-        position: absolute;
-        border-style: solid;
-        border-color: rgba(255, 255, 255, 0.5);
-        cursor: ew-resize;
-        margin-left: 3px;
-        left: 0;
-        border-width: 0 1px;
-        z-index: 1;
-    }
-
+    .sg-task.resize-enabled:hover::before,
     .sg-task.resize-enabled:hover::after {
         content: '';
         width: 4px;
@@ -199,12 +168,20 @@
         top: 25%;
         position: absolute;
         border-style: solid;
-        border-color: rgba(255, 255, 255, 0.5);
+        border-color: var(--sg-task-resize-color);
         cursor: ew-resize;
-        margin-right: 3px;
-        right: 0;
         border-width: 0 1px;
         z-index: 1;
+    }
+
+    .sg-task.resize-enabled:hover::before {
+        margin-left: 3px;
+        left: 0;
+    }
+
+    .sg-task.resize-enabled:hover::after {
+        margin-right: 3px;
+        right: 0;
     }
 
     .sg-task-reflected {
@@ -234,7 +211,7 @@
     }
 
     :global(.sg-task-selected) {
-        outline: 2px solid rgba(3, 169, 244, 0.5);
+        outline: 2px solid var(--sg-task-selected-outline-color);
         outline-offset: 3px;
         z-index: 1;
     }

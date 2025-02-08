@@ -43,7 +43,7 @@
 <style>
     .sg-resize {
         z-index: 2;
-        background: #e9eaeb;
+        background: var(--sg-resize-color);
         width: 5px;
         cursor: col-resize;
         position: absolute;

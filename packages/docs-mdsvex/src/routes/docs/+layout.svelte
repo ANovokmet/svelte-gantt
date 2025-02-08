@@ -17,7 +17,7 @@
 		></div>
 	</div>
 
-	<main class={`w-full overflow-x-hidden lg:min-h-64 min-h-[calc(100vh-var(--sg--navbar-height))] px-8 992:px-16 pt-8`}>
+	<main class={`w-full overflow-x-hidden lg:min-h-64 min-h-[calc(100vh-var(--sg--navbar-height))] px-8 992:px-16 pt-8 bg-slate-900`}>
 
 		<article class="markdown prose dark:prose-invert z-10 max-w-[var(--sg-article-max-width)]">
 			<p class="text-brand mb-3.5 text-[15px] font-semibold leading-6">{$meta.category?.title}</p>
