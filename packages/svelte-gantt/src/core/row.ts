@@ -3,10 +3,10 @@ export interface RowModel {
      * Id of row, every resource needs to have a unique one
      */
     id: PropertyKey;
-    label: string;
+    label?: string;
     classes?: string | string[];
     contentHtml?: string;
-    height: number;
+    height?: number;
 
     /** 
      * enable dragging to row

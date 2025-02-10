@@ -1,7 +1,7 @@
 import { isDraggable } from '../../utils/utils';
 import { useDraggable } from '../../core/drag';
 import type { SvelteRow } from '../../core/row';
-import type { SvelteGanttComponent } from '../../gantt';
+import type { SvelteGanttComponent } from '../..';
 import { getRelativePos, getRowAtPoint } from '../../utils/dom';
 
 interface DragOptions {

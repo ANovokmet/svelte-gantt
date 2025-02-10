@@ -46,6 +46,7 @@ promise = promise.then(() =>
             commonjs(),
             typescript({
                 compilerOptions: {
+                    rootDir: "./src",
                     declarationDir: `${outputDir}/types`
                 }
             })
@@ -74,7 +75,8 @@ promise = promise.then(() => {
     delete pkg.scripts;
     delete pkg.eslintConfig;
 
-    pkg.peerDependencies.svelte = '^4.0.0';
+    pkg.peerDependencies = { svelte: '^4.0.0' };
+    pkg.devDependencies = { svelte: '^4.0.0' };
     pkg.exports = {
         '.': {
             types: './types/index.d.ts',

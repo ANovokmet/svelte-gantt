@@ -1,6 +1,5 @@
 import type { ColumnService } from './core/column';
 import type { GanttApi } from './core/api';
-import type { Component } from './core/svelte';
 import type { RowModel, SvelteRow } from './core/row';
 import type { TaskModel, SvelteTask } from './core/task';
 import type { TimeRangeModel, TimeRangeFactory } from './core/timeRange';
@@ -11,7 +10,7 @@ import type { SvelteGanttDateAdapter } from './utils/date';
 import type { Writable, Readable } from 'svelte/store';
 import { SelectionManager } from './core/selectionManager';
 
-interface Header {
+export interface Header {
     unit: string;
     format: string;
     offset?: number;
@@ -166,27 +165,4 @@ export interface SvelteGanttOptions {
      * Headers of table, used with SvelteGanttTable module
      */
     tableHeaders?: TableHeader[];
-}
-
-export interface SvelteGanttComponent extends Component<SvelteGanttOptions> {
-    api: GanttApi;
-    utils: GanttUtils;
-    columnService: ColumnService;
-    timeRangeFactory: TimeRangeFactory;
-
-    refreshTasks();
-    refreshTimeRanges();
-    getRowContainer(): HTMLElement;
-    selectTask(id: number);
-    unselectTasks();
-    scrollToTask(id: number, scrollBehavior?: string);
-    scrollToRow(id: number, scrollBehavior?: string);
-
-    updateTask(model: TaskModel);
-    updateTasks(models: TaskModel[]);
-    updateRow(model: RowModel);
-    updateRows(models: RowModel[]);
-    getTask(id): SvelteTask;
-    getTasks(resourceId): SvelteTask[];
-    getRow(id): SvelteRow;
 }

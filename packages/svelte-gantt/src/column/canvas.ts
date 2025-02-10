@@ -1,4 +1,4 @@
-import { Column } from 'src/core/column';
+import { Column } from '../core/column';
 
 export function createBackground(
     columns: Column[],

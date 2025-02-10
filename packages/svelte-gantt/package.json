@@ -1,7 +1,7 @@
 {
     "name": "svelte-gantt",
     "description": "Interactive JavaScript Gantt chart/resource booking component",
-    "version": "4.4.2",
+    "version": "4.5.0",
     "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
     "type": "module",
     "scripts": {
@@ -72,7 +72,7 @@
         "rollup-plugin-postcss": "^4.0.1",
         "rollup-plugin-svelte": "^7.1.5",
         "rollup-plugin-uglify": "^3.0.0",
-        "svelte": "^4.2.1",
+        "svelte": "^4.2.19",
         "svelte-check": "^3.4.3",
         "svelte-preprocess": "^5.0.3",
         "tslib": "^2.0.0",
