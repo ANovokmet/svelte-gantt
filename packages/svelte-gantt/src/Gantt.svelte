@@ -33,7 +33,7 @@
     import * as layouts from './core/layouts';
     import { useCreateTask } from './modules/create-tasks';
     import type { MoveEvent } from './modules/create-tasks';
-    import type { GanttContext, InvalidatePositionOptions } from './gantt';
+    import type { GanttContext, Header, InvalidatePositionOptions } from './gantt';
     import Draggable from './core/drag/Draggable.svelte';
     import type { DragChange, State as DraggingState } from './core/drag/DragContext';
 
@@ -45,8 +45,17 @@
         }
     }
 
+    /**
+     * Rows to load in the gantt
+     */
     export let rows: RowModel[];
+    /**
+     * Tasks that display in the gantt
+     */
     export let tasks: TaskModel[] = [];
+    /**
+     * Timeranges that display in the gantt
+     */
     export let timeRanges = [];
 
     assertSet({ rows });
@@ -54,7 +63,9 @@
     $: if (mounted) initTasks(tasks);
     $: if (mounted) initTimeRanges(timeRanges);
 
+    /** top and bottom padding of a single row in px */
     export let rowPadding = 6;
+    /** height of a single row in px */
     export let rowHeight = 52;
     const _rowHeight = writable(rowHeight);
     const _rowPadding = writable(rowPadding);
@@ -65,7 +76,9 @@
         return date instanceof Date ? date.valueOf() : date;
     }
 
+    /** datetime timeline starts on, date */
     export let from;
+    /** datetime timeline ends on, date */
     export let to;
     assertSet({ from, to });
     const _from = writable(toDateNum(from));
@@ -73,7 +86,9 @@
     $: $_from = toDateNum(from);
     $: $_to = toDateNum(to);
 
+    /** Minimum width of main gantt area in px */
     export let minWidth = 800;
+    /** should timeline stretch width to fit */
     export let fitWidth = false;
     const _minWidth = writable(minWidth);
     const _fitWidth = writable(fitWidth);
@@ -82,11 +97,20 @@
         $_fitWidth = fitWidth;
     }
 
-    export let classes = [];
-    export let headers = [
+    /** sets top level gantt class which can be used for styling */
+    export let classes: string | string[] = [];
+    /**
+     * list of headers used for main gantt area
+     *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+     *  - format: datetime format used for header cell label
+     **/
+    export let headers: Header[] = [
         { unit: 'day', format: 'MMMM Do' },
         { unit: 'hour', format: 'H:mm' }
     ];
+    /**
+     * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
+     */
     export let zoomLevels = [
         {
             headers: [
@@ -105,14 +129,22 @@
             fitWidth: false
         }
     ];
+    /** task content factory function, e.g. (task) => '<div>Custom task content</div>'  */
     export let taskContent = null;
+    /**
+     * Width of table, used with SvelteGanttTable module
+     */
     export let tableWidth = 240;
+    /** width of handle for resizing task */
     export let resizeHandleWidth = 10;
+    /** handler of button clicks, e.g. (task) => {debugger}, */
     export let onTaskButtonClick = null;
 
     export let dateAdapter: SvelteGanttDateAdapter = new DefaultSvelteGanttDateAdapter();
 
+    /** minimum unit of time task date values will round to */
     export let magnetUnit = 'minute';
+    /** amount of units task date values will round to */
     export let magnetOffset = 15;
     let magnetDuration: number;
     $: setMagnetDuration(magnetUnit, magnetOffset);
@@ -124,14 +156,21 @@
         }
     }
 
+    /** duration unit of columns */
     export let columnUnit = 'minute';
+    /** duration width of column */
     export let columnOffset = 15;
 
     // export until Svelte3 implements Svelte2's setup(component) hook
     export let ganttTableModules = [];
     export let ganttBodyModules = [];
-
+    /**
+     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree.
+     */
     export let reflectOnParentRows = true;
+    /**
+     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
+     */
     export let reflectOnChildRows = false;
 
     /**
@@ -139,10 +178,15 @@
      * Set to false if advanced CSS styling is needed.
      **/
     export let useCanvasColumns = true;
+    /** color of strokes seperating the columns in ganttbody */
     export let columnStrokeColor = '#efefef';
+    /** width of strokes seperating the columns in ganttbody */
     export let columnStrokeWidth = 1;
-
-    export let highlightedDurations: HighlightedDurations;
+    /** 
+     * object including a unit and fractions of that unit that should be highlighted eg. {unit: 'days', fractions: [0,6]} -> will highlight weekends.
+     * highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
+     */
+    export let highlightedDurations: HighlightedDurations = undefined;
     export let highlightColor = '#6eb859';
 
     /** Allows working with the actual DOM node */
@@ -550,7 +594,7 @@
         taskStore.refresh();
     }
 
-    export function getRowContainer() {
+    export function getRowContainer(): HTMLElement {
         return rowContainer;
     }
 
@@ -684,7 +728,7 @@
         updateLayoutSync();
     }
 
-    export function getRow(resourceId) {
+    export function getRow(resourceId: PropertyKey): SvelteRow {
         return $rowStore.entities[resourceId];
     }
 
@@ -1093,7 +1137,7 @@
         --sg-dependency-arrow-color: #64748b;
         --sg-task-resize-color: rgba(255, 255, 255, 0.5);
         --sg-task-selected-outline-color: rgba(3, 169, 244, 0.5);
-
+/* 
         --sg-column-header-bg-hover: #333;
         --sg-column-border-color: #333;
         --sg-column-header-border-color: #333;
@@ -1102,7 +1146,7 @@
         --sg-table-header-cell-bg: #333;
         --sg-resize-color: #333;
         --sg-dependency-arrow-color: red;
-        --sg-task-resize-color: #ccc;
+        --sg-task-resize-color: #ccc; */
     }
 
     .sg-disable-transition :global(.sg-task),
