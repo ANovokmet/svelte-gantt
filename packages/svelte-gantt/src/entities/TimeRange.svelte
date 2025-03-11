@@ -1,12 +1,21 @@
 <script lang="ts">
     import { normalizeClassAttr } from '../utils/dom';
 
-    export let model;
-    export let left;
-    export let width;
-    export let resizing = false;
+    interface Props {
+        model: any;
+        left: any;
+        width: any;
+        resizing?: boolean;
+    }
 
-    $: classes = normalizeClassAttr(model.classes);
+    let {
+        model,
+        left,
+        width,
+        resizing = false
+    }: Props = $props();
+
+    let classes = $derived(normalizeClassAttr(model.classes));
 </script>
 
 <div

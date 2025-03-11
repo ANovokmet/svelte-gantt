@@ -1,26 +1,32 @@
 <script lang="ts">
     import { createBackground } from './canvas';
 
-    /**
+    interface Props {
+        /**
      * Container component for columns rendered as gantt body background
      */
-    export let columns;
-
-    export let useCanvasColumns = true;
-    export let columnStrokeWidth;
-    export let columnStrokeColor;
-    export let columnDefaultColor = '#ffffff';
-
-    let backgroundImage;
-    $: {
-        // TODO: background repeats and so do columns so passing every element is not needed, but line alignment issues occur on later rows
-        // TODO: I used to make column widths and positions whole numbers, now they contain decimals again, check if this is because of that
-        backgroundImage = createBackground(columns, {
-            // columns.slice(0,5)
-            columnStrokeColor,
-            columnStrokeWidth
-        });
+        columns: any;
+        useCanvasColumns?: boolean;
+        columnStrokeWidth: any;
+        columnStrokeColor: any;
+        columnDefaultColor?: string;
     }
+
+    let {
+        columns,
+        useCanvasColumns = true,
+        columnStrokeWidth,
+        columnStrokeColor,
+        columnDefaultColor = '#ffffff'
+    }: Props = $props();
+
+    //  TODO: I used to make column widths and positions whole numbers, now they contain decimals again, check if this is because of that
+    //  TODO: background repeats and so do columns so passing every element is not needed, but line alignment issues occur on later rows
+    let backgroundImage = $derived(createBackground(columns, {
+        // columns.slice(0,5)
+        columnStrokeColor,
+        columnStrokeWidth
+    }));
 </script>
 
 {#if useCanvasColumns}

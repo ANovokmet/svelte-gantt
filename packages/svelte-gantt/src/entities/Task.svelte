@@ -1,19 +1,35 @@
 <script lang="ts">
     import { getContext } from 'svelte';
+
     import type { TaskModel } from '../core/task';
     import { normalizeClassAttr } from '../utils/dom';
     import { isResizable } from '../utils/utils';
 
-    export let model: TaskModel;
-    export let height: number;
-    export let left: number;
-    export let top: number;
-    export let width: number;
-    export let reflected = false;
-    export let animating = true;
+    interface Props {
+        model: TaskModel;
+        height: number;
+        left: number;
+        top: number;
+        width: number;
+        reflected?: boolean;
+        animating?: boolean;
+        dragging?: boolean;
+        resizing?: boolean;
+        onPointerDown?: (e: PointerEvent) => void;
+    }
 
-    export let dragging = false;
-    export let resizing = false;
+    let {
+        model,
+        height,
+        left,
+        top,
+        width,
+        reflected = false,
+        animating = true,
+        dragging = false,
+        resizing = false,
+        onPointerDown = () => undefined,
+    }: Props = $props();
 
     const { rowStore } = getContext('dataStore');
     const { taskContent, onTaskButtonClick, taskElementHook } = getContext('options');
@@ -35,18 +51,14 @@
         }
     }
 
-    $: classes = model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default';
+    let classes = $derived(model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default');
 
-    let resizeEnabled: boolean;
-    $: {
+    let resizeEnabled = $derived.by(() => {
         const row = $rowStore.entities[model.resourceId];
-        resizeEnabled = model.type !== 'milestone' && row && isResizable(row.model) && isResizable(model);
-    }
+        return model.type !== 'milestone' && row && isResizable(row.model) && isResizable(model);
+    });
 
-    let _moving: boolean;
-    $: {
-        _moving = dragging || resizing;
-    }
+    let _moving: boolean = $derived(dragging || resizing);
 </script>
 
 <div
@@ -63,13 +75,13 @@
     class:sg-task--sticky={model.stickyLabel}
     class:sg-ignore-click={_ignoreClick}
     class:sg-task-instant={width === 0}
-    on:pointerdown
+    onpointerdown={onPointerDown}
 >
     {#if model.type === 'milestone'}
         <div class="sg-milestone__diamond"></div>
     {/if}
     {#if model.amountDone}
-        <div class="sg-task-background" style="width:{model.amountDone}%" />
+        <div class="sg-task-background" style="width:{model.amountDone}%"></div>
     {/if}
     <div class="sg-task-content">
         {#if model.html}
@@ -80,10 +92,10 @@
             {model.label}
         {/if}
         {#if model.showButton}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <span
                 class="sg-task-button {model.buttonClasses}"
-                on:click={onClick}
+                onclick={onClick}
                 role="button"
                 tabindex="0"
             >

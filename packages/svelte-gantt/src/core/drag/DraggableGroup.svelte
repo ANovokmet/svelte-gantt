@@ -3,7 +3,6 @@
     import { writable } from 'svelte/store';
     import type { DragChange, DragContext, Position, State } from './DragContext';
     import type { DownDropEvent } from './draggable';
-    import { createEventDispatcher } from "svelte";
     import { getContext } from 'svelte';
     import type { SvelteTask } from '../task';
     import type { SvelteRow } from '../row';
@@ -18,25 +17,34 @@
         widthDelta: number;
     }> & State;
 
-    export let items: { [taskId: PropertyKey]: RootState; } = {};
+    interface Props {
+        items?: { [taskId: PropertyKey]: RootState; };
+        children?: import('svelte').Snippet<[any]>;
+        onChange: (event: {  changes: DragChange[]; }) => void; 
+        onItemsChange: (event: { items: { [taskId: PropertyKey]: RootState; }; }) => void;
+    }
+
+    let { 
+      items = {},
+      children,
+      onChange = () => undefined,
+      onItemsChange = () => undefined
+    }: Props = $props();
 
     let _taskIds: PropertyKey[] = [];
     const _active = writable(false);
-    const root = writable<{ [taskId: PropertyKey]: RootState; }>({});
+    const root = writable<{ [taskId: PropertyKey]: RootState; }>(items);
 
 
-    $: $root = items;
+    $effect(() => {
+        $root = items;
+    });
 
     const { taskStore, rowStore } = getContext('dataStore');
     const gantt = getContext('gantt');
     const { rowPadding } = getContext('options');
     const { api, utils, columnService, selectionManager } = getContext('services');
 
-    const dispatcher = createEventDispatcher<{ 
-        change: {  changes: DragChange[]; }; 
-        itemsChange: { items: { [taskId: PropertyKey]: RootState; }; };
-    }>();
-    
     const selectedTasks = selectionManager._selectedTasks;
 
     const context: DragContext = {
@@ -76,7 +84,7 @@
                     widthDelta: task.width - start.width,
                 };
             }
-            dispatcher('itemsChange', { items: $root });
+            onItemsChange({ items: $root });
         },
         dropAll(event) {
             if (!event.dragging && !event.resizing) {
@@ -109,10 +117,10 @@
                 });
             }
 
-            dispatcher('change', { changes });
+            onChange({ changes });
             $root = {};
             _taskIds = [];
-            dispatcher('itemsChange', { items: $root });
+            onItemsChange({ items: $root });
         },
         moveAll({ x, y, width, event }: { x?: number; y?: number; width?: number; event: PointerEvent }, task: SvelteTask, state: State) {
 
@@ -232,4 +240,4 @@
     setContext('drag', context);
 </script>
 
-<slot {context}></slot>
+{@render children?.({ context, })}

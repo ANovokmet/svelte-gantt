@@ -1,41 +1,46 @@
-<script context="module">
+<script module>
     export const type = 'table';
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher, onMount, getContext } from 'svelte';
-
-    const dispatch = createEventDispatcher();
+    import { getContext } from 'svelte';
 
     import TableRow from './TableRow.svelte';
     import type { GanttDataStore } from '../../core/store';
     import type { TableHeader } from './tableHeader';
     import type { SvelteRow } from '../../core/row';
 
-    export let tableWidth;
-    export let paddingTop;
-    export let rowContainerHeight;
-    export let visibleRows: SvelteRow[];
     // list of columns used in the table
     // title: label to display in the header
     // property: property of row to display in the cell
-    // width: width of column
-    export let tableHeaders: TableHeader[] = [{ title: 'Name', property: 'label', width: 100 }];
+    
+    interface Props {
+        tableWidth: any;
+        paddingTop: any;
+        rowContainerHeight: any;
+        visibleRows: SvelteRow[];
+        // width: width of column
+        tableHeaders?: TableHeader[];
+    }
+
+    let {
+        tableWidth,
+        paddingTop,
+        rowContainerHeight,
+        visibleRows,
+        tableHeaders = [{ title: 'Name', property: 'label', width: 100 }]
+    }: Props = $props();
 
     const { headerHeight, bottomScrollbarVisible } = getContext('dimensions');
     const { rowPadding, rowHeight } = getContext('options');
     const { rowStore, taskStore } = getContext('dataStore');
     const { scrollables, updateLayout } = getContext('gantt');
 
-    onMount(() => {
-        dispatch('init', { module: this });
-    });
-
-    let headerContainer;
-    function scrollListener(node) {
+    let headerContainer = $state<HTMLElement>();
+    function scrollListener(node: HTMLElement) {
         scrollables.push({ node, orientation: 'vertical' });
 
-        function onScroll(event) {
+        function onScroll(event: Event) {
             headerContainer.scrollLeft = node.scrollLeft;
         }
 
@@ -48,24 +53,23 @@
         };
     }
 
-    let scrollWidth;
-    $: {
+    let scrollWidth = $derived.by(() => {
         let sum = 0;
         tableHeaders.forEach(header => {
             sum += header.width;
         });
-        scrollWidth = sum;
-    }
+        return sum;
+    });
 
-    function onRowExpanded(event) {
-        const row = event.detail.row as SvelteRow;
+    function onRowExpanded(event: { row: SvelteRow }) {
+        const row = event.row;
         row.model.expanded = true;
         if (row.children) show(row.children);
         updateLayout();
     }
 
-    function onRowCollapsed(event) {
-        const row = event.detail.row as SvelteRow;
+    function onRowCollapsed(event: { row: SvelteRow }) {
+        const row = event.row;
         row.model.expanded = false;
         if (row.children) hide(row.children);
         updateLayout();
@@ -105,8 +109,8 @@
                     <TableRow
                         {row}
                         headers={tableHeaders}
-                        on:rowExpanded={onRowExpanded}
-                        on:rowCollapsed={onRowCollapsed}
+                        onRowExpanded={onRowExpanded}
+                        onRowCollapsed={onRowCollapsed}
                     />
                 {/each}
             </div>

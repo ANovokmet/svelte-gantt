@@ -2,10 +2,14 @@
     import { normalizeClassAttr } from '../utils/dom';
     import type { SvelteRow } from '../core/row';
     import { getContext } from 'svelte';
-    export let row: SvelteRow;
+    interface Props {
+        row: SvelteRow;
+    }
+
+    let { row }: Props = $props();
     const { hoveredRow, selectedRow } = getContext('gantt');
 
-    $: classes = normalizeClassAttr(row.model.classes);
+    let classes = $derived(normalizeClassAttr(row.model.classes));
 </script>
 
 <div

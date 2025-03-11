@@ -6,11 +6,9 @@
     const { visibleHeight } = getContext('dimensions');
     const { taskStore } = getContext('dataStore');
 
-    export let paddingTop;
-    export let dependencies = [];
+    let { paddingTop, dependencies = [] } = $props();
 
-    let visibleDependencies = [];
-    $: {
+    let visibleDependencies = $derived.by(() => {
         const result = [];
         for (let i = 0; i < dependencies.length; i++) {
             const dependency = dependencies[i];
@@ -18,17 +16,12 @@
 
             const fromTask = map[dependency.fromId];
             const toTask = map[dependency.toId];
-            if (
-                fromTask &&
-                toTask &&
-                Math.min(fromTask.top, toTask.top) <= paddingTop + $visibleHeight &&
-                Math.max(fromTask.top, toTask.top) >= paddingTop
-            ) {
+            if (fromTask && toTask && Math.min(fromTask.top, toTask.top) <= paddingTop + $visibleHeight && Math.max(fromTask.top, toTask.top) >= paddingTop) {
                 result.push(dependency);
             }
         }
-        visibleDependencies = result;
-    }
+        return result;
+    });
 </script>
 
 <div class="dependency-container">

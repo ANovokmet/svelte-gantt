@@ -2,19 +2,29 @@
     import { whenEnterPress } from '../../utils/dom';
     import type { SvelteRow } from '../../core/row';
 
-    import { createEventDispatcher } from 'svelte';
+    interface Props {
+        row: SvelteRow;
+        expandIconHtml?: string;
+        collapseIconHtml?: string;
+        children?: import('svelte').Snippet;
+        onRowExpanded?(event: { row: SvelteRow });
+        onRowCollapsed?(event: { row: SvelteRow });
+    }
 
-    export let row: SvelteRow;
-    export let expandIconHtml: string = null;
-    export let collapseIconHtml: string = null;
-
-    const dispatch = createEventDispatcher();
+    let {
+        row,
+        expandIconHtml = null,
+        collapseIconHtml = null,
+        children,
+        onRowExpanded,
+        onRowCollapsed
+    }: Props = $props();
 
     function onExpandToggle() {
         if (row.model.expanded || row.model.expanded == null) {
-            dispatch('rowCollapsed', { row });
+            onRowCollapsed({ row });
         } else {
-            dispatch('rowExpanded', { row });
+          onRowExpanded({ row });
         }
     }
 </script>
@@ -25,8 +35,8 @@
             class="sg-tree-expander"
             role="button"
             tabindex="0"
-            on:click={onExpandToggle}
-            on:keydown={whenEnterPress(onExpandToggle)}
+            onclick={onExpandToggle}
+            onkeydown={whenEnterPress(onExpandToggle)}
         >
             {#if row.model.expanded}
                 {#if expandIconHtml}
@@ -47,7 +57,7 @@
             {/if}
         </div>
     {/if}
-    <slot />
+    {@render children?.()}
 </div>
 
 <style>

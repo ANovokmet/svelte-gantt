@@ -1,8 +1,17 @@
-<script>
-    export let top;
-    export let left;
-    export let actions = [];
-    export let onactionend = null;
+<script lang="ts">
+    interface Props {
+        top: any;
+        left: any;
+        actions?: any;
+        onactionend?: any;
+    }
+
+    let {
+        top = $bindable(),
+        left = $bindable(),
+        actions = [],
+        onactionend = null
+    }: Props = $props();
 
     export function position(point) {
         (top = point.y), (left = point.x);
@@ -17,7 +26,7 @@
 
 <div class="sg-context-menu" style="top:{top}px;left:{left}px">
     {#each actions as action}
-        <div class="context-option" on:click={event => execute(event, action)}>{action.label}</div>
+        <div class="context-option" onclick={event => execute(event, action)}>{action.label}</div>
     {/each}
 </div>
 

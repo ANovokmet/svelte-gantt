@@ -1,13 +1,15 @@
 <script lang="ts">
+    import { run, stopPropagation } from 'svelte/legacy';
+
     import { onMount, setContext, tick, onDestroy } from 'svelte';
     import { writable, derived } from 'svelte/store';
 
-    let ganttElement: HTMLElement;
-    let mainHeaderContainer: HTMLElement;
-    let mainContainer;
-    let rowContainer: HTMLElement;
-    let scrollables = [];
-    let mounted = false;
+    let ganttElement: HTMLElement = $state();
+    let mainHeaderContainer: HTMLElement = $state();
+    let mainContainer = $state<HTMLElement>();
+    let rowContainer: HTMLElement = $state();
+    const scrollables: { node: HTMLElement; orientation: 'horizontal' | 'vertical'; }[] = [];
+    let mounted = $state(false);
 
     import { createDataStore } from './core/store';
     import { Task, Row, TimeRange, TimeRangeHeader } from './entities';
@@ -45,73 +47,116 @@
         }
     }
 
-    /**
-     * Rows to load in the gantt
-     */
-    export let rows: RowModel[];
-    /**
-     * Tasks that display in the gantt
-     */
-    export let tasks: TaskModel[] = [];
-    /**
-     * Timeranges that display in the gantt
-     */
-    export let timeRanges = [];
-
-    assertSet({ rows });
-    $: if (mounted) initRows(rows);
-    $: if (mounted) initTasks(tasks);
-    $: if (mounted) initTimeRanges(timeRanges);
-
-    /** top and bottom padding of a single row in px */
-    export let rowPadding = 6;
-    /** height of a single row in px */
-    export let rowHeight = 52;
-    const _rowHeight = writable(rowHeight);
-    const _rowPadding = writable(rowPadding);
-    $: $_rowHeight = rowHeight;
-    $: $_rowPadding = rowPadding;
-
-    function toDateNum(date: number | Date) {
-        return date instanceof Date ? date.valueOf() : date;
+    
+    export interface Props {
+        /**
+         * Rows to load in the gantt
+         */
+        rows: RowModel[];
+        /**
+         * Tasks that display in the gantt
+         */
+        tasks?: TaskModel[];
+        /**
+         * Timeranges that display in the gantt
+         */
+        timeRanges?: any;
+        /** top and bottom padding of a single row in px */
+        rowPadding?: number;
+        /** height of a single row in px */
+        rowHeight?: number;
+        /** datetime timeline starts on, date */
+        from: any;
+        /** datetime timeline ends on, date */
+        to: any;
+        /** Minimum width of main gantt area in px */
+        minWidth?: number;
+        /** should timeline stretch width to fit */
+        fitWidth?: boolean;
+        /** sets top level gantt class which can be used for styling */
+        classes?: string | string[];
+        /**
+         * list of headers used for main gantt area
+         *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
+         *  - format: datetime format used for header cell label
+         **/
+        headers?: Header[];
+        /**
+         * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
+         */
+        zoomLevels?: any;
+        /** task content factory function, e.g. (task) => '<div>Custom task content</div>'  */
+        taskContent?: any;
+        /**
+         * Width of table, used with SvelteGanttTable module
+         */
+        tableWidth?: number;
+        /** width of handle for resizing task */
+        resizeHandleWidth?: number;
+        /** handler of button clicks, e.g. (task) => {debugger}, */
+        onTaskButtonClick?: any;
+        dateAdapter?: SvelteGanttDateAdapter;
+        /** minimum unit of time task date values will round to */
+        magnetUnit?: string;
+        /** amount of units task date values will round to */
+        magnetOffset?: number;
+        /** duration unit of columns */
+        columnUnit?: string;
+        /** duration width of column */
+        columnOffset?: number;
+        // export until Svelte3 implements Svelte2's setup(component) hook
+        ganttTableModules?: any;
+        ganttBodyModules?: any;
+        /**
+         * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree.
+         */
+        reflectOnParentRows?: boolean;
+        /**
+         * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
+         */
+        reflectOnChildRows?: boolean;
+        /**
+         * Render columns in a canvas, results in a better performance.
+         * Set to false if advanced CSS styling is needed.
+         **/
+        useCanvasColumns?: boolean;
+        /** color of strokes seperating the columns in ganttbody */
+        columnStrokeColor?: string;
+        /** width of strokes seperating the columns in ganttbody */
+        columnStrokeWidth?: number;
+        /** 
+         * object including a unit and fractions of that unit that should be highlighted eg. {unit: 'days', fractions: [0,6]} -> will highlight weekends.
+         * highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
+         */
+        highlightedDurations?: HighlightedDurations;
+        highlightColor?: string;
+        /** Allows working with the actual DOM node */
+        taskElementHook?: any;
+        /** Controls how the tasks will render */
+        layout?: 'overlap' | 'pack' | 'expand';
+        /** enable create task by dragging */
+        enableCreateTask?: boolean;
+        onCreateTask?: any;
+        onCreatedTask?: any;
+        [key: string]: any
     }
 
-    /** datetime timeline starts on, date */
-    export let from;
-    /** datetime timeline ends on, date */
-    export let to;
-    assertSet({ from, to });
-    const _from = writable(toDateNum(from));
-    const _to = writable(toDateNum(to));
-    $: $_from = toDateNum(from);
-    $: $_to = toDateNum(to);
-
-    /** Minimum width of main gantt area in px */
-    export let minWidth = 800;
-    /** should timeline stretch width to fit */
-    export let fitWidth = false;
-    const _minWidth = writable(minWidth);
-    const _fitWidth = writable(fitWidth);
-    $: {
-        $_minWidth = minWidth;
-        $_fitWidth = fitWidth;
-    }
-
-    /** sets top level gantt class which can be used for styling */
-    export let classes: string | string[] = [];
-    /**
-     * list of headers used for main gantt area
-     *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-     *  - format: datetime format used for header cell label
-     **/
-    export let headers: Header[] = [
+    let {
+        rows,
+        tasks = [],
+        timeRanges = [],
+        rowPadding = 6,
+        rowHeight = 52,
+        from,
+        to,
+        minWidth = 800,
+        fitWidth = false,
+        classes = [],
+        headers = $bindable([
         { unit: 'day', format: 'MMMM Do' },
         { unit: 'hour', format: 'H:mm' }
-    ];
-    /**
-     * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
-     */
-    export let zoomLevels = [
+    ]),
+        zoomLevels = [
         {
             headers: [
                 { unit: 'day', format: 'DD.MM.YYYY' },
@@ -128,26 +173,72 @@
             minWidth: 5000,
             fitWidth: false
         }
-    ];
-    /** task content factory function, e.g. (task) => '<div>Custom task content</div>'  */
-    export let taskContent = null;
-    /**
-     * Width of table, used with SvelteGanttTable module
-     */
-    export let tableWidth = 240;
-    /** width of handle for resizing task */
-    export let resizeHandleWidth = 10;
-    /** handler of button clicks, e.g. (task) => {debugger}, */
-    export let onTaskButtonClick = null;
+    ],
+        taskContent = null,
+        tableWidth = $bindable(240),
+        resizeHandleWidth = 10,
+        onTaskButtonClick = null,
+        dateAdapter = new DefaultSvelteGanttDateAdapter(),
+        magnetUnit = 'minute',
+        magnetOffset = 15,
+        columnUnit = $bindable('minute'),
+        columnOffset = $bindable(15),
+        ganttTableModules = [],
+        ganttBodyModules = [],
+        reflectOnParentRows = true,
+        reflectOnChildRows = false,
+        useCanvasColumns = true,
+        columnStrokeColor = '#efefef',
+        columnStrokeWidth = 1,
+        highlightedDurations = undefined,
+        highlightColor = '#6eb859',
+        taskElementHook = null,
+        layout = 'overlap',
+        enableCreateTask = false,
+        onCreateTask = (e: { from: number; to: number; resourceId: PropertyKey; }) => {
+            const id: any = `creating-task-${(Math.random() + 1).toString(36).substring(2, 7)}`;
+            return ({
+                id,
+                label: ' ',
+                ...e,
+            }) as TaskModel;
+        },
+        onCreatedTask = (task: SvelteTask) => {},
+        ...rest
+    }: Props = $props();
+    
+    assertSet({ rows });
 
-    export let dateAdapter: SvelteGanttDateAdapter = new DefaultSvelteGanttDateAdapter();
+    const _rowHeight = writable(rowHeight);
+    const _rowPadding = writable(rowPadding);
 
-    /** minimum unit of time task date values will round to */
-    export let magnetUnit = 'minute';
-    /** amount of units task date values will round to */
-    export let magnetOffset = 15;
+    function toDateNum(date: number | Date) {
+        return date instanceof Date ? date.valueOf() : date;
+    }
+
+    
+    
+    assertSet({ from, to });
+    const _from = writable(toDateNum(from));
+    const _to = writable(toDateNum(to));
+
+    
+    
+    const _minWidth = writable(minWidth);
+    const _fitWidth = writable(fitWidth);
+
+    
+    
+    
+    
+    
+    
+    
+
+
+    
+    
     let magnetDuration: number;
-    $: setMagnetDuration(magnetUnit, magnetOffset);
     setMagnetDuration(magnetUnit, magnetOffset);
 
     function setMagnetDuration(unit, offset) {
@@ -156,46 +247,22 @@
         }
     }
 
-    /** duration unit of columns */
-    export let columnUnit = 'minute';
-    /** duration width of column */
-    export let columnOffset = 15;
+    
+    
 
-    // export until Svelte3 implements Svelte2's setup(component) hook
-    export let ganttTableModules = [];
-    export let ganttBodyModules = [];
-    /**
-     * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree.
-     */
-    export let reflectOnParentRows = true;
-    /**
-     * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
-     */
-    export let reflectOnChildRows = false;
+    
+    
+    
 
-    /**
-     * Render columns in a canvas, results in a better performance.
-     * Set to false if advanced CSS styling is needed.
-     **/
-    export let useCanvasColumns = true;
-    /** color of strokes seperating the columns in ganttbody */
-    export let columnStrokeColor = '#efefef';
-    /** width of strokes seperating the columns in ganttbody */
-    export let columnStrokeWidth = 1;
-    /** 
-     * object including a unit and fractions of that unit that should be highlighted eg. {unit: 'days', fractions: [0,6]} -> will highlight weekends.
-     * highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
-     */
-    export let highlightedDurations: HighlightedDurations = undefined;
-    export let highlightColor = '#6eb859';
+    
+    
+    
+    
 
-    /** Allows working with the actual DOM node */
-    export let taskElementHook = null;
+    
 
-    /** Controls how the tasks will render */
-    export let layout: 'overlap' | 'pack' | 'expand' = 'overlap';
+    
     const _layout = writable(layout);
-    $: $_layout = layout;
 
     const visibleWidth = writable<number>(null);
     const visibleHeight = writable<number>(null);
@@ -221,7 +288,7 @@
         get magnetDuration() { return magnetDuration },
     });
 
-    let disableTransition = false;
+    let disableTransition = $state(false);
 
     async function tickWithoutCSSTransition() {
         disableTransition = true;
@@ -230,13 +297,7 @@
         disableTransition = false;
     }
 
-    let columns: IColumn[];
-    $: {
-        columns = getColumnsV2($_from, $_to, columnUnit, columnOffset, $_width);
-        tickWithoutCSSTransition();
-        refreshTimeRanges();
-        refreshTasks();
-    }
+    let columns: IColumn[] = $state();
 
     function getColumnsV2(
         from: number | Date,
@@ -275,12 +336,10 @@
         return cols;
     }
 
-    let offsetWidth: number;
-    let offsetHeight: number;
+    let offsetWidth: number = $state();
+    let offsetHeight: number = $state();
     let bottomScrollbarVisible = writable(offsetHeight - $visibleHeight);
     let rightScrollbarVisible = writable(offsetWidth - $visibleWidth);
-    $: $bottomScrollbarVisible = offsetHeight - $visibleHeight;
-    $: $rightScrollbarVisible = offsetWidth - $visibleWidth;
 
     setContext('dimensions', {
         from: _from,
@@ -329,9 +388,9 @@
     };
     setContext('gantt', ganttContext);
 
-    let invalidatedTasks: { [taskId: PropertyKey]: boolean; } = {};
-    let invalidatedRows: { [rowId: PropertyKey]: boolean; } = {};
-    let invalidateFull = true;
+    let invalidatedTasks: { [taskId: PropertyKey]: boolean; } = $state({});
+    let invalidatedRows: { [rowId: PropertyKey]: boolean; } = $state({});
+    let invalidateFull = $state(true);
     function invalidatePosition({ task, row }: InvalidatePositionOptions) {
         if (row) {
             invalidatedRows[row.model.id] = true;
@@ -398,7 +457,7 @@
         selectionManager.unSelectTasks();
     });
 
-    let __scrollTop = 0;
+    let __scrollTop = $state(0);
     let __scrollLeft = 0;
     function scrollable(node) {
         const onscroll = event => {
@@ -428,12 +487,12 @@
         scrollables.push({ node, orientation: 'horizontal' });
     }
 
-    function onResize(event) {
-        tableWidth = event.detail.left;
+    function onResize(event: { left: number }) {
+        tableWidth = event.left;
     }
 
     let zoomLevel = 0;
-    let zooming = false;
+    let zooming = $state(false);
     async function onwheel(event: WheelEvent) {
         if (event.ctrlKey) {
             event.preventDefault();
@@ -477,9 +536,9 @@
         }
     }
 
-    function onDateSelected(event) {
-        $_from = event.detail.from;
-        $_to = event.detail.to;
+    function onDateSelected(event: { from: number, to: number }) {
+        $_from = event.from;
+        $_to = event.to;
         api['gantt'].raise.dateSelected({ from: $_from, to: $_to });
     }
 
@@ -509,36 +568,7 @@
         updateLayout();
     }
 
-    let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = {};
-    $: {
-        _reflectedTasksCache = {};
-        for (const task of $allTasks) {
-            const row = $rowStore.entities[task.model.resourceId];
-            if (!row) {
-                continue;
-            }
-
-            if (reflectOnChildRows && row.allChildren) {
-                row.allChildren.forEach(r => {
-                    const reflectedTask = reflectTask(task, r);
-                    if (!_reflectedTasksCache[r.model.id]) {
-                        _reflectedTasksCache[r.model.id] = [];
-                    }
-                    _reflectedTasksCache[r.model.id].push(reflectedTask);
-                });
-            }
-
-            if (reflectOnParentRows && row.allParents) {
-                row.allParents.forEach(r => {
-                    const reflectedTask = reflectTask(task, r);
-                    if (!_reflectedTasksCache[r.model.id]) {
-                        _reflectedTasksCache[r.model.id] = [];
-                    }
-                    _reflectedTasksCache[r.model.id].push(reflectedTask);
-                });
-            }
-        }
-    }
+    let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = $state({});
 
     function initTimeRanges(timeRangeData) {
         const timeRanges = timeRangeData.map(timeRange => {
@@ -609,7 +639,7 @@
         selectionManager.unSelectTasks();
     }
 
-    export function scrollToRow(id, scrollBehavior = 'auto') {
+    export function scrollToRow(id, scrollBehavior: ScrollBehavior = 'auto') {
         const { scrollTop, clientHeight } = mainContainer;
         const row = $rowStore.entities[id];
         if (!row) {
@@ -632,7 +662,7 @@
         }
     }
 
-    export function scrollToTask(id, scrollBehavior = 'auto') {
+    export function scrollToTask(id, scrollBehavior: ScrollBehavior = 'auto') {
         const { scrollLeft, scrollTop, clientWidth, clientHeight } = mainContainer;
 
         const task = $taskStore.entities[id];
@@ -743,10 +773,244 @@
         return null;
     }
 
-    let filteredRows: SvelteRow[] = [];
-    let rowsAreOfSameHeight = true;
-    let rowContainerHeight = 0;
-    $: {
+    let filteredRows: SvelteRow[] = $state([]);
+    let rowsAreOfSameHeight = $state(true);
+    let rowContainerHeight = $state(0);
+
+    let startIndex = $state<number>();
+
+    let endIndex = $state<number>();
+
+    let paddingTop = $state<number>(0);
+
+    let visibleRows = $state<SvelteRow[]>([]);
+
+    let visibleTasks: SvelteTask[] = $state(); // try to keep the same order in the array as before
+    let previousOrder: { [id: PropertyKey]: number; } = $state({});
+
+    let layoutChanged = $state({});
+    let refreshLayout = $state({});
+
+
+    export function updateLayoutSync(_invalidateFull?: boolean) {
+        const params: layouts.LayoutParams = {
+            taskStore: $taskStore,
+            rowStore: $rowStore,
+            rowTasks: $rowTaskCache,
+            rowHeight,
+            rowPadding,
+            rowReflectedTasks: _reflectedTasksCache,
+            invalidatedRows,
+            invalidatedTasks,
+            invalidateFull: _invalidateFull ?? invalidateFull,
+        };
+
+        if (layout === 'overlap') {
+            layouts.overlap(params);
+        }
+
+        if (layout === 'pack') {
+            layouts.pack(params);
+        }
+
+        if (layout === 'expand') {
+            layouts.expand(params);
+        }
+
+        layoutChanged = {};
+        invalidateFull = false;
+        invalidatedTasks = {};
+        invalidatedRows = {};
+    }
+
+    export function updateLayout() {
+        refreshLayout = {};
+        invalidateFull = true;
+    }
+
+    let draggingTasks: { [taskId: PropertyKey]: DraggingState; } = $state({});
+    let _creatingTask: SvelteTask = null;
+    function onCreateTaskMove({ from, to, x, width, y }: MoveEvent) {
+        if (!_creatingTask) {
+            // TODO:: incorrect for collapsible rows, if creating under one
+            const row = $allRows.find(row => row.y < y && y < row.y + row.height);
+            const resourceId = row.model.id;
+            _creatingTask = createTask(onCreateTask({
+                resourceId,
+                from,
+                to,
+            }));
+            taskStore.upsert(_creatingTask);
+            draggingTasks[_creatingTask.model.id] = {
+                x: _creatingTask.left,
+                y: _creatingTask.top,
+                width: _creatingTask.width,
+                resizing: true,
+            }
+        }
+
+        draggingTasks[_creatingTask.model.id].x = x;
+        draggingTasks[_creatingTask.model.id].width = width;
+    }
+
+    function onCreateTaskEnd({ from, to, x, width }: MoveEvent) {
+        _creatingTask.model.from = from;
+        _creatingTask.model.to = to;
+        _creatingTask.left = x;
+        _creatingTask.width = width;
+        taskStore.upsert(_creatingTask);
+        delete draggingTasks[_creatingTask.model.id];
+        onCreatedTask(_creatingTask);
+        _creatingTask = null;
+    }
+
+    const dragCreateTasks = useCreateTask();
+
+    function onChange(e: { changes: DragChange[] }) {
+        if (e.changes.some(c => !c.targetRow)) {
+            return;
+        }
+        for (const change of e.changes) {
+            const { task, current, previous, sourceRow, targetRow } = change;
+            if (!targetRow) {
+                continue;
+            }
+            const model = task.model;
+            
+            if (targetRow) {
+                api.tasks.raise.switchRow(task, targetRow, sourceRow);
+            }
+
+            const changed = previous.from != current.from || previous.to != current.to || (sourceRow && sourceRow.model.id !== targetRow.model.id);
+            if (changed) {
+                model.from = current.from;
+                model.to = current.to;
+                model.resourceId = targetRow.model.id;
+                const newTask: SvelteTask = {
+                    ...task,
+                    left: current.left,
+                    top: current.top,
+                    width: current.width,
+                };
+
+                api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState: previous });
+                api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState: previous });
+                taskStore.update(newTask);
+                invalidatePosition({ row: sourceRow });
+                invalidatePosition({ task: newTask });
+            }
+        }
+    }
+
+    function onItemsChange(e: { items: { [taskId: PropertyKey]: DraggingState } }) {
+        draggingTasks = { ...e.items };
+    }
+    run(() => {
+        if (mounted) initRows(rows);
+    });
+    run(() => {
+        if (mounted) initTasks(tasks);
+    });
+    run(() => {
+        if (mounted) initTimeRanges(timeRanges);
+    });
+    run(() => {
+        $_rowHeight = rowHeight;
+    });
+    run(() => {
+        $_rowPadding = rowPadding;
+    });
+    run(() => {
+        $_from = toDateNum(from);
+    });
+    run(() => {
+        $_to = toDateNum(to);
+    });
+    run(() => {
+        $_minWidth = minWidth;
+        $_fitWidth = fitWidth;
+    });
+    run(() => {
+        setMagnetDuration(magnetUnit, magnetOffset);
+    });
+    run(() => {
+        $_layout = layout;
+    });
+    run(() => {
+        columns = getColumnsV2($_from, $_to, columnUnit, columnOffset, $_width);
+        tickWithoutCSSTransition();
+        refreshTimeRanges();
+        refreshTasks();
+    });
+    run(() => {
+        $bottomScrollbarVisible = offsetHeight - $visibleHeight;
+    });
+    run(() => {
+        $rightScrollbarVisible = offsetWidth - $visibleWidth;
+    });
+    run(() => {
+        _reflectedTasksCache = {};
+        for (const task of $allTasks) {
+            const row = $rowStore.entities[task.model.resourceId];
+            if (!row) {
+                continue;
+            }
+
+            if (reflectOnChildRows && row.allChildren) {
+                row.allChildren.forEach(r => {
+                    const reflectedTask = reflectTask(task, r);
+                    if (!_reflectedTasksCache[r.model.id]) {
+                        _reflectedTasksCache[r.model.id] = [];
+                    }
+                    _reflectedTasksCache[r.model.id].push(reflectedTask);
+                });
+            }
+
+            if (reflectOnParentRows && row.allParents) {
+                row.allParents.forEach(r => {
+                    const reflectedTask = reflectTask(task, r);
+                    if (!_reflectedTasksCache[r.model.id]) {
+                        _reflectedTasksCache[r.model.id] = [];
+                    }
+                    _reflectedTasksCache[r.model.id].push(reflectedTask);
+                });
+            }
+        }
+    });
+    /** apply layouts */
+    run(() => {
+        refreshLayout;
+
+        const params: layouts.LayoutParams = {
+            taskStore: $taskStore,
+            rowStore: $rowStore,
+            rowTasks: $rowTaskCache,
+            rowHeight,
+            rowPadding,
+            rowReflectedTasks: _reflectedTasksCache,
+            invalidatedRows,
+            invalidatedTasks,
+            invalidateFull,
+        };
+
+        if (layout === 'overlap') {
+            layouts.overlap(params);
+        }
+
+        if (layout === 'pack') {
+            layouts.pack(params);
+        }
+
+        if (layout === 'expand') {
+            layouts.expand(params);
+        }
+
+        layoutChanged = {};
+        invalidateFull = false;
+        invalidatedTasks = {};
+        invalidatedRows = {};
+    });
+    run(() => {
         filteredRows = [];
         rowContainerHeight = 0;
         layoutChanged;
@@ -762,38 +1026,29 @@
                 rowContainerHeight += row.height || rowHeight;
             }
         }
-    }
-
-    let startIndex;
-    $: {
+    });
+    run(() => {
         if (rowsAreOfSameHeight) {
             const rowHeight = rowContainerHeight / filteredRows.length;
             startIndex = Math.floor(__scrollTop / rowHeight);
         } else {
             startIndex = getIndicesOnly(filteredRows, __scrollTop, row => row.y)[0];
         }
-    }
-
-    let endIndex;
-    $: {
+    });
+    run(() => {
         if (rowsAreOfSameHeight) {
             endIndex = Math.min(startIndex + Math.ceil($visibleHeight / rowHeight), filteredRows.length - 1);
         } else {
             endIndex = getIndicesOnly(filteredRows, __scrollTop + $visibleHeight, row => row.y)[0];
         }
-    }
-
-    let paddingTop = 0;
-    $: {
+    });
+    run(() => {
         paddingTop = filteredRows[startIndex] ? filteredRows[startIndex].y : 0;
-    }
-
-    let visibleRows = [];
-    $: visibleRows = filteredRows.slice(startIndex, endIndex + 1);
-
-    let visibleTasks: SvelteTask[]; // try to keep the same order in the array as before
-    let previousOrder: { [id: PropertyKey]: number; } = {};
-    $: {
+    });
+    run(() => {
+        visibleRows = filteredRows.slice(startIndex, endIndex + 1);
+    });
+    run(() => {
         const tasks: SvelteTask[] = [];
         const rendered: { [id: PropertyKey]: boolean } = {};
 
@@ -847,202 +1102,39 @@
 
         previousOrder = ordered ? previousOrder : order;
         visibleTasks = ordered ? tasksOrdered : tasks;
-    }
-
-    let layoutChanged = {};
-    let refreshLayout = {};
-    /** apply layouts */
-    $: {
-        refreshLayout;
-
-        const params: layouts.LayoutParams = {
-            taskStore: $taskStore,
-            rowStore: $rowStore,
-            rowTasks: $rowTaskCache,
-            rowHeight,
-            rowPadding,
-            rowReflectedTasks: _reflectedTasksCache,
-            invalidatedRows,
-            invalidatedTasks,
-            invalidateFull,
-        };
-
-        if (layout === 'overlap') {
-            layouts.overlap(params);
-        }
-
-        if (layout === 'pack') {
-            layouts.pack(params);
-        }
-
-        if (layout === 'expand') {
-            layouts.expand(params);
-        }
-
-        layoutChanged = {};
-        invalidateFull = false;
-        invalidatedTasks = {};
-        invalidatedRows = {};
-    }
-
-    $: {
+    });
+    run(() => {
         layout;
         tasks;
         rows;
         updateLayout();
-    }
-
-    export function updateLayoutSync(_invalidateFull?: boolean) {
-        const params: layouts.LayoutParams = {
-            taskStore: $taskStore,
-            rowStore: $rowStore,
-            rowTasks: $rowTaskCache,
-            rowHeight,
-            rowPadding,
-            rowReflectedTasks: _reflectedTasksCache,
-            invalidatedRows,
-            invalidatedTasks,
-            invalidateFull: _invalidateFull ?? invalidateFull,
-        };
-
-        if (layout === 'overlap') {
-            layouts.overlap(params);
-        }
-
-        if (layout === 'pack') {
-            layouts.pack(params);
-        }
-
-        if (layout === 'expand') {
-            layouts.expand(params);
-        }
-
-        layoutChanged = {};
-        invalidateFull = false;
-        invalidatedTasks = {};
-        invalidatedRows = {};
-    }
-
-    export function updateLayout() {
-        refreshLayout = {};
-        invalidateFull = true;
-    }
-
-    /** enable create task by dragging */
-    export let enableCreateTask = false;
-    export let onCreateTask = (e: { from: number; to: number; resourceId: PropertyKey; }) => {
-        const id: any = `creating-task-${(Math.random() + 1).toString(36).substring(2, 7)}`;
-        return ({
-            id,
-            label: ' ',
-            ...e,
-        }) as TaskModel;
-    }
-    export let onCreatedTask = (task: SvelteTask) => {};
-
-    let draggingTasks: { [taskId: PropertyKey]: DraggingState; } = {};
-    let _creatingTask: SvelteTask = null;
-    function onCreateTaskMove({ from, to, x, width, y }: MoveEvent) {
-        if (!_creatingTask) {
-            // TODO:: incorrect for collapsible rows, if creating under one
-            const row = $allRows.find(row => row.y < y && y < row.y + row.height);
-            const resourceId = row.model.id;
-            _creatingTask = createTask(onCreateTask({
-                resourceId,
-                from,
-                to,
-            }));
-            taskStore.upsert(_creatingTask);
-            draggingTasks[_creatingTask.model.id] = {
-                x: _creatingTask.left,
-                y: _creatingTask.top,
-                width: _creatingTask.width,
-                resizing: true,
-            }
-        }
-
-        draggingTasks[_creatingTask.model.id].x = x;
-        draggingTasks[_creatingTask.model.id].width = width;
-    }
-
-    function onCreateTaskEnd({ from, to, x, width }: MoveEvent) {
-        _creatingTask.model.from = from;
-        _creatingTask.model.to = to;
-        _creatingTask.left = x;
-        _creatingTask.width = width;
-        taskStore.upsert(_creatingTask);
-        delete draggingTasks[_creatingTask.model.id];
-        onCreatedTask(_creatingTask);
-        _creatingTask = null;
-    }
-
-    const dragCreateTasks = useCreateTask();
-
-    function onChange(e: CustomEvent<{ changes: DragChange[] }>) {
-        if (e.detail.changes.some(c => !c.targetRow)) {
-            return;
-        }
-        for (const change of e.detail.changes) {
-            const { task, current, previous, sourceRow, targetRow } = change;
-            if (!targetRow) {
-                continue;
-            }
-            const model = task.model;
-            
-            if (targetRow) {
-                api.tasks.raise.switchRow(task, targetRow, sourceRow);
-            }
-
-            const changed = previous.from != current.from || previous.to != current.to || (sourceRow && sourceRow.model.id !== targetRow.model.id);
-            if (changed) {
-                model.from = current.from;
-                model.to = current.to;
-                model.resourceId = targetRow.model.id;
-                const newTask: SvelteTask = {
-                    ...task,
-                    left: current.left,
-                    top: current.top,
-                    width: current.width,
-                };
-
-                api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState: previous });
-                api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState: previous });
-                taskStore.update(newTask);
-                invalidatePosition({ row: sourceRow });
-                invalidatePosition({ task: newTask });
-            }
-        }
-    }
-
-    function onItemsChange(e: CustomEvent<{ items: { [taskId: PropertyKey]: DraggingState } }>) {
-        draggingTasks = { ...e.detail.items };
-    }
+    });
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- svelte-ignore a11y-mouse-events-have-key-events -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_mouse_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     class="sg-gantt {classes}"
     class:sg-disable-transition={disableTransition}
     bind:this={ganttElement}
-    on:pointerdown|stopPropagation={onEvent}
-    on:click|stopPropagation={onEvent}
-    on:dblclick={onEvent}
-    on:pointerover={onEvent}
-    on:pointerleave={onEvent}
+    onpointerdown={stopPropagation(onEvent)}
+    onclick={stopPropagation(onEvent)}
+    ondblclick={onEvent}
+    onpointerover={onEvent}
+    onpointerleave={onEvent}
 >
     {#each ganttTableModules as module}
-        <svelte:component
-            this={module}
+        {@const SvelteComponent = module}
+        <SvelteComponent
             {rowContainerHeight}
             {paddingTop}
             {tableWidth}
-            {...$$restProps}
+            {...rest}
             {visibleRows}
         />
 
-        <Resizer x={tableWidth} on:resize={onResize} container={ganttElement}></Resizer>
+        <Resizer x={tableWidth} onResize={onResize} container={ganttElement}></Resizer>
     {/each}
 
     <div class="sg-timeline sg-view">
@@ -1053,7 +1145,7 @@
                         {headers}
                         ganttBodyColumns={columns}
                         ganttBodyUnit={columnUnit}
-                        on:dateSelected={onDateSelected}
+                        onDateSelected={onDateSelected}
                     />
                     {#each $allTimeRanges as timeRange (timeRange.model.id)}
                         <TimeRangeHeader {...timeRange} />
@@ -1067,7 +1159,7 @@
             bind:this={mainContainer}
             use:scrollable
             class:zooming
-            on:wheel={onwheel}
+            {onwheel}
             bind:clientHeight={$visibleHeight}
             bind:offsetHeight={offsetHeight}
             bind:clientWidth={$visibleWidth}
@@ -1094,30 +1186,32 @@
                         <TimeRange {...timeRange} />
                     {/each}
 
-                    <DraggableGroup items={draggingTasks} on:change={onChange} on:itemsChange={onItemsChange}>
+                    <DraggableGroup items={draggingTasks} onChange={onChange} onItemsChange={onItemsChange}>
                         {#each visibleTasks as task (task.model.id)}
-                            <Draggable {task} let:state let:onPointerDown>
-                                <Task
-                                    {...task}
-                                    model={task.model}
-                                    left={state.x}
-                                    top={state.y}
-                                    width={state.width}
-                                    height={task.height}
-                                    dragging={state.dragging}
-                                    resizing={state.resizing}
-                                    on:pointerdown={onPointerDown}
-                                />
+                            <Draggable {task}>
+                                {#snippet children({ state, onPointerDown })}
+                                    <Task
+                                        {...task}
+                                        model={task.model}
+                                        left={state.x}
+                                        top={state.y}
+                                        width={state.width}
+                                        height={task.height}
+                                        dragging={state.dragging}
+                                        resizing={state.resizing}
+                                        onPointerDown={onPointerDown}
+                                    />
+                                {/snippet}
                             </Draggable>
                         {/each}
                     </DraggableGroup>
                 </div>
                 {#each ganttBodyModules as module}
-                    <svelte:component
-                        this={module}
+                    {@const SvelteComponent_1 = module}
+                    <SvelteComponent_1
                         {paddingTop}
                         {visibleRows}
-                        {...$$restProps}
+                        {...rest}
                     />
                 {/each}
             </div>

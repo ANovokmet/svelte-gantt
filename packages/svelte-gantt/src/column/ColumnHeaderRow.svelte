@@ -1,22 +1,30 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from 'svelte';
-    const dispatch = createEventDispatcher();
+    import { getContext } from 'svelte';
 
     import { getAllPeriods } from '../utils/date';
     import { getPositionByDate } from '../utils/utils';
     import { whenEnterPress } from '../utils/dom';
+    import type { Header } from 'src/gantt';
+    import type { Column } from 'src/core/column';
 
     const { from, to, width } = getContext('dimensions');
     const { dateAdapter } = getContext('options');
 
-    export let header;
+    let { 
+      header = $bindable(), 
+      ganttBodyColumns, 
+      ganttBodyUnit,
+      onDateSelected = () => undefined,
+    }: {
+      header: Header & { columns?: any[] }, 
+      ganttBodyColumns: Column[], 
+      ganttBodyUnit: string,
+      onDateSelected?: (event: { from: number; to: number; unit: string; }) => void;
+    } = $props();
 
-    export let ganttBodyColumns;
-    export let ganttBodyUnit;
-
-    $: {
+    const columns = $derived.by(() => {
         if (header.unit === ganttBodyUnit) {
-            header.columns = ganttBodyColumns.map(column => ({
+            return ganttBodyColumns.map(column => ({
                 ...column,
                 label: dateAdapter.format(column.from, header.format)
             }));
@@ -24,8 +32,7 @@
             const periods = getAllPeriods($from.valueOf(), $to.valueOf(), header.unit, header.offset);
             let distance_point = 0;
             let left = 0;
-
-            header.columns = periods.map(period => {
+            return  periods.map(period => {
                 left = distance_point;
                 distance_point = getPositionByDate(
                     period.to,
@@ -42,25 +49,25 @@
                 };
             });
         }
-    }
+    });
 
     function onHeaderClick(_header) {
-        dispatch('dateSelected', { from: _header.from, to: _header.to, unit: header.unit });
+      onDateSelected({ from: _header.from, to: _header.to, unit: header.unit });
     }
 </script>
 
 <div class="column-header-row">
-    {#each header.columns as _header}
+    {#each columns as col}
         <div
             class="column-header-cell"
             role="button"
             tabindex="0"
             class:sticky={header.sticky}
-            style="left:{_header.left}px;width:{_header.width}px"
-            on:click={() => onHeaderClick(_header)}
-            on:keydown={whenEnterPress(() => onHeaderClick(_header))}
+            style="left:{col.left}px;width:{col.width}px"
+            onclick={() => onHeaderClick(col)}
+            onkeydown={whenEnterPress(() => onHeaderClick(col))}
         >
-            <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
+            <div class="column-header-cell-label">{col.label || 'N/A'}</div>
         </div>
     {/each}
 </div>

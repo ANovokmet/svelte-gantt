@@ -1,24 +1,25 @@
-<script>
-    import { createEventDispatcher } from 'svelte';
-
-    const dispatch = createEventDispatcher();
-
+<script lang="ts">
     import { useDraggable } from '../core/drag';
     import { setCursor } from '../utils/dom';
 
-    export let x;
-    export let container;
+    type Props = {
+      x: number;
+      container: HTMLElement;
+      onResize(event: { left: number; });
+    }
+
+    let { x = $bindable(), container, onResize }: Props = $props();
 
     let dragging = false;
-    const dragOptions = {
+    const dragOptions = $state({
         onDrag: event => {
             (x = event.x), (dragging = true);
-            dispatch('resize', { left: x });
+            onResize({ left: x });
             setCursor('col-resize');
         },
         onDrop: event => {
             (x = event.x), (dragging = false);
-            dispatch('resize', { left: x });
+            onResize({ left: x });
             setCursor('default');
         },
         dragAllowed: true,
@@ -27,12 +28,14 @@
         getX: () => x,
         getY: () => 0,
         getWidth: () => 0
-    };
+    });
 
-    $: dragOptions.container = container;
+    $effect(() => {
+        dragOptions.container = container;
+    });
 
-    function resizer(node) {
-        const draggable = useDraggable(node, dragOptions, 'resizer');
+    function resizer(node: HTMLElement) {
+        const draggable = useDraggable(node, dragOptions);
 
         return { destroy: () => draggable.destroy() };
     }

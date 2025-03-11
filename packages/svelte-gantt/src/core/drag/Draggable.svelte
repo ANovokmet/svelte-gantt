@@ -1,15 +1,23 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import type { SvelteTask } from "../task";
-    import { createDraggable } from "./draggable";
-    import { scrollIfOutOfBounds } from "../../utils/dom";
-    import { onDestroy } from "svelte";
+    import { getContext } from 'svelte';
+    import type { SvelteTask } from '../task';
+    import { createDraggable } from './draggable';
+    import { scrollIfOutOfBounds } from '../../utils/dom';
+    import { onDestroy, type Snippet } from 'svelte';
 
-    export let task: SvelteTask;
+    interface Props {
+        task: SvelteTask;
+        children?: Snippet<
+            [
+                {
+                    state: any;
+                    onPointerDown(e: PointerEvent): void;
+                }
+            ]
+        >;
+    }
 
-    let _x: number;
-    let _y: number;
-    let _width: number;
+    let { task, children }: Props = $props();
 
     const { rowContainer, mainContainer } = getContext('gantt');
     const { resizeHandleWidth } = getContext('options');
@@ -17,29 +25,29 @@
 
     const root = context.rootState;
 
-    $: state = $root[task.model.id];
-    $: _dragging = state?.dragging ?? false;
-    $: _resizing = state?.resizing ?? false;
-    $: _ignoreClick = state?.ignoreClick ?? false;
-    $: _state = {
-        x: _x,
-        y: _y,
-        width: _width,
-        dragging: _dragging,
-        resizing: _resizing,
-    }
-
-    $: {
+    let __state$ = $derived($root[task.model.id]);
+    let _dragging = $derived(__state$?.dragging ?? false);
+    let _resizing = $derived(__state$?.resizing ?? false);
+    let _ignoreClick = $derived(__state$?.ignoreClick ?? false);
+    const _state = $derived.by(() => {
         if (_dragging || _resizing) {
-            _x = state?.x ?? task.left;
-            _y = state?.y ?? task.top;
-            _width = state?.width ?? task.width;
+            return {
+                x: __state$?.x ?? task.left,
+                y: __state$?.y ?? task.top,
+                width: __state$?.width ?? task.width,
+                dragging: _dragging,
+                resizing: _resizing
+            };
         } else {
-            _x = task.left;
-            _y = task.top;
-            _width = task.width;
+            return {
+                x: task.left,
+                y: task.top,
+                width: task.width,
+                dragging: _dragging,
+                resizing: _resizing
+            };
         }
-    }
+    });
 
     export const dragAllowed: (task: SvelteTask) => boolean = null;
     export const resizeAllowed: (task: SvelteTask) => boolean = null;
@@ -47,9 +55,9 @@
     const onPointerDown = createDraggable({
         container: rowContainer,
         resizeHandleWidth,
-        getX: () => _x,
-        getY: () => _y,
-        getWidth: () => _width,
+        getX: () => _state.x,
+        getY: () => _state.y,
+        getWidth: () => _state.width,
         dragAllowed() {
             const fn = dragAllowed ?? context.dragAllowed ?? (() => true);
             return fn(task);
@@ -69,7 +77,7 @@
                 x: event.x,
                 y: event.width,
                 resizing: true,
-                ignoreClick: true,
+                ignoreClick: true
             });
         },
         onDrag(event) {
@@ -77,7 +85,7 @@
                 x: event.x,
                 y: event.y,
                 dragging: true,
-                ignoreClick: true,
+                ignoreClick: true
             });
             scrollIfOutOfBounds(event.event, mainContainer);
         },
@@ -91,5 +99,4 @@
     });
 </script>
 
-
-<slot state={_state} onPointerDown={onPointerDown}/>
+{@render children?.({ state: _state, onPointerDown })}

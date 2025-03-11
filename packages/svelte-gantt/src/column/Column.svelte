@@ -1,6 +1,8 @@
 <script lang="ts">
-    export let left;
-    export let width;
+    let { left, width }: {
+      left: number;
+      width: number;
+    } = $props();
 </script>
 
 <div class="column" style="left:{left}px;width:{width}px"></div>

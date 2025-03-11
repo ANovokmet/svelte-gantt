@@ -9,17 +9,16 @@
     const { resizeHandleWidth } = getContext('options');
     const { timeRangeStore } = getContext('dataStore');
 
-    export let model;
-    export let width;
-    export let left;
+    let { model, width, left } = $props();
 
-    const _position = {
+    const _position = $state({
         width,
         x: left
-    };
-    $: {
-        (_position.x = left), (_position.width = width);
-    }
+    });
+    $effect(() => {
+      _position.x = left;
+      _position.width = width;
+    });
 
     function drag(node) {
         const ondrop = event => {
@@ -82,10 +81,8 @@
         return { destroy: () => draggable.destroy() };
     }
 
-    let classes;
-    $: {
-        classes = normalizeClassAttr(model.classes);
-    }
+    let classes = $derived(normalizeClassAttr(model.classes));
+    
 </script>
 
 <div

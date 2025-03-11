@@ -12,7 +12,8 @@
         "declarationDir": "./dist",
         // "declarationDir": "./dist/types",
         "importsNotUsedAsValues": "remove",
-        "isolatedModules": false
+        "isolatedModules": false,
+        "verbatimModuleSyntax": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules/*", "__sapper__/*", "public/*"]

@@ -6,17 +6,19 @@
     import type { SvelteRow } from '../../core/row';
     import { normalizeClassAttr } from '../../utils/dom';
 
-    export let headers: TableHeader[] = null;
-    export let row: SvelteRow = null;
+    interface Props {
+        headers?: TableHeader[];
+        row?: SvelteRow;
+        onRowExpanded?(event: { row: SvelteRow });
+        onRowCollapsed?(event: { row: SvelteRow });
+    }
+
+    let { headers = null, row = null, onRowCollapsed, onRowExpanded }: Props = $props();
 
     const { hoveredRow, selectedRow } = getContext('gantt');
 
-    let treeIndentationStyle = '';
-    $: {
-        treeIndentationStyle = row.parent ? `padding-left: ${row.childLevel * 3}em;` : '';
-    }
-
-    $: classes = normalizeClassAttr(row.model.classes)
+    let treeIndentationStyle = $derived(row.parent ? `padding-left: ${row.childLevel * 3}em;` : '');
+    let classes = $derived(normalizeClassAttr(row.model.classes))
 </script>
 
 <div
@@ -30,7 +32,7 @@
     {#each headers as header}
         <div class="sg-table-body-cell sg-table-cell" style="width:{header.width}px">
             {#if header.type == 'tree'}
-                <TableTreeCell on:rowCollapsed on:rowExpanded {row}>
+                <TableTreeCell {onRowExpanded} {onRowCollapsed} {row}>
                     {#if row.model.iconClass}
                         <div class="sg-table-icon">
                             <i class={row.model.iconClass}></i>
