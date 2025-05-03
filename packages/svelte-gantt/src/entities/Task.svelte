@@ -1,260 +1,222 @@
 <script lang="ts">
-    import { getContext } from 'svelte';
-
     import type { TaskModel } from '../core/task';
-    import { normalizeClassAttr } from '../utils/dom';
-    import { isResizable } from '../utils/utils';
+    import type { Snippet } from 'svelte';
+    import { TaskBuilder } from './task.builder';
+    import { createDraggableBuilder } from '@svelte-gantt/gantt-core';
+    import { cssStringify } from '../utils/dom';
 
-    interface Props {
-        model: TaskModel;
-        height: number;
-        left: number;
-        top: number;
-        width: number;
-        reflected?: boolean;
-        animating?: boolean;
-        dragging?: boolean;
-        resizing?: boolean;
-        onPointerDown?: (e: PointerEvent) => void;
+    type Props = {
+      model: TaskModel;
+      height: number;
+      left: number;
+      top: number;
+      width: number;
+      reflected?: boolean;
+      animating?: boolean;
+      selected?: boolean;
+      onPointerDown?: (e: PointerEvent) => void;
+      children?: Snippet<[TaskModel]>;
     }
 
     let {
-        model,
-        height,
-        left,
-        top,
-        width,
-        reflected = false,
-        animating = true,
-        dragging = false,
-        resizing = false,
-        onPointerDown = () => undefined,
-    }: Props = $props();
+      model,
+      height,
+      left,
+      top,
+      width,
+      selected = false,
+      reflected = false,
+      animating = true,
+      onPointerDown = () => undefined,
+      children = undefined,
+    }: Props = $props(); // TODO:: pass task instead of spread props
 
-    const { rowStore } = getContext('dataStore');
-    const { taskContent, onTaskButtonClick, taskElementHook } = getContext('options');
-    const { selectionManager } = getContext('services');
+    const builder = new TaskBuilder({
+      get model() { return model; },
+      get height() { return height; },
+      get left() { return left; },
+      get top() { return top; },
+      get width() { return width; },
+      get selected() { return selected; },
 
-    const selectedTasks = selectionManager._selectedTasks;
-
-    let _ignoreClick = false;
-
-    function taskElement(node, model) {
-        if (taskElementHook) {
-            return taskElementHook(node, model);
-        }
-    }
-
-    function onClick(event: MouseEvent) {
-        if (onTaskButtonClick) {
-            onTaskButtonClick(model, event);
-        }
-    }
-
-    let classes = $derived(model.classes ? normalizeClassAttr(model.classes) : 'sg-task-default');
-
-    let resizeEnabled = $derived.by(() => {
-        const row = $rowStore.entities[model.resourceId];
-        return model.type !== 'milestone' && row && isResizable(row.model) && isResizable(model);
+      get reflected() { return reflected; },
+      get animating() { return animating; },
+      onPointerDown,
     });
 
-    let _moving: boolean = $derived(dragging || resizing);
+    const drag = createDraggableBuilder({
+      dragAllowed: true,
+      resizeAllowed: true,
+      resizeHandleWidth: 5,
+      id: String(model.id),
+      get nodeRef() { return ref; },
+      onDrop(e) {
+        console.log('successfully dropped', e, model);
+      }
+    });
+
+    let ref = $state<HTMLElement>();
+
+    const transform = $derived.by(() => {
+      return {
+        ...builder.style,
+        ...drag.transform ? { 
+          left: `${drag.transform.x}px`, 
+          top: `${drag.transform.y}px;`, 
+          width: `${drag.transform.width}px` 
+        } : null
+      };
+    });
 </script>
 
-<div
-    data-task-id={model.id}
-    use:taskElement={model}
-    class="sg-task {classes}"
-    class:sg-milestone={model.type === 'milestone'}
-    style="width:{width}px; height:{height}px; left: {left}px; top: {top}px;"
-    class:moving={_moving}
-    class:animating={animating}
-    class:sg-task-reflected={reflected}
-    class:sg-task-selected={$selectedTasks[model.id]}
-    class:resize-enabled={resizeEnabled}
-    class:sg-task--sticky={model.stickyLabel}
-    class:sg-ignore-click={_ignoreClick}
-    class:sg-task-instant={width === 0}
-    onpointerdown={onPointerDown}
->
-    {#if model.type === 'milestone'}
-        <div class="sg-milestone__diamond"></div>
-    {/if}
-    {#if model.amountDone}
-        <div class="sg-task-background" style="width:{model.amountDone}%"></div>
-    {/if}
-    <div class="sg-task-content">
-        {#if model.html}
-            {@html model.html}
-        {:else if taskContent}
-            {@html taskContent(model)}
-        {:else}
-            {model.label}
-        {/if}
-        {#if model.showButton}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <span
-                class="sg-task-button {model.buttonClasses}"
-                onclick={onClick}
-                role="button"
-                tabindex="0"
-            >
-                {@html model.buttonHtml}
-            </span>
-        {/if}
-    </div>
-
-    {#if model.labelBottom}
-        <span class="sg-label-bottom">{model.labelBottom}</span>
-    {/if}
+<div use:drag.ref {...builder.attrs} {...drag.attrs} {...drag.listeners} style={cssStringify(transform)}>
+  {#if model.type === 'milestone'}
+    <div class="sg-milestone__diamond"></div>
+  {/if}
+  {#if children}
+    {@render children(model)}
+  {:else}
+    {model.label}
+  {/if}
 </div>
 
 <style>
-    .sg-label-bottom {
-        position: absolute;
-        top: calc(100% + 10px);
-        color: #888;
-    }
+  [data-sg-task], .sg-task {
+    position: absolute;
+    border-radius: 2px;
 
-    .sg-task {
-        position: absolute;
-        border-radius: 2px;
+    white-space: nowrap;
+    /* overflow: hidden; */
 
-        white-space: nowrap;
-        /* overflow: hidden; */
+    transition:
+        background-color 0.2s,
+        opacity 0.2s;
+    pointer-events: all;
+    /* disable mobile pan/zoom on drag */
+    touch-action: none;
+  }
 
-        transition:
-            background-color 0.2s,
-            opacity 0.2s;
-        pointer-events: all;
-        /* disable mobile pan/zoom on drag */
-        touch-action: none;
-    }
+  [data-sg-task], .sg-task {
+    padding-left: 14px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+  }
 
-    .sg-task-background {
-        position: absolute;
-        height: 100%;
-        top: 0;
-    }
+  /* .sg-task-content {
+    position: absolute;
+    height: 100%;
+    top: 0;
 
-    .sg-task-content {
-        position: absolute;
-        height: 100%;
-        top: 0;
+    padding-left: 14px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    user-select: none;
+  } */
 
-        padding-left: 14px;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        user-select: none;
-    }
+  .sg-task.animating:not(.moving),
+  .sg-task-sticky:not(.moving) {
+    transition:
+      left 0.2s,
+      top 0.2s,
+      transform 0.2s,
+      background-color 0.2s,
+      width 0.2s,
+      height 0.2s;
+  }
 
-    .sg-task.animating:not(.moving),
-    .sg-task--sticky:not(.moving) {
-        transition:
-            left 0.2s,
-            top 0.2s,
-            transform 0.2s,
-            background-color 0.2s,
-            width 0.2s,
-            height 0.2s;
-    }
+  .sg-task-sticky > .sg-task-content {
+    position: sticky;
+    left: 0;
+    max-width: 100px;
+  }
 
-    .sg-task--sticky > .sg-task-content {
-        position: sticky;
-        left: 0;
-        max-width: 100px;
-    }
+  .sg-task.moving, [data-moving] {
+    z-index: 10000;
+    opacity: 0.5;
+  }
 
-    .sg-task.moving {
-        z-index: 10000;
-        opacity: 0.5;
-    }
+  .sg-task.resize-enabled:hover::before,
+  .sg-task.resize-enabled:hover::after {
+    content: '';
+    width: 4px;
+    height: 50%;
+    top: 25%;
+    position: absolute;
+    border-style: solid;
+    border-color: var(--sg-task-resize-color);
+    cursor: ew-resize;
+    border-width: 0 1px;
+    z-index: 1;
+  }
 
-    .sg-task.resize-enabled:hover::before,
-    .sg-task.resize-enabled:hover::after {
-        content: '';
-        width: 4px;
-        height: 50%;
-        top: 25%;
-        position: absolute;
-        border-style: solid;
-        border-color: var(--sg-task-resize-color);
-        cursor: ew-resize;
-        border-width: 0 1px;
-        z-index: 1;
-    }
+  .sg-task.resize-enabled:hover::before {
+    margin-left: 3px;
+    left: 0;
+  }
 
-    .sg-task.resize-enabled:hover::before {
-        margin-left: 3px;
-        left: 0;
-    }
+  .sg-task.resize-enabled:hover::after {
+    margin-right: 3px;
+    right: 0;
+  }
 
-    .sg-task.resize-enabled:hover::after {
-        margin-right: 3px;
-        right: 0;
-    }
+  .sg-task-reflected {
+    opacity: 0.5;
+  }
 
-    .sg-task-reflected {
-        opacity: 0.5;
-    }
+  .sg-task-instant {
+    width: 2px !important;
+    margin-left: -1px;
+  }
 
-    .sg-task-instant {
-        width: 2px !important;
-        margin-left: -1px;
-    }
+  :global(.sg-task-default) {
+    color: white;
+    background: rgb(116, 191, 255);
+  }
 
-    .sg-task-background {
-        background: rgba(0, 0, 0, 0.2);
-    }
+  :global(.sg-task-default:hover) {
+    background: rgb(98, 161, 216);
+  }
 
-    :global(.sg-task-default) {
-        color: white;
-        background: rgb(116, 191, 255);
-    }
+  :global(.sg-task-default.selected) {
+    background: rgb(69, 112, 150);
+  }
 
-    :global(.sg-task-default:hover) {
-        background: rgb(98, 161, 216);
-    }
+  :global(.sg-task-selected), [data-sg-task-selected='true'] {
+    outline: 2px solid var(--sg-task-selected-outline-color);
+    outline-offset: 3px;
+    z-index: 1;
+  }
 
-    :global(.sg-task-default.selected) {
-        background: rgb(69, 112, 150);
-    }
+  .sg-milestone {
+    /* height: 20px; */
+    width: 20px !important;
+    min-width: 40px;
+    margin-left: -20px;
+  }
 
-    :global(.sg-task-selected) {
-        outline: 2px solid var(--sg-task-selected-outline-color);
-        outline-offset: 3px;
-        z-index: 1;
-    }
+  .sg-task.sg-milestone {
+    background: transparent;
+  }
 
-    .sg-milestone {
-        /* height: 20px; */
-        width: 20px !important;
-        min-width: 40px;
-        margin-left: -20px;
-    }
+  .sg-milestone .sg-milestone__diamond {
+    position: relative;
+  }
 
-    .sg-task.sg-milestone {
-        background: transparent;
-    }
+  .sg-milestone .sg-milestone__diamond:before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    content: ' ';
+    height: 28px;
+    width: 28px;
+    transform-origin: 0 0;
+    transform: rotate(45deg);
+  }
 
-    .sg-milestone .sg-milestone__diamond {
-        position: relative;
-    }
-
-    .sg-milestone .sg-milestone__diamond:before {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        content: ' ';
-        height: 28px;
-        width: 28px;
-        transform-origin: 0 0;
-        transform: rotate(45deg);
-    }
-
-    :global(.sg-milestone__diamond:before) {
-        background: rgb(116, 191, 255);
-    }
+  :global(.sg-milestone__diamond:before) {
+    background: rgb(116, 191, 255);
+  }
 </style>

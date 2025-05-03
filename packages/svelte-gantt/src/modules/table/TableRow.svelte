@@ -1,72 +1,36 @@
 <script lang="ts">
-    import { getContext } from 'svelte';
-
-    import TableTreeCell from './TableTreeCell.svelte';
-    import type { TableHeader } from './tableHeader';
-    import type { SvelteRow } from '../../core/row';
-    import { normalizeClassAttr } from '../../utils/dom';
+    import TableExpandButton from './TableExpandButton.svelte';
+    import { TableRowBuilder } from './table-row.builder';
 
     interface Props {
-        headers?: TableHeader[];
-        row?: SvelteRow;
-        onRowExpanded?(event: { row: SvelteRow });
-        onRowCollapsed?(event: { row: SvelteRow });
+      builder: TableRowBuilder;
     }
 
-    let { headers = null, row = null, onRowCollapsed, onRowExpanded }: Props = $props();
+    let { builder }: Props = $props();
 
-    const { hoveredRow, selectedRow } = getContext('gantt');
-
-    let treeIndentationStyle = $derived(row.parent ? `padding-left: ${row.childLevel * 3}em;` : '');
-    let classes = $derived(normalizeClassAttr(row.model.classes))
+    const row = $derived(builder.row);
 </script>
 
 <div
     data-row-id={row.model.id}
-    style="height:{row.height}px"
-    class="sg-table-row {classes} sg-table-row-level-{row.childLevel}"
+    class="sg-table-row {builder.classes} sg-table-row-level-{row.depth}"
     class:sg-row-expanded={row.model.expanded}
-    class:sg-hover={$hoveredRow == row.model.id}
-    class:sg-selected={$selectedRow == row.model.id}
+    class:sg-hover={row.hovered}
+    class:sg-selected={row.selected}
+    {...builder.attr}
 >
-    {#each headers as header}
+    {#each builder.gantt.table.headers as header, i}
         <div class="sg-table-body-cell sg-table-cell" style="width:{header.width}px">
-            {#if header.type == 'tree'}
-                <TableTreeCell {onRowExpanded} {onRowCollapsed} {row}>
-                    {#if row.model.iconClass}
-                        <div class="sg-table-icon">
-                            <i class={row.model.iconClass}></i>
-                        </div>
-                    {/if}
-
-                    {#if row.model.headerHtml}
-                        {@html row.model.headerHtml}
-                    {:else if header.renderer}
-                        {@html header.renderer(row)}
-                    {:else}
-                        {row.model[header.property]}
-                    {/if}
-                </TableTreeCell>
-            {:else}
-                {#if row.model.iconClass}
-                    <div class="sg-table-icon">
-                        <i class={row.model.iconClass}></i>
-                    </div>
-                {/if}
-
-                {#if row.model.headerHtml}
-                    {@html row.model.headerHtml}
-                {:else if header.renderer}
-                    {@html header.renderer(row)}
-                {:else if header.type === 'resourceInfo'}
-                    <img class="sg-resource-image" src={row.model.imageSrc} alt="" />
-                    <div class="sg-resource-title">
-                        {row.model[header.property]}
-                    </div>
-                {:else}
-                    {row.model[header.property]}
-                {/if}
-            {/if}
+          {#if i === 0 && row.children}
+            <TableExpandButton {row} />
+          {/if}
+          {#if row.model.headerHtml}
+              {@html row.model.headerHtml}
+          {:else if header.renderer}
+              {@html header.renderer(row)}
+          {:else}
+              {row.model[header.property]}
+          {/if}
         </div>
     {/each}
 </div>
@@ -99,26 +63,5 @@
 
     .sg-table-row:last-child > .sg-table-body-cell {
         border-bottom: 0;
-    }
-
-    .sg-resource-image {
-        width: 2.4em;
-        height: 2.4em;
-        border-radius: 50%;
-        margin-right: 0.6em;
-
-        background: #047c69;
-    }
-
-    .sg-resource-info {
-        flex: 1;
-        height: 100%;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
-
-    .sg-table-icon {
-        margin-right: 0.5em;
     }
 </style>

@@ -1,43 +1,22 @@
 <script lang="ts">
-    import { run, stopPropagation } from 'svelte/legacy';
+    import { onMount, setContext, tick } from 'svelte';
 
-    import { onMount, setContext, tick, onDestroy } from 'svelte';
-    import { writable, derived } from 'svelte/store';
+    import { GanttBuilder, type GanttProps } from '@svelte-gantt/gantt-core';
+    import type { SvelteTask, TaskModel, RowModel, SvelteRow } from '@svelte-gantt/gantt-core';
 
     let ganttElement: HTMLElement = $state();
-    let mainHeaderContainer: HTMLElement = $state();
-    let mainContainer = $state<HTMLElement>();
-    let rowContainer: HTMLElement = $state();
-    const scrollables: { node: HTMLElement; orientation: 'horizontal' | 'vertical'; }[] = [];
     let mounted = $state(false);
 
-    import { createDataStore } from './core/store';
-    import { Task, Row, TimeRange, TimeRangeHeader } from './entities';
-    import { Columns, ColumnHeader } from './column';
+    import { ColumnHeader, Columns } from './column';
+    import { Row, Task, TimeRange, TimeRangeHeader } from './entities';
     import { Resizer } from './ui';
 
-    import { createUtils, getIndicesOnly, getPositionByDate } from './utils/utils';
-    import { getRelativePos, isLeftClick } from './utils/dom';
-    import { provideGanttApi } from './core/api';
-    import { createTaskFactory } from './core/task';
-    import type { SvelteTask, TaskModel } from './core/task';
-    import { collapseRow, expandRow, createRows } from './core/row';
-    import type { RowModel, SvelteRow } from './core/row';
-    import { TimeRangeFactory } from './core/timeRange';
-    import { DraggableGroup } from './core/drag';
-    import { SelectionManager } from './core/selectionManager';
-    import { createColumnService } from './core/column';
-    import type { HighlightedDurations, Column as IColumn } from './core/column';
-    import { createDelegatedEventDispatcher } from './core/events';
-    import { getDuration, getAllPeriods } from './utils/date';
-    import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
-    import type { SvelteGanttDateAdapter } from './utils/date';
-    import * as layouts from './core/layouts';
-    import { useCreateTask } from './modules/create-tasks';
+    import { createGantt } from './gantt';
     import type { MoveEvent } from './modules/create-tasks';
-    import type { GanttContext, Header, InvalidatePositionOptions } from './gantt';
-    import Draggable from './core/drag/Draggable.svelte';
-    import type { DragChange, State as DraggingState } from './core/drag/DragContext';
+    import { useCreateTask } from './modules/create-tasks';
+    import { toValue } from './utils/date';
+    import { DefaultSvelteGanttDateAdapter } from './utils/defaultDateAdapter';
+    import { createUtils } from './utils/utils';
 
     function assertSet(values) {
         for (const name in values) {
@@ -47,99 +26,20 @@
         }
     }
 
-    
-    export interface Props {
-        /**
-         * Rows to load in the gantt
-         */
-        rows: RowModel[];
-        /**
-         * Tasks that display in the gantt
-         */
-        tasks?: TaskModel[];
-        /**
-         * Timeranges that display in the gantt
-         */
-        timeRanges?: any;
-        /** top and bottom padding of a single row in px */
-        rowPadding?: number;
-        /** height of a single row in px */
-        rowHeight?: number;
-        /** datetime timeline starts on, date */
-        from: any;
-        /** datetime timeline ends on, date */
-        to: any;
-        /** Minimum width of main gantt area in px */
-        minWidth?: number;
-        /** should timeline stretch width to fit */
-        fitWidth?: boolean;
-        /** sets top level gantt class which can be used for styling */
-        classes?: string | string[];
-        /**
-         * list of headers used for main gantt area
-         *  - unit: time unit used, e.g. day will create a cell in the header for each day in the timeline
-         *  - format: datetime format used for header cell label
-         **/
-        headers?: Header[];
-        /**
-         * List of zoom levels for gantt. Gantt cycles trough these parameters on ctrl+scroll.
-         */
-        zoomLevels?: any;
-        /** task content factory function, e.g. (task) => '<div>Custom task content</div>'  */
-        taskContent?: any;
-        /**
-         * Width of table, used with SvelteGanttTable module
-         */
-        tableWidth?: number;
-        /** width of handle for resizing task */
-        resizeHandleWidth?: number;
-        /** handler of button clicks, e.g. (task) => {debugger}, */
-        onTaskButtonClick?: any;
-        dateAdapter?: SvelteGanttDateAdapter;
-        /** minimum unit of time task date values will round to */
-        magnetUnit?: string;
-        /** amount of units task date values will round to */
-        magnetOffset?: number;
-        /** duration unit of columns */
-        columnUnit?: string;
-        /** duration width of column */
-        columnOffset?: number;
-        // export until Svelte3 implements Svelte2's setup(component) hook
-        ganttTableModules?: any;
-        ganttBodyModules?: any;
-        /**
-         * When task is assigned to a child row display them on parent rows as well, used when rows are disabled as a tree.
-         */
-        reflectOnParentRows?: boolean;
-        /**
-         * When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
-         */
-        reflectOnChildRows?: boolean;
-        /**
-         * Render columns in a canvas, results in a better performance.
-         * Set to false if advanced CSS styling is needed.
-         **/
-        useCanvasColumns?: boolean;
-        /** color of strokes seperating the columns in ganttbody */
-        columnStrokeColor?: string;
-        /** width of strokes seperating the columns in ganttbody */
-        columnStrokeWidth?: number;
-        /** 
-         * object including a unit and fractions of that unit that should be highlighted eg. {unit: 'days', fractions: [0,6]} -> will highlight weekends.
-         * highlighting will only work correctly if highlighted unit is the same or a constant fraction of the column unit eg. days, hours, minutes in the above.
-         */
-        highlightedDurations?: HighlightedDurations;
-        highlightColor?: string;
-        /** Allows working with the actual DOM node */
-        taskElementHook?: any;
-        /** Controls how the tasks will render */
-        layout?: 'overlap' | 'pack' | 'expand';
-        /** enable create task by dragging */
-        enableCreateTask?: boolean;
-        onCreateTask?: any;
-        onCreatedTask?: any;
-        [key: string]: any
+    interface Props {
+      /** sets top level gantt class which can be used for styling */
+      classes?: string | string[];
+      /** task content factory function, e.g. (task) => '<div>Custom task content</div>'  */
+      taskContent?: any;
+      // export until Svelte3 implements Svelte2's setup(component) hook
+      ganttTableModules?: any;
+      ganttBodyModules?: any;
+      /** Allows working with the actual DOM node */
+      taskElementHook?: any;
+      [key: string]: any;
     }
+
+    let props: GanttProps = $props();
 
     let {
         rows,
@@ -152,37 +52,36 @@
         minWidth = 800,
         fitWidth = false,
         classes = [],
-        headers = $bindable([
-        { unit: 'day', format: 'MMMM Do' },
-        { unit: 'hour', format: 'H:mm' }
-    ]),
+        headers = [
+          { unit: 'day', format: 'MMMM Do' },
+          { unit: 'hour', format: 'H:mm' }
+        ],
         zoomLevels = [
-        {
-            headers: [
-                { unit: 'day', format: 'DD.MM.YYYY' },
-                { unit: 'hour', format: 'HH' }
-            ],
-            minWidth: 800,
-            fitWidth: true
-        },
-        {
-            headers: [
-                { unit: 'hour', format: 'ddd D/M, H A' },
-                { unit: 'minute', format: 'mm', offset: 15 }
-            ],
-            minWidth: 5000,
-            fitWidth: false
-        }
-    ],
+            {
+                headers: [
+                    { unit: 'day', format: 'DD.MM.YYYY' },
+                    { unit: 'hour', format: 'HH' }
+                ],
+                minWidth: 800,
+                fitWidth: true
+            },
+            {
+                headers: [
+                    { unit: 'hour', format: 'ddd D/M, H A' },
+                    { unit: 'minute', format: 'mm', offset: 15 }
+                ],
+                minWidth: 5000,
+                fitWidth: false
+            }
+        ],
         taskContent = null,
-        tableWidth = $bindable(240),
+        tableWidth = 240,
         resizeHandleWidth = 10,
-        onTaskButtonClick = null,
         dateAdapter = new DefaultSvelteGanttDateAdapter(),
         magnetUnit = 'minute',
         magnetOffset = 15,
-        columnUnit = $bindable('minute'),
-        columnOffset = $bindable(15),
+        columnUnit = 'minute',
+        columnOffset = 15,
         ganttTableModules = [],
         ganttBodyModules = [],
         reflectOnParentRows = true,
@@ -193,7 +92,6 @@
         highlightedDurations = undefined,
         highlightColor = '#6eb859',
         taskElementHook = null,
-        layout = 'overlap',
         enableCreateTask = false,
         onCreateTask = (e: { from: number; to: number; resourceId: PropertyKey; }) => {
             const id: any = `creating-task-${(Math.random() + 1).toString(36).substring(2, 7)}`;
@@ -204,92 +102,30 @@
             }) as TaskModel;
         },
         onCreatedTask = (task: SvelteTask) => {},
+        onRowsChange = (e) => { rows = e; },
+        onTasksChange = (e) => { tasks = e; },
+        onTimeRangesChange = (e) => { timeRanges = e; },
+        ganttState = {},
+        onGanttStateChange = (e) => { ganttState = e; },
+        viewport = {},
+        onViewportChange = (e) => { viewport = e; },
         ...rest
-    }: Props = $props();
+    }: GanttProps = props;
     
     assertSet({ rows });
 
-    const _rowHeight = writable(rowHeight);
-    const _rowPadding = writable(rowPadding);
+    const builder = new GanttBuilder(props);
+    createGantt(builder);
 
-    function toDateNum(date: number | Date) {
-        return date instanceof Date ? date.valueOf() : date;
-    }
-
-    
-    
     assertSet({ from, to });
-    const _from = writable(toDateNum(from));
-    const _to = writable(toDateNum(to));
-
-    
-    
-    const _minWidth = writable(minWidth);
-    const _fitWidth = writable(fitWidth);
-
-    
-    
-    
-    
-    
-    
-    
-
-
-    
-    
-    let magnetDuration: number;
-    setMagnetDuration(magnetUnit, magnetOffset);
-
-    function setMagnetDuration(unit, offset) {
-        if (unit && offset) {
-            magnetDuration = getDuration(unit, offset);
-        }
-    }
-
-    
-    
-
-    
-    
-    
-
-    
-    
-    
-    
-
-    
-
-    
-    const _layout = writable(layout);
-
-    const visibleWidth = writable<number>(null);
-    const visibleHeight = writable<number>(null);
-    const headerHeight = writable<number>(null);
-    const _width = derived([visibleWidth, _minWidth, _fitWidth], ([visible, min, stretch]) => {
-        return stretch && visible > min ? visible : min;
-    });
-
-    const dataStore = createDataStore();
-    setContext('dataStore', dataStore);
-    const {
-        rowStore,
-        taskStore,
-        timeRangeStore,
-        allTasks,
-        allRows,
-        allTimeRanges,
-        rowTaskCache
-    } = dataStore;
-
-    export const columnService = createColumnService({
-        get columns() { return columns },
-        get magnetDuration() { return magnetDuration },
+    let _from = $state(toValue(from));
+    let _to = $state(toValue(to));
+    $effect(() => {
+      _from = toValue(from);
+      _to = toValue(to);
     });
 
     let disableTransition = $state(false);
-
     async function tickWithoutCSSTransition() {
         disableTransition = true;
         await tick();
@@ -297,94 +133,25 @@
         disableTransition = false;
     }
 
-    let columns: IColumn[] = $state();
+    export const api = builder.api;
 
-    function getColumnsV2(
-        from: number | Date,
-        to: number | Date,
-        unit: string,
-        offset: number,
-        width: number
-    ): IColumn[] {
-        //BUG: Function is running twice on init, how to prevent it?
+    export const timeRangeFactory = new TimeRangeFactory(builder.columnService);
 
-        if (from instanceof Date) from = from.valueOf();
-        if (to instanceof Date) to = to.valueOf();
-
-        let cols = [];
-        const periods = getAllPeriods(
-            from.valueOf(),
-            to.valueOf(),
-            unit,
-            offset,
-            highlightedDurations
-        );
-        let left = 0;
-        let distance_point = 0;
-        periods.forEach(function (period) {
-            left = distance_point;
-            distance_point = getPositionByDate(period.to, $_from, $_to, $_width);
-            cols.push({
-                width: distance_point - left,
-                from: period.from,
-                to: period.to,
-                left: left,
-                duration: period.duration,
-                ...(period.isHighlighted && { bgHighlightColor: highlightColor })
-            });
-        });
-        return cols;
-    }
-
-    let offsetWidth: number = $state();
-    let offsetHeight: number = $state();
-    let bottomScrollbarVisible = writable(offsetHeight - $visibleHeight);
-    let rightScrollbarVisible = writable(offsetWidth - $visibleWidth);
-
-    setContext('dimensions', {
-        from: _from,
-        to: _to,
-        width: _width,
-        visibleWidth,
-        visibleHeight,
-        headerHeight,
-        bottomScrollbarVisible,
-        rightScrollbarVisible,
+    export const utils = createUtils({
+        get from() { return _from },
+        get to() { return _to },
+        get width() { return builder.width },
+        get magnetOffset() { return magnetOffset;},
+        get magnetUnit() { return magnetUnit;},
+        get magnetDuration() { return builder.magnetDuration();},
+        get dateAdapter() { return dateAdapter;},
     });
-
-    setContext('options', {
-        dateAdapter,
-        taskElementHook,
-        taskContent,
-        rowPadding: _rowPadding,
-        rowHeight: _rowHeight,
-        layout: _layout,
-        resizeHandleWidth: resizeHandleWidth,
-        reflectOnParentRows,
-        reflectOnChildRows,
-        onTaskButtonClick
-    });
-
-    const hoveredRow = writable<number | string>(null);
-    const selectedRow = writable<number | string>(null);
 
     const ganttContext: GanttContext = {
-        rowContainer: null,
-        mainContainer: null,
-        mainHeaderContainer: null,
-        scrollables,
-        hoveredRow,
-        selectedRow,
-        updateLayout,
-        expandRow(row) {
-            expandRow(row);
-            updateLayout();
-        },
-        collapseRow(row) {
-            collapseRow(row);
-            updateLayout();
-        },
-        invalidatePosition,
+        ...store,
+        utils,
+        api,
+        columnService: builder.columnService,
     };
     setContext('gantt', ganttContext);
 
@@ -404,207 +171,33 @@
     }
 
     onMount(() => {
-        Object.assign(ganttContext, {
-            rowContainer,
-            mainContainer,
-            mainHeaderContainer
-        });
         mounted = true;
     });
-
-    const { onDelegatedEvent, offDelegatedEvent, onEvent } = createDelegatedEventDispatcher();
-
-    onDelegatedEvent('click', 'data-task-id', (event, data, target) => {
-        const taskId = data;
-        const task = $taskStore.entities[taskId];
-        if (isLeftClick(event) && !target.classList.contains('sg-task-reflected') && !target.classList.contains('sg-ignore-click')) {
-            if (event.ctrlKey) {
-                selectionManager.toggleSelection(taskId);
-            } else {
-                selectionManager.selectSingle(taskId);
-            }
-        }
-        api['tasks'].raise.select(task);
-    });
-
-    onDelegatedEvent('pointerover', 'data-row-id', (event, data, target) => {
-        $hoveredRow = data;
-    });
-
-    onDelegatedEvent('click', 'data-row-id', (event, data, target) => {
-        selectionManager.unSelectTasks();
-        if ($selectedRow == data) {
-            $selectedRow = null;
-            return;
-        }
-        $selectedRow = data;
-    });
-
-    onDelegatedEvent('dblclick', 'data-task-id', (event, data, target) => {
-        const taskId = data;
-        api['tasks'].raise.dblclicked($taskStore.entities[taskId], event);
-    });
-
-    onDelegatedEvent('pointerleave', 'empty', (event, data, target) => {
-        $hoveredRow = null;
-    });
-
-    onDestroy(() => {
-        offDelegatedEvent('click', 'data-task-id');
-        offDelegatedEvent('click', 'data-row-id');
-        offDelegatedEvent('dblclick', 'data-task-id');
-
-        selectionManager.unSelectTasks();
-    });
-
-    let __scrollTop = $state(0);
-    let __scrollLeft = 0;
-    function scrollable(node) {
-        const onscroll = event => {
-            const { scrollTop, scrollLeft } = node;
-
-            scrollables.forEach(scrollable => {
-                if (scrollable.orientation === 'horizontal') {
-                    scrollable.node.scrollLeft = scrollLeft;
-                } else {
-                    scrollable.node.scrollTop = scrollTop;
-                }
-            });
-
-            __scrollTop = scrollTop;
-            __scrollLeft = scrollLeft;
-        };
-
-        node.addEventListener('scroll', onscroll);
-        return {
-            destroy() {
-                node.removeEventListener('scroll', onscroll, false);
-            }
-        };
-    }
-
-    function horizontalScrollListener(node) {
-        scrollables.push({ node, orientation: 'horizontal' });
-    }
 
     function onResize(event: { left: number }) {
         tableWidth = event.left;
     }
 
-    let zoomLevel = 0;
-    let zooming = $state(false);
-    async function onwheel(event: WheelEvent) {
-        if (event.ctrlKey) {
-            event.preventDefault();
-
-            const prevZoomLevel = zoomLevel;
-            if (event.deltaY > 0) {
-                zoomLevel = Math.max(zoomLevel - 1, 0);
-            } else {
-                zoomLevel = Math.min(zoomLevel + 1, zoomLevels.length - 1);
-            }
-
-            if (prevZoomLevel != zoomLevel && zoomLevels[zoomLevel]) {
-                const options = {
-                    columnUnit: columnUnit,
-                    columnOffset: columnOffset,
-                    minWidth: $_minWidth,
-                    ...zoomLevels[zoomLevel]
-                };
-
-                const scale = options.minWidth / $_width;
-                const node = mainContainer;
-                const mousepos = getRelativePos(node, event);
-                const before = node.scrollLeft + mousepos.x;
-                const after = before * scale;
-                const scrollLeft = after - mousepos.x + node.clientWidth / 2;
-
-                columnUnit = options.columnUnit;
-                columnOffset = options.columnOffset;
-                $_minWidth = options.minWidth;
-
-                if (options.headers) headers = options.headers;
-
-                if (options.fitWidth) $_fitWidth = options.fitWidth;
-
-                api['gantt'].raise.viewChanged();
-                zooming = true;
-                await tick();
-                node.scrollLeft = scrollLeft;
-                zooming = false;
-            }
-        }
-    }
-
     function onDateSelected(event: { from: number, to: number }) {
-        $_from = event.from;
-        $_to = event.to;
-        api['gantt'].raise.dateSelected({ from: $_from, to: $_to });
+        _from = event.from;
+        _to = event.to;
+        api['gantt'].raise.dateSelected({ from: _from, to: _to });
     }
 
-    function initRows(rowsData) {
-        //Bug: Running twice on change options
-        const rows = createRows(rowsData, { rowHeight });
-        rowStore.addAll(rows);
-        updateLayout();
-    }
-
-    const { createTask, reflectTask } = createTaskFactory({
-        get rowEntities() { return $rowStore.entities; },
+    const { createTask, reflectTask }  = createTaskFactory({
+        get rowEntities() { return builder.rowStore.entities; },
         get rowPadding() { return rowPadding },
-        getPositionByDate: (date) => columnService.getPositionByDate(date),
+        selection: builder.selection,
+        getPositionByDate: (date) => builder.columnService.getPositionByDate(date),
     });
 
-    async function initTasks(taskData: TaskModel[]) {
-        const tasks = [];
-        for (const taskModel of taskData) {
-            if (!draggingTasks[taskModel.id]) {
-                delete draggingTasks[taskModel.id];
-            }
-            const task = createTask(taskModel);
-            tasks.push(task);
-        }
-        taskStore.addAll(tasks);
-        updateLayout();
-    }
-
-    let _reflectedTasksCache: { [rowId: PropertyKey]: SvelteTask[] } = $state({});
-
-    function initTimeRanges(timeRangeData) {
-        const timeRanges = timeRangeData.map(timeRange => {
-            return timeRangeFactory.create(timeRange);
-        });
-        timeRangeStore.addAll(timeRanges);
-    }
-
-    export const api = provideGanttApi();
-    const selectionManager = new SelectionManager(taskStore);
-
-    export const timeRangeFactory = new TimeRangeFactory(columnService);
-
-    export const utils = createUtils({
-        get from() { return $_from },
-        get to() { return $_to },
-        get width() { return $_width },
-        get magnetOffset() { return  magnetOffset;},
-        get magnetUnit() { return magnetUnit;},
-        get magnetDuration() { return  magnetDuration;},
-        get dateAdapter() { return  dateAdapter;},
-    });
-
-    setContext('services', {
-        utils,
-        api,
-        selectionManager,
-        columnService,
-    });
 
     export function refreshTimeRanges() {
-        timeRangeStore._update(({ ids, entities }) => {
+        timeRangeStore.updateRaw(({ ids, entities }) => {
             ids.forEach(id => {
                 const timeRange = entities[id];
-                const newLeft = columnService.getPositionByDate(timeRange.model.from) | 0;
-                const newRight = columnService.getPositionByDate(timeRange.model.to) | 0;
+                const newLeft = builder.columnService.getPositionByDate(timeRange.model.from) | 0;
+                const newRight = builder.columnService.getPositionByDate(timeRange.model.to) | 0;
 
                 timeRange.left = newLeft;
                 timeRange.width = newRight - newLeft;
@@ -614,218 +207,93 @@
     }
 
     export function refreshTasks() {
-        $allTasks.forEach(task => {
-            const newLeft = columnService.getPositionByDate(task.model.from) | 0;
-            const newRight = columnService.getPositionByDate(task.model.to) | 0;
-
-            task.left = newLeft;
-            task.width = newRight - newLeft;
-        });
-        taskStore.refresh();
-    }
-
-    export function getRowContainer(): HTMLElement {
-        return rowContainer;
+      for (const task of builder.taskStore.all) {
+        const newLeft = builder.columnService.getPositionByDate(task.model.from) | 0;
+        const newRight = builder.columnService.getPositionByDate(task.model.to) | 0;
+        task.left = newLeft;
+        task.width = newRight - newLeft;
+      }
+      builder.taskStore.refresh();
     }
 
     export function selectTask(id) {
-        const task = $taskStore.entities[id];
+        const task = builder.taskStore.entities[id];
         if (task) {
-            selectionManager.selectSingle(id);
+            builder.selection.select(id);
         }
     }
 
     export function unselectTasks() {
-        selectionManager.unSelectTasks();
+      builder.selection.clear();
     }
 
-    export function scrollToRow(id, scrollBehavior: ScrollBehavior = 'auto') {
-        const { scrollTop, clientHeight } = mainContainer;
-        const row = $rowStore.entities[id];
-        if (!row) {
-            return;
-        }
-        const targetTop = row.y;
-
-        if (targetTop < scrollTop) {
-            mainContainer.scrollTo({
-                top: targetTop,
-                behavior: scrollBehavior
-            });
-        }
-
-        if (targetTop > scrollTop + clientHeight) {
-            mainContainer.scrollTo({
-                top: targetTop + row.height - clientHeight,
-                behavior: scrollBehavior
-            });
-        }
-    }
-
-    export function scrollToTask(id, scrollBehavior: ScrollBehavior = 'auto') {
-        const { scrollLeft, scrollTop, clientWidth, clientHeight } = mainContainer;
-
-        const task = $taskStore.entities[id];
-        if (!task) return;
-        const row = $rowStore.entities[task.model.resourceId];
-        if (!row) return;
-        const targetLeft = task.left;
-        const targetTop = row.y;
-
-        const options = {
-            top: undefined,
-            left: undefined,
-            behavior: scrollBehavior
-        };
-
-        if (targetLeft < scrollLeft) {
-            options.left = targetLeft;
-        }
-
-        if (targetLeft > scrollLeft + clientWidth) {
-            options.left = targetLeft + task.width - clientWidth;
-        }
-
-        if (targetTop < scrollTop) {
-            options.top = targetTop;
-        }
-
-        if (targetTop > scrollTop + clientHeight) {
-            options.top = targetTop + row.height - clientHeight;
-        }
-
-        mainContainer.scrollTo(options);
-    }
 
     export function updateTask(model: TaskModel) {
         const task = createTask(model);
-        taskStore.upsert(task);
+        builder.taskStore.upsert(task);
         invalidatePosition({ task });
-        updateLayoutSync();
     }
 
     export function updateTasks(models: TaskModel[]) {
         const tasks = models.map(model => createTask(model));
-        taskStore.upsertAll(tasks);
+        builder.taskStore.upsertAll(tasks);
         tasks.forEach(task => invalidatePosition({ task }));
-        updateLayoutSync();
     }
 
     export function removeTask(taskId: PropertyKey) {
-        const task = $taskStore.entities[taskId];
+        const task = builder.taskStore.entities[taskId];
         if (!task) {
             return;
         }
-        taskStore.delete(taskId);
+        builder.taskStore.delete(taskId);
 
-        const row = $rowStore.entities[task.model.resourceId];
+        const row = builder.rowStore.entities[task.model.resourceId];
         if (!row) {
             return;
         }
         invalidatePosition({ row });
-        updateLayoutSync();
     }
 
     export function removeTasks(taskIds: PropertyKey[]) {
         for (const taskId of taskIds) {
-            const task = $taskStore.entities[taskId];
+            const task = builder.taskStore.entities[taskId];
             if (!task) {
                 continue;
             }
 
-            const row = $rowStore.entities[task.model.resourceId];
+            const row = builder.rowStore.entities[task.model.resourceId];
             if (!row) {
                 continue;
             }
             invalidatePosition({ row });
         }
 
-        taskStore.deleteAll(taskIds);
-        updateLayoutSync();
+        builder.taskStore.deleteAll(taskIds);
     }
 
     export function updateRow(model: RowModel) {
-        const row = createRows([model], { rowHeight });
-        rowStore.upsertAll(row);
-        updateLayout();
-        updateLayoutSync();
+        // const row = rowFactory.createRows([model], { rowHeight });
+        // rowStore.upsertAll(row.rows);
     }
 
     export function updateRows(models: RowModel[]) {
-        const rows = createRows(models, { rowHeight });
-        rowStore.upsertAll(rows);
-        updateLayout();
-        updateLayoutSync();
+        // const rows = rowFactory.createRows(models, { rowHeight });
+        // rowStore.upsertAll(rows.rows);
     }
 
     export function getRow(resourceId: PropertyKey): SvelteRow {
-        return $rowStore.entities[resourceId];
+        return builder.rowStore.entities[resourceId];
     }
 
     export function getTask(id) {
-        return $taskStore.entities[id];
+        return builder.taskStore.entities[id];
     }
 
     export function getTasks(resourceId) {
-        if ($rowTaskCache[resourceId]) {
-            return $rowTaskCache[resourceId].map(id => $taskStore.entities[id]);
+        if (builder.taskStore.rowTaskCache[resourceId]) {
+            return builder.taskStore.rowTaskCache[resourceId].map(id => builder.taskStore.entities[id]);
         }
         return null;
-    }
-
-    let filteredRows: SvelteRow[] = $state([]);
-    let rowsAreOfSameHeight = $state(true);
-    let rowContainerHeight = $state(0);
-
-    let startIndex = $state<number>();
-
-    let endIndex = $state<number>();
-
-    let paddingTop = $state<number>(0);
-
-    let visibleRows = $state<SvelteRow[]>([]);
-
-    let visibleTasks: SvelteTask[] = $state(); // try to keep the same order in the array as before
-    let previousOrder: { [id: PropertyKey]: number; } = $state({});
-
-    let layoutChanged = $state({});
-    let refreshLayout = $state({});
-
-
-    export function updateLayoutSync(_invalidateFull?: boolean) {
-        const params: layouts.LayoutParams = {
-            taskStore: $taskStore,
-            rowStore: $rowStore,
-            rowTasks: $rowTaskCache,
-            rowHeight,
-            rowPadding,
-            rowReflectedTasks: _reflectedTasksCache,
-            invalidatedRows,
-            invalidatedTasks,
-            invalidateFull: _invalidateFull ?? invalidateFull,
-        };
-
-        if (layout === 'overlap') {
-            layouts.overlap(params);
-        }
-
-        if (layout === 'pack') {
-            layouts.pack(params);
-        }
-
-        if (layout === 'expand') {
-            layouts.expand(params);
-        }
-
-        layoutChanged = {};
-        invalidateFull = false;
-        invalidatedTasks = {};
-        invalidatedRows = {};
-    }
-
-    export function updateLayout() {
-        refreshLayout = {};
-        invalidateFull = true;
     }
 
     let draggingTasks: { [taskId: PropertyKey]: DraggingState; } = $state({});
@@ -833,14 +301,14 @@
     function onCreateTaskMove({ from, to, x, width, y }: MoveEvent) {
         if (!_creatingTask) {
             // TODO:: incorrect for collapsible rows, if creating under one
-            const row = $allRows.find(row => row.y < y && y < row.y + row.height);
+            const row = builder.rowStore.all.find(row => row.y < y && y < row.y + row.height);
             const resourceId = row.model.id;
             _creatingTask = createTask(onCreateTask({
                 resourceId,
                 from,
                 to,
             }));
-            taskStore.upsert(_creatingTask);
+            builder.taskStore.upsert(_creatingTask);
             draggingTasks[_creatingTask.model.id] = {
                 x: _creatingTask.left,
                 y: _creatingTask.top,
@@ -858,7 +326,7 @@
         _creatingTask.model.to = to;
         _creatingTask.left = x;
         _creatingTask.width = width;
-        taskStore.upsert(_creatingTask);
+        builder.taskStore.upsert(_creatingTask);
         delete draggingTasks[_creatingTask.model.id];
         onCreatedTask(_creatingTask);
         _creatingTask = null;
@@ -895,7 +363,7 @@
 
                 api.tasks.raise.change({ task: newTask, sourceRow, targetRow, previousState: previous });
                 api.tasks.raise.changed({ task: newTask, sourceRow, targetRow, previousState: previous });
-                taskStore.update(newTask);
+                builder.taskStore.update(newTask);
                 invalidatePosition({ row: sourceRow });
                 invalidatePosition({ task: newTask });
             }
@@ -905,210 +373,6 @@
     function onItemsChange(e: { items: { [taskId: PropertyKey]: DraggingState } }) {
         draggingTasks = { ...e.items };
     }
-    run(() => {
-        if (mounted) initRows(rows);
-    });
-    run(() => {
-        if (mounted) initTasks(tasks);
-    });
-    run(() => {
-        if (mounted) initTimeRanges(timeRanges);
-    });
-    run(() => {
-        $_rowHeight = rowHeight;
-    });
-    run(() => {
-        $_rowPadding = rowPadding;
-    });
-    run(() => {
-        $_from = toDateNum(from);
-    });
-    run(() => {
-        $_to = toDateNum(to);
-    });
-    run(() => {
-        $_minWidth = minWidth;
-        $_fitWidth = fitWidth;
-    });
-    run(() => {
-        setMagnetDuration(magnetUnit, magnetOffset);
-    });
-    run(() => {
-        $_layout = layout;
-    });
-    run(() => {
-        columns = getColumnsV2($_from, $_to, columnUnit, columnOffset, $_width);
-        tickWithoutCSSTransition();
-        refreshTimeRanges();
-        refreshTasks();
-    });
-    run(() => {
-        $bottomScrollbarVisible = offsetHeight - $visibleHeight;
-    });
-    run(() => {
-        $rightScrollbarVisible = offsetWidth - $visibleWidth;
-    });
-    run(() => {
-        _reflectedTasksCache = {};
-        for (const task of $allTasks) {
-            const row = $rowStore.entities[task.model.resourceId];
-            if (!row) {
-                continue;
-            }
-
-            if (reflectOnChildRows && row.allChildren) {
-                row.allChildren.forEach(r => {
-                    const reflectedTask = reflectTask(task, r);
-                    if (!_reflectedTasksCache[r.model.id]) {
-                        _reflectedTasksCache[r.model.id] = [];
-                    }
-                    _reflectedTasksCache[r.model.id].push(reflectedTask);
-                });
-            }
-
-            if (reflectOnParentRows && row.allParents) {
-                row.allParents.forEach(r => {
-                    const reflectedTask = reflectTask(task, r);
-                    if (!_reflectedTasksCache[r.model.id]) {
-                        _reflectedTasksCache[r.model.id] = [];
-                    }
-                    _reflectedTasksCache[r.model.id].push(reflectedTask);
-                });
-            }
-        }
-    });
-    /** apply layouts */
-    run(() => {
-        refreshLayout;
-
-        const params: layouts.LayoutParams = {
-            taskStore: $taskStore,
-            rowStore: $rowStore,
-            rowTasks: $rowTaskCache,
-            rowHeight,
-            rowPadding,
-            rowReflectedTasks: _reflectedTasksCache,
-            invalidatedRows,
-            invalidatedTasks,
-            invalidateFull,
-        };
-
-        if (layout === 'overlap') {
-            layouts.overlap(params);
-        }
-
-        if (layout === 'pack') {
-            layouts.pack(params);
-        }
-
-        if (layout === 'expand') {
-            layouts.expand(params);
-        }
-
-        layoutChanged = {};
-        invalidateFull = false;
-        invalidatedTasks = {};
-        invalidatedRows = {};
-    });
-    run(() => {
-        filteredRows = [];
-        rowContainerHeight = 0;
-        layoutChanged;
-        const firstRow = $allRows[0];
-        for (const row of $allRows) {
-            if (!row.hidden) {
-                filteredRows.push(row);
-
-                if (firstRow && firstRow.height !== row.height) {
-                    rowsAreOfSameHeight = false;
-                }
-
-                rowContainerHeight += row.height || rowHeight;
-            }
-        }
-    });
-    run(() => {
-        if (rowsAreOfSameHeight) {
-            const rowHeight = rowContainerHeight / filteredRows.length;
-            startIndex = Math.floor(__scrollTop / rowHeight);
-        } else {
-            startIndex = getIndicesOnly(filteredRows, __scrollTop, row => row.y)[0];
-        }
-    });
-    run(() => {
-        if (rowsAreOfSameHeight) {
-            endIndex = Math.min(startIndex + Math.ceil($visibleHeight / rowHeight), filteredRows.length - 1);
-        } else {
-            endIndex = getIndicesOnly(filteredRows, __scrollTop + $visibleHeight, row => row.y)[0];
-        }
-    });
-    run(() => {
-        paddingTop = filteredRows[startIndex] ? filteredRows[startIndex].y : 0;
-    });
-    run(() => {
-        visibleRows = filteredRows.slice(startIndex, endIndex + 1);
-    });
-    run(() => {
-        const tasks: SvelteTask[] = [];
-        const rendered: { [id: PropertyKey]: boolean } = {};
-
-        const tasksOrdered: SvelteTask[] = [];
-        const order: { [id: PropertyKey]: number; } = {};
-        // because svelte detaches html elements when their order changes (even when keyed)
-        // this helps CSS transitions
-        let ordered = true;
-        let ordinal = 0;
-        function tryRestorePosition(task: SvelteTask) {
-            if (!task) return;
-            tasks.push(task);
-            const id = task.model.id;
-            if (previousOrder[id] != null) {
-                tasksOrdered[previousOrder[id]] = task;
-            } else {
-                ordered = false;
-            }
-
-            order[id] = ordinal++;
-        }
-
-        for (let i = 0; i < visibleRows.length; i++) {
-            const row = visibleRows[i];
-            if ($rowTaskCache[row.model.id]) {
-                for (let j = 0; j < $rowTaskCache[row.model.id].length; j++) {
-                    const id = $rowTaskCache[row.model.id][j];
-                    rendered[id] = true;
-                    tryRestorePosition($taskStore.entities[id]);
-                }
-            }
-
-            if (_reflectedTasksCache[row.model.id]) {
-                for (const task of _reflectedTasksCache[row.model.id]) {
-                    tryRestorePosition(task);
-                }
-            }
-        }
-        
-        // render all tasks being dragged if not already
-        for (const id in draggingTasks) {
-            if (!rendered[id]) {
-                rendered[id] = true;
-                tryRestorePosition($taskStore.entities[id]);
-            }
-        }
-
-        if (tasksOrdered.length !== tasks.length) {
-            ordered = false;
-        }
-
-        previousOrder = ordered ? previousOrder : order;
-        visibleTasks = ordered ? tasksOrdered : tasks;
-    });
-    run(() => {
-        layout;
-        tasks;
-        rows;
-        updateLayout();
-    });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -1116,102 +380,71 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     class="sg-gantt {classes}"
+    id="sg-gantt-{builder.id}"
+    data-sg-gantt={builder.id}
     class:sg-disable-transition={disableTransition}
     bind:this={ganttElement}
-    onpointerdown={stopPropagation(onEvent)}
-    onclick={stopPropagation(onEvent)}
-    ondblclick={onEvent}
-    onpointerover={onEvent}
-    onpointerleave={onEvent}
+    {...builder.elements.root.events}
+    style="--sg-header-height:{64}px"
 >
     {#each ganttTableModules as module}
-        {@const SvelteComponent = module}
+    {@const SvelteComponent = module}
+      <div class="sg-view" style:flex-basis="{tableWidth}px">
         <SvelteComponent
-            {rowContainerHeight}
-            {paddingTop}
-            {tableWidth}
-            {...rest}
-            {visibleRows}
+            {...props} {...rest}
         />
-
-        <Resizer x={tableWidth} onResize={onResize} container={ganttElement}></Resizer>
+      </div>
+      <Resizer x={tableWidth} onResize={onResize} container={ganttElement}></Resizer>
     {/each}
 
     <div class="sg-timeline sg-view">
-        <div class="sg-header" bind:this={mainHeaderContainer} bind:clientHeight={$headerHeight} style={`padding-right: ${$rightScrollbarVisible}px;`}>
-            <div class="sg-header-scroller" use:horizontalScrollListener>
-                <div class="header-container" style="width:{$_width}px">
-                    <ColumnHeader
-                        {headers}
-                        ganttBodyColumns={columns}
-                        ganttBodyUnit={columnUnit}
-                        onDateSelected={onDateSelected}
-                    />
-                    {#each $allTimeRanges as timeRange (timeRange.model.id)}
-                        <TimeRangeHeader {...timeRange} />
-                    {/each}
-                </div>
+        <div class="sg-header" style:padding-right={`${builder.rightScrollbarVisible}px`}  data-sg-scroll-listener="horizontal">
+            <div class="sg-header-container" style="width:{builder.width}px">
+                {#each builder.columnHeaders as header}
+                    <ColumnHeader header={header} />
+                {/each}
+                {#each builder.timeRangeStore.all as timeRange (timeRange.model.id)}
+                    <TimeRangeHeader {timeRange} />
+                {/each}
             </div>
         </div>
 
+        <!-- TODO:: these are good measurements but this element does not resize so svelte+resizeobsever do not catch changes, ive never observed this because you need to have expandable rows -->
         <div
             class="sg-timeline-body"
-            bind:this={mainContainer}
-            use:scrollable
-            class:zooming
-            {onwheel}
-            bind:clientHeight={$visibleHeight}
-            bind:offsetHeight={offsetHeight}
-            bind:clientWidth={$visibleWidth}
-            bind:offsetWidth={offsetWidth}
-            use:dragCreateTasks={{ container: rowContainer, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd, boundsContainer: mainContainer }}
+            data-sg-timeline-body
+            data-sg-main-container
+            use:dragCreateTasks={{ container: null, enabled: enableCreateTask, onMove: onCreateTaskMove, onEnd: onCreateTaskEnd, boundsContainer: null }}
+            {...builder.elements.body.events}
         >
-            <div class="content" style="width:{$_width}px">
-                <Columns {columns} {columnStrokeColor} {columnStrokeWidth} {useCanvasColumns} />
+            <div class="content" style="width:{builder.width}px">
+                <Columns columns={builder.columns} {columnStrokeColor} {columnStrokeWidth} {useCanvasColumns} />
 
                 <div
                     class="sg-rows"
-                    bind:this={rowContainer}
-                    style="height:{rowContainerHeight}px;"
+                    data-sg-row-container
+                    style="height:{builder.virtual.totalHeight}px;"
                 >
-                    <div style="transform: translateY({paddingTop}px);">
-                        {#each visibleRows as row (row.model.id)}
-                            <Row {row} />
+                    <div style="transform: translateY({builder.virtual.virtualOffset}px);">
+                        {#each builder.visibleRowBuilders as row (row.row.id)}
+                            <Row builder={row} />
                         {/each}
                     </div>
                 </div>
 
                 <div class="sg-foreground">
-                    {#each $allTimeRanges as timeRange (timeRange.model.id)}
-                        <TimeRange {...timeRange} />
+                    {#each builder.timeRangeStore.all as timeRange (timeRange.model.id)}
+                        <TimeRange {timeRange} />
                     {/each}
 
-                    <DraggableGroup items={draggingTasks} onChange={onChange} onItemsChange={onItemsChange}>
-                        {#each visibleTasks as task (task.model.id)}
-                            <Draggable {task}>
-                                {#snippet children({ state, onPointerDown })}
-                                    <Task
-                                        {...task}
-                                        model={task.model}
-                                        left={state.x}
-                                        top={state.y}
-                                        width={state.width}
-                                        height={task.height}
-                                        dragging={state.dragging}
-                                        resizing={state.resizing}
-                                        onPointerDown={onPointerDown}
-                                    />
-                                {/snippet}
-                            </Draggable>
-                        {/each}
-                    </DraggableGroup>
+                    {#each builder.visibleTasks as task (task.model.id)}
+                        <Task {...task} />
+                    {/each}
                 </div>
                 {#each ganttBodyModules as module}
                     {@const SvelteComponent_1 = module}
                     <SvelteComponent_1
-                        {paddingTop}
-                        {visibleRows}
-                        {...rest}
+                        {...props}
                     />
                 {/each}
             </div>
@@ -1256,7 +489,7 @@
     }
 
     .sg-timeline {
-        flex: 1 1 0%;
+        flex: 1 1 0;
         display: flex;
         flex-direction: column;
         overflow-x: auto;
@@ -1290,13 +523,21 @@
 
     .sg-timeline-body {
         overflow: auto;
-        flex: 1 1 auto;
+        flex: 1 1 0;
+    }
+
+    .sg-header {
+      height: var(--sg-header-height);
+
+      overflow: hidden;
+        position: relative;
     }
 
     .sg-header-scroller {
         /* border-right: 1px solid #efefef; // replace with element, or conditionally draw this border */
         overflow: hidden;
         position: relative;
+        height: 100%;
     }
 
     .content {
@@ -1305,5 +546,11 @@
 
     :global(*) {
         box-sizing: border-box;
+    }
+
+    .sg-header-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 </style>

@@ -61,7 +61,7 @@
      */
     let gantt;
     onMount(() => {
-        window.gantt = gantt = new SvelteGantt({ target: document.getElementById('example-gantt'), props: $options });
+        window.gantt = gantt = SvelteGantt(document.getElementById('example-gantt'), $options);
     });
 
     function shuffle(array) {

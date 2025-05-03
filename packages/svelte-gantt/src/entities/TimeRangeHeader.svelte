@@ -1,102 +1,80 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import { useDraggable } from '../core/drag';
-    import { normalizeClassAttr } from '../utils/dom';
+    import { createDraggableBuilder, type SvelteTimeRange } from '@svelte-gantt/gantt-core';
+    import { cssStringify, normalizeClassAttr } from '../utils/dom';
     import { isResizable } from '../utils/utils';
+    import { useGantt } from '../gantt';
 
-    const { rowContainer } = getContext('gantt');
-    const { api, utils, columnService } = getContext('services');
-    const { resizeHandleWidth } = getContext('options');
-    const { timeRangeStore } = getContext('dataStore');
+    const { utils, columnService } = getContext('gantt');
+    const gantt = useGantt();
 
-    let { model, width, left } = $props();
+    let { timeRange }: { timeRange: SvelteTimeRange } = $props();
 
-    const _position = $state({
-        width,
-        x: left
-    });
-    $effect(() => {
-      _position.x = left;
-      _position.width = width;
-    });
+    let classes = $derived(normalizeClassAttr(timeRange.model.classes));
 
-    function drag(node) {
-        const ondrop = event => {
-            const newFrom = utils.roundTo(columnService.getDateByPosition(event.x));
-            const newTo = utils.roundTo(columnService.getDateByPosition(event.x + event.width));
-            const newLeft = columnService.getPositionByDate(newFrom);
-            const newRight = columnService.getPositionByDate(newTo);
+    let ref = $state<HTMLElement>();
 
-            Object.assign(model, {
-                from: newFrom,
-                to: newTo
-            });
+    const drag = createDraggableBuilder({
+      dragAllowed: false,
+      resizeAllowed: () => isResizable(timeRange.model),
+      resizeHandleWidth: 5, // gantt.options.resizeHandleWidth,
+      id: String(timeRange.model.id),
+      get nodeRef() { return ref; },
+      onDrop(event) {
+        const { model } = timeRange;
+        const newFrom = utils.roundTo(columnService.getDateByPosition(event.x));
+        const newTo = utils.roundTo(columnService.getDateByPosition(event.x + event.width));
+        const newLeft = columnService.getPositionByDate(newFrom);
+        const newRight = columnService.getPositionByDate(newTo);
 
-            update({
-                left: newLeft,
-                width: newRight - newLeft,
-                model,
-                resizing: false
-            });
-            api.timeranges.raise.changed({ model, left: event.x, width: event.width });
+        model.from = newFrom;
+        model.to = newTo;
 
-            window.removeEventListener('pointermove', onmousemove, false);
-        };
+        // gantt.timeRangeStore.update({
+        //   left: newLeft,
+        //   width: newRight - newLeft,
+        //   model,
+        //   resizing: undefined // TODO:: remove
+        // });
 
-        function update(state) {
-            timeRangeStore.update(state);
-            _position.x = state.left;
-            _position.width = state.width;
-        }
-
-        const draggable = useDraggable(node, {
-            onDown: event => {
-                api.timeranges.raise.clicked({ model });
-                update({
-                    left: event.x,
-                    width: event.width,
-                    model,
-                    resizing: true
-                });
-            },
-            onResize: event => {
-                api.timeranges.raise.resized({ model, left: event.x, width: event.width });
-                update({
-                    left: event.x,
-                    width: event.width,
-                    model,
-                    resizing: true
-                });
-            },
-            dragAllowed: false,
-            resizeAllowed: () => isResizable(model),
-            onDrop: ondrop,
-            container: rowContainer,
-            resizeHandleWidth,
-            getX: () => _position.x,
-            getY: () => 0,
-            getWidth: () => _position.width
+        gantt.timeRangeStore.update(model.id, {
+          from: newFrom,
+          to: newTo,
         });
+      }
+    });
 
-        return { destroy: () => draggable.destroy() };
-    }
+    const transform = $derived.by(() => {
+      return {
+        left: `${timeRange.left}px`, 
+        width: `${timeRange.width}px`,
+        ...drag.transform ? { 
+          left: `${drag.transform.x}px`, 
+          width: `${drag.transform.width}px` 
+        } : null
+      };
+    });
 
-    let classes = $derived(normalizeClassAttr(model.classes));
-    
+    // TODO:: apply an id to both body and header
 </script>
 
 <div
-    class="sg-time-range-control {classes}"
-    style="width:{_position.width}px;left:{_position.x}px"
-    class:sg-time-range-disabled={!isResizable(model)}
+  use:drag.ref
+  {...drag.attrs}
+  {...drag.listeners}
+  class="sg-time-range-control {classes}"
+  data-sg-time-range-header
+  style={cssStringify(transform)}
+  class:sg-time-range-disabled={!timeRange.resizable}
 >
-    <div class="sg-time-range-handle-left" use:drag></div>
-    <div class="sg-time-range-handle-right" use:drag></div>
+    <div class="sg-time-range-handle-left"></div>
+    <div class="sg-time-range-handle-right"></div>
 </div>
 
 <style>
     .sg-time-range-control {
         position: absolute;
+        bottom: 0;
     }
 
     .sg-time-range-handle-left {

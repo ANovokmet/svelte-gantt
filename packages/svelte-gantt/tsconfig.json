@@ -6,7 +6,7 @@
         "rootDir": ".",
         "target": "ESNext",
         "module": "ESNext",
-        "moduleResolution": "node",
+        "moduleResolution": "nodenext",
         "types": ["svelte"],
         "declaration": true,
         "declarationDir": "./dist",

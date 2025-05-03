@@ -1,33 +1,23 @@
 <script lang="ts">
-    import { normalizeClassAttr } from '../utils/dom';
-    import type { SvelteRow } from '../core/row';
-    import { getContext } from 'svelte';
-    interface Props {
-        row: SvelteRow;
-    }
+  import { RowBuilder } from './row.builder';
 
-    let { row }: Props = $props();
-    const { hoveredRow, selectedRow } = getContext('gantt');
+  type Props = {
+    builder: RowBuilder;
+  }
 
-    let classes = $derived(normalizeClassAttr(row.model.classes));
+  let { builder }: Props = $props();
 </script>
 
-<div
-    class="sg-row {classes}"
-    data-row-id={row.model.id}
-    class:sg-hover={$hoveredRow == row.model.id}
-    class:sg-selected={$selectedRow == row.model.id}
-    style="height:{row.height}px"
->
-    {#if row.model.contentHtml}
-        {@html row.model.contentHtml}
-    {/if}
+<div {...builder.attrs}>
+  {#if builder.row.model.contentHtml}
+    {@html builder.row.model.contentHtml}
+  {/if}
 </div>
 
 <style>
-    .sg-row {
-        position: relative;
-        width: 100%;
-        box-sizing: border-box;
-    }
+  [data-sg-row], .sg-row {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
 </style>

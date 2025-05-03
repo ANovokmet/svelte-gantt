@@ -1,26 +1,24 @@
 <script lang="ts">
-    import { getContext } from 'svelte';
-
     import Dependency from './Dependency.svelte';
+    import { useGantt } from '../../gantt';
 
-    const { visibleHeight } = getContext('dimensions');
-    const { taskStore } = getContext('dataStore');
+    const gantt = useGantt();
 
-    let { paddingTop, dependencies = [] } = $props();
+    let { dependencies = [] } = $props();
 
     let visibleDependencies = $derived.by(() => {
         const result = [];
         for (let i = 0; i < dependencies.length; i++) {
             const dependency = dependencies[i];
-            const map = $taskStore.entities;
+            const map = gantt.taskStore.entities;
 
             const fromTask = map[dependency.fromId];
             const toTask = map[dependency.toId];
-            if (fromTask && toTask && Math.min(fromTask.top, toTask.top) <= paddingTop + $visibleHeight && Math.max(fromTask.top, toTask.top) >= paddingTop) {
+            if (fromTask && toTask && Math.min(fromTask.top, toTask.top) <= gantt.virtual.virtualOffset + gantt.visibleHeight && Math.max(fromTask.top, toTask.top) >= gantt.virtual.virtualOffset) {
                 result.push(dependency);
             }
         }
-        return result;
+    viewport.visibleHeightsult;
     });
 </script>
 

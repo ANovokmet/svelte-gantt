@@ -47,7 +47,6 @@ gantt.$set({
 | `reflectOnChildRows` | `boolean` | When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree. | undefined |
 | `classes` | `string`\|`Array` | Custom CSS classes to apply to gantt. | undefined |
 | `resizeHandleWidth` | `number` | Width of handle for resizing tasks, in px. | undefined |
-| `onTaskButtonClick` | `(task: Task) => void` | Callback for task button clicks. | undefined |
 | `taskContent` | `(task: Task) => string` | Task content factory function. | undefined |
 | `taskElementHook` | `Function` | [Task element hook](/docs/data/tasks#taskelementhook) | undefined |
 | `tableWidth` | `number` | Width of table, used with SvelteGanttTable module. | undefined |

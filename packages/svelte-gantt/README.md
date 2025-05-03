@@ -97,7 +97,6 @@ gantt.$set({
 -   `reflectOnChildRows` {`Boolean`} When task is assigned to a parent row display them on child rows as well, used when rows are disabled as a tree.
 -   `classes` {`String`|`Array`} Custom CSS classes to apply to gantt.
 -   `resizeHandleWidth` {`Number`} Width of handle for resizing tasks, in px.
--   `onTaskButtonClick` {`Function`} Callback for task button clicks.
     -   eg. `(task) => console.log('clicked on: ', task)`
 -   `taskContent` {`Function`} ,task content factory function.
     -   eg. `` (task) => `<div>Task ${task.model.label}</div>` ``

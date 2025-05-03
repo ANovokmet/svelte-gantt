@@ -1,25 +1,28 @@
 {
-    "name": "svelte-gantt-monorepo",
-    "description": "monorepo for svelte-gantt",
-    "private": true,
-    "version": "0.0.1",
-    "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
-    "type": "module",
-    "scripts": {
-        "dev:docs": "pnpm --filter docs-mdsvex run dev",
-        "build:docs": "pnpm --filter docs-mdsvex run build",
-        "dev:demo": "pnpm --filter demo run dev",
-        "dev:svelte-gantt": "pnpm --filter svelte-gantt run autobuild",
-        "playground": "run-p dev:demo dev:svelte-gantt"
-    },
-    "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^6.7.4",
-        "@typescript-eslint/parser": "^6.7.4",
-        "eslint": "^8.50.0",
-        "eslint-config-prettier": "^9.0.0",
-        "eslint-plugin-svelte": "^2.34.0",
-        "prettier": "^3.0.3",
-        "prettier-plugin-svelte": "^3.0.3",
-        "typescript": "^5.0.0"
-    }
+  "name": "svelte-gantt-monorepo",
+  "description": "monorepo for svelte-gantt",
+  "private": true,
+  "version": "0.0.1",
+  "author": "Ante Novokmet <ante.je.zakon@gmail.com>",
+  "type": "module",
+  "scripts": {
+    "dev:docs": "pnpm --filter docs-mdsvex run dev",
+    "build:docs": "pnpm --filter docs-mdsvex run build",
+    "dev:demo": "pnpm --filter demo run dev",
+    "dev:svelte-gantt": "pnpm --filter svelte-gantt run autobuild",
+    "playground": "run-p dev:demo dev:svelte-gantt"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-svelte": "^2.34.0",
+    "prettier": "^3.0.3",
+    "prettier-plugin-svelte": "^3.0.3",
+    "typescript": "^5.0.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
